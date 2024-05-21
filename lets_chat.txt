@@ -1,2 +1,19 @@
 有任何新想法与问题请留言！
 每天请将进展push到远程仓库中！
+
+爬虫
+---
+目前我暂定使用 Beautiful Soup 4 作为 HTML 解析库，依此编写爬虫。
+
+爬取 dukekunshan.edu.cn 时有两类内容可能需要特殊处理：
+	1. 这种静态的 PDF: https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/mainsite/2023/10/Duke-Kunshan-University-Campus-Map-2023.pdf。
+	2. 存在 Box 上的文件，如 https://duke.box.com/v/dku-student-handbook。对此，我目前的想法是搭建一个 Box App，然后用 Box API 专门下载此类文件（存在 Box 上的文件我已知的应该只有 Student Handbook 和 Undergraduate Bulletin，所以特别对待应该没问题）：
+
+对于 Library，搜索其需要登录（用 Python requests 时提供个用户名和密码即可），然后向 https://quicksearch.library.duke.edu/?q=keyword 发请求就能获得搜索结果。但是我感觉最好还是和 Library 专门沟通一下，获得一个 API 会更好。
+
+对于 DKUHub，如果用某个人的账号登录一下强行爬也不能说不行，只是确实太麻烦了。所以这应该也是需要沟通的。
+
+如果要爬取整个互联网和DKU相关数据的话，有以下选择：
+	1. 从头开始，准备一些起始网页，不断跳超链接到别的网站（从头造Google）。
+	2. 用 Google 先搜索类似于“Duke Kunshan University”等关键字，然后再爬取相关网站。
+	3. 在别人已经准备好的的 commoncrawl 数据集里搜索与我们学校相关的关键字。
