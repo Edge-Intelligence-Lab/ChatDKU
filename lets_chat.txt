@@ -9,7 +9,7 @@
 	1. 这种静态的 PDF: https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/mainsite/2023/10/Duke-Kunshan-University-Campus-Map-2023.pdf。
 	2. 存在 Box 上的文件，如 https://duke.box.com/v/dku-student-handbook。对此，我目前的想法是搭建一个 Box App，然后用 Box API 专门下载此类文件（存在 Box 上的文件我已知的应该只有 Student Handbook 和 Undergraduate Bulletin，所以特别对待应该没问题）：
 
-----Cody's comments: For the PDF content, I solved this issue using OCR to collect structured data. The demo for the official webpage pdf is in the folder. (TBD)
+Cody's comments: For the PDF content, I solved this issue using OCR to collect structured data. The demo for the official webpage pdf is in the folder. (TBD)
 
 对于 Library，搜索其需要登录（用 Python requests 时提供个用户名和密码即可），然后向 https://quicksearch.library.duke.edu/?q=keyword 发请求就能获得搜索结果。但是我感觉最好还是和 Library 专门沟通一下，获得一个 API 会更好。
 
@@ -22,3 +22,14 @@
 ---
 
 爬虫爬取到的文件请存放到RAG_data中
+
+
+Cody：搜集到的一些具有参考价值的有关ChatGPT 3.5 turbo 的实用性资料（以下链接），包含现成的代码（包含：检查微调数据集格式、微调数据集上传、创建微调任务并完成微调）
+https://github.com/Logistic98/chatgpt-fine-tuning?tab=readme-ov-file
+https://github.com/PKU-YuanGroup/ChatLaw
+https://github.com/xing61/xiaoyi-robot/blob/main/fine-tune.%E5%BE%AE%E8%B0%83/%E5%BE%AE%E8%B0%83%E7%A4%BA%E4%BE%8B.md
+
+然而前提条件：ChatGPT大模型微调需要 OpenAI 的 API-KEY，而且要求这个账号必须是付费过的，新账号的白嫖额度是不能用的（第三方购买的很多廉价账号都是机器批量注册的新账号，都是不能用的）
+因此需要付费GPT API才能全部实践。我尝试过用第三方盗版的，要么是假的，要么也需要收费。
+
+搜集了GPT3.5有关DKU的基本信息，目前demo只包含127个问答，再往后之后GPT几乎都会提供相似的问答信息了。（数据集格式是ChatGPT 3.5 turbo的要求格式）

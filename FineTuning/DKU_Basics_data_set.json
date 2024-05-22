@@ -1,0 +1,891 @@
+[
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What undergraduate programs does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers undergraduate programs in areas such as global health, environmental science and policy, data science, economics, and global China studies."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the facilities like at DKU?"},
+      {"role": "assistant", "content": "DKU boasts state-of-the-art facilities including cutting-edge laboratories, libraries, sports facilities, and student accommodation."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU offer study abroad opportunities?"},
+      {"role": "assistant", "content": "Yes, DKU offers study abroad opportunities through its partnerships with universities worldwide, allowing students to gain international experience."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What research areas is DKU known for?"},
+      {"role": "assistant", "content": "DKU is known for its research in areas such as environmental science, public policy, global health, data science, and East Asian studies."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How diverse is the student body at DKU?"},
+      {"role": "assistant", "content": "DKU prides itself on its diverse student body, with students from various cultural, ethnic, and socioeconomic backgrounds."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What support services are available for students at DKU?"},
+      {"role": "assistant", "content": "DKU provides a range of support services for students including academic advising, career counseling, mental health services, and extracurricular activities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How can students get involved in research at DKU?"},
+      {"role": "assistant", "content": "Students can get involved in research at DKU through faculty-led projects, internships, research assistantships, and independent study opportunities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What extracurricular activities are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers a wide range of extracurricular activities including student clubs, sports teams, cultural events, and community service opportunities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Are there opportunities for internships at DKU?"},
+      {"role": "assistant", "content": "Yes, DKU provides opportunities for internships both on and off campus, allowing students to gain practical experience in their field of study."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU promote sustainability?"},
+      {"role": "assistant", "content": "DKU promotes sustainability through its curriculum, campus initiatives, research projects, and partnerships with sustainability-focused organizations."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What career services are available for DKU students?"},
+      {"role": "assistant", "content": "DKU offers career services including job search assistance, resume and interview workshops, employer networking events, and alumni mentoring programs."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the campus life like at DKU?"},
+      {"role": "assistant", "content": "Campus life at DKU is vibrant and dynamic, with a wide range of academic, cultural, and recreational activities happening throughout the year."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU have a graduate school?"},
+      {"role": "assistant", "content": "Yes, DKU offers a range of graduate programs in various disciplines, including business, global health, environmental policy, and more."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What languages are courses taught in at DKU?"},
+      {"role": "assistant", "content": "Courses at DKU are primarily taught in English, with some courses offered in Chinese."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of financial aid is available at DKU?"},
+      {"role": "assistant", "content": "DKU offers a variety of financial aid options, including scholarships, grants, and work-study programs to assist students with their educational expenses."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the living arrangements for students at DKU?"},
+      {"role": "assistant", "content": "Students at DKU live in modern, on-campus residential halls that offer a variety of amenities and foster a sense of community."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU support students with disabilities?"},
+      {"role": "assistant", "content": "DKU provides support for students with disabilities through various accommodations, accessible facilities, and dedicated support services to ensure equal access to education."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What opportunities for undergraduate research are available at DKU?"},
+      {"role": "assistant", "content": "Undergraduate students at DKU can participate in research projects across various disciplines, often working closely with faculty members and utilizing the university's research facilities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of community does DKU have?"},
+      {"role": "assistant", "content": "DKU has a vibrant and inclusive community, characterized by its diverse student body, active student organizations, and strong sense of collaboration among students, faculty, and staff."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the dining options at DKU?"},
+      {"role": "assistant", "content": "DKU offers a variety of dining options, including on-campus dining halls, cafes, and restaurants that cater to diverse dietary preferences and requirements."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of extracurricular activities does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers a wide range of extracurricular activities, including student clubs, sports teams, cultural events, and volunteer opportunities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What study resources are available for DKU students?"},
+      {"role": "assistant", "content": "DKU students have access to a wealth of study resources, including libraries, online databases, study spaces, tutoring services, and academic workshops."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What makes DKU unique among other universities?"},
+      {"role": "assistant", "content": "DKU is unique for its integration of Eastern and Western educational philosophies, commitment to sustainability, interdisciplinary curriculum, and strong emphasis on global citizenship and research."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the student-to-faculty ratio at DKU?"},
+      {"role": "assistant", "content": "The student-to-faculty ratio at DKU is low, ensuring that students receive personalized attention and support from their professors."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What types of degrees does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers a variety of undergraduate and graduate degrees across multiple disciplines, including arts and humanities, social sciences, natural sciences, and business."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What career paths do DKU graduates typically pursue?"},
+      {"role": "assistant", "content": "DKU graduates pursue diverse career paths, including roles in academia, industry, government, non-profit organizations, and entrepreneurial ventures."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are DKU's core values?"},
+      {"role": "assistant", "content": "DKU's core values include academic excellence, global citizenship, interdisciplinary collaboration, and sustainability."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How can prospective students apply to DKU?"},
+      {"role": "assistant", "content": "Prospective students can apply to DKU by completing an online application form, submitting required documents, and following the application instructions provided on the DKU admissions website."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is Duke Kunshan University?"},
+      {"role": "assistant", "content": "Duke Kunshan University (DKU) is a joint venture between Duke University in the United States and Wuhan University in China. It offers a unique blend of American liberal arts education and Chinese educational traditions."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Where is Duke Kunshan University located?"},
+      {"role": "assistant", "content": "Duke Kunshan University is located in Kunshan, Jiangsu Province, China, which is approximately halfway between Shanghai and Suzhou."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What programs does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers a range of undergraduate and graduate programs, including majors in global health, environmental science, public policy, data science, and humanities, among others."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How can I apply to Duke Kunshan University?"},
+      {"role": "assistant", "content": "You can apply to Duke Kunshan University through their official website. The application process typically includes submitting academic transcripts, standardized test scores, letters of recommendation, and a personal statement."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the student-faculty ratio at DKU?"},
+      {"role": "assistant", "content": "The student-faculty ratio at Duke Kunshan University is approximately 10:1, ensuring small class sizes and personalized attention from faculty."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Is DKU an accredited institution?"},
+      {"role": "assistant", "content": "Yes, Duke Kunshan University is accredited by the Ministry of Education of China and is recognized by Duke University in the United States."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the housing options for DKU students?"},
+      {"role": "assistant", "content": "DKU provides on-campus housing options for students, including modern dormitories with amenities such as study rooms, common areas, and dining facilities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU offer scholarships or financial aid?"},
+      {"role": "assistant", "content": "Yes, Duke Kunshan University offers various scholarships and financial aid options to help students fund their education. These include merit-based scholarships, need-based grants, and work-study opportunities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the language of instruction at DKU?"},
+      {"role": "assistant", "content": "The primary language of instruction at Duke Kunshan University is English, although some courses may be offered in Chinese."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What opportunities for research are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers numerous research opportunities for students, including collaborations with faculty, independent research projects, and access to research centers such as the Global Health Research Center and the Environmental Research Center."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Are there student organizations at DKU?"},
+      {"role": "assistant", "content": "Yes, there are a variety of student organizations at Duke Kunshan University, including cultural clubs, academic societies, sports teams, and volunteer groups."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What career services are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers comprehensive career services, including career counseling, internship and job placement assistance, resume workshops, and networking events with alumni and industry professionals."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Can international students study at DKU?"},
+      {"role": "assistant", "content": "Yes, Duke Kunshan University welcomes international students from around the world and offers support services to help them adjust to life in China."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What partnerships does DKU have with other universities?"},
+      {"role": "assistant", "content": "DKU has partnerships with numerous universities worldwide, including Duke University, Wuhan University, and other institutions, facilitating student exchanges, collaborative research, and joint academic programs."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the dining options at DKU?"},
+      {"role": "assistant", "content": "DKU offers a variety of dining options on campus, including cafeterias, coffee shops, and restaurants that serve a range of cuisines to cater to diverse tastes."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU support student well-being?"},
+      {"role": "assistant", "content": "DKU supports student well-being through various services, including counseling, health services, fitness programs, and wellness workshops."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What sports facilities are available at DKU?"},
+      {"role": "assistant", "content": "DKU provides a range of sports facilities, including a gymnasium, swimming pool, tennis courts, and sports fields for various athletic activities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the campus like at DKU?"},
+      {"role": "assistant", "content": "The DKU campus is modern and eco-friendly, featuring state-of-the-art facilities, green spaces, and sustainable design elements to create a conducive learning environment."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU have exchange programs?"},
+      {"role": "assistant", "content": "Yes, DKU offers exchange programs with partner universities around the world, allowing students to study abroad and gain international experience."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How is the academic calendar structured at DKU?"},
+      {"role": "assistant", "content": "The academic calendar at DKU is structured into two main semesters, Fall and Spring, along with a Summer session for additional coursework and research opportunities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What technology resources are available to DKU students?"},
+      {"role": "assistant", "content": "DKU provides students with access to advanced technology resources, including computer labs, high-speed internet, online learning platforms, and technical support services."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the tuition fee for DKU?"},
+      {"role": "assistant", "content": "Tuition fees at DKU vary depending on the program of study. Prospective students should check the official DKU website for the most current fee schedule and financial aid information."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the admission requirements for DKU?"},
+      {"role": "assistant", "content": "Admission requirements for DKU typically include academic transcripts, standardized test scores (such as SAT or ACT for undergraduate programs), letters of recommendation, a personal statement, and an interview."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What support services are available for international students at DKU?"},
+      {"role": "assistant", "content": "DKU offers various support services for international students, including visa assistance, orientation programs, language support, and cultural integration activities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the student life like at DKU?"},
+      {"role": "assistant", "content": "Student life at DKU is vibrant and diverse, with numerous extracurricular activities, cultural events, student clubs, and opportunities for community engagement."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the research strengths of DKU?"},
+      {"role": "assistant", "content": "DKU's research strengths include global health, environmental science, data science, and public policy. The university emphasizes interdisciplinary research and international collaboration."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What types of internships are available to DKU students?"},
+      {"role": "assistant", "content": "DKU students have access to a wide range of internship opportunities in various fields, including business, technology, health care, and non-profit organizations, both in China and internationally."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU integrate Chinese and Western educational philosophies?"},
+      {"role": "assistant", "content": "DKU integrates Chinese and Western educational philosophies by combining the American liberal arts tradition with Chinese cultural and academic practices, fostering a unique and holistic learning environment."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of cultural activities are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers a variety of cultural activities, including festivals, performances, art exhibitions, and workshops that celebrate both Chinese culture and the diverse backgrounds of its student body."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU offer online courses?"},
+      {"role": "assistant", "content": "Yes, DKU offers online courses and hybrid learning options to accommodate students' diverse needs and to provide flexibility in their education."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How can alumni stay connected with DKU?"},
+      {"role": "assistant", "content": "Alumni can stay connected with DKU through the university's alumni network, which offers events, newsletters, social media groups, and opportunities for continued professional development."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the advantages of studying at DKU?"},
+      {"role": "assistant", "content": "Advantages of studying at DKU include a unique blend of Eastern and Western educational practices, small class sizes, diverse student body, strong faculty, and opportunities for global learning and research."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of support does DKU offer for students' mental health?"},
+      {"role": "assistant", "content": "DKU offers various mental health support services, including counseling, mental health workshops, stress management programs, and access to professional mental health care providers."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the application deadline for DKU?"},
+      {"role": "assistant", "content": "Application deadlines for DKU vary depending on the program. Prospective students should consult the DKU website for specific dates and deadlines for their desired program."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the main features of DKU's campus?"},
+      {"role": "assistant", "content": "Main features of DKU's campus include modern academic buildings, state-of-the-art research facilities, comfortable residential halls, green spaces, and recreational facilities."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU promote sustainability on campus?"},
+      {"role": "assistant", "content": "DKU promotes sustainability through green building practices, energy-efficient technologies, waste reduction programs, and initiatives to encourage sustainable behavior among students and staff."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of community engagement opportunities does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers various community engagement opportunities, including volunteer programs, community service projects, and partnerships with local organizations to address social issues."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What academic support services are available at DKU?"},
+      {"role": "assistant", "content": "DKU provides academic support services such as tutoring, writing assistance, study skills workshops, and advising to help students succeed in their coursework."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How can students get involved in research at DKU?"},
+      {"role": "assistant", "content": "Students can get involved in research at DKU by joining faculty-led projects, applying for research grants, participating in research centers, and presenting their findings at academic conferences."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What study abroad opportunities are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers numerous study abroad opportunities through its partnerships with universities worldwide, allowing students to gain international experience and broaden their academic horizons."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of library resources does DKU offer?"},
+      {"role": "assistant", "content": "DKU's library offers extensive resources, including a vast collection of books, academic journals, online databases, study spaces, and research support services."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of arts programs are available at DKU?"},
+      {"role": "assistant", "content": "DKU offers a variety of arts programs, including courses in visual arts, music, theater, and dance, as well as opportunities to participate in performances and exhibitions."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU support entrepreneurial students?"},
+      {"role": "assistant", "content": "DKU supports entrepreneurial students through initiatives such as startup incubators, entrepreneurship courses, mentorship programs, and access to networks of investors and industry experts."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the focus of DKU's undergraduate curriculum?"},
+      {"role": "assistant", "content": "The focus of DKU's undergraduate curriculum is on providing a broad-based liberal arts education that encourages critical thinking, interdisciplinary learning, and global awareness."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU integrate technology into its education system?"},
+      {"role": "assistant", "content": "DKU integrates technology into its education system through the use of online learning platforms, digital resources, interactive classroom technologies, and support for student-led tech initiatives."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What leadership development programs does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers leadership development programs that include workshops, leadership courses, mentoring, and opportunities to take on leadership roles in student organizations and projects."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What is the ratio of international to domestic students at DKU?"},
+      {"role": "assistant", "content": "The ratio of international to domestic students at DKU varies, but the university strives to maintain a diverse student body with a significant proportion of international students."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "How does DKU promote interdisciplinary learning?"},
+      {"role": "assistant", "content": "DKU promotes interdisciplinary learning by offering cross-listed courses, encouraging collaborative projects, and fostering an academic culture that values diverse perspectives and integrative thinking."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What are the strengths of DKU's faculty?"},
+      {"role": "assistant", "content": "DKU's faculty are distinguished by their expertise in their respective fields, commitment to teaching and research, and diverse international backgrounds."}
+    ]
+  },
+  {
+    "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "What kind of career services does DKU offer?"},
+      {"role": "assistant", "content": "DKU offers comprehensive career services, including career counseling, job search assistance, resume workshops, networking events, and internship placement support."}
+    ]
+  },
+  {
+      "messages": [
+      {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+      {"role": "user", "content": "Does DKU have a strong alumni network?"},
+      {"role": "assistant", "content": "Yes, DKU has a strong alumni network with graduates working in various industries and sectors around the world, providing valuable connections and opportunities for current students."}
+      ]
+  },
+  {
+      "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "What internship opportunities are available for DKU students?"},
+          {"role": "assistant", "content": "DKU students have access to internship opportunities with leading companies, NGOs, government agencies, and research institutions both locally and internationally."}
+      ]
+  },
+  {
+      "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "How does DKU foster innovation and entrepreneurship?"},
+          {"role": "assistant", "content": "DKU fosters innovation and entrepreneurship through courses, workshops, incubator programs, and partnerships with industry leaders, providing students with the skills and resources to turn their ideas into reality."}
+      ]
+  },
+  {
+      "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "What opportunities are there for community engagement at DKU?"},
+          {"role": "assistant", "content": "DKU offers various opportunities for community engagement such as service-learning projects, volunteer programs, and partnerships with local organizations, allowing students to make a positive impact in the community."}
+      ]
+  },
+  {
+      "messages": [
+        {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+        {"role": "user", "content": "What are the admission requirements for DKU?"},
+        {"role": "assistant", "content": "Admission requirements for DKU vary depending on the program and level of study, but typically include academic transcripts, standardized test scores, letters of recommendation, and a personal statement or essay."}
+      ]
+    },
+    {
+      "messages": [
+        {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+        {"role": "user", "content": "Can international students apply to DKU?"},
+        {"role": "assistant", "content": "Yes, DKU welcomes applications from international students and provides support services such as visa assistance, language support, and cultural orientation to help them adjust to life at DKU."}
+      ]
+    },
+    {
+      "messages": [
+        {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+        {"role": "user", "content": "What is the academic calendar like at DKU?"},
+        {"role": "assistant", "content": "The academic calendar at DKU follows a semester-based system, with fall and spring semesters, as well as shorter summer sessions. Specific dates may vary each year."}
+      ]
+    },
+    {
+      "messages": [
+        {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+        {"role": "user", "content": "Are there opportunities for undergraduate research at DKU?"},
+        {"role": "assistant", "content": "Yes, DKU encourages undergraduate research through research assistantships, independent study projects, and participation in faculty-led research initiatives."}
+      ]
+    },
+    {
+      "messages": [
+        {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+        {"role": "user", "content": "Does DKU offer financial aid for students?"},
+        {"role": "assistant", "content": "Yes, DKU offers a range of financial aid options including scholarships, grants, loans, and work-study programs to help students fund their education."}
+      ]
+    },
+    {
+        "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "What language is instruction conducted in at DKU?"},
+          {"role": "assistant", "content": "Instruction at DKU is primarily conducted in English, but Chinese language courses are also offered to support students' language proficiency and cultural integration."}
+        ]
+      },
+      {
+        "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "Is there a campus tour available for prospective students?"},
+          {"role": "assistant", "content": "Yes, DKU offers campus tours for prospective students and their families to explore the facilities, meet faculty and staff, and learn more about the academic programs and student life at DKU."}
+        ]
+      },
+      {
+        "messages": [
+          {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+          {"role": "user", "content": "What is the student community like at DKU?"},
+          {"role": "assistant", "content": "The student community at DKU is diverse, vibrant, and supportive, with students from all over the world coming together to learn, collaborate, and engage in various activities and initiatives."}
+        ]
+      },
+      {
+          "messages": [
+            {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+            {"role": "user", "content": "What are the career prospects for DKU graduates?"},
+            {"role": "assistant", "content": "DKU graduates have excellent career prospects, with many securing positions in leading companies, research institutions, government agencies, and nonprofit organizations around the world. DKU's strong alumni network and career services also contribute to the success of its graduates."}
+          ]
+        },
+        {
+          "messages": [
+            {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+            {"role": "user", "content": "What are the admission deadlines for DKU?"},
+            {"role": "assistant", "content": "Admission deadlines for DKU vary depending on the program and level of study. Prospective students are advised to check the official DKU website or contact the admissions office for specific deadlines."}
+          ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What support does DKU offer for international students?"},
+                {"role": "assistant", "content": "DKU provides comprehensive support for international students, including assistance with visa applications, orientation programs, language support services, and cultural integration activities. Additionally, there are dedicated staff members and student organizations to help international students adjust to life at DKU."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the housing options for DKU students?"},
+                {"role": "assistant", "content": "DKU offers a variety of housing options for students, including on-campus dormitories and off-campus apartments. The on-campus dormitories provide convenient access to campus facilities and a supportive community atmosphere, while off-campus apartments offer more independence and flexibility. Both options prioritize safety, comfort, and affordability."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the requirements for international students applying to DKU?"},
+                {"role": "assistant", "content": "International students applying to DKU typically need to submit academic transcripts, standardized test scores (such as the SAT or ACT), English language proficiency test scores (such as the TOEFL or IELTS), letters of recommendation, a personal statement or essay, and any additional documents required by their chosen program. Specific requirements may vary depending on the program and level of study."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What support does DKU offer for international students?"},
+                {"role": "assistant", "content": "DKU provides comprehensive support for international students, including assistance with visa applications, orientation programs, language support services, and cultural integration activities. Additionally, there are dedicated staff members and student organizations to help international students adjust to life at DKU."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the housing options for DKU students?"},
+                {"role": "assistant", "content": "DKU offers a variety of housing options for students, including on-campus dormitories and off-campus apartments. The on-campus dormitories provide convenient access to campus facilities and a supportive community atmosphere, while off-campus apartments offer more independence and flexibility. Both options prioritize safety, comfort, and affordability."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the requirements for international students applying to DKU?"},
+                {"role": "assistant", "content": "International students applying to DKU typically need to submit academic transcripts, standardized test scores (such as the SAT or ACT), English language proficiency test scores (such as the TOEFL or IELTS), letters of recommendation, a personal statement or essay, and any additional documents required by their chosen program. Specific requirements may vary depending on the program and level of study."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What types of scholarships are available at DKU?"},
+                {"role": "assistant", "content": "DKU offers a variety of scholarships to both domestic and international students, including merit-based scholarships, need-based scholarships, talent scholarships for exceptional achievements in specific areas such as academics, sports, or the arts, as well as scholarships sponsored by external organizations and donors. The eligibility criteria and application process for each scholarship may vary, so students are encouraged to explore the scholarship opportunities available on the DKU website or contact the financial aid office for more information."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "How does DKU support student entrepreneurship?"},
+                {"role": "assistant", "content": "DKU supports student entrepreneurship through various initiatives and resources aimed at fostering innovation, creativity, and business acumen. This includes entrepreneurship courses, workshops, mentorship programs, networking events, access to funding opportunities and incubator spaces, as well as collaboration with industry partners and alumni who are entrepreneurs themselves. DKU also encourages interdisciplinary collaboration, providing students with the opportunity to work on entrepreneurial projects across different disciplines and leverage diverse perspectives to tackle real-world challenges."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Does DKU offer study abroad programs?"},
+                {"role": "assistant", "content": "Yes, DKU offers study abroad programs that allow students to spend a semester or academic year studying at partner universities around the world. These programs offer students the opportunity to gain international experience, immerse themselves in different cultures, and broaden their academic horizons. DKU's study abroad office provides support and guidance to students throughout the application process, including assistance with course selection, visa applications, and pre-departure orientation."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What is the student-faculty ratio at DKU?"},
+                {"role": "assistant", "content": "The student-faculty ratio at DKU is designed to be low, ensuring that students receive personalized attention, mentorship, and support from their professors. This allows for meaningful interactions between students and faculty members, fosters academic engagement, and promotes collaborative learning experiences both inside and outside the classroom."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the dining options available on campus at DKU?"},
+                {"role": "assistant", "content": "DKU offers a variety of dining options on campus to cater to different dietary preferences and cultural tastes. These include cafeterias serving a range of international cuisines, coffee shops offering snacks and beverages, as well as student-run eateries and food trucks providing diverse and affordable meal choices. Additionally, DKU is committed to promoting sustainability in its dining services, sourcing local and organic ingredients, minimizing food waste, and offering vegetarian and vegan options."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What sports facilities are available at DKU?"},
+                {"role": "assistant", "content": "DKU boasts state-of-the-art sports facilities to support students' physical health and wellness. These include gymnasiums equipped with fitness equipment, indoor and outdoor courts for basketball, volleyball, and tennis, soccer fields, running tracks, swimming pools, and yoga studios. Additionally, DKU offers a wide range of intramural and club sports activities, as well as fitness classes and recreational programs to promote an active lifestyle and community engagement."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Does DKU offer graduate programs?"},
+                {"role": "assistant", "content": "Yes, DKU offers a variety of graduate programs across different disciplines, including master's and doctoral degrees. These programs are designed to provide advanced education and research opportunities for students seeking to deepen their knowledge and expertise in specific fields. DKU's graduate programs feature interdisciplinary curricula, distinguished faculty, and state-of-the-art facilities, preparing students for successful careers in academia, industry, government, and the nonprofit sector."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "How does DKU promote diversity and inclusion?"},
+                {"role": "assistant", "content": "DKU is committed to fostering a diverse, inclusive, and equitable campus community where all individuals feel valued, respected, and empowered to succeed. To promote diversity and inclusion, DKU implements various initiatives and policies, including recruitment and retention efforts to attract students, faculty, and staff from diverse backgrounds, cultural competency training for campus community members, support services for underrepresented groups, and multicultural programming and events that celebrate diversity and promote cross-cultural understanding. Additionally, DKU encourages open dialogue, collaboration, and mutual respect among its members to create a welcoming and supportive environment for everyone."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What is the academic advising system like at DKU?"},
+                {"role": "assistant", "content": "DKU offers comprehensive academic advising services to support students' academic and personal development throughout their university journey. Each student is assigned a dedicated academic advisor who provides guidance on course selection, degree planning, academic goals, and career aspirations. Academic advisors also assist students in navigating university policies and procedures, accessing campus resources, and addressing any challenges or concerns they may encounter. Additionally, DKU's academic advising system emphasizes holistic support, encouraging students to explore their interests, pursue their passions, and make informed decisions that align with their individual strengths and aspirations."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What are the options for transportation around DKU campus?"},
+                {"role": "assistant", "content": "DKU provides various transportation options to facilitate commuting around campus and the surrounding areas. These include shuttle buses that connect different parts of the campus and nearby areas, bicycle rental services for students to easily navigate the campus and explore the surroundings, as well as designated parking areas for those who commute by car. Additionally, DKU encourages sustainable transportation practices such as carpooling, walking, and using public transportation to reduce carbon emissions and promote environmental sustainability."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Does DKU offer opportunities for student leadership development?"},
+                {"role": "assistant", "content": "Yes, DKU offers numerous opportunities for student leadership development to empower students to become effective leaders, collaborators, and changemakers. These opportunities include leadership workshops, seminars, and training sessions that focus on developing essential leadership skills such as communication, teamwork, problem-solving, and decision-making. Additionally, students can participate in student government, club leadership roles, community service projects, and campus initiatives to gain hands-on leadership experience and make a positive impact on the DKU community and beyond."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Are there opportunities for undergraduate research at DKU?"},
+                {"role": "assistant", "content": "Yes, DKU provides numerous opportunities for undergraduate research, allowing students to engage in hands-on research projects under the guidance of faculty mentors. These opportunities may include research assistantships, independent study courses, summer research programs, and participation in faculty-led research initiatives. Additionally, DKU encourages interdisciplinary collaboration and offers resources such as research grants, laboratory facilities, and academic support services to facilitate undergraduate research experiences. Participation in undergraduate research not only enhances students' academic and professional skills but also fosters critical thinking, creativity, and intellectual curiosity."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What is the process for enrolling in courses at DKU?"},
+                {"role": "assistant", "content": "The process for enrolling in courses at DKU typically involves several steps to ensure that students have a well-rounded and fulfilling academic experience. First, students consult with their academic advisor to discuss their academic goals, degree requirements, and course options. Then, students use the online course registration system to view available courses, check prerequisites, and create their course schedule. During the registration period, students may add or drop courses based on availability and their academic needs. Throughout this process, students can seek guidance from their academic advisor, faculty members, and academic support services to make informed decisions and optimize their course selections."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What internship opportunities are available for DKU students?"},
+                {"role": "assistant", "content": "DKU offers a wide range of internship opportunities for students to gain practical experience, explore career interests, and develop professional skills. These opportunities may include internships with local and multinational companies, government agencies, non-profit organizations, research institutions, and startups. DKU's internship programs may be structured as part-time or full-time experiences during the academic year or summer break, depending on the student's schedule and availability. Additionally, DKU provides support services such as internship search assistance, resume and cover letter workshops, networking events, and career counseling to help students secure meaningful internship opportunities and maximize their learning outcomes."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What resources are available for students with disabilities at DKU?"},
+                {"role": "assistant", "content": "DKU is committed to providing equal access and support for students with disabilities to ensure their academic success and full participation in campus life. To support students with disabilities, DKU offers a range of resources and accommodations, including accessible facilities and classrooms, assistive technology, note-taking services, alternative exam arrangements, and disability-related counseling and advocacy. Additionally, DKU works closely with students, faculty, and staff to create an inclusive and supportive environment where all individuals are valued, respected, and empowered to thrive."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Does DKU offer study abroad programs for graduate students?"},
+                {"role": "assistant", "content": "Yes, DKU offers study abroad programs for graduate students as part of its commitment to providing global learning opportunities and fostering cross-cultural exchange. These study abroad programs are designed to enhance graduate students' academic and professional development by immersing them in diverse cultural and academic environments, fostering international collaboration and networking, and providing unique perspectives on their field of study. Graduate students can participate in semester-long exchange programs, research collaborations, internships, conferences, and other international experiences tailored to their academic and career goals. DKU's study abroad office provides support and guidance to graduate students throughout the application process, including assistance with program selection, academic planning, funding opportunities, and travel arrangements."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What is the process for applying for financial aid at DKU?"},
+                {"role": "assistant", "content": "The process for applying for financial aid at DKU typically involves several steps to help students secure funding to support their education. First, students are encouraged to explore the various financial aid options available, including scholarships, grants, loans, work-study programs, and external funding opportunities. Then, students complete the financial aid application form and submit supporting documents, such as income statements, tax returns, and financial aid essays, as required. DKU's financial aid office reviews each application carefully and evaluates eligibility based on factors such as financial need, academic merit, and program requirements. Once financial aid awards are determined, students are notified of their aid package and any additional steps they need to take to accept or decline the offered aid. Throughout this process, students can seek guidance from the financial aid office, academic advisors, and other support services to navigate the financial aid process successfully and make informed decisions about funding their education at DKU."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What language proficiency requirements are there for international students applying to DKU?"},
+                {"role": "assistant", "content": "International students applying to DKU are typically required to demonstrate proficiency in English through standardized tests such as the TOEFL (Test of English as a Foreign Language), IELTS (International English Language Testing System), or other recognized English proficiency exams. The specific language proficiency requirements may vary depending on the program and level of study, so students are encouraged to review the admissions requirements for their chosen program carefully. In addition to standardized test scores, international students may also be required to submit other documents demonstrating their English language proficiency, such as a personal statement or interview."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What cultural activities are available for students at DKU?"},
+                {"role": "assistant", "content": "DKU offers a vibrant array of cultural activities and events to enrich students' cultural experiences, celebrate diversity, and foster cross-cultural understanding. These activities may include cultural festivals showcasing music, dance, art, and cuisine from around the world, cultural heritage weeks highlighting different countries and regions, language exchange programs, international film screenings, guest lectures and performances by renowned artists and scholars, as well as cultural immersion trips and study abroad opportunities. Additionally, student organizations and clubs at DKU often organize cultural events and activities to promote cultural awareness, appreciation, and dialogue among students from diverse backgrounds."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Can students work part-time while studying at DKU?"},
+                {"role": "assistant", "content": "Yes, students at DKU are permitted to work part-time while studying, subject to certain restrictions and regulations. International students may be eligible to work part-time on campus or off campus with the appropriate work authorization, such as a student visa with work authorization or other relevant permits. Additionally, DKU offers various student employment opportunities on campus, including positions in academic departments, administrative offices, research labs, libraries, and student services. These part-time job opportunities not only provide students with valuable work experience and financial support but also contribute to their personal and professional development."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What health services are available for students at DKU?"},
+                {"role": "assistant", "content": "DKU provides comprehensive health services and wellness programs to support students' physical, mental, and emotional well-being throughout their university experience. These services may include on-campus health clinics staffed by licensed healthcare professionals, counseling and psychological services for mental health support, preventive care and health education programs, vaccination clinics, and referrals to off-campus specialists and healthcare providers as needed. Additionally, DKU may offer health insurance plans or facilitate access to health insurance coverage for students to ensure they have access to affordable healthcare services and resources."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What is the process for transferring credits to DKU from another institution?"},
+                {"role": "assistant", "content": "The process for transferring credits to DKU from another institution typically involves several steps to evaluate the compatibility and equivalency of the credits earned. First, students interested in transferring credits should review the DKU transfer credit policy and guidelines to understand the criteria and requirements for credit transfer. Then, students submit an official transcript from their previous institution along with course descriptions or syllabi for the courses they wish to transfer. DKU's transfer credit evaluation team reviews the submitted documents to assess the content, level, and relevance of the courses and determines the transferability of credits based on DKU's academic standards and requirements. Once the transfer credit evaluation is complete, students are notified of the outcome and any credits approved for transfer are added to their academic record at DKU. It is important for students to consult with their academic advisor or the transfer credit coordinator at DKU for guidance and support throughout the credit transfer process."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Are there opportunities for undergraduate students to publish research at DKU?"},
+                {"role": "assistant", "content": "Yes, DKU encourages undergraduate students to engage in research activities and offers opportunities for them to publish their research findings in academic journals, conference proceedings, and other scholarly publications. Undergraduate students may collaborate with faculty mentors on research projects, participate in research seminars and workshops, and present their research at conferences and symposiums. Additionally, DKU may have undergraduate research journals or platforms where students can submit their research papers for publication and dissemination within the academic community. Publishing research as an undergraduate not only enhances students' academic and professional skills but also contributes to their personal growth, intellectual curiosity, and academic achievements."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What types of technology resources are available for students at DKU?"},
+                {"role": "assistant", "content": "DKU provides students with access to a wide range of technology resources and support services to enhance their learning, research, and academic success. These resources may include computer labs equipped with PCs, Macs, and specialized software for various disciplines, high-speed internet access and wireless networks across campus, printing and scanning facilities, multimedia production studios, digital libraries and online databases, and technical support services for troubleshooting hardware and software issues. Additionally, DKU may offer virtual learning platforms, online course materials, and interactive tools to facilitate remote and blended learning experiences, especially in response to the evolving needs and challenges of the digital age."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What career counseling services are available for students at DKU?"},
+                {"role": "assistant", "content": "DKU offers comprehensive career counseling services to support students in exploring career paths, developing job search strategies, and achieving their career goals. These services may include individual career counseling sessions with professional career advisors, career assessments and personality tests to identify strengths, interests, and career preferences, workshops and seminars on resume writing, interviewing skills, and networking techniques, career fairs and employer events to connect students with potential employers and internship opportunities, as well as online resources and job search platforms for exploring job opportunities and graduate programs. Additionally, DKU's career counseling services may offer alumni mentoring programs, mock interviews, and alumni networking opportunities to help students navigate the transition from university to the workforce successfully."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What extracurricular activities are available for students at DKU?"},
+                {"role": "assistant", "content": "DKU offers a wide range of extracurricular activities to complement students' academic experiences, foster personal growth, and build a vibrant campus community. These activities may include student clubs and organizations representing diverse interests such as cultural, academic, professional, recreational, and social pursuits, community service projects and volunteer opportunities to give back to the local community and make a positive impact, intramural and club sports teams for athletic and recreational pursuits, performing arts groups, music ensembles, and theater productions for creative expression and artistic development, as well as leadership development programs, workshops, and conferences to enhance students' leadership skills, teamwork, and interpersonal competencies. Additionally, DKU encourages students to create their own clubs and initiatives to pursue their passions, interests, and aspirations, contributing to a dynamic and inclusive campus culture."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What environmental sustainability initiatives does DKU participate in?"},
+                {"role": "assistant", "content": "DKU is committed to environmental sustainability and participates in various initiatives to promote eco-friendly practices, reduce carbon emissions, and conserve natural resources. These initiatives may include campus-wide recycling programs for paper, plastic, glass, and electronic waste, energy conservation measures such as energy-efficient lighting and building systems, water conservation strategies such as low-flow fixtures and drought-resistant landscaping, waste reduction and composting programs to minimize food waste and organic materials, sustainable transportation options such as bike-sharing programs and electric vehicle charging stations, green building design and construction standards for new facilities and renovations, and sustainability education and awareness campaigns to engage the campus community in environmental stewardship and advocacy. Additionally, DKU may collaborate with local governments, businesses, and community organizations on sustainability initiatives and participate in sustainability-related research, projects, and partnerships to address global environmental challenges and promote a more sustainable future."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "Does DKU offer support for students' mental health and well-being?"},
+                {"role": "assistant", "content": "Yes, DKU offers comprehensive support for students' mental health and well-being to ensure they have access to the resources and services they need to thrive personally and academically. These support services may include counseling and psychological services staffed by licensed professionals who provide confidential and culturally sensitive counseling, therapy, and crisis intervention, mental health workshops, support groups, and psychoeducational programs to promote emotional resilience, stress management, and coping skills, psychiatric consultations and medication management for students with mental health diagnoses, outreach and prevention initiatives to raise awareness about mental health issues and reduce stigma, as well as collaboration with campus partners and community resources to provide holistic and integrated care for students' mental health needs. Additionally, DKU may offer online resources, self-help tools, and peer support programs to supplement in-person services and empower students to take proactive steps to prioritize their mental health and well-being."}
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are DKU LLM, developed by Edge Intelligence Lab in Duke Kunshan University: \n- Your answer should be polite. \n- You must reject any rude and illegal question."},
+                {"role": "user", "content": "What support does DKU offer for students with academic accommodations?"},
+                {"role": "assistant", "content": "DKU is committed to providing equal access and support for students with academic accommodations to ensure their academic success and full participation in the educational experience. To support students with academic accommodations, DKU offers a range of services and resources, including disability services staff who work with students to determine reasonable accommodations based on their individual needs, such as extended time on exams, note-taking assistance, alternative format materials, accessible technology, and specialized equipment. Additionally, DKU provides faculty training and support to ensure they are aware of and able to implement accommodations effectively, academic coaching and study skills workshops to help students develop strategies for academic success, and ongoing communication and collaboration between students, faculty, and disability services staff to address any challenges or concerns that may arise. By fostering an inclusive and supportive learning environment, DKU strives to empower all students to achieve their full potential and thrive academically."}
+            ]
+        }
+]
