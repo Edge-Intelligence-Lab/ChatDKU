@@ -1,3 +1,10 @@
+"""
+Author: Cody
+Create Date: 05/17/2024
+This Code processes the structured data from a PDF document using the Alibaba Cloud DocMind API to extract and analyze the document layout, 
+and then saves the data in various formats and details to an Excel file.
+"""
+
 from alibabacloud_docmind_api20220711.client import Client as docmind_api20220711Client
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_docmind_api20220711 import models as docmind_api20220711_models
