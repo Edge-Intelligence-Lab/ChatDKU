@@ -1,0 +1,590 @@
+<!doctype html>
+<html id="login" lang="en-US">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>3DPrinterOS</title>
+
+
+            <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/vnd.microsoft.icon" href="/assets/img/ico/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/ico/ico.16.png">
+    <link rel="icon" type="image/png" sizes="24x24" href="/assets/img/ico/ico.24.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/ico/ico.32.png">
+    <link rel="icon" type="image/png" href="/assets/img/ico/ico.256.png">
+
+	<meta name="author" content="3D Control Systems" />
+    <meta name="keywords" content="3DPrinterOS, 3D Printer Management Software, Cloud 3D Printer Software, 3D printer management" />
+    <meta name="description" content="3DPrinterOS is Cloud 3D Printer Management Software. Enterprises, Schools and Service Bureaus use our cloud-based 3D printing management platform to prepare, fix, securely store, and stream 3D designs to 3D printers with data tracking and analytics. Unlike our competition, we have a working platform with 10,000+ hours of use, over ~70% of OEM's supported, and 30,000+ hours of experience developing 3D printing software. We have users in over 86 countries and our current clients include Duke, Purdue and Florida State University." />
+    <meta property="og:url" content="https://cloud.3dprinteros.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="3DPrinterOS is Cloud 3D Printer Management Software." />
+    <meta property="og:description" content="Enterprises, Schools and Service Bureaus use our cloud-based 3D printing management platform to prepare, fix, securely store, and stream 3D designs to 3D printers with data tracking and analytics. Unlike our competition, we have a working platform with 10,000+ hours of use, over ~70% of OEM's supported, and 30,000+ hours of experience developing 3D printing software. We have users in over 86 countries and our current clients include Duke, Purdue and Florida State University." />
+    <meta property="og:image" content="https://cloud.3dprinteros.com/public/images/1200X630FB.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="fb:app_id" content="610921070160002" />
+
+    <script>
+        var phpconst = {cdn_url: 'https://live-cdn-3dprinteros.azureedge.net'};
+        var printSettings = {};
+        var license = false;
+        
+        
+        var metaTypes = [{"description":"Simplify3D","id":"Simplify3D"},{"description":"Cura","id":"Cura"},{"description":"UltiGCode","id":"UltiGCode"},{"description":"Miracle-Grue","id":"Miracle-Grue"},{"description":"FlashForge","id":"FlashForge"},{"description":"Bambu Lab","id":"Bambu Lab"},{"description":"PrusaSlicer","id":"PrusaSlicer"}];
+        var grpcServersPool = ["https:\/\/grpc-cloud.3dprinteros.com:8443","https:\/\/grpc-cloud1.3dprinteros.com:8443","https:\/\/grpc-cloud2.3dprinteros.com:8443","https:\/\/grpc-cloud3.3dprinteros.com:8443","https:\/\/grpc-cloud4.3dprinteros.com:8443","https:\/\/grpc-cloud5.3dprinteros.com:8443","https:\/\/grpc-cloud6.3dprinteros.com:8443","https:\/\/grpc-cloud7.3dprinteros.com:8443","https:\/\/grpc-cloud8.3dprinteros.com:8443","https:\/\/grpc-cloud9.3dprinteros.com:8443","https:\/\/grpc-cloud10.3dprinteros.com:8443","https:\/\/grpc-cloud11.3dprinteros.com:8443","https:\/\/grpc-cloud12.3dprinteros.com:8443","https:\/\/grpc-cloud13.3dprinteros.com:8443","https:\/\/grpc-cloud14.3dprinteros.com:8443","https:\/\/grpc-cloud15.3dprinteros.com:8443","https:\/\/grpc-cloud16.3dprinteros.com:8443","https:\/\/grpc-cloud17.3dprinteros.com:8443","https:\/\/grpc-cloud18.3dprinteros.com:8443","https:\/\/grpc-cloud19.3dprinteros.com:8443","https:\/\/grpc-cloud20.3dprinteros.com:8443","https:\/\/grpc-cloud21.3dprinteros.com:8443","https:\/\/grpc-cloud22.3dprinteros.com:8443","https:\/\/grpc-cloud23.3dprinteros.com:8443","https:\/\/grpc-cloud24.3dprinteros.com:8443","https:\/\/grpc-cloud25.3dprinteros.com:8443","https:\/\/grpc-cloud26.3dprinteros.com:8443","https:\/\/grpc-cloud27.3dprinteros.com:8443","https:\/\/grpc-cloud28.3dprinteros.com:8443","https:\/\/grpc-cloud29.3dprinteros.com:8443","https:\/\/grpc-cloud30.3dprinteros.com:8443","https:\/\/grpc-cloud31.3dprinteros.com:8443","https:\/\/grpc-cloud32.3dprinteros.com:8443","https:\/\/grpc-cloud33.3dprinteros.com:8443","https:\/\/grpc-cloud34.3dprinteros.com:8443","https:\/\/grpc-cloud35.3dprinteros.com:8443","https:\/\/grpc-cloud36.3dprinteros.com:8443","https:\/\/grpc-cloud37.3dprinteros.com:8443","https:\/\/grpc-cloud38.3dprinteros.com:8443","https:\/\/grpc-cloud39.3dprinteros.com:8443","https:\/\/grpc-cloud40.3dprinteros.com:8443","https:\/\/grpc-cloud41.3dprinteros.com:8443","https:\/\/grpc-cloud42.3dprinteros.com:8443","https:\/\/grpc-cloud43.3dprinteros.com:8443","https:\/\/grpc-cloud44.3dprinteros.com:8443","https:\/\/grpc-cloud45.3dprinteros.com:8443","https:\/\/grpc-cloud46.3dprinteros.com:8443","https:\/\/grpc-cloud47.3dprinteros.com:8443","https:\/\/grpc-cloud48.3dprinteros.com:8443","https:\/\/grpc-cloud49.3dprinteros.com:8443"];
+        var websocketServerUrl = 'https://wss-cloud.3dprinteros.com';
+    </script>
+
+
+
+                
+    
+  <link type="text/css" href="/assets/c/fonts.css?r=480" rel="stylesheet" />
+  <link type="text/css" href="/assets/c/clear.css?r=480" rel="stylesheet" />
+  <link type="text/css" href="/assets/c/style.css?r=480" rel="stylesheet" />
+  <link type="text/css" href="/assets/apps/default/css/default.css?r=480" rel="stylesheet" />
+  <link type="text/css" href="/public/dist/css/app.css?r=480" rel="stylesheet" />
+  <link type="text/css" href="/assets/c/main.css?r=480" rel="stylesheet" />
+
+  <script type="text/javascript" src="/assets/vendor/inspinia/js/jquery-3.7.1.min.js?r=480"></script>
+  <script type="text/javascript" src="/assets/apps/default/js/default.js?r=480"></script>
+  <script type="text/javascript" src="/assets/js/default.js?r=480"></script>
+  <script type="text/javascript" src="https://apis.google.com/js/platform.js?r=480"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCliITwTbSm2bu2nrIxfzNFYjcWwlxbKew&amp;&amp;v=3&amp;libraries=places,visualization"></script>
+  <script type="text/javascript" src="/assets/js/gmaps.js?r=480"></script>
+  <script type="text/javascript" src="/public/js/overlib.js?r=480"></script>
+    <style>
+        /*body #intercom-container .intercom-launcher-discovery-frame, body #intercom-container .intercom-launcher-frame{*/
+             /*display: none !important;*/
+        /*}*/
+        </style>
+    
+
+    <!-- themes -->
+                <link href="/assets/c/dremel/style.css?r=480" rel="stylesheet" type="text/css">
+        <!-- themes end -->
+
+<script>if (!window.Intercom) {window.Intercom = function(){}}</script>
+
+
+    <link rel="stylesheet" type="text/css" href="//fast.appcues.com/widget.css">
+
+</head>
+<body
+        class="
+ theme-name-dremel"
+>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MB87BKM"
+                      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+<div class="fix-mob-mess">
+    <div id="cookieMess" style="display: none">
+        <div class="item-chrome">
+            <h3>
+                3DPrinterOS servers use your cookies only for user authorization purposes, we do not store or keep any personal information inside cookies.
+                <span class="cookieMess-close"><a>Close</a></span>
+            </h3>
+        </div>
+    </div>
+
+    </div>
+
+
+<style>
+    #map-canvas {
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        right: 0;
+        z-index: 0;
+    }
+    .footer_menu.footer-no-fixed{
+        display: none;
+    }
+    @media (max-width: 630px) {
+      #map-canvas{
+        display: none;
+      }
+    }
+</style>
+<div id="map"></div>
+<div id="app"></div>
+    <script src="/public/dist/js/app.js?r=480"></script>
+    <script src="/public/dist/js/chunk-vendors.js?r=480"></script>
+<script>
+    var auth2 = null;
+  gapi.load('auth2', function() {
+    auth2 = gapi.auth2.init({
+      client_id: '1005013634378-7qotjufht2ld7tu43btg83pn695ohgfm.apps.googleusercontent.com',
+      scope: 'profile email'
+    });
+  });
+
+  function googleSignIn() {
+    if (auth2) {
+      auth2.signIn().then(function(googleUser) {
+        console.log('GOOGLE OAUTH RESPONSE:', googleUser);
+        window.location.href = '/sign/google?token=' + googleUser.getAuthResponse().id_token;
+      }).catch(function(e) {
+        console.log('GOOGLE OAUTH ERROR');
+        console.log(e);
+      });
+    } else {
+      setTimeout(function() {
+        googleSignIn();
+      }, 500);
+    }
+  }
+  
+  var map = new cGoogleMaps();
+  map.init([
+  {
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#1d2c4d"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#8ec3b9"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#1a3646"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "color": "#00c1ea"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#067b97"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#023e58"
+      },
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.country",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#4b6878"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.land_parcel",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#64779e"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.province",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#4b6878"
+      }
+    ]
+  },
+  {
+    "featureType": "landscape",
+    "stylers": [
+      {
+        "color": "#023e58"
+      }
+    ]
+  },
+  {
+    "featureType": "landscape.man_made",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#334e87"
+      }
+    ]
+  },
+  {
+    "featureType": "landscape.natural",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#023e58"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#283d6a"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#6f9ba5"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#1d2c4d"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#023e58"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#3C7680"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#304a7d"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.icon",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#98a5be"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#1d2c4d"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#2c6675"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#255763"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#b0d5ce"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#023e58"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#98a5be"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#1d2c4d"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.line",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#283d6a"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#3a4762"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#0e1626"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#0e1626"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#4e6d70"
+      }
+    ]
+  }
+]);
+</script>
+
+
+<!--Simple universal popup -->
+<div class="simple_universal_popup simple_universal_popup_0 popup appspopup" style="display: none">
+    <h1 class="title"><span class="s_p_title">Popup</span></h1>
+    <button class="fullscreen_popup"></button>
+    <button class="minimize_popup" style="display: none"><span></span></button>
+    <a class="close"></a>
+    <div class="popup_content">
+        <div class="popup_content_main">
+
+        </div>
+        <div class="popup_content_buttons">
+            <input type="button" value="Ok" class="btn w_popup b_ok" name="ok"/>
+            <input type="button" value="Cancel" class="btn w_popup red b_cancel" name="cancel"/>
+            <input type="button" value="Close" class="btn w_popup b_close" name="close" style="display: none"/>
+        </div>
+    </div>
+</div>
+
+<!--
+ | **
+ | ** Pictures update END
+ | **
+ -->
+<script type="text/javascript">
+    /*
+     * Table sorters
+     */
+
+        if(typeof $.tablesorter !== 'undefined'){
+      $("table#myTable").tablesorter({
+        headers: {
+          1: {
+            sorter: false
+          },
+          6: {
+            sorter: false
+          }
+        }
+      });
+
+
+      $("table#myTable2").tablesorter({
+        headers: {
+          0: {
+            sorter: false
+          },
+          9: {
+            sorter: false
+          },
+          10: {
+            sorter: false
+          },
+          11: {
+            sorter: false
+          },
+          12: {
+            sorter: false
+          }
+        }
+      });
+
+      $("table#TableStudents").tablesorter();
+    }
+
+    
+</script>
+
+
+<script>
+  function ga() {}
+  ga('create', 'UA-58068430-3', 'auto');
+
+  
+      
+  ga('send', 'pageview', {
+    'dimension1': ''
+  });
+
+</script>
+
+
+    <div style="height:30px">
+        <div class="footer_menu footer-no-fixed ">
+            <ul>
+                <li>&copy; 3DPrinterOS 2024,</li>
+                <li>All rights reserved.</li>
+                <li><a href="https://www.3dprinteros.com/terms-and-conditions/">Copyright</a></li>
+                                <li>
+                    <div class="dropup goright">
+                        <a href="#" class="dropup-btn">Doc</a>
+                        <div class="dropup-menu hidden">
+                            <a target="_blank" href="https://www.3dprinteros.com/privacy-policy/">Privacy Policy</a>
+                            <a target="_blank" href="https://www.3dprinteros.com/terms-and-conditions/">Terms of Use</a>
+                            <a target="_blank" href="https://docs.google.com/document/d/e/2PACX-1vTfM01JhZPfZvPXG4Vis9l1_3Xz6cP1TKlNp8tqLe5U58qYir04-zq4Dfc1S6AxJP78i6zGmcZksMN5/pub">Data Handling Policy</a>
+                            <a target="_blank" href="https://docs.google.com/document/d/e/2PACX-1vQQUW7QnebmjNKkPfKApJpTIoISCG0lk1wH8gg4Bzo-rc9zzSdPDlWYs4X40brT8FVwBG7UYkUZ1yvd/pub">GDPR Cheat Sheet</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+
+
+
+<script>
+    if (typeof MPM != "undefined") {
+        var mpm =  new MPM();
+        mpm.init();
+    }
+
+    $(document).ready(function() {
+        $('.org_currency').html(window.orgCurrencyEntity || '$');
+            });
+</script>
+</body>
+</html>

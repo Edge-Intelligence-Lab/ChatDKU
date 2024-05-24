@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Find Research Databases</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script>
+        var is_bootstrap = true;
+    </script>
+        <!-- Public head code template -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noarchive"/>
+
+<!-- See https://tinyurl.com/favicons-in-2021 -->
+<link rel="icon" href="https://library.duke.edu/sites/default/files/dul/favicon/favicon.ico" sizes="any">
+<link rel="icon" href="https://library.duke.edu/sites/default/files/dul/favicon/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="https://library.duke.edu/sites/default/files/dul/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://library.duke.edu/sites/default/files/dul/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://library.duke.edu/sites/default/files/dul/favicon/favicon-16x16.png">
+<link rel="manifest" href="https://library.duke.edu/sites/default/files/dul/favicon/site.webmanifest">
+<link rel="mask-icon" href="https://library.duke.edu/sites/default/files/dul/favicon/safari-pinned-tab.svg" color="#053482">
+<meta name="msapplication-TileColor" content="#053482">
+<meta name="theme-color" content="#ffffff">
+
+<link rel="stylesheet" href="https://static-assets-us.libguides.com/web/jquery/css/jquery-ui.min.css?2691"/>
+
+<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+
+    <link rel="stylesheet" href="https://static-assets-us.libguides.com/web/css3.9.4/lg-public-bs5.min.css"/>
+
+    <script type="text/javascript" src="https://static-assets-us.libguides.com/web/jquery/js/jquery-3.7.0.min.js"></script>
+
+<!-- js_include_fallback_lg.twig -->
+<script src="//code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script>jQuery.ui || document.write('<script src="https://static-assets-us.libguides.com/web/jquery/js/jquery-ui.min.js?2691">\x3C/script>');</script>
+<!-- !js_include_fallback_lg.twig -->
+
+    <script type="text/javascript" src="https://static-assets-us.libguides.com/web/js3.9.4/lg-public-bs5.min.js"></script>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"/>
+
+    <script src="https://static-assets-us.libguides.com/web/select2/current/js/select2.min.js"></script>
+    <link rel="stylesheet" href="https://static-assets-us.libguides.com/web/select2/current/css/select2.min.css"/>
+
+
+    
+<script>
+    var springStats = springStats || {};
+    springStats.saConfig = springStats.saConfig || {
+        site_id: 353,
+        tracking_parameters: {"_st_site_id":353},
+        tracking_server_host: "libguides-proc.springyaws.com"
+    };
+</script>
+<script  src="https://static-assets-us.libguides.com/web/js/sa.min.js?3116"></script>
+
+
+<script type="text/javascript">
+    var title_base = "Find Research Databases";
+    var search_data = {"terms":""};
+    
+    springSpace.azPublicObj = new springSpace.azPublic.AZPublic({
+        languages: {
+           view_more: "View More",
+           view_less: "View Less"
+        }
+    });
+
+    jQuery(document).ready(function () {
+        if (window.history && history.pushState) {
+            jQuery(window).bind("popstate", function (e) {
+                // Don\'t reload list if this is the result of a skip link hash update.
+                if (location.hash !== "#s-lib-public-main" && springSpace.azList.historyEdited) {
+                    // location.search will return URL encoded values which will end up causing double-encoding when jQuery sends the loadAzList request.
+                    var search_terms = decodeURIComponent(springSpace.Util.getQSParam({
+                        name: "q",
+                        qs: location.search
+                    }));
+
+                    springSpace.azPublicObj.loadAzList({
+                        first: springSpace.Util.getQSParam({name: "a", qs: location.search}),
+                        subject_id: springSpace.Util.getQSParam({name: "s", qs: location.search}),
+                        type_id: springSpace.Util.getQSParam({name: "t", qs: location.search}),
+                        vendor_id: springSpace.Util.getQSParam({name: "v", qs: location.search}),
+                        access_mode_id: springSpace.Util.getQSParam({name: "am", qs: location.search}),
+                        page: springSpace.Util.getQSParam({name: "p", qs: location.search}),
+                        search: springSpace.Util.escapeHtml(search_terms),
+                        site_id: 353,
+                        action: "back"
+                    });
+                }
+            });
+        }
+
+        springSpace.azPublicObj.initPage();
+        springSpace.azPublicObj.loadSidebar();
+
+        jQuery('#az-search-form').on('submit', function (e) {
+            e.preventDefault();
+            springSpace.azPublicObj.filterAzBySearch(353)
+        });
+
+        springSpace.azList.initSelections();
+
+        // note that loadAzList is called with handle_alpha_filter=true so we can apply any passed in first-letter
+        // filters after the search is complete
+        if (springSpace.azPublicObj.getSearchTerm() == "") {
+            springSpace.azPublicObj.loadAzList({
+                first: "",
+                subject_id: "",
+                type_id: "",
+                vendor_id: "",
+                access_mode_id: "",
+                page: 0,
+                search: search_data.terms,
+                site_id: 353,
+                action: "init"
+            }, true);
+        }
+        // else, call filterAzBySearch so the passed in search string will be recorded
+        else {
+            springSpace.azPublicObj.filterAzBySearch(353);
+        }
+
+            });
+
+    springSpace.azList = {
+        referrer: document.referrer,
+        az_preview: "",
+        az_sublist_id: 0,
+        locations: [],
+        historyEdited: false,
+        is_widget: 0,
+        site_domain: "",
+        init_filters: {
+            subject: "",
+            vendor: "",
+            type: "",
+            alpha: "",
+            search: search_data.terms
+        },
+        letter_selected: "", // "first" alpha letter selecte so we can keep track.
+        letter_alpha_map: {
+            pound: "#",
+            all: ""
+        },
+        getAlphaMap: function (letter) {
+            if (letter == "pound" || letter == "all") {
+                return this.letter_alpha_map[letter]
+            } else {
+                return letter;
+            }
+        },
+        reset: function () {
+            this.letter_selected = "";
+            jQuery(".s-lg-az-first").removeClass("bold");
+            jQuery(".s-lg-az-search").val("");
+            springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-types");
+            springSpace.azPublicObj.clearAzSelection("s-lg-sel-subjects");
+            springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-vendors");
+            springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-access-modes");
+            springSpace.azPublicObj.loadAzList({
+                site_id: 353
+            });
+        },
+        initSelections: function () {
+            // subject filter
+            if (this.init_filters.subject == 0) {
+                springSpace.azPublicObj.clearAzSelection("s-lg-sel-subjects");
+            }
+
+            // type filter
+            if (this.init_filters.type == 0) {
+                springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-types");
+            }
+
+            // vendor filter
+            if (this.init_filters.vendor == 0) {
+                springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-vendors");
+            }
+
+            // access modes filter
+            if (this.init_filters.access_modes == 0) {
+                springSpace.azPublicObj.clearAzSelection("s-lg-sel-az-access-modes");
+            }
+
+            // this.init_filters.alpha must be handled after the search results come back, so handling was moved inside
+            // the loadAzList() call itself
+
+            // search term
+            if (this.init_filters.search == "") {
+                jQuery(".s-lg-az-search").val("");
+            } else {
+                jQuery(".s-lg-az-search").val(this.init_filters.search);
+            }
+        }
+    };
+
+    jQuery(window).on("visibilitychange", function() {
+        if (typeof (Storage) !== "undefined") {
+            localStorage.historyBackToList = false;
+            localStorage.historyScrollTo = jQuery(window).scrollTop();
+        }
+    });
+
+    
+        jQuery(document).ready(function () {
+            springSpace.springTrack.trackPage({_st_type_id: '29'});
+        });
+    
+</script>
+
+
+<!-- BEGIN: Analytics code --><!-- Matomo -->
+<script>
+  var _paq = window._paq = window._paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="//analytics.lib.duke.edu/";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '12']);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code --><!-- END: Analytics code -->
+            <script src="https://library.duke.edu/masthead/load-masthead.js.php?width=1400&fixed=false" async></script>
+    
+    <link rel="stylesheet" href="/lookfeel.css">
+            <style>
+#col-search input { border: 1px solid #e1e3ea !important; margin-right:0.75em; }
+#s-lib-public-header-desc { display: none; }
+a, #s-lg-az-subject-resources a, #s-lg-az-index button { color: #004ccc; }
+a:hover, #s-lg-az-subject-resources a:hover, #s-lg-az-index button:hover { color: #2969d4; }
+#s-lg-az-subject-resources-body div.az-subject-guides-row a { display: none; }
+#s-lg-az-subject-resources-body h5:last-of-type { display: none; }
+#s-lg-az-custom-box-32457805 h4 { display: none; }
+#help-box-container i.fa { color: #053482; }
+#madlib-footer {
+	float: left;
+	width: 100%;
+	margin-bottom: 30px;
+	padding: 20px 15px 40px 15px;
+	background: #eee;
+	border-top: 6px solid #ddd;
+	border-radius: 0 0 10px 10px;
+} 
+
+#madlib-footer a img {
+	border: none !important;
+}
+
+#madlib-footer h3 {
+	line-height: 1em;
+	font-size: 16px;
+	border-bottom: #aaa 1px dotted;
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+	font-weight: bold;
+	letter-spacing: -0.05em;
+	vertical-align: baseline;
+	display: block;
+	text-rendering: optimizelegibility;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+#madlib-footer h3 a, #madlib-footer h3 a:link, #madlib-footer h3 a:visited, #madlib-footer h3 a:active {
+	color: #333;
+	}
+
+#madlib-footer a {
+	text-decoration: none;
+	}
+
+#madlib-footer a:hover {
+	text-decoration: underline;
+	color: #2969d4;
+	}
+
+#madlib-footer ul {
+	margin: 0 10px 10px 0;
+	padding: 0;
+}
+
+#madlib-footer ul li {
+	font: 9pt/1.8em 'Helvetica Neue',Arial,'Liberation Sans',FreeSans,sans-serif !important;
+	list-style: none;
+	margin-left: 0;
+	padding: 0;
+}
+
+
+#region-footer-devillogo {
+	width: 60px;
+	float: left;
+	margin: 0 10px;
+}
+
+
+#region-footer-contact {
+	width: 200px;
+	float: left;
+	margin: 0 10px;
+}
+
+	div.perkinsAddress {
+		font-size: 10.5px;
+	}
+
+#region-footer-services {
+	width: 400px;
+	float: left;
+	margin: 0 10px;
+}
+
+	#region-footer-services .services-col1 {
+		width: 190px; 
+		margin: 0 10px 0 0;
+		float:left;
+	}
+
+	#region-footer-services .services-col2 {
+		width: 190px; 
+		margin: 0 0 0 10px;
+		float:left;
+	}
+
+#region-footer-social {
+	width: 190px;
+	float: left;
+	margin: 0 10px;
+}
+
+	.socialMediaIconsBig {
+		border-top: none;
+		border-bottom: none;
+		margin-top: 0;
+		margin-bottom: 10px;
+		padding: 0;	
+	}
+
+	.socialMediaIconsBig a { margin-right: 3px; }
+
+
+#region-footer-dukelogo {
+	width: 140px;
+	float: left;
+	margin: 0 10px;
+}
+
+.dukeLogo {
+	margin-top: 28px;
+}
+
+</style>
+
+    </head>
+    <body class="s-lib-public-body">
+        
+    <header>
+        <div id="dul-masthead-filler" style="width: 100%; text-align: center;">		<div class="dul-masthead-wrapper" style="height: 105px; width: 100%; max-width: 1400px; background-color:#053482; margin: 0 auto; margin-bottom: -2px;">				<a href="http://library.duke.edu"><img src="//library.duke.edu/masthead/img/logo.png" alt="Duke University Libraries" id="dul-masthead-logo" style="float: left; margin: 20px;"></a>			</div>	</div>
+    </header>
+
+
+        <div id="s-lib-public-header" class="s-lib-header container s-lib-side-borders">
+            <nav id="s-lib-bc" aria-label="breadcrumb"><ol id="s-lib-bc-list" class="breadcrumb"><li id="s-lib-bc-customer" class="breadcrumb-item"><a href="http://library.duke.edu/">Home</a></li><li id="s-lib-bc-site" class="breadcrumb-item"><a href="https://guides.library.duke.edu/">LibGuides</a></li><li id="s-lib-bc-page" class="active breadcrumb-item">Find Research Databases</li></ol></nav>
+            <h1 id="s-lib-public-header-title">
+                Find Research Databases
+            </h1>
+            <div id="s-lib-public-header-desc"
+                style="white-space: pre-line;">
+                
+            </div>
+
+                    </div>
+
+        <div id="s-lib-public-nav" class="container s-lib-side-borders">
+            
+        </div>
+
+        <div id="s-lib-public-main" class="s-lib-main container s-lib-side-borders" tabindex="-1">
+            <div id="s-lib-public-main-searchbar">
+                
+
+
+
+
+<section class="d-none d-lg-block">
+    <div id="s-lg-az-search-bar" class="row">
+        <div id="az-search-col-1" class="col-lg-12 center">
+            
+
+    <nav class="navbar navbar-expand-lg navbar-default" aria-label="Search filters">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggler navbar-toggle collapsed" data-toggle="collapse"
+                        data-target="#s-lg-az-nav-1" data-bs-toggle="collapse" data-bs-target="#s-lg-az-nav-1">
+                    <span class="sr-only">Toggle search filters navigation</span>
+                    <span class="navbar-toggler-icon"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse" id="s-lg-az-nav-1">
+                <div id="s-lg-az-filters">
+                    <section>
+                        <form role="search" id="az-search-form" class="">
+                            <div id="s-lg-az-filter-cols" class="row">
+                                <div class="col-md-10">
+                                    <div class="row">
+                                                                                    <div id="col-search" class="col ps-3 d-flex align-items-start">
+                                                <div class="d-flex justify-content-start">
+                                                    <img src="/web/assets/media/icons/duotune/general/gen021.svg"
+                                                         role="presentation" style="display:none">
+                                                    <input type="text" class="s-lg-az-search form-control"
+                                                            maxlength="260"
+                                                            placeholder="Database Title / Keyword"/>
+                                                </div>
+                                            </div>
+                                                                                                                            <div class="col-subjects col ps-3">
+                                                <div class="d-flex justify-content-start align-items-baseline">
+                                                    <img src="/web/assets/media/icons/duotune/abstract/abs046.svg"
+                                                         role="presentation" style="display:none">
+                                                        <select data-placeholder="Subjects" name="s-lg-sel-subjects" aria-label="Database Subject Filter" multiple="multiple" class="s-lg-sel-subjects form-control form-control-select2-multi">
+        <option value="99726">African &amp; African American Studies (10)</option><option value="99725">African American Studies (57)</option><option value="131880">African Studies (35)</option><option value="99727">Arts &amp; Visual Studies (17)</option><option value="99382">Asian American Studies (17)</option><option value="99728">Asian Studies (69)</option><option value="99730">Biology (8)</option><option value="99731">British &amp; Irish Studies (54)</option><option value="58552">Business (48)</option><option value="99732">Canadian Studies (12)</option><option value="99733">Chemistry (9)</option><option value="99734">Chinese Studies (62)</option><option value="99735">Classical Studies (14)</option><option value="99736">Computer Science (11)</option><option value="99737">Cultural Anthropology (33)</option><option value="99738">Dance (12)</option><option value="99739">Earth &amp; Climate Sciences (10)</option><option value="99740">Economics (27)</option><option value="99741">Education (14)</option><option value="58553">Engineering - Biomedical (25)</option><option value="116564">Engineering - Civil &amp; Environmental (19)</option><option value="116565">Engineering - Electrical &amp; Computer (19)</option><option value="116566">Engineering - Mechanical &amp; Material Science (22)</option><option value="129430">Engineering &amp; Technology (15)</option><option value="217830">Engineering (1)</option><option value="116567">Engineering Management (22)</option><option value="99742">Environmental Sciences (19)</option><option value="129528">European Studies (24)</option><option value="99744">Evolutionary Anthropology (7)</option><option value="99745">Film Studies (19)</option><option value="99746">French Studies (25)</option><option value="99747">German Studies (23)</option><option value="131796">Global Health (21)</option><option value="129578">Government &amp; Law (9)</option><option value="99748">Health &amp; Medical Sciences (36)</option><option value="58554">Health Sciences (42)</option><option value="129443">History (19)</option><option value="99749">History of Science &amp; Technology (6)</option><option value="129427">Humanities (19)</option><option value="99750">Iberian Studies (11)</option><option value="99778">International Relations (20)</option><option value="100249">Islamic Studies (12)</option><option value="99779">Italian Studies (9)</option><option value="99780">Japanese Studies (26)</option><option value="99781">Jewish Studies (15)</option><option value="99782">Korean Studies (15)</option><option value="99783">Latin American, Latino/a &amp; Caribbean Studies (57)</option><option value="99784">Latino/a Studies (24)</option><option value="99785">Law (51)</option><option value="99787">Linguistics (15)</option><option value="169734">Literature (44)</option><option value="99788">Marine Sciences (9)</option><option value="58557">Mathematics, Data &amp; Statistics (9)</option><option value="99777">Medieval &amp; Renaissance Studies (28)</option><option value="99776">Middle East &amp; Islamic Studies (40)</option><option value="99775">Military History (7)</option><option value="99774">Music (44)</option><option value="99773">Native American Studies (16)</option><option value="99772">Neuroscience (7)</option><option value="99751">Non-governmental and Inter-Governmental Organizations (NGOs &amp; IGOs) (8)</option><option value="131627">Performing Arts (11)</option><option value="99752">Philosophy (11)</option><option value="99753">Physics &amp; Astrophysics (9)</option><option value="99771">Political Science (25)</option><option value="99754">Psychology (11)</option><option value="99766">Public Policy &amp; Political Science (8)</option><option value="131775">Public Policy (27)</option><option value="99765">Religious Studies (33)</option><option value="129447">Sciences (20)</option><option value="99763">Slavic, East European &amp; Eurasian Studies (22)</option><option value="129572">Social Sciences (14)</option><option value="99767">Sociology (38)</option><option value="99789">South Asian Studies (21)</option><option value="99762">Sports (22)</option><option value="99761">Statistical Science (11)</option><option value="108194">Streaming Video (44)</option><option value="99760">Theater Studies (30)</option><option value="99759">US Federal Documents (27)</option><option value="99758">US History (114)</option><option value="99757">Western European Studies (31)</option><option value="99756">Women&#039;s &amp; Sexuality Studies (27)</option><option value="99755">World History (14)</option>
+    </select>
+
+                                                    <i class="fa fa-angle-down me-2 fs-4"></i>
+                                                </div>
+                                            </div>
+                                                                                                                            <div class="col-types col ps-3">
+                                                <div class="d-flex justify-content-start align-items-baseline">
+                                                    <img src="/web/assets/media/icons/duotune/general/gen025.svg"
+                                                         role="presentation" style="display:none">
+                                                        <select data-placeholder="Types" name="s-lg-sel-az-types" aria-label="Database Types Filter" class="s-lg-sel-az-types form-control form-control-select2-multi" multiple="multiple">
+                                                                                                                                                                                                                                                                                                                        <option value="11415">Articles (249)</option>
+        <option value="11419">Book Reviews (13)</option>
+        <option value="19898">Books (31)</option>
+        <option value="11422">Data (71)</option>
+        <option value="43687">Directories (8)</option>
+        <option value="11421">Encyclopedias &amp; Dictionaries (116)</option>
+        <option value="19897">Grey Literature (10)</option>
+        <option value="19226">Images (18)</option>
+        <option value="11420">Newspapers (115)</option>
+        <option value="54785">Open Access (105)</option>
+        <option value="11418">Primary Sources (394)</option>
+        <option value="19225">Streaming Music (14)</option>
+        <option value="11417">Streaming Video (48)</option>
+        <option value="19907">Theses &amp; Dissertations (8)</option>
+    </select>
+
+                                                    <i class="fa fa-angle-down me-2 fs-4"></i>
+                                                </div>
+                                            </div>
+                                                                                
+                                                                            </div>
+                                </div>
+                                <div class="col-md-2 d-flex flex-grow-1 justify-content-around align-items-center form-group">
+                                    <div class="d-flex flex-row justify-content-around flex-grow-1">
+                                        <button class="btn btn-default s-lg-az-reset" type="button"
+                                                onclick="springSpace.azList.reset();" style="display:none;">
+                                            Clear Filters
+                                        </button>
+                                        <button class="btn btn-primary flex-grow-1" style="max-width:75%" type="submit"
+                                                aria-label="Submit for Search Results">
+                                            Search
+                                        </button>
+                                    </div>
+                                </div>
+                                                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </nav>
+        </div>
+    </div>
+</section>
+
+<section class="d-block d-lg-none">
+    
+
+    <div id="az-public-mobile-filters" class="mb-3">
+        <input type="hidden" name="site_id" id="site_id" value="353">
+
+                    <form role="search" onsubmit="springSpace.azPublicObj.filterAzBySearch(353); return false;">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="s-lg-az-search form-control" maxlength="260"
+                               placeholder="Database Title / Keyword"/>
+                    </div>
+                </div>
+            </form>
+                    
+        
+        
+        
+        
+                    <div id="az-public-mobile-filters-group">
+                                <div class="collapse w-100" id="az-public-mobile-filters-collapse"
+                     data-bs-parent="#az-public-mobile-filters-group">
+                    
+                                            <div class="form-group">
+                            <div class="input-group">
+                                    <select data-placeholder="Subjects" name="s-lg-sel-subjects" aria-label="Database Subject Filter" multiple="multiple" class="s-lg-sel-subjects form-control form-control-select2-multi">
+        <option value="99726">African &amp; African American Studies (10)</option><option value="99725">African American Studies (57)</option><option value="131880">African Studies (35)</option><option value="99727">Arts &amp; Visual Studies (17)</option><option value="99382">Asian American Studies (17)</option><option value="99728">Asian Studies (69)</option><option value="99730">Biology (8)</option><option value="99731">British &amp; Irish Studies (54)</option><option value="58552">Business (48)</option><option value="99732">Canadian Studies (12)</option><option value="99733">Chemistry (9)</option><option value="99734">Chinese Studies (62)</option><option value="99735">Classical Studies (14)</option><option value="99736">Computer Science (11)</option><option value="99737">Cultural Anthropology (33)</option><option value="99738">Dance (12)</option><option value="99739">Earth &amp; Climate Sciences (10)</option><option value="99740">Economics (27)</option><option value="99741">Education (14)</option><option value="58553">Engineering - Biomedical (25)</option><option value="116564">Engineering - Civil &amp; Environmental (19)</option><option value="116565">Engineering - Electrical &amp; Computer (19)</option><option value="116566">Engineering - Mechanical &amp; Material Science (22)</option><option value="129430">Engineering &amp; Technology (15)</option><option value="217830">Engineering (1)</option><option value="116567">Engineering Management (22)</option><option value="99742">Environmental Sciences (19)</option><option value="129528">European Studies (24)</option><option value="99744">Evolutionary Anthropology (7)</option><option value="99745">Film Studies (19)</option><option value="99746">French Studies (25)</option><option value="99747">German Studies (23)</option><option value="131796">Global Health (21)</option><option value="129578">Government &amp; Law (9)</option><option value="99748">Health &amp; Medical Sciences (36)</option><option value="58554">Health Sciences (42)</option><option value="129443">History (19)</option><option value="99749">History of Science &amp; Technology (6)</option><option value="129427">Humanities (19)</option><option value="99750">Iberian Studies (11)</option><option value="99778">International Relations (20)</option><option value="100249">Islamic Studies (12)</option><option value="99779">Italian Studies (9)</option><option value="99780">Japanese Studies (26)</option><option value="99781">Jewish Studies (15)</option><option value="99782">Korean Studies (15)</option><option value="99783">Latin American, Latino/a &amp; Caribbean Studies (57)</option><option value="99784">Latino/a Studies (24)</option><option value="99785">Law (51)</option><option value="99787">Linguistics (15)</option><option value="169734">Literature (44)</option><option value="99788">Marine Sciences (9)</option><option value="58557">Mathematics, Data &amp; Statistics (9)</option><option value="99777">Medieval &amp; Renaissance Studies (28)</option><option value="99776">Middle East &amp; Islamic Studies (40)</option><option value="99775">Military History (7)</option><option value="99774">Music (44)</option><option value="99773">Native American Studies (16)</option><option value="99772">Neuroscience (7)</option><option value="99751">Non-governmental and Inter-Governmental Organizations (NGOs &amp; IGOs) (8)</option><option value="131627">Performing Arts (11)</option><option value="99752">Philosophy (11)</option><option value="99753">Physics &amp; Astrophysics (9)</option><option value="99771">Political Science (25)</option><option value="99754">Psychology (11)</option><option value="99766">Public Policy &amp; Political Science (8)</option><option value="131775">Public Policy (27)</option><option value="99765">Religious Studies (33)</option><option value="129447">Sciences (20)</option><option value="99763">Slavic, East European &amp; Eurasian Studies (22)</option><option value="129572">Social Sciences (14)</option><option value="99767">Sociology (38)</option><option value="99789">South Asian Studies (21)</option><option value="99762">Sports (22)</option><option value="99761">Statistical Science (11)</option><option value="108194">Streaming Video (44)</option><option value="99760">Theater Studies (30)</option><option value="99759">US Federal Documents (27)</option><option value="99758">US History (114)</option><option value="99757">Western European Studies (31)</option><option value="99756">Women&#039;s &amp; Sexuality Studies (27)</option><option value="99755">World History (14)</option>
+    </select>
+
+                            </div>
+                        </div>
+                    
+                                            <div class="form-group">
+                            <div class="input-group">
+                                    <select data-placeholder="Types" name="s-lg-sel-az-types" aria-label="Database Types Filter" class="s-lg-sel-az-types form-control form-control-select2-multi" multiple="multiple">
+                                                                                                                                                                                                                                                                                                                        <option value="11415">Articles (249)</option>
+        <option value="11419">Book Reviews (13)</option>
+        <option value="19898">Books (31)</option>
+        <option value="11422">Data (71)</option>
+        <option value="43687">Directories (8)</option>
+        <option value="11421">Encyclopedias &amp; Dictionaries (116)</option>
+        <option value="19897">Grey Literature (10)</option>
+        <option value="19226">Images (18)</option>
+        <option value="11420">Newspapers (115)</option>
+        <option value="54785">Open Access (105)</option>
+        <option value="11418">Primary Sources (394)</option>
+        <option value="19225">Streaming Music (14)</option>
+        <option value="11417">Streaming Video (48)</option>
+        <option value="19907">Theses &amp; Dissertations (8)</option>
+    </select>
+
+                            </div>
+                        </div>
+                    
+                    
+                    
+                                    </div>
+                            </div>
+        
+        <div class="d-flex align-items-center">
+                            <a class="collapsible collapsed az-toggle me-auto" data-bs-toggle="collapse"
+                   href="#az-public-mobile-filters-collapse" aria-expanded="false"
+                   aria-controls="az-public-mobile-filters-collapse"></a>
+            
+            
+            <button class="btn btn-primary ms-auto" type="submit"
+                    onclick="springSpace.azPublicObj.filterAzBySearch(353); return false;">
+                <img src="/web/assets/media/icons/duotune/general/gen021.svg"> Search
+            </button>
+        </div>
+    </div>
+    </section>
+
+<div class="modal fade" id="az-mobile-filter-edit-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                
+
+    <div id="az-public-mobile-filters" class="mb-3">
+        <input type="hidden" name="site_id" id="site_id" value="353">
+
+                    <form role="search" onsubmit="springSpace.azPublicObj.filterAzBySearch(353); return false;">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="s-lg-az-search form-control" maxlength="260"
+                               placeholder="Database Title / Keyword"/>
+                    </div>
+                </div>
+            </form>
+                    
+        
+        
+        
+        
+                    <div id="az-public-mobile-filters-group">
+                
+                                            <div class="form-group">
+                            <div class="input-group">
+                                    <select data-placeholder="Subjects" name="s-lg-sel-subjects" aria-label="Database Subject Filter" multiple="multiple" class="s-lg-sel-subjects form-control form-control-select2-multi">
+        <option value="99726">African &amp; African American Studies (10)</option><option value="99725">African American Studies (57)</option><option value="131880">African Studies (35)</option><option value="99727">Arts &amp; Visual Studies (17)</option><option value="99382">Asian American Studies (17)</option><option value="99728">Asian Studies (69)</option><option value="99730">Biology (8)</option><option value="99731">British &amp; Irish Studies (54)</option><option value="58552">Business (48)</option><option value="99732">Canadian Studies (12)</option><option value="99733">Chemistry (9)</option><option value="99734">Chinese Studies (62)</option><option value="99735">Classical Studies (14)</option><option value="99736">Computer Science (11)</option><option value="99737">Cultural Anthropology (33)</option><option value="99738">Dance (12)</option><option value="99739">Earth &amp; Climate Sciences (10)</option><option value="99740">Economics (27)</option><option value="99741">Education (14)</option><option value="58553">Engineering - Biomedical (25)</option><option value="116564">Engineering - Civil &amp; Environmental (19)</option><option value="116565">Engineering - Electrical &amp; Computer (19)</option><option value="116566">Engineering - Mechanical &amp; Material Science (22)</option><option value="129430">Engineering &amp; Technology (15)</option><option value="217830">Engineering (1)</option><option value="116567">Engineering Management (22)</option><option value="99742">Environmental Sciences (19)</option><option value="129528">European Studies (24)</option><option value="99744">Evolutionary Anthropology (7)</option><option value="99745">Film Studies (19)</option><option value="99746">French Studies (25)</option><option value="99747">German Studies (23)</option><option value="131796">Global Health (21)</option><option value="129578">Government &amp; Law (9)</option><option value="99748">Health &amp; Medical Sciences (36)</option><option value="58554">Health Sciences (42)</option><option value="129443">History (19)</option><option value="99749">History of Science &amp; Technology (6)</option><option value="129427">Humanities (19)</option><option value="99750">Iberian Studies (11)</option><option value="99778">International Relations (20)</option><option value="100249">Islamic Studies (12)</option><option value="99779">Italian Studies (9)</option><option value="99780">Japanese Studies (26)</option><option value="99781">Jewish Studies (15)</option><option value="99782">Korean Studies (15)</option><option value="99783">Latin American, Latino/a &amp; Caribbean Studies (57)</option><option value="99784">Latino/a Studies (24)</option><option value="99785">Law (51)</option><option value="99787">Linguistics (15)</option><option value="169734">Literature (44)</option><option value="99788">Marine Sciences (9)</option><option value="58557">Mathematics, Data &amp; Statistics (9)</option><option value="99777">Medieval &amp; Renaissance Studies (28)</option><option value="99776">Middle East &amp; Islamic Studies (40)</option><option value="99775">Military History (7)</option><option value="99774">Music (44)</option><option value="99773">Native American Studies (16)</option><option value="99772">Neuroscience (7)</option><option value="99751">Non-governmental and Inter-Governmental Organizations (NGOs &amp; IGOs) (8)</option><option value="131627">Performing Arts (11)</option><option value="99752">Philosophy (11)</option><option value="99753">Physics &amp; Astrophysics (9)</option><option value="99771">Political Science (25)</option><option value="99754">Psychology (11)</option><option value="99766">Public Policy &amp; Political Science (8)</option><option value="131775">Public Policy (27)</option><option value="99765">Religious Studies (33)</option><option value="129447">Sciences (20)</option><option value="99763">Slavic, East European &amp; Eurasian Studies (22)</option><option value="129572">Social Sciences (14)</option><option value="99767">Sociology (38)</option><option value="99789">South Asian Studies (21)</option><option value="99762">Sports (22)</option><option value="99761">Statistical Science (11)</option><option value="108194">Streaming Video (44)</option><option value="99760">Theater Studies (30)</option><option value="99759">US Federal Documents (27)</option><option value="99758">US History (114)</option><option value="99757">Western European Studies (31)</option><option value="99756">Women&#039;s &amp; Sexuality Studies (27)</option><option value="99755">World History (14)</option>
+    </select>
+
+                            </div>
+                        </div>
+                    
+                                            <div class="form-group">
+                            <div class="input-group">
+                                    <select data-placeholder="Types" name="s-lg-sel-az-types" aria-label="Database Types Filter" class="s-lg-sel-az-types form-control form-control-select2-multi" multiple="multiple">
+                                                                                                                                                                                                                                                                                                                        <option value="11415">Articles (249)</option>
+        <option value="11419">Book Reviews (13)</option>
+        <option value="19898">Books (31)</option>
+        <option value="11422">Data (71)</option>
+        <option value="43687">Directories (8)</option>
+        <option value="11421">Encyclopedias &amp; Dictionaries (116)</option>
+        <option value="19897">Grey Literature (10)</option>
+        <option value="19226">Images (18)</option>
+        <option value="11420">Newspapers (115)</option>
+        <option value="54785">Open Access (105)</option>
+        <option value="11418">Primary Sources (394)</option>
+        <option value="19225">Streaming Music (14)</option>
+        <option value="11417">Streaming Video (48)</option>
+        <option value="19907">Theses &amp; Dissertations (8)</option>
+    </select>
+
+                            </div>
+                        </div>
+                    
+                    
+                    
+                                </div>
+        
+        <div class="d-flex align-items-center">
+            
+                            <button class="btn btn-light me-auto" data-bs-dismiss="modal" type="button">Cancel</button>
+            
+            <button class="btn btn-primary ms-auto" type="submit"
+                    onclick="springSpace.azPublicObj.filterAzBySearch(353); return false;">
+                <img src="/web/assets/media/icons/duotune/general/gen021.svg"> Search
+            </button>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+</div>            </div>    
+            <section>
+                                <div id="s-lg-az-cols" class="row">
+                                            <div id="col1" class="col-lg-8 center">
+                            <div id="s-lg-az-search-reset" class="pad-right-sm">
+                                                    <h2 id="s-lg-az-result-count" aria-live="polite" class="bold s-lib-text-lg pad-right-med"></h2>
+                    <button id="s-lg-az-reset" class="btn btn-default btn-sm" type="button" onclick="springSpace.azList.reset();">Clear Filters/Browse All Databases</button>
+                
+                            </div>
+
+                            <div id="s-lg-az-index" class="pad-right-sm"></div>
+
+                            <div id="s-lg-az-content" class="pad-right-sm">
+                                <div class="bold s-lib-color-lt-grey pad-top-med text-center">Loading...</div>
+                            </div>
+
+                            <div id="s-lg-az-pager" class="pad-right-sm pad-top-med"></div>
+                        </div>
+
+                        <div id="col2" class="col-lg-4 center">
+                            <div class="sidebar-boxes"></div>
+                        </div>
+                                    </div>
+            </section>
+        </div>
+
+        
+<div id="s-lib-footer-public" class="container s-lib-footer footer s-lib-side-borders">
+    <div>
+        <div id="s-lib-footer-brand">
+            Powered by Springshare.
+        </div>
+        <div id="s-lib-footer-rights">
+            All rights reserved.
+        </div>
+        <div id="s-lib-footer-login-link">
+            <a href="https://duke.libapps.com/libapps/login.php?site_id=353">Login to LibApps</a>
+        </div>
+    </div>
+    <div>
+        <div id="s-lib-footer-support-link">
+            <a href="mailto:asklib@duke.edu">Report a problem.</a>
+        </div>
+    </div>
+</div><div id="s-lib-alert" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="s-lib-alert-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="s-lib-alert-loading">
+                    <style>.loader-container{display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center}.loader{height:1rem;line-height:1rem}.loader__dot{-webkit-animation:load 501ms alternate infinite;animation:load 501ms alternate infinite;background-color:#f7941d;border-radius:50%;display:inline-block;font-size:0;height:.5rem;margin:0 .25rem;width:.5rem}.loader__dot:nth-of-type(2){-webkit-animation-delay:.2s;animation-delay:.2s}.loader__dot:nth-of-type(3){-webkit-animation-delay:.4s;animation-delay:.4s}.loader__dot:nth-of-type(4){-webkit-animation-delay:.6s;animation-delay:.6s}.loader__dot:nth-of-type(5){-webkit-animation-delay:.8s;animation-delay:.8s}.loader__dot:nth-of-type(6){-webkit-animation-delay:1s;animation-delay:1s}.loader__dot:nth-of-type(7){-webkit-animation-delay:1.2s;animation-delay:1.2s}.loader__dot:nth-of-type(8){-webkit-animation-delay:1.4s;animation-delay:1.4s}.loader__dot:nth-of-type(9){-webkit-animation-delay:1.6s;animation-delay:1.6s}.loader__dot:nth-of-type(10){-webkit-animation-delay:1.8s;animation-delay:1.8s}@-webkit-keyframes load{0%{-webkit-transform:scale(0,0);transform:scale(0,0)}100%{-webkit-transform:scale(1,1);transform:scale(1,1)}}@keyframes load{0%{-webkit-transform:scale(0,0);transform:scale(0,0)}100%{-webkit-transform:scale(1,1);transform:scale(1,1)}}</style><div class="loader-container"><div aria-live="polite" class="loader" role="status"><span class="loader__text sr-only">Loading ... </span><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div><div class="loader__dot"></div></div></div>                </div>
+
+                <div id="s-lib-alert-content"></div>
+            </div>
+
+            <div class="modal-footer ui-dialog-buttonset">
+                <div id="s-lib-alert-buttons"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- popover.twig -->
+<div id="s-lib-popover-title" class="hide">
+    <span class="text-info">
+        <strong>title</strong>
+    </span>
+
+    <button type="button" id="popclose" class="close" onclick="jQuery('.s-lib-popover').popover('hide')">
+        &times;
+    </button>
+</div>
+
+<div id="s-lib-popover-content" class="hide">
+    <i class="fa fa-refresh fa-spin"></i> Loading...
+    <button class="btn btn-default btn-sm popclose" type="button">Close</button>
+</div>
+<!-- !popover.twig -->
+
+<!-- scroll_top.twig -->
+<div id="s-lib-scroll-top">
+    <a href="javascript:void(0);" onclick="jQuery('body').focus();" title="Back to Top"
+       aria-label="Back to Top">
+        <span class="fa-stack fa-lg" aria-hidden="true">
+            <i class="fa fa-square-o fa-stack-2x"></i>
+            <i class="fa fa-angle-double-up fa-stack-1x" style="position:relative; bottom:2px;"></i>
+        </span>
+    </a>
+</div>
+<!-- !scroll_top.twig -->
+
+
+
+<div class="container" style="padding: 0;">
+<!-- Flat masthead adapted from madlib Drupal theme. Not dependent on Bootstrap, megamenu.js, 960.gs, or other frameworks -->
+<!-- begin flat footer -->
+<div id="madlib-footer">
+<div id="region-footer-devillogo">
+<a href="http://library.duke.edu"><img alt="Duke University Libraries" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/devillogo-60pct-60.png"></a>
+</div>
+<div id="region-footer-contact">
+<h3><a href="https://library.duke.edu/about/contact">Contact Us</a></h3>
+<div class="perkinsAddress">
+411 Chapel Drive<br>Durham, NC 27708<br><div style="margin-top:5px">(919) 660-5870<br><span class="font-size:7px;">Perkins Library Service Desk</span></div>
+</div>
+</div>
+<div id="region-footer-services">
+<h3><a href="https://library.duke.edu/services">Services for...</a></h3>
+<ul class="services-col1">
+<li><a href="https://library.duke.edu/services/faculty">Faculty & Instructors</a></li>
+<li><a href="https://library.duke.edu/services/graduate">Graduate Students</a></li>
+<li><a href="https://library.duke.edu/services/undergraduate">Undergraduate Students</a></li>
+<li><a href="https://library.duke.edu/services/international">International Students</a></li>
+</ul>
+<ul class="services-col2">
+<li><a href="https://library.duke.edu/services/alumni">Alumni</a></li>
+<li><a href="https://library.duke.edu/services/donors">Donors</a></li>
+<li><a href="https://library.duke.edu/services/visitors">Visitors</a></li>
+<li><a href="https://library.duke.edu/services/disabilities">Patrons with Disabilities</a></li>
+</ul>
+</div>
+<div id="region-footer-social">
+<div class="socialMediaIconsBig">
+<a href="https://twitter.com/DukeLibraries"><img alt="Twitter" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/twitter24.png"/></a>
+<a href="https://www.facebook.com/dukelibraries"><img alt="Facebook" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/facebook24.png"/></a>
+<a href="http://www.youtube.com/user/DukeUnivLibraries"><img alt="Youtube" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/youtube24.png"/></a>
+<a href="http://www.flickr.com/photos/dukeunivlibraries/"><img alt="Flickr" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/flickr24.png"/></a>
+<a href="http://www.pinterest.com/dukelibraries/"><img alt="Pinterest" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/pinterest24.png"/></a>
+<a href="http://blogs.library.duke.edu/"><img alt="RSS" src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/icons/rss24.png"/></a>
+</div>
+<ul class="social-col">
+<li><a href="https://library.duke.edu/about/statement-potentially-harmful-language-library-descriptions">Harmful Language Statement</a></li>
+<li><a href="https://library.duke.edu/about/reuse-attribution">Re-use & Attribution</a> / <a href="https://library.duke.edu/about/privacy">Privacy</a></li>
+<li><a href="https://library.duke.edu/support">Support the Libraries</a></li>
+</ul>
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0" src="https://licensebuttons.net/l/by-nc-sa/3.0/80x15.png" title="This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License"></a>
+</div>
+<div id="region-footer-dukelogo">
+<a href="https://duke.edu"><img src="https://library.duke.edu/themes/contrib/drupal9_dulcet/images/legacy/dukelogo_vert_60pct_140.png" class="dukeLogo" alt="Duke University"></a>	</div>
+</div>
+
+<!--These are the Duke customization files that must be called in the footer.-->
+<script type="text/javascript" src="//s3.amazonaws.com/libapps/sites/353/include/customization-new.js"></script>
+
+
+<!-- end flat footer -->
+</div>
+
+        <script>
+            springSpace.azPublicObj.addMultiselectChangeListener('.s-lg-sel-subjects');
+            springSpace.azPublicObj.addMultiselectChangeListener('.s-lg-sel-az-types');
+            springSpace.azPublicObj.addMultiselectChangeListener('.s-lg-sel-az-vendors');
+            springSpace.azPublicObj.addMultiselectChangeListener('.s-lg-sel-az-access-modes');
+        </script>
+    </body>
+</html>

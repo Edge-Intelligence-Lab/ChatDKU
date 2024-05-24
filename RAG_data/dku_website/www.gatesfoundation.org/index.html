@@ -1,0 +1,776 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    
+
+
+    <title>Bill & Melinda Gates Foundation | Bill & Melinda Gates Foundation</title>
+
+    <meta charset="UTF-8" /><script type="text/javascript">window.NREUM||(NREUM={});NREUM.info = {"beacon":"bam.nr-data.net","errorBeacon":"bam.nr-data.net","licenseKey":"eb64bef4dd","applicationID":"1052810313","transactionName":"YANRMUNWW0dQBkRQXllJfjNyGGZdRQBTVkNSJVwLRUVaWF0AQhZ4WQJWHQ==","queueTime":0,"applicationTime":152,"agent":"","atts":""}</script><script type="text/javascript">(window.NREUM||(NREUM={})).init={privacy:{cookies_enabled:true},ajax:{deny_list:["bam.nr-data.net"]},distributed_tracing:{enabled:true}};(window.NREUM||(NREUM={})).loader_config={agentID:"1133821996",accountID:"1457659",trustKey:"1457659",xpid:"VQICVlBWARABVFRQDwAHVVUC",licenseKey:"eb64bef4dd",applicationID:"1052810313"};window.NREUM||(NREUM={}),__nr_require=function(t,e,n){function r(n){if(!e[n]){var o=e[n]={exports:{}};t[n][0].call(o.exports,function(e){var o=t[n][1][e];return r(o||e)},o,o.exports)}return e[n].exports}if("function"==typeof __nr_require)return __nr_require;for(var o=0;o<n.length;o++)r(n[o]);return r}({1:[function(t,e,n){function r(t){try{s.console&&console.log(t)}catch(e){}}var o,i=t("ee"),a=t(31),s={};try{o=localStorage.getItem("__nr_flags").split(","),console&&"function"==typeof console.log&&(s.console=!0,o.indexOf("dev")!==-1&&(s.dev=!0),o.indexOf("nr_dev")!==-1&&(s.nrDev=!0))}catch(c){}s.nrDev&&i.on("internal-error",function(t){r(t.stack)}),s.dev&&i.on("fn-err",function(t,e,n){r(n.stack)}),s.dev&&(r("NR AGENT IN DEVELOPMENT MODE"),r("flags: "+a(s,function(t,e){return t}).join(", ")))},{}],2:[function(t,e,n){function r(t,e,n,r,s){try{l?l-=1:o(s||new UncaughtException(t,e,n),!0)}catch(f){try{i("ierr",[f,c.now(),!0])}catch(d){}}return"function"==typeof u&&u.apply(this,a(arguments))}function UncaughtException(t,e,n){this.message=t||"Uncaught error with no additional information",this.sourceURL=e,this.line=n}function o(t,e){var n=e?null:c.now();i("err",[t,n])}var i=t("handle"),a=t(32),s=t("ee"),c=t("loader"),f=t("gos"),u=window.onerror,d=!1,p="nr@seenError";if(!c.disabled){var l=0;c.features.err=!0,t(1),window.onerror=r;try{throw new Error}catch(h){"stack"in h&&(t(14),t(13),"addEventListener"in window&&t(7),c.xhrWrappable&&t(15),d=!0)}s.on("fn-start",function(t,e,n){d&&(l+=1)}),s.on("fn-err",function(t,e,n){d&&!n[p]&&(f(n,p,function(){return!0}),this.thrown=!0,o(n))}),s.on("fn-end",function(){d&&!this.thrown&&l>0&&(l-=1)}),s.on("internal-error",function(t){i("ierr",[t,c.now(),!0])})}},{}],3:[function(t,e,n){var r=t("loader");r.disabled||(r.features.ins=!0)},{}],4:[function(t,e,n){function r(){U++,L=g.hash,this[u]=y.now()}function o(){U--,g.hash!==L&&i(0,!0);var t=y.now();this[h]=~~this[h]+t-this[u],this[d]=t}function i(t,e){E.emit("newURL",[""+g,e])}function a(t,e){t.on(e,function(){this[e]=y.now()})}var s="-start",c="-end",f="-body",u="fn"+s,d="fn"+c,p="cb"+s,l="cb"+c,h="jsTime",m="fetch",v="addEventListener",w=window,g=w.location,y=t("loader");if(w[v]&&y.xhrWrappable&&!y.disabled){var x=t(11),b=t(12),E=t(9),R=t(7),O=t(14),T=t(8),S=t(15),P=t(10),M=t("ee"),C=M.get("tracer"),N=t(23);t(17),y.features.spa=!0;var L,U=0;M.on(u,r),b.on(p,r),P.on(p,r),M.on(d,o),b.on(l,o),P.on(l,o),M.buffer([u,d,"xhr-resolved"]),R.buffer([u]),O.buffer(["setTimeout"+c,"clearTimeout"+s,u]),S.buffer([u,"new-xhr","send-xhr"+s]),T.buffer([m+s,m+"-done",m+f+s,m+f+c]),E.buffer(["newURL"]),x.buffer([u]),b.buffer(["propagate",p,l,"executor-err","resolve"+s]),C.buffer([u,"no-"+u]),P.buffer(["new-jsonp","cb-start","jsonp-error","jsonp-end"]),a(T,m+s),a(T,m+"-done"),a(P,"new-jsonp"),a(P,"jsonp-end"),a(P,"cb-start"),E.on("pushState-end",i),E.on("replaceState-end",i),w[v]("hashchange",i,N(!0)),w[v]("load",i,N(!0)),w[v]("popstate",function(){i(0,U>1)},N(!0))}},{}],5:[function(t,e,n){function r(){var t=new PerformanceObserver(function(t,e){var n=t.getEntries();s(v,[n])});try{t.observe({entryTypes:["resource"]})}catch(e){}}function o(t){if(s(v,[window.performance.getEntriesByType(w)]),window.performance["c"+p])try{window.performance[h](m,o,!1)}catch(t){}else try{window.performance[h]("webkit"+m,o,!1)}catch(t){}}function i(t){}if(window.performance&&window.performance.timing&&window.performance.getEntriesByType){var a=t("ee"),s=t("handle"),c=t(14),f=t(13),u=t(6),d=t(23),p="learResourceTimings",l="addEventListener",h="removeEventListener",m="resourcetimingbufferfull",v="bstResource",w="resource",g="-start",y="-end",x="fn"+g,b="fn"+y,E="bstTimer",R="pushState",O=t("loader");if(!O.disabled){O.features.stn=!0,t(9),"addEventListener"in window&&t(7);var T=NREUM.o.EV;a.on(x,function(t,e){var n=t[0];n instanceof T&&(this.bstStart=O.now())}),a.on(b,function(t,e){var n=t[0];n instanceof T&&s("bst",[n,e,this.bstStart,O.now()])}),c.on(x,function(t,e,n){this.bstStart=O.now(),this.bstType=n}),c.on(b,function(t,e){s(E,[e,this.bstStart,O.now(),this.bstType])}),f.on(x,function(){this.bstStart=O.now()}),f.on(b,function(t,e){s(E,[e,this.bstStart,O.now(),"requestAnimationFrame"])}),a.on(R+g,function(t){this.time=O.now(),this.startPath=location.pathname+location.hash}),a.on(R+y,function(t){s("bstHist",[location.pathname+location.hash,this.startPath,this.time])}),u()?(s(v,[window.performance.getEntriesByType("resource")]),r()):l in window.performance&&(window.performance["c"+p]?window.performance[l](m,o,d(!1)):window.performance[l]("webkit"+m,o,d(!1))),document[l]("scroll",i,d(!1)),document[l]("keypress",i,d(!1)),document[l]("click",i,d(!1))}}},{}],6:[function(t,e,n){e.exports=function(){return"PerformanceObserver"in window&&"function"==typeof window.PerformanceObserver}},{}],7:[function(t,e,n){function r(t){for(var e=t;e&&!e.hasOwnProperty(u);)e=Object.getPrototypeOf(e);e&&o(e)}function o(t){s.inPlace(t,[u,d],"-",i)}function i(t,e){return t[1]}var a=t("ee").get("events"),s=t("wrap-function")(a,!0),c=t("gos"),f=XMLHttpRequest,u="addEventListener",d="removeEventListener";e.exports=a,"getPrototypeOf"in Object?(r(document),r(window),r(f.prototype)):f.prototype.hasOwnProperty(u)&&(o(window),o(f.prototype)),a.on(u+"-start",function(t,e){var n=t[1];if(null!==n&&("function"==typeof n||"object"==typeof n)){var r=c(n,"nr@wrapped",function(){function t(){if("function"==typeof n.handleEvent)return n.handleEvent.apply(n,arguments)}var e={object:t,"function":n}[typeof n];return e?s(e,"fn-",null,e.name||"anonymous"):n});this.wrapped=t[1]=r}}),a.on(d+"-start",function(t){t[1]=this.wrapped||t[1]})},{}],8:[function(t,e,n){function r(t,e,n){var r=t[e];"function"==typeof r&&(t[e]=function(){var t=i(arguments),e={};o.emit(n+"before-start",[t],e);var a;e[m]&&e[m].dt&&(a=e[m].dt);var s=r.apply(this,t);return o.emit(n+"start",[t,a],s),s.then(function(t){return o.emit(n+"end",[null,t],s),t},function(t){throw o.emit(n+"end",[t],s),t})})}var o=t("ee").get("fetch"),i=t(32),a=t(31);e.exports=o;var s=window,c="fetch-",f=c+"body-",u=["arrayBuffer","blob","json","text","formData"],d=s.Request,p=s.Response,l=s.fetch,h="prototype",m="nr@context";d&&p&&l&&(a(u,function(t,e){r(d[h],e,f),r(p[h],e,f)}),r(s,"fetch",c),o.on(c+"end",function(t,e){var n=this;if(e){var r=e.headers.get("content-length");null!==r&&(n.rxSize=r),o.emit(c+"done",[null,e],n)}else o.emit(c+"done",[t],n)}))},{}],9:[function(t,e,n){var r=t("ee").get("history"),o=t("wrap-function")(r);e.exports=r;var i=window.history&&window.history.constructor&&window.history.constructor.prototype,a=window.history;i&&i.pushState&&i.replaceState&&(a=i),o.inPlace(a,["pushState","replaceState"],"-")},{}],10:[function(t,e,n){function r(t){function e(){f.emit("jsonp-end",[],l),t.removeEventListener("load",e,c(!1)),t.removeEventListener("error",n,c(!1))}function n(){f.emit("jsonp-error",[],l),f.emit("jsonp-end",[],l),t.removeEventListener("load",e,c(!1)),t.removeEventListener("error",n,c(!1))}var r=t&&"string"==typeof t.nodeName&&"script"===t.nodeName.toLowerCase();if(r){var o="function"==typeof t.addEventListener;if(o){var a=i(t.src);if(a){var d=s(a),p="function"==typeof d.parent[d.key];if(p){var l={};u.inPlace(d.parent,[d.key],"cb-",l),t.addEventListener("load",e,c(!1)),t.addEventListener("error",n,c(!1)),f.emit("new-jsonp",[t.src],l)}}}}}function o(){return"addEventListener"in window}function i(t){var e=t.match(d);return e?e[1]:null}function a(t,e){var n=t.match(l),r=n[1],o=n[3];return o?a(o,e[r]):e[r]}function s(t){var e=t.match(p);return e&&e.length>=3?{key:e[2],parent:a(e[1],window)}:{key:t,parent:window}}var c=t(23),f=t("ee").get("jsonp"),u=t("wrap-function")(f);if(e.exports=f,o()){var d=/[?&](?:callback|cb)=([^&#]+)/,p=/(.*)\.([^.]+)/,l=/^(\w+)(\.|$)(.*)$/,h=["appendChild","insertBefore","replaceChild"];Node&&Node.prototype&&Node.prototype.appendChild?u.inPlace(Node.prototype,h,"dom-"):(u.inPlace(HTMLElement.prototype,h,"dom-"),u.inPlace(HTMLHeadElement.prototype,h,"dom-"),u.inPlace(HTMLBodyElement.prototype,h,"dom-")),f.on("dom-start",function(t){r(t[0])})}},{}],11:[function(t,e,n){var r=t("ee").get("mutation"),o=t("wrap-function")(r),i=NREUM.o.MO;e.exports=r,i&&(window.MutationObserver=function(t){return this instanceof i?new i(o(t,"fn-")):i.apply(this,arguments)},MutationObserver.prototype=i.prototype)},{}],12:[function(t,e,n){function r(t){var e=i.context(),n=s(t,"executor-",e,null,!1),r=new f(n);return i.context(r).getCtx=function(){return e},r}var o=t("wrap-function"),i=t("ee").get("promise"),a=t("ee").getOrSetContext,s=o(i),c=t(31),f=NREUM.o.PR;e.exports=i,f&&(window.Promise=r,["all","race"].forEach(function(t){var e=f[t];f[t]=function(n){function r(t){return function(){i.emit("propagate",[null,!o],a,!1,!1),o=o||!t}}var o=!1;c(n,function(e,n){Promise.resolve(n).then(r("all"===t),r(!1))});var a=e.apply(f,arguments),s=f.resolve(a);return s}}),["resolve","reject"].forEach(function(t){var e=f[t];f[t]=function(t){var n=e.apply(f,arguments);return t!==n&&i.emit("propagate",[t,!0],n,!1,!1),n}}),f.prototype["catch"]=function(t){return this.then(null,t)},f.prototype=Object.create(f.prototype,{constructor:{value:r}}),c(Object.getOwnPropertyNames(f),function(t,e){try{r[e]=f[e]}catch(n){}}),o.wrapInPlace(f.prototype,"then",function(t){return function(){var e=this,n=o.argsToArray.apply(this,arguments),r=a(e);r.promise=e,n[0]=s(n[0],"cb-",r,null,!1),n[1]=s(n[1],"cb-",r,null,!1);var c=t.apply(this,n);return r.nextPromise=c,i.emit("propagate",[e,!0],c,!1,!1),c}}),i.on("executor-start",function(t){t[0]=s(t[0],"resolve-",this,null,!1),t[1]=s(t[1],"resolve-",this,null,!1)}),i.on("executor-err",function(t,e,n){t[1](n)}),i.on("cb-end",function(t,e,n){i.emit("propagate",[n,!0],this.nextPromise,!1,!1)}),i.on("propagate",function(t,e,n){this.getCtx&&!e||(this.getCtx=function(){if(t instanceof Promise)var e=i.context(t);return e&&e.getCtx?e.getCtx():this})}),r.toString=function(){return""+f})},{}],13:[function(t,e,n){var r=t("ee").get("raf"),o=t("wrap-function")(r),i="equestAnimationFrame";e.exports=r,o.inPlace(window,["r"+i,"mozR"+i,"webkitR"+i,"msR"+i],"raf-"),r.on("raf-start",function(t){t[0]=o(t[0],"fn-")})},{}],14:[function(t,e,n){function r(t,e,n){t[0]=a(t[0],"fn-",null,n)}function o(t,e,n){this.method=n,this.timerDuration=isNaN(t[1])?0:+t[1],t[0]=a(t[0],"fn-",this,n)}var i=t("ee").get("timer"),a=t("wrap-function")(i),s="setTimeout",c="setInterval",f="clearTimeout",u="-start",d="-";e.exports=i,a.inPlace(window,[s,"setImmediate"],s+d),a.inPlace(window,[c],c+d),a.inPlace(window,[f,"clearImmediate"],f+d),i.on(c+u,r),i.on(s+u,o)},{}],15:[function(t,e,n){function r(t,e){d.inPlace(e,["onreadystatechange"],"fn-",s)}function o(){var t=this,e=u.context(t);t.readyState>3&&!e.resolved&&(e.resolved=!0,u.emit("xhr-resolved",[],t)),d.inPlace(t,y,"fn-",s)}function i(t){x.push(t),m&&(E?E.then(a):w?w(a):(R=-R,O.data=R))}function a(){for(var t=0;t<x.length;t++)r([],x[t]);x.length&&(x=[])}function s(t,e){return e}function c(t,e){for(var n in t)e[n]=t[n];return e}t(7);var f=t("ee"),u=f.get("xhr"),d=t("wrap-function")(u),p=t(23),l=NREUM.o,h=l.XHR,m=l.MO,v=l.PR,w=l.SI,g="readystatechange",y=["onload","onerror","onabort","onloadstart","onloadend","onprogress","ontimeout"],x=[];e.exports=u;var b=window.XMLHttpRequest=function(t){var e=new h(t);try{u.emit("new-xhr",[e],e),e.addEventListener(g,o,p(!1))}catch(n){try{u.emit("internal-error",[n])}catch(r){}}return e};if(c(h,b),b.prototype=h.prototype,d.inPlace(b.prototype,["open","send"],"-xhr-",s),u.on("send-xhr-start",function(t,e){r(t,e),i(e)}),u.on("open-xhr-start",r),m){var E=v&&v.resolve();if(!w&&!v){var R=1,O=document.createTextNode(R);new m(a).observe(O,{characterData:!0})}}else f.on("fn-end",function(t){t[0]&&t[0].type===g||a()})},{}],16:[function(t,e,n){function r(t){if(!s(t))return null;var e=window.NREUM;if(!e.loader_config)return null;var n=(e.loader_config.accountID||"").toString()||null,r=(e.loader_config.agentID||"").toString()||null,f=(e.loader_config.trustKey||"").toString()||null;if(!n||!r)return null;var h=l.generateSpanId(),m=l.generateTraceId(),v=Date.now(),w={spanId:h,traceId:m,timestamp:v};return(t.sameOrigin||c(t)&&p())&&(w.traceContextParentHeader=o(h,m),w.traceContextStateHeader=i(h,v,n,r,f)),(t.sameOrigin&&!u()||!t.sameOrigin&&c(t)&&d())&&(w.newrelicHeader=a(h,m,v,n,r,f)),w}function o(t,e){return"00-"+e+"-"+t+"-01"}function i(t,e,n,r,o){var i=0,a="",s=1,c="",f="";return o+"@nr="+i+"-"+s+"-"+n+"-"+r+"-"+t+"-"+a+"-"+c+"-"+f+"-"+e}function a(t,e,n,r,o,i){var a="btoa"in window&&"function"==typeof window.btoa;if(!a)return null;var s={v:[0,1],d:{ty:"Browser",ac:r,ap:o,id:t,tr:e,ti:n}};return i&&r!==i&&(s.d.tk=i),btoa(JSON.stringify(s))}function s(t){return f()&&c(t)}function c(t){var e=!1,n={};if("init"in NREUM&&"distributed_tracing"in NREUM.init&&(n=NREUM.init.distributed_tracing),t.sameOrigin)e=!0;else if(n.allowed_origins instanceof Array)for(var r=0;r<n.allowed_origins.length;r++){var o=h(n.allowed_origins[r]);if(t.hostname===o.hostname&&t.protocol===o.protocol&&t.port===o.port){e=!0;break}}return e}function f(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.enabled}function u(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.exclude_newrelic_header}function d(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&NREUM.init.distributed_tracing.cors_use_newrelic_header!==!1}function p(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.cors_use_tracecontext_headers}var l=t(28),h=t(18);e.exports={generateTracePayload:r,shouldGenerateTrace:s}},{}],17:[function(t,e,n){function r(t){var e=this.params,n=this.metrics;if(!this.ended){this.ended=!0;for(var r=0;r<p;r++)t.removeEventListener(d[r],this.listener,!1);return e.protocol&&"data"===e.protocol?void g("Ajax/DataUrl/Excluded"):void(e.aborted||(n.duration=a.now()-this.startTime,this.loadCaptureCalled||4!==t.readyState?null==e.status&&(e.status=0):i(this,t),n.cbTime=this.cbTime,s("xhr",[e,n,this.startTime,this.endTime,"xhr"],this)))}}function o(t,e){var n=c(e),r=t.params;r.hostname=n.hostname,r.port=n.port,r.protocol=n.protocol,r.host=n.hostname+":"+n.port,r.pathname=n.pathname,t.parsedOrigin=n,t.sameOrigin=n.sameOrigin}function i(t,e){t.params.status=e.status;var n=v(e,t.lastSize);if(n&&(t.metrics.rxSize=n),t.sameOrigin){var r=e.getResponseHeader("X-NewRelic-App-Data");r&&(t.params.cat=r.split(", ").pop())}t.loadCaptureCalled=!0}var a=t("loader");if(a.xhrWrappable&&!a.disabled){var s=t("handle"),c=t(18),f=t(16).generateTracePayload,u=t("ee"),d=["load","error","abort","timeout"],p=d.length,l=t("id"),h=t(24),m=t(22),v=t(19),w=t(23),g=t(25).recordSupportability,y=NREUM.o.REQ,x=window.XMLHttpRequest;a.features.xhr=!0,t(15),t(8),u.on("new-xhr",function(t){var e=this;e.totalCbs=0,e.called=0,e.cbTime=0,e.end=r,e.ended=!1,e.xhrGuids={},e.lastSize=null,e.loadCaptureCalled=!1,e.params=this.params||{},e.metrics=this.metrics||{},t.addEventListener("load",function(n){i(e,t)},w(!1)),h&&(h>34||h<10)||t.addEventListener("progress",function(t){e.lastSize=t.loaded},w(!1))}),u.on("open-xhr-start",function(t){this.params={method:t[0]},o(this,t[1]),this.metrics={}}),u.on("open-xhr-end",function(t,e){"loader_config"in NREUM&&"xpid"in NREUM.loader_config&&this.sameOrigin&&e.setRequestHeader("X-NewRelic-ID",NREUM.loader_config.xpid);var n=f(this.parsedOrigin);if(n){var r=!1;n.newrelicHeader&&(e.setRequestHeader("newrelic",n.newrelicHeader),r=!0),n.traceContextParentHeader&&(e.setRequestHeader("traceparent",n.traceContextParentHeader),n.traceContextStateHeader&&e.setRequestHeader("tracestate",n.traceContextStateHeader),r=!0),r&&(this.dt=n)}}),u.on("send-xhr-start",function(t,e){var n=this.metrics,r=t[0],o=this;if(n&&r){var i=m(r);i&&(n.txSize=i)}this.startTime=a.now(),this.listener=function(t){try{"abort"!==t.type||o.loadCaptureCalled||(o.params.aborted=!0),("load"!==t.type||o.called===o.totalCbs&&(o.onloadCalled||"function"!=typeof e.onload))&&o.end(e)}catch(n){try{u.emit("internal-error",[n])}catch(r){}}};for(var s=0;s<p;s++)e.addEventListener(d[s],this.listener,w(!1))}),u.on("xhr-cb-time",function(t,e,n){this.cbTime+=t,e?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof n.onload||this.end(n)}),u.on("xhr-load-added",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&!this.xhrGuids[n]&&(this.xhrGuids[n]=!0,this.totalCbs+=1)}),u.on("xhr-load-removed",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&this.xhrGuids[n]&&(delete this.xhrGuids[n],this.totalCbs-=1)}),u.on("xhr-resolved",function(){this.endTime=a.now()}),u.on("addEventListener-end",function(t,e){e instanceof x&&"load"===t[0]&&u.emit("xhr-load-added",[t[1],t[2]],e)}),u.on("removeEventListener-end",function(t,e){e instanceof x&&"load"===t[0]&&u.emit("xhr-load-removed",[t[1],t[2]],e)}),u.on("fn-start",function(t,e,n){e instanceof x&&("onload"===n&&(this.onload=!0),("load"===(t[0]&&t[0].type)||this.onload)&&(this.xhrCbStart=a.now()))}),u.on("fn-end",function(t,e){this.xhrCbStart&&u.emit("xhr-cb-time",[a.now()-this.xhrCbStart,this.onload,e],e)}),u.on("fetch-before-start",function(t){function e(t,e){var n=!1;return e.newrelicHeader&&(t.set("newrelic",e.newrelicHeader),n=!0),e.traceContextParentHeader&&(t.set("traceparent",e.traceContextParentHeader),e.traceContextStateHeader&&t.set("tracestate",e.traceContextStateHeader),n=!0),n}var n,r=t[1]||{};"string"==typeof t[0]?n=t[0]:t[0]&&t[0].url?n=t[0].url:window.URL&&t[0]&&t[0]instanceof URL&&(n=t[0].href),n&&(this.parsedOrigin=c(n),this.sameOrigin=this.parsedOrigin.sameOrigin);var o=f(this.parsedOrigin);if(o&&(o.newrelicHeader||o.traceContextParentHeader))if("string"==typeof t[0]||window.URL&&t[0]&&t[0]instanceof URL){var i={};for(var a in r)i[a]=r[a];i.headers=new Headers(r.headers||{}),e(i.headers,o)&&(this.dt=o),t.length>1?t[1]=i:t.push(i)}else t[0]&&t[0].headers&&e(t[0].headers,o)&&(this.dt=o)}),u.on("fetch-start",function(t,e){this.params={},this.metrics={},this.startTime=a.now(),this.dt=e,t.length>=1&&(this.target=t[0]),t.length>=2&&(this.opts=t[1]);var n,r=this.opts||{},i=this.target;if("string"==typeof i?n=i:"object"==typeof i&&i instanceof y?n=i.url:window.URL&&"object"==typeof i&&i instanceof URL&&(n=i.href),o(this,n),"data"!==this.params.protocol){var s=(""+(i&&i instanceof y&&i.method||r.method||"GET")).toUpperCase();this.params.method=s,this.txSize=m(r.body)||0}}),u.on("fetch-done",function(t,e){if(this.endTime=a.now(),this.params||(this.params={}),"data"===this.params.protocol)return void g("Ajax/DataUrl/Excluded");this.params.status=e?e.status:0;var n;"string"==typeof this.rxSize&&this.rxSize.length>0&&(n=+this.rxSize);var r={txSize:this.txSize,rxSize:n,duration:a.now()-this.startTime};s("xhr",[this.params,r,this.startTime,this.endTime,"fetch"],this)})}},{}],18:[function(t,e,n){var r={};e.exports=function(t){if(t in r)return r[t];if(0===(t||"").indexOf("data:"))return{protocol:"data"};var e=document.createElement("a"),n=window.location,o={};e.href=t,o.port=e.port;var i=e.href.split("://");!o.port&&i[1]&&(o.port=i[1].split("/")[0].split("@").pop().split(":")[1]),o.port&&"0"!==o.port||(o.port="https"===i[0]?"443":"80"),o.hostname=e.hostname||n.hostname,o.pathname=e.pathname,o.protocol=i[0],"/"!==o.pathname.charAt(0)&&(o.pathname="/"+o.pathname);var a=!e.protocol||":"===e.protocol||e.protocol===n.protocol,s=e.hostname===document.domain&&e.port===n.port;return o.sameOrigin=a&&(!e.hostname||s),"/"===o.pathname&&(r[t]=o),o}},{}],19:[function(t,e,n){function r(t,e){var n=t.responseType;return"json"===n&&null!==e?e:"arraybuffer"===n||"blob"===n||"json"===n?o(t.response):"text"===n||""===n||void 0===n?o(t.responseText):void 0}var o=t(22);e.exports=r},{}],20:[function(t,e,n){function r(){}function o(t,e,n,r){return function(){return u.recordSupportability("API/"+e+"/called"),i(t+e,[f.now()].concat(s(arguments)),n?null:this,r),n?void 0:this}}var i=t("handle"),a=t(31),s=t(32),c=t("ee").get("tracer"),f=t("loader"),u=t(25),d=NREUM;"undefined"==typeof window.newrelic&&(newrelic=d);var p=["setPageViewName","setCustomAttribute","setErrorHandler","finished","addToTrace","inlineHit","addRelease"],l="api-",h=l+"ixn-";a(p,function(t,e){d[e]=o(l,e,!0,"api")}),d.addPageAction=o(l,"addPageAction",!0),d.setCurrentRouteName=o(l,"routeName",!0),e.exports=newrelic,d.interaction=function(){return(new r).get()};var m=r.prototype={createTracer:function(t,e){var n={},r=this,o="function"==typeof e;return i(h+"tracer",[f.now(),t,n],r),function(){if(c.emit((o?"":"no-")+"fn-start",[f.now(),r,o],n),o)try{return e.apply(this,arguments)}catch(t){throw c.emit("fn-err",[arguments,this,t],n),t}finally{c.emit("fn-end",[f.now()],n)}}}};a("actionText,setName,setAttribute,save,ignore,onEnd,getContext,end,get".split(","),function(t,e){m[e]=o(h,e)}),newrelic.noticeError=function(t,e){"string"==typeof t&&(t=new Error(t)),u.recordSupportability("API/noticeError/called"),i("err",[t,f.now(),!1,e])}},{}],21:[function(t,e,n){function r(t){if(NREUM.init){for(var e=NREUM.init,n=t.split("."),r=0;r<n.length-1;r++)if(e=e[n[r]],"object"!=typeof e)return;return e=e[n[n.length-1]]}}e.exports={getConfiguration:r}},{}],22:[function(t,e,n){e.exports=function(t){if("string"==typeof t&&t.length)return t.length;if("object"==typeof t){if("undefined"!=typeof ArrayBuffer&&t instanceof ArrayBuffer&&t.byteLength)return t.byteLength;if("undefined"!=typeof Blob&&t instanceof Blob&&t.size)return t.size;if(!("undefined"!=typeof FormData&&t instanceof FormData))try{return JSON.stringify(t).length}catch(e){return}}}},{}],23:[function(t,e,n){var r=!1;try{var o=Object.defineProperty({},"passive",{get:function(){r=!0}});window.addEventListener("testPassive",null,o),window.removeEventListener("testPassive",null,o)}catch(i){}e.exports=function(t){return r?{passive:!0,capture:!!t}:!!t}},{}],24:[function(t,e,n){var r=0,o=navigator.userAgent.match(/Firefox[\/\s](\d+\.\d+)/);o&&(r=+o[1]),e.exports=r},{}],25:[function(t,e,n){function r(t,e){var n=[a,t,{name:t},e];return i("storeMetric",n,null,"api"),n}function o(t,e){var n=[s,t,{name:t},e];return i("storeEventMetrics",n,null,"api"),n}var i=t("handle"),a="sm",s="cm";e.exports={constants:{SUPPORTABILITY_METRIC:a,CUSTOM_METRIC:s},recordSupportability:r,recordCustom:o}},{}],26:[function(t,e,n){function r(){return s.exists&&performance.now?Math.round(performance.now()):(i=Math.max((new Date).getTime(),i))-a}function o(){return i}var i=(new Date).getTime(),a=i,s=t(33);e.exports=r,e.exports.offset=a,e.exports.getLastTimestamp=o},{}],27:[function(t,e,n){function r(t,e){var n=t.getEntries();n.forEach(function(t){"first-paint"===t.name?l("timing",["fp",Math.floor(t.startTime)]):"first-contentful-paint"===t.name&&l("timing",["fcp",Math.floor(t.startTime)])})}function o(t,e){var n=t.getEntries();if(n.length>0){var r=n[n.length-1];if(f&&f<r.startTime)return;var o=[r],i=a({});i&&o.push(i),l("lcp",o)}}function i(t){t.getEntries().forEach(function(t){t.hadRecentInput||l("cls",[t])})}function a(t){var e=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(e)return e.type&&(t["net-type"]=e.type),e.effectiveType&&(t["net-etype"]=e.effectiveType),e.rtt&&(t["net-rtt"]=e.rtt),e.downlink&&(t["net-dlink"]=e.downlink),t}function s(t){if(t instanceof w&&!y){var e=Math.round(t.timeStamp),n={type:t.type};a(n),e<=h.now()?n.fid=h.now()-e:e>h.offset&&e<=Date.now()?(e-=h.offset,n.fid=h.now()-e):e=h.now(),y=!0,l("timing",["fi",e,n])}}function c(t){"hidden"===t&&(f=h.now(),l("pageHide",[f]))}if(!("init"in NREUM&&"page_view_timing"in NREUM.init&&"enabled"in NREUM.init.page_view_timing&&NREUM.init.page_view_timing.enabled===!1)){var f,u,d,p,l=t("handle"),h=t("loader"),m=t(30),v=t(23),w=NREUM.o.EV;if("PerformanceObserver"in window&&"function"==typeof window.PerformanceObserver){u=new PerformanceObserver(r);try{u.observe({entryTypes:["paint"]})}catch(g){}d=new PerformanceObserver(o);try{d.observe({entryTypes:["largest-contentful-paint"]})}catch(g){}p=new PerformanceObserver(i);try{p.observe({type:"layout-shift",buffered:!0})}catch(g){}}if("addEventListener"in document){var y=!1,x=["click","keydown","mousedown","pointerdown","touchstart"];x.forEach(function(t){document.addEventListener(t,s,v(!1))})}m(c)}},{}],28:[function(t,e,n){function r(){function t(){return e?15&e[n++]:16*Math.random()|0}var e=null,n=0,r=window.crypto||window.msCrypto;r&&r.getRandomValues&&(e=r.getRandomValues(new Uint8Array(31)));for(var o,i="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",a="",s=0;s<i.length;s++)o=i[s],"x"===o?a+=t().toString(16):"y"===o?(o=3&t()|8,a+=o.toString(16)):a+=o;return a}function o(){return a(16)}function i(){return a(32)}function a(t){function e(){return n?15&n[r++]:16*Math.random()|0}var n=null,r=0,o=window.crypto||window.msCrypto;o&&o.getRandomValues&&Uint8Array&&(n=o.getRandomValues(new Uint8Array(t)));for(var i=[],a=0;a<t;a++)i.push(e().toString(16));return i.join("")}e.exports={generateUuid:r,generateSpanId:o,generateTraceId:i}},{}],29:[function(t,e,n){function r(t,e){if(!o)return!1;if(t!==o)return!1;if(!e)return!0;if(!i)return!1;for(var n=i.split("."),r=e.split("."),a=0;a<r.length;a++)if(r[a]!==n[a])return!1;return!0}var o=null,i=null,a=/Version\/(\S+)\s+Safari/;if(navigator.userAgent){var s=navigator.userAgent,c=s.match(a);c&&s.indexOf("Chrome")===-1&&s.indexOf("Chromium")===-1&&(o="Safari",i=c[1])}e.exports={agent:o,version:i,match:r}},{}],30:[function(t,e,n){function r(t){function e(){t(s&&document[s]?document[s]:document[i]?"hidden":"visible")}"addEventListener"in document&&a&&document.addEventListener(a,e,o(!1))}var o=t(23);e.exports=r;var i,a,s;"undefined"!=typeof document.hidden?(i="hidden",a="visibilitychange",s="visibilityState"):"undefined"!=typeof document.msHidden?(i="msHidden",a="msvisibilitychange"):"undefined"!=typeof document.webkitHidden&&(i="webkitHidden",a="webkitvisibilitychange",s="webkitVisibilityState")},{}],31:[function(t,e,n){function r(t,e){var n=[],r="",i=0;for(r in t)o.call(t,r)&&(n[i]=e(r,t[r]),i+=1);return n}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],32:[function(t,e,n){function r(t,e,n){e||(e=0),"undefined"==typeof n&&(n=t?t.length:0);for(var r=-1,o=n-e||0,i=Array(o<0?0:o);++r<o;)i[r]=t[e+r];return i}e.exports=r},{}],33:[function(t,e,n){e.exports={exists:"undefined"!=typeof window.performance&&window.performance.timing&&"undefined"!=typeof window.performance.timing.navigationStart}},{}],ee:[function(t,e,n){function r(){}function o(t){function e(t){return t&&t instanceof r?t:t?f(t,c,a):a()}function n(n,r,o,i,a){if(a!==!1&&(a=!0),!l.aborted||i){t&&a&&t(n,r,o);for(var s=e(o),c=m(n),f=c.length,u=0;u<f;u++)c[u].apply(s,r);var p=d[y[n]];return p&&p.push([x,n,r,s]),s}}function i(t,e){g[t]=m(t).concat(e)}function h(t,e){var n=g[t];if(n)for(var r=0;r<n.length;r++)n[r]===e&&n.splice(r,1)}function m(t){return g[t]||[]}function v(t){return p[t]=p[t]||o(n)}function w(t,e){l.aborted||u(t,function(t,n){e=e||"feature",y[n]=e,e in d||(d[e]=[])})}var g={},y={},x={on:i,addEventListener:i,removeEventListener:h,emit:n,get:v,listeners:m,context:e,buffer:w,abort:s,aborted:!1};return x}function i(t){return f(t,c,a)}function a(){return new r}function s(){(d.api||d.feature)&&(l.aborted=!0,d=l.backlog={})}var c="nr@context",f=t("gos"),u=t(31),d={},p={},l=e.exports=o();e.exports.getOrSetContext=i,l.backlog=d},{}],gos:[function(t,e,n){function r(t,e,n){if(o.call(t,e))return t[e];var r=n();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(t,e,{value:r,writable:!0,enumerable:!1}),r}catch(i){}return t[e]=r,r}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],handle:[function(t,e,n){function r(t,e,n,r){o.buffer([t],r),o.emit(t,e,n)}var o=t("ee").get("handle");e.exports=r,r.ee=o},{}],id:[function(t,e,n){function r(t){var e=typeof t;return!t||"object"!==e&&"function"!==e?-1:t===window?0:a(t,i,function(){return o++})}var o=1,i="nr@id",a=t("gos");e.exports=r},{}],loader:[function(t,e,n){function r(){if(!T++){var t=O.info=NREUM.info,e=m.getElementsByTagName("script")[0];if(setTimeout(f.abort,3e4),!(t&&t.licenseKey&&t.applicationID&&e))return f.abort();c(E,function(e,n){t[e]||(t[e]=n)});var n=a();s("mark",["onload",n+O.offset],null,"api"),s("timing",["load",n]);var r=m.createElement("script");0===t.agent.indexOf("http://")||0===t.agent.indexOf("https://")?r.src=t.agent:r.src=l+"://"+t.agent,e.parentNode.insertBefore(r,e)}}function o(){"complete"===m.readyState&&i()}function i(){s("mark",["domContent",a()+O.offset],null,"api")}var a=t(26),s=t("handle"),c=t(31),f=t("ee"),u=t(29),d=t(21),p=t(23),l=d.getConfiguration("ssl")===!1?"http":"https",h=window,m=h.document,v="addEventListener",w="attachEvent",g=h.XMLHttpRequest,y=g&&g.prototype,x=!1;NREUM.o={ST:setTimeout,SI:h.setImmediate,CT:clearTimeout,XHR:g,REQ:h.Request,EV:h.Event,PR:h.Promise,MO:h.MutationObserver};var b=""+location,E={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net",agent:"js-agent.newrelic.com/nr-spa-1216.min.js"},R=g&&y&&y[v]&&!/CriOS/.test(navigator.userAgent),O=e.exports={offset:a.getLastTimestamp(),now:a,origin:b,features:{},xhrWrappable:R,userAgent:u,disabled:x};if(!x){t(20),t(27),m[v]?(m[v]("DOMContentLoaded",i,p(!1)),h[v]("load",r,p(!1))):(m[w]("onreadystatechange",o),h[w]("onload",r)),s("mark",["firstbyte",a.getLastTimestamp()],null,"api");var T=0}},{}],"wrap-function":[function(t,e,n){function r(t,e){function n(e,n,r,c,f){function nrWrapper(){var i,a,u,p;try{a=this,i=d(arguments),u="function"==typeof r?r(i,a):r||{}}catch(l){o([l,"",[i,a,c],u],t)}s(n+"start",[i,a,c],u,f);try{return p=e.apply(a,i)}catch(h){throw s(n+"err",[i,a,h],u,f),h}finally{s(n+"end",[i,a,p],u,f)}}return a(e)?e:(n||(n=""),nrWrapper[p]=e,i(e,nrWrapper,t),nrWrapper)}function r(t,e,r,o,i){r||(r="");var s,c,f,u="-"===r.charAt(0);for(f=0;f<e.length;f++)c=e[f],s=t[c],a(s)||(t[c]=n(s,u?c+r:r,o,c,i))}function s(n,r,i,a){if(!h||e){var s=h;h=!0;try{t.emit(n,r,i,e,a)}catch(c){o([c,n,r,i],t)}h=s}}return t||(t=u),n.inPlace=r,n.flag=p,n}function o(t,e){e||(e=u);try{e.emit("internal-error",t)}catch(n){}}function i(t,e,n){if(Object.defineProperty&&Object.keys)try{var r=Object.keys(t);return r.forEach(function(n){Object.defineProperty(e,n,{get:function(){return t[n]},set:function(e){return t[n]=e,e}})}),e}catch(i){o([i],n)}for(var a in t)l.call(t,a)&&(e[a]=t[a]);return e}function a(t){return!(t&&t instanceof Function&&t.apply&&!t[p])}function s(t,e){var n=e(t);return n[p]=t,i(t,n,u),n}function c(t,e,n){var r=t[e];t[e]=s(r,n)}function f(){for(var t=arguments.length,e=new Array(t),n=0;n<t;++n)e[n]=arguments[n];return e}var u=t("ee"),d=t(32),p="nr@original",l=Object.prototype.hasOwnProperty,h=!1;e.exports=r,e.exports.wrapFunction=s,e.exports.wrapInPlace=c,e.exports.argsToArray=f},{}]},{},["loader",2,17,5,3,4]);</script>
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="MobileOptimized" content="320" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1" />
+        <link rel="shortcut icon" href="/-/media/e30c31e9271c4fc49cb33d56a5adb16c.ashx">
+    <link rel="canonical" href="https://www.gatesfoundation.org/" />
+        <meta name="servername" content="gfo-prd-wfe02" />
+        <meta name="description" content="We are a nonprofit fighting poverty, disease, and inequity around the world" />
+        <meta name="title" content="Bill &amp; Melinda Gates Foundation" />
+        <meta property="og:url" content="https://www.gatesfoundation.org/" />
+        <meta property="og:title" content="Bill &amp; Melinda Gates Foundation" />
+        <meta property="og:locale" content="en" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Bill &amp; Melinda Gates Foundation" />
+        <meta property="og:description" content="We are a nonprofit fighting poverty, disease, and inequity around the world" />
+        <meta property="og:image" content="https://www.gatesfoundation.org/-/media/gfo/2home/home_ourstory_pga1287486_fc235844.jpg?rev=a4772b2a583343ee9cbf5c008663e001" />
+        <meta property="og:image:url" content="https://www.gatesfoundation.org/-/media/gfo/2home/home_ourstory_pga1287486_fc235844.jpg?rev=a4772b2a583343ee9cbf5c008663e001" />
+        <meta property="og:image:secure_url" content="https://www.gatesfoundation.org/-/media/gfo/2home/home_ourstory_pga1287486_fc235844.jpg?rev=a4772b2a583343ee9cbf5c008663e001" />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:image:width" content="1024" />
+        <meta property="og:image:height" content="683" />
+        <meta name="twitter:title" content="Bill &amp; Melinda Gates Foundation" />
+        <meta name="twitter:site" content="@gatesfoundation" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:description" content="We are a nonprofit fighting poverty, disease, and inequity around the world" />
+        <meta name="twitter:image" content="https://www.gatesfoundation.org/-/media/gfo/2home/home_ourstory_pga1287486_fc235844.jpg?rev=a4772b2a583343ee9cbf5c008663e001" />
+
+    <link href="/Areas/GFO/assets/css/index-generated.css?v=9e9d012ad1c988a7255f778228b235971dd2c4e3" media="all" rel="stylesheet" />
+    <link href="/assets/css/email-signup-generated.css?v=9e9d012ad1c988a7255f778228b235971dd2c4e3" media="all" rel="stylesheet" />
+    
+    
+
+     <!-- OneTrust Cookies Consent Notice start  -->
+     <script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js" type="text/javascript" charset="UTF-8" data-domain-script="b9bb8ffb-2901-447e-a378-7fbe2eae92c7"></script>
+     <script type="text/javascript">
+         function OptanonWrapper() {}
+     </script>
+     <!-- OneTrust Cookies Consent Notice end  -->
+
+    <!-- Begin Google Tag Manager Data Layer -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('consent',
+            'default', {
+                // Deny consent for ad_storage
+                'ad_storage': 'denied',
+                'functionality_storage': 'denied',
+                'personalization_storage': 'denied',
+                'analytics_storage': 'denied',
+                // Grant consent for analytics_storage
+                'security_storage': 'granted'
+            });
+
+            window.dataLayer.push({"event":"Personalized Component Impression","Personalization Impressions Data":[]});
+    </script>
+    <!-- Google Tag Manager -->
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TK28RTV');
+    </script>
+    <!-- End Google Tag Manager -->
+    <!-- End Google Tag Manager Data Layer -->
+            <script type="application/ld+json">
+        {"@type":"WebPage","name":"Home","description":"","publisher":{"@type":"Organization","name":"Bill & Melinda Gates Foundation"},"breadcrumb":null,"primaryImageOfPage":"","datePublished":null,"@context":"https://schema.org"}
+    </script>
+    <script type="application/ld+json">
+        {"@type":"NGO","name":"Bill & Melinda Gates Foundation","alternateName":"Gates Foundation","url":"https://www.gatesfoundation.org/about","logo":"https://www.gatesfoundation.org/-/media/logos/logolg.svg","contactPoint":{"@type":"ContactPoint","telephone":"+1 20 67 09 34 00","contactType":"","availableLanguage":"en"},"sameAs":["https://www.facebook.com/gatesfoundation/","https://twitter.com/gatesfoundation","https://www.instagram.com/gatesfoundation","https://www.youtube.com/user/GatesFoundation","https://www.linkedin.com/company/bill-&-melinda-gates-foundation/","https://en.wikipedia.org/wiki/Bill %26 Melinda Gates Foundation"],"@context":"https://schema.org"}
+    </script>
+
+</head>
+<body>
+
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TK28RTV" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+<div class="js-page-content-wrapper">
+    <header>
+        
+        <div class="js-old-browser-modal modal-container">
+    <div
+        class="modal js-modal old-browser-modal__modal"
+         id="old-browser-modal">
+        <div class="modal__box-holder">
+            <div class="modal__overlay"></div>
+            <div class="modal__box">
+                <div class="modal__title">
+                    <button
+                        type="button"
+                            class="modal__close js-modal-close"
+                            aria-label="Close modal">
+                        <svg class="icon icon--close" aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.6569 7.75792L16.2427 6.3437L6.34318 16.2432L7.75739 17.6574L17.6569 7.75792Z" fill="currentColor" />
+                            <path d="M16.242 17.6568L17.6562 16.2426L7.75676 6.34314L6.34254 7.75735L16.242 17.6568Z" fill="currentColor" />
+                            <path d="M14 14V10H10V14H14Z" fill="currentColor" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal__content">
+                    <section class="rich-text component">
+                        <h3>Unsupported browser detected</h3>
+<p>
+Your browser appears to be unsupported. Because of this, portions of the site may not function as intended.
+</p>
+<p>
+Please install a current version of <a href="https://www.google.com/chrome/">Chrome</a>, <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox</a>, <a href="https://www.microsoft.com/en-us/edge">Edge</a>, or <a href="https://www.apple.com/safari/">Safari</a> for a better experience.
+</p>
+<br class="t-last-br" />
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        
+        <section class="site-header js-site-header__mount"
+         data-model='{&quot;skipNavigation&quot;:{&quot;href&quot;:&quot;#main-content&quot;,&quot;text&quot;:&quot;Skip to main content&quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:null,&quot;icon&quot;:null},&quot;logo&quot;:{&quot;title&quot;:&quot;Bill &amp; Melinda Gates Foundation&quot;,&quot;logoSm&quot;:&quot;/-/media/logos/logolg.svg?rev=3899f8bf52024eab88c391bca76ef76a&amp;hash=4605CDDB73C7FF4F483FA1352341A9F1&quot;,&quot;logoLg&quot;:&quot;/-/media/logos/logolg.svg?rev=3899f8bf52024eab88c391bca76ef76a&amp;hash=4605CDDB73C7FF4F483FA1352341A9F1&quot;},&quot;theme&quot;:&quot;base&quot;,&quot;siteName&quot;:null,&quot;sticky&quot;:false,&quot;primaryNav&quot;:[{&quot;title&quot;:&quot;About us&quot;,&quot;subtitle&quot;:&quot;Learn about our origins, how we work, committed grants, careers, and our role in fighting inequities.&quot;,&quot;link&quot;:{&quot;href&quot;:&quot;/about&quot;,&quot;text&quot;:&quot;Learn more about us&quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;submenu&quot;:[{&quot;header&quot;:&quot;&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/about/our-story&quot;,&quot;text&quot;:&quot;Our story&quot;,&quot;title&quot;:&quot;Our story&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/our-role&quot;,&quot;text&quot;:&quot;Our role&quot;,&quot;title&quot;:&quot;Our role&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/foundation-faq&quot;,&quot;text&quot;:&quot;Foundation FAQ&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/foundation-fact-sheet&quot;,&quot;text&quot;:&quot;Foundation Fact Sheet&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/leadership&quot;,&quot;text&quot;:&quot;Leadership&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/financials&quot;,&quot;text&quot;:&quot;Financials&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/media-center&quot;,&quot;text&quot;:&quot;Media Center&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]},{&quot;header&quot;:&quot;&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/about/how-we-work&quot;,&quot;text&quot;:&quot;How we work&quot;,&quot;title&quot;:&quot;How we work&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/committed-grants&quot;,&quot;text&quot;:&quot;Committed grants&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/diversity-equity-inclusion&quot;,&quot;text&quot;:&quot;Diversity, equity, and inclusion&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/careers&quot;,&quot;text&quot;:&quot;Careers&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/supporting-our-work&quot;,&quot;text&quot;:&quot;Ways to give&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/offices&quot;,&quot;text&quot;:&quot;Offices&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/about/contact&quot;,&quot;text&quot;:&quot;Contact&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]}],&quot;feature&quot;:{&quot;type&quot;:&quot;person&quot;,&quot;data&quot;:{&quot;header&quot;:&quot;Leader spotlight&quot;,&quot;name&quot;:&quot;Violaine  Mitchell&quot;,&quot;title&quot;:&quot;Director, Immunization&quot;,&quot;image&quot;:{&quot;srcSet&quot;:&quot;/-/media/gfo/3about/3people/ga11631184_violaine_mitchell_20190314_0001.jpg?rev=61a341e649334ef88512d801a1700b4b&amp;w=100&amp;hash=C11DE2DB6C08679890B5D4D4A60150BA 100w,/-/media/gfo/3about/3people/ga11631184_violaine_mitchell_20190314_0001.jpg?rev=61a341e649334ef88512d801a1700b4b&amp;w=200&amp;hash=645E07CC47876AF9B7B2F1C87DADB5E0 200w,/-/media/gfo/3about/3people/ga11631184_violaine_mitchell_20190314_0001.jpg?rev=61a341e649334ef88512d801a1700b4b&amp;w=3000&amp;hash=E16F460254E44E7AE3D581503F0C25B9 3000w&quot;,&quot;alt&quot;:&quot;Violaine Mitchell&quot;,&quot;sizes&quot;:null,&quot;height&quot;:&quot;2400&quot;,&quot;width&quot;:&quot;3000&quot;},&quot;link&quot;:{&quot;href&quot;:&quot;https://www.gatesfoundation.org/about/leadership/violaine-mitchell&quot;,&quot;text&quot;:&quot;Violaine  Mitchell&quot;,&quot;title&quot;:&quot;Violaine  Mitchell&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:null,&quot;icon&quot;:null}}}},{&quot;title&quot;:&quot;Our work&quot;,&quot;subtitle&quot;:&quot;Learn how our seven divisions collaborate with partners in over 130 countries to address the issues we care about and drive change.&quot;,&quot;link&quot;:{&quot;href&quot;:&quot;/our-work&quot;,&quot;text&quot;:&quot;Explore our work&quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;submenu&quot;:[{&quot;header&quot;:&quot;Places&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/our-work/places/africa&quot;,&quot;text&quot;:&quot;Africa&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/china&quot;,&quot;text&quot;:&quot;China&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/east-asia&quot;,&quot;text&quot;:&quot;East Asia&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/europe&quot;,&quot;text&quot;:&quot;Europe&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/india&quot;,&quot;text&quot;:&quot;India&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/middle-east&quot;,&quot;text&quot;:&quot;Middle East&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/places/north-america&quot;,&quot;text&quot;:&quot;North America&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work#places&quot;,&quot;text&quot;:&quot;View all&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]},{&quot;header&quot;:&quot;Program strategies&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/our-work/programs/global-growth-and-opportunity/agricultural-development&quot;,&quot;text&quot;:&quot;Agricultural Development&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/programs/gender-equality/family-planning&quot;,&quot;text&quot;:&quot;Family Planning&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/programs/global-growth-and-opportunity/inclusive-financial-systems&quot;,&quot;text&quot;:&quot;Inclusive Financial Systems&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/programs/global-development/polio&quot;,&quot;text&quot;:&quot;Polio&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/programs/global-growth-and-opportunity/water-sanitation-and-hygiene&quot;,&quot;text&quot;:&quot;Water Sanitation and Hygiene&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work/programs/gender-equality/women-in-leadership&quot;,&quot;text&quot;:&quot;Women in Leadership&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/our-work#program_strategies&quot;,&quot;text&quot;:&quot;View all&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]}],&quot;feature&quot;:{&quot;type&quot;:&quot;promo&quot;,&quot;data&quot;:{&quot;description&quot;:&quot;Our goal is to urgently reach children, adolescents, and adults in lower-income countries with the vaccines they need to live a life free from vaccine-preventable diseases.  &quot;,&quot;link&quot;:{&quot;href&quot;:&quot;https://www.gatesfoundation.org/our-work/programs/global-development/immunization&quot;,&quot;text&quot;:&quot;Immunization&quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:null,&quot;icon&quot;:null},&quot;image&quot;:{&quot;srcSet&quot;:&quot;/-/media/gfo/4our-work/programs/global-development/programs_globaldev_immunization_ga16086315_sc614367_1600x1000.jpg?rev=73f84a4f4c9641dd83ce07a402de78aa&amp;w=270&amp;hash=973F05BAA28D4D74CAE5B9E422FA9449 270w,/-/media/gfo/4our-work/programs/global-development/programs_globaldev_immunization_ga16086315_sc614367_1600x1000.jpg?rev=73f84a4f4c9641dd83ce07a402de78aa&amp;w=540&amp;hash=E51D376FE536F56EB6E5183777ED78C8 540w,/-/media/gfo/4our-work/programs/global-development/programs_globaldev_immunization_ga16086315_sc614367_1600x1000.jpg?rev=73f84a4f4c9641dd83ce07a402de78aa&amp;w=1600&amp;hash=2D4C0277C5915A44A2CC10F3CEF97769 1600w&quot;,&quot;alt&quot;:&quot;Astou Faye (22), mother of a 9-month-old boy, Mbaye Faye, waits her turn for the vaccination of her son who will receive a second dose of the measles vaccine at the Philippe Maguilen Senghor Hospital in Dakar, Senegal.&quot;,&quot;sizes&quot;:null,&quot;height&quot;:&quot;1000&quot;,&quot;width&quot;:&quot;1600&quot;}}}},{&quot;title&quot;:&quot;Ideas&quot;,&quot;subtitle&quot;:&quot;Read the latest stories, research, interviews, and news from across the Gates Foundation.&quot;,&quot;link&quot;:{&quot;href&quot;:&quot;/ideas&quot;,&quot;text&quot;:&quot;Discover our ideas&quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;submenu&quot;:[{&quot;header&quot;:&quot;Featured&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/ideas/womens-economic-power&quot;,&quot;text&quot;:&quot;Women’s Economic Power&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/science-innovation-technology&quot;,&quot;text&quot;:&quot;Power of Science and Innovation&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/video&quot;,&quot;text&quot;:&quot;Explore video&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/speeches&quot;,&quot;text&quot;:&quot;Speeches&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]},{&quot;header&quot;:&quot;Popular topics&quot;,&quot;numberOfColumns&quot;:1,&quot;link&quot;:{&quot;href&quot;:&quot;&quot;,&quot;text&quot;:&quot;&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},&quot;links&quot;:[{&quot;href&quot;:&quot;/ideas/climate-adaptation&quot;,&quot;text&quot;:&quot;Climate adaptation&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/digital-public-infrastructure&quot;,&quot;text&quot;:&quot;Digital Public Infrastructure&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/science-innovation-technology/future-womens-health-technology&quot;,&quot;text&quot;:&quot;Women’s health innovations&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/science-innovation-technology/artificial-intelligence&quot;,&quot;text&quot;:&quot;AI for health equity&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null},{&quot;href&quot;:&quot;/ideas/science-innovation-technology/healthcare-timeline&quot;,&quot;text&quot;:&quot;20 years of innovation&quot;,&quot;title&quot;:&quot;&quot;,&quot;type&quot;:&quot;internal&quot;,&quot;lang&quot;:&quot;en&quot;,&quot;icon&quot;:null}]}],&quot;feature&quot;:{&quot;type&quot;:&quot;promo&quot;,&quot;data&quot;:{&quot;description&quot;:&quot;&quot;,&quot;link&quot;:{&quot;href&quot;:&quot;https://www.gatesfoundation.org/ideas/womens-economic-power/access-capital&quot;,&quot;text&quot;:&quot;Expanding women’s access to capital &quot;,&quot;title&quot;:null,&quot;type&quot;:null,&quot;lang&quot;:null,&quot;icon&quot;:null},&quot;image&quot;:{&quot;srcSet&quot;:&quot;/-/media/gfo/5ideas_articles/wep/access-to-capital-share-image.jpg?rev=fd529b6fff6d43b28e6a40eba139fcca&amp;w=270&amp;hash=C2DF99810B21A07CDCF1021F75347A1A 270w,/-/media/gfo/5ideas_articles/wep/access-to-capital-share-image.jpg?rev=fd529b6fff6d43b28e6a40eba139fcca&amp;w=540&amp;hash=BB711D4A71CCF4F457F49AE5FA13DF0E 540w,/-/media/gfo/5ideas_articles/wep/access-to-capital-share-image.jpg?rev=fd529b6fff6d43b28e6a40eba139fcca&amp;w=1280&amp;hash=0F2D518F408B25DD9D8C53A58ECB932D 1280w&quot;,&quot;alt&quot;:&quot;Expanding women’s access to capital&quot;,&quot;sizes&quot;:null,&quot;height&quot;:&quot;720&quot;,&quot;width&quot;:&quot;1280&quot;}}}}],&quot;search&quot;:{&quot;label&quot;:&quot;Search&quot;,&quot;searchUrl&quot;:&quot;/search&quot;,&quot;placeholder&quot;:&quot;Search&quot;,&quot;buttonText&quot;:&quot;Search&quot;}}'
+         data-dictionary='{&quot;subMenuBack&quot;:&quot;Back&quot;,&quot;openMenuText&quot;:&quot;&quot;,&quot;closeMenuText&quot;:&quot;&quot;}'
+         lang="en" dir="ltr"></section>
+        
+
+    </header>
+    <main class="main-content">
+        <div id="main-content"></div>
+        <div class="main-content-wrapper">
+<section class="component container container--bleed   " id="Container-c724f861-9c0c-432e-bbea-802e8c115ca8" 
+         style=" ">
+    <section class="component container container--100 ">
+    <div class="container__col container__col--100">
+        <h1 class="container u-visuallyhidden invisible-page-title">
+    Bill &amp; Melinda Gates Foundation
+    </h1>    <section class="simple-homepage-hero component js-simple-homepage-hero simple-homepage-hero--media simple-homepage-hero--image">
+            <div class="simple-homepage-hero__overlay  js-simple-homepage-hero-overlay">
+                <div class="simple-homepage-hero__container container js-simple-homepage-hero-container">
+                    <div class="simple-homepage-hero__content">
+                        <h2 class="simple-homepage-hero__title simple-homepage-hero__title--clickable js-make-clickable-element" data-location='/ideas/partners-human-potential' data-gtm-element="hero header" data-gtm-link="https://www.gatesfoundation.org/ideas/partners-human-potential" data-gtm-text="Introducing: &lt;br /&gt;Partners of Human Potential">
+                            Introducing: <br />Partners of Human Potential
+                        </h2>
+                            <div class="simple-homepage-hero__cta">
+                                <a href="/ideas/partners-human-potential" data-gtm-element="hero cta" data-gtm-link="https://www.gatesfoundation.org/ideas/partners-human-potential" class="arrow-link" data-gtm-text="Discover stories of good people doing great things...that lead to even greater things">
+<span>Discover stories of good people doing great things...that lead to even greater things</span>
+
+</a>
+ 
+                            </div>
+                    </div>
+                </div>
+            </div>
+                    <div class="simple-homepage-hero__container container">
+                <div class="simple-homepage-hero__content">
+                    <h2 class="simple-homepage-hero__title simple-homepage-hero__title--clickable js-make-clickable-element" data-location='/ideas/partners-human-potential' data-gtm-element="hero header" data-gtm-link="https://www.gatesfoundation.org/ideas/partners-human-potential" data-gtm-text="Introducing: &lt;br /&gt;Partners of Human Potential">
+                        Introducing: <br />Partners of Human Potential
+                    </h2>
+                        <div class="simple-homepage-hero__cta">
+                            <a href="/ideas/partners-human-potential" data-gtm-element="hero cta" data-gtm-link="https://www.gatesfoundation.org/ideas/partners-human-potential" class="arrow-link" data-gtm-text="Discover stories of good people doing great things...that lead to even greater things">
+<span>Discover stories of good people doing great things...that lead to even greater things</span>
+
+</a>
+
+                        </div>
+                </div>
+            </div>
+        <figure class="simple-homepage-hero__media">
+                <span class="simple-homepage-hero__image-wrapper simple-homepage-hero__image-wrapper--clickable js-make-clickable-element" data-location='/ideas/partners-human-potential' data-gtm-element="hero image" data-gtm-link="https://www.gatesfoundation.org/ideas/partners-human-potential">
+<img alt="Portraits of Human Potential" srcset="/-/media/gfo/5ideas_articles/portraits-of-potential/bmgf_manifesto-hero-motion.gif?rev=8839e2826f3d4e818a9868c046d5719b 1920w, /-/media/gfo/5ideas_articles/portraits-of-potential/bmgf_manifesto-hero-motion.gif?rev=8839e2826f3d4e818a9868c046d5719b 1600w, /-/media/gfo/5ideas_articles/portraits-of-potential/bmgf_manifesto-hero-motion.gif?rev=8839e2826f3d4e818a9868c046d5719b 1200w, /-/media/gfo/5ideas_articles/portraits-of-potential/bmgf_manifesto-hero-motion.gif?rev=8839e2826f3d4e818a9868c046d5719b 800w, /-/media/gfo/5ideas_articles/portraits-of-potential/bmgf_manifesto-hero-motion.gif?rev=8839e2826f3d4e818a9868c046d5719b 400w" loading="eager" sizes="&#40;min-width: 1570px&#41; 1570px, 100vw" height="1080" width="1920" class="image-element" style="--image-height:1080; --image-width:1920">                </span>
+                            </figure>
+    </section>
+
+    </div>
+</section>
+
+</section>
+<section class="component container container--100 ">
+    <div class="container__col container__col--100">
+        <section class="component manual-internal-promo-slider js-manual-internal-promo-slider">
+    <div class="manual-internal-promo-slider__container container">
+        <div class="manual-internal-promo-slider__header section-headline">
+                <h2 class="manual-internal-promo-slider__title section-headline__title">
+                    Trending topics
+                </h2>
+            <div class="manual-internal-promo-slider__controls section-headline__cta">
+                <button class="btn manual-internal-promo-slider__prev js-slide-prev-button"
+                        type="button"
+                        aria-label="previous">
+                    <svg class="icon manual-internal-promo-slider__icon-prev" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-left">
+
+	</use>
+</svg>
+                </button>
+                <button class="btn manual-internal-promo-slider__next js-slide-next-button"
+                        type="button"
+                        aria-label="next">
+                    <svg class="icon manual-internal-promo-slider__icon-next" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+                </button>
+            </div>
+        </div>
+        <div class="manual-internal-promo-slider__controls-full">
+            <button class="btn manual-internal-promo-slider__prev js-slide-prev-button"
+                    type="button"
+                    aria-label="previous">
+                <svg class="icon manual-internal-promo-slider__icon-prev" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-left">
+
+	</use>
+</svg>
+            </button>
+            <button class="btn manual-internal-promo-slider__next js-slide-next-button"
+                    type="button"
+                    aria-label="next">
+                <svg class="icon manual-internal-promo-slider__icon-next" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+            </button>
+            <div class="manual-internal-promo-slider__slide-bar">
+                <div class="manual-internal-promo-slider__slide-bar-pos js-slide-position-bar"></div>
+            </div>
+        </div>
+        <div class="manual-internal-promo-slider__slider js-slide-container"
+             style="display:none">
+                                <section class="trending-topic">
+                        <a href="/ideas/articles/ai-ultrasound-maternal-health" title="Ultrasounds in hand, midwives are transforming maternal health" class="trending-topic__card-link">
+                                <img srcset="/-/media/gfo/5ideas_articles/articles/20240501-ai-ultrasound-maternal-health/ga17479470_kf685158_1600x1000.jpg?rev=c87d7342f9514af8a8ab5315bd4892fc&amp;w=650&amp;hash=C18846ABF181F5CA053E2FAAE33620DE 1x, /-/media/gfo/5ideas_articles/articles/20240501-ai-ultrasound-maternal-health/ga17479470_kf685158_1600x1000.jpg?rev=c87d7342f9514af8a8ab5315bd4892fc&amp;w=1300&amp;hash=C05AA3C9461C10B79F686BB9C3D74DDF 2x" alt="Jane Waire performs an ultrasound on Faith Nwanza in Mai Mahiu, Kenya." loading="lazy"/>
+                                <div class="trending-topic__content">
+                                        <div class="trending-topic__content-type">Article</div>
+                                                                            <div class="link trending-topic__title link">
+                                            Ultrasounds in hand, midwives are transforming maternal health
+                                        </div>
+                                                                    </div>
+                        </a>
+                    </section>
+                    <section class="trending-topic">
+                        <a href="/ideas/media-center/press-releases/2024/04/global-immunization-fifty-years" title="Global immunization efforts have saved at least 154 million lives over the past 50 years" class="trending-topic__card-link">
+                                <img srcset="/-/media/placeholders/fullmark_light.png?rev=6cbb569adb9b46939a9af13f877f1e8b&amp;w=650&amp;hash=104A76DC89D0CE4C67E4F895E861D075 650w,/-/media/placeholders/fullmark_light.png?rev=6cbb569adb9b46939a9af13f877f1e8b&amp;w=1601&amp;hash=D8D4FECFAB10D9A181A1B67621B1EF55 1601w" alt="Bill and Melinda Gates Foundation" loading="lazy"/>
+                                <div class="trending-topic__content">
+                                        <div class="trending-topic__content-type">Press release</div>
+                                                                            <div class="link trending-topic__title link">
+                                            Global immunization efforts have saved at least 154 million lives over the past 50 years
+                                        </div>
+                                                                    </div>
+                        </a>
+                    </section>
+                    <section class="trending-topic">
+                        <a href="/ideas/articles/resources-womens-health-pph" title="Imagine if women’s health had the resources it deserves" class="trending-topic__card-link">
+                                <img srcset="/-/media/gfo/5ideas_articles/articles/20240522-resources-womens-health-pph/hero_ideas_az-hph-repost_ga17402452_rk676153_0522024_1600x1000.jpg?rev=78ce4e918949479ab2919d7e97f9f13c&amp;w=650&amp;hash=51A450ADB6CB2E6F8F8F9FC0D925727D 1x, /-/media/gfo/5ideas_articles/articles/20240522-resources-womens-health-pph/hero_ideas_az-hph-repost_ga17402452_rk676153_0522024_1600x1000.jpg?rev=78ce4e918949479ab2919d7e97f9f13c&amp;w=1300&amp;hash=D9829448B9FA4852872F6C57937F4913 2x" alt="Anita Zaidi tours the Veerangana Awanti Bai Women Hospital with physician, Kirti Tiwari in Lucknow, Uttar Pradesh, India, on November 7, 2023." loading="lazy"/>
+                                <div class="trending-topic__content">
+                                        <div class="trending-topic__content-type">Article</div>
+                                                                            <div class="link trending-topic__title link">
+                                            Imagine if women’s health had the resources it deserves
+                                        </div>
+                                                                    </div>
+                        </a>
+                    </section>
+                    <section class="trending-topic">
+                        <a href="/ideas/maternal-immunization" title="The power of maternal vaccines" class="trending-topic__card-link">
+                                <img srcset="/-/media/gfo/5ideas_articles/maternal-immunization/social-inequities---mi_16x10.jpg?rev=ede7a5e7c731473bb03013270bcaf509&amp;w=1024&amp;h=640&amp;hash=BD3B3EF1A41E1426EABD849D596497B3 1024w" alt="What is maternal immunization?" loading="lazy"/>
+                                <div class="trending-topic__content">
+                                                                            <div class="link trending-topic__title link">
+                                            The power of maternal vaccines
+                                        </div>
+                                                                    </div>
+                        </a>
+                    </section>
+        </div>
+    </div>
+</section>
+
+    </div>
+</section>
+
+<section class="component container container--bleed container--dark  container--background" id="Container-0e41ab5f-2e14-4e1c-a821-ccbaeda399ca" 
+         style="--background-color:#0F0F0F ">
+    <section class="section-headline component component--headline container section-headline--no-border section-headline--dark"
+         lang="en" dir="ltr">
+    <h2 class="section-headline__title">Ideas</h2>
+
+        <div class="section-headline__cta">
+            <a href="/ideas" class="arrow-link arrow-link--arrow">
+<span>Learn more about Ideas</span>
+<svg class="icon icon--arrow-right" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+</a>
+  
+        </div>
+
+        <div class="section-headline__subtitle">
+            Read the latest stories, research, and news from across the foundation.
+        </div>
+</section>
+<section class="component container container--70-30  ">
+    <div class="container__col container__col--70 ">
+        <section class="article-promo component" lang="en" dir="ltr">
+            <figure class="article-promo__media" >
+                <a href="/ideas/articles/womens-economic-power-health" title="Supporting women’s health is the key to advancing women’s economic power" data-gtm-element="promo image" data-gtm-link="/ideas/articles/womens-economic-power-health">
+                    <img srcset="/-/media/gfo/5ideas_articles/articles/20240516-womens-economic-power-health/hero_ideas_bbc-wep-health_ga17586655_bo690363_05172024_1600x1000.jpg?rev=6f3cc661fd8140f7a4881f1628d63aea&amp;w=400&amp;hash=0E9C7A84417EE8F6BE67F34B9EDA2290 400w,/-/media/gfo/5ideas_articles/articles/20240516-womens-economic-power-health/hero_ideas_bbc-wep-health_ga17586655_bo690363_05172024_1600x1000.jpg?rev=6f3cc661fd8140f7a4881f1628d63aea&amp;w=800&amp;hash=C27E39160FADFFD1BA25AAF9488A5AAE 800w,/-/media/gfo/5ideas_articles/articles/20240516-womens-economic-power-health/hero_ideas_bbc-wep-health_ga17586655_bo690363_05172024_1600x1000.jpg?rev=6f3cc661fd8140f7a4881f1628d63aea&amp;w=1200&amp;hash=DAFABE2E710E280EED291F7F4B9E9A90 1200w,/-/media/gfo/5ideas_articles/articles/20240516-womens-economic-power-health/hero_ideas_bbc-wep-health_ga17586655_bo690363_05172024_1600x1000.jpg?rev=6f3cc661fd8140f7a4881f1628d63aea&amp;w=1600&amp;hash=42F137C7A910815C2B755879DA51B885 1600w" alt="Dr. Stellah Bosire, centered, walks with members of the group Feminists for Peace, Rights and Justice Center in Kibera, Kenya.&#160;"  sizes="(min-width: 770px) 770px, 100vw" loading="lazy"/>
+                </a>
+            </figure>
+    <div class="article-promo__content">
+                <div class="article-promo__eyebrow" >
+                    
+                </div>
+                        <h2 class="article-promo__title">
+                    <a class="link" href="/ideas/articles/womens-economic-power-health" data-gtm-element="promo header" data-gtm-link="/ideas/articles/womens-economic-power-health" data-gtm-text="Supporting women’s health is the key to advancing women’s economic power">Supporting women’s health is the key to advancing women’s economic power</a>
+                </h2>
+                        <div class="article-promo__description">
+                    No country can grow more prosperous or healthier while leaving behind half of its population. Marie Ba tells us what’s at stake if countries do not address the women’s health gap. 
+                </div>
+                    <div class="article-promo__author">
+                <span class="article-promo__author-text">
+                            By  Marie Ba
+                </span>
+                    <span class="article-promo__location">
+                        Director, Ouagadougou Partnership Coordination Unit
+                    </span>
+            </div>
+    </div>
+</section>
+
+    </div>
+    <div class="container__col container__col--30 ">
+        <section class="article-promo component" lang="en" dir="ltr">
+            <figure class="article-promo__media" >
+                <a href="/ideas/articles/james-mutinda-music-farmer" title="Through music and nutrition, a farmer’s passions come alive" data-gtm-element="promo image" data-gtm-link="/ideas/articles/james-mutinda-music-farmer">
+                    <img srcset="/-/media/gfo/5ideas_articles/articles/20240410-james-mutinda-portrait/ga17317775_bo668462_1600x1000.jpg?rev=1b2672120ee64022a521315a57ff4b44&amp;w=400&amp;hash=864DF97DA955397E108D3A3CCF59C554 400w,/-/media/gfo/5ideas_articles/articles/20240410-james-mutinda-portrait/ga17317775_bo668462_1600x1000.jpg?rev=1b2672120ee64022a521315a57ff4b44&amp;w=800&amp;hash=7E98719C31BBA98B0A96B083DE82C5CC 800w,/-/media/gfo/5ideas_articles/articles/20240410-james-mutinda-portrait/ga17317775_bo668462_1600x1000.jpg?rev=1b2672120ee64022a521315a57ff4b44&amp;w=1200&amp;hash=BE8411CE86B33040D3CA37C5C0D465D8 1200w,/-/media/gfo/5ideas_articles/articles/20240410-james-mutinda-portrait/ga17317775_bo668462_1600x1000.jpg?rev=1b2672120ee64022a521315a57ff4b44&amp;w=1600&amp;hash=AACE07F0210660049027A0B08CBC7AB0 1600w" alt="James Mutinda, a farmer, teaches music to students using recycled items for instruments at Lulu Light School in Machakos County, Kenya, on September 19, 2023."  sizes="(min-width: 770px) 770px, 100vw" loading="lazy"/>
+                </a>
+            </figure>
+    <div class="article-promo__content">
+                <div class="article-promo__eyebrow" >
+                    
+                </div>
+                        <h2 class="article-promo__title">
+                    <a class="link" href="/ideas/articles/james-mutinda-music-farmer" data-gtm-element="promo header" data-gtm-link="/ideas/articles/james-mutinda-music-farmer" data-gtm-text="Through music and nutrition, a farmer’s passions come alive">Through music and nutrition, a farmer’s passions come alive</a>
+                </h2>
+                            <div class="article-promo__author">
+                <span class="article-promo__author-text">
+                </span>
+            </div>
+    </div>
+</section>
+
+
+    <section class="component js-email-signup email-signup email-signup--30-percent email-signup--top-border" 
+             style="" 
+             data-scroll-depth=""
+             lang="en" dir="ltr">
+        <div class="email-signup__inner ">
+                    <button class="email-signup__sticky-toggle js-email-sticky-toggle">Subscribe to <em>The Optimist</em> to get weekly updates on the latest in global health, gender equality, education, and more.</button>
+                <div class="email-signup__details">
+                    <span class="email-signup__title">Subscribe to <em>The Optimist</em> to get weekly updates on the latest in global health, gender equality, education, and more.</span>
+                </div>
+                <form class="sc-form js-form email-signup__form js-sc-email-signup1"
+                      action="https://go.communications.gatesfoundation.org/l/701613/2020-10-13/d1rjv"
+                      data-newsletter-signup-component="true"
+                      data-newsletter-signup-component-name=Small
+                      method="get"
+                      novalidate
+                      data-goal={BCE81E6A-A111-480F-A7DC-5AEEA2EE14AF}>
+                    <label class="sc-form-item js-form-required">
+                        <span class="sc-form-item__label">Email address</span>
+                        <input type="email"
+                               class="sc-form-item__field js-email-signup-input"
+                               id="8b82085a-3402-49ea-a400-b0bb4ab67eb1"
+                               data-type="email"
+                               aria-required="true"
+                               autocomplete="email"
+                               placeholder=""
+                               name="email"
+                               value="" />
+                        <span role="alert" class="sc-form-item__error-msg">
+                            Please enter a valid email address
+                        </span>
+                    </label>
+                    <div class="sc-form__button-row email-signup__button-row">
+                        <button type="submit"
+                                class="btn btn--primary email-signup__submit-button">
+                            Subscribe
+                        </button>
+                    </div>
+                    <div class="email-signup__terms">
+                        <p style="font-size: 16px;">By submitting your email to subscribe, you agree to the Bill &amp; Melinda Gates Foundation's <a class="link" href="/privacy-and-cookies-notice">Privacy &amp; Cookies Notice</a></p>
+                    </div>
+                </form>
+            
+        </div>
+    </section>
+
+    </div>
+</section>
+
+</section>
+
+<section class="component container container--bleed   " id="Container-354acd34-5df8-4d09-9709-c87e3d0f8cec" 
+         style=" ">
+    <section class="section-headline component component--headline container section-headline--no-border "
+         lang="en" dir="ltr">
+    <h2 class="section-headline__title">Videos</h2>
+
+        <div class="section-headline__cta">
+            <a href="/video" class="arrow-link arrow-link--arrow">
+<span>See all videos</span>
+<svg class="icon icon--arrow-right" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+</a>
+  
+        </div>
+
+</section>
+<section class="component container container--30-30-30 ">
+    <div class="container__col container__col--30">
+        <section class="article-promo component" lang="en" dir="ltr">
+            <figure class="article-promo__media" >
+                <a href="/video" title="What does Women’s Economic Power mean?" data-gtm-element="promo image" data-gtm-link="/video">
+                    <img srcset="/-/media/gfo/videos/womens-economic-power-youtube-thumb_1600x1000.jpg?rev=eaed83958e5348ea9318e28b3a5a8dc9&amp;w=400&amp;hash=5DCFC046B4628232988B799DC9633CF9 400w,/-/media/gfo/videos/womens-economic-power-youtube-thumb_1600x1000.jpg?rev=eaed83958e5348ea9318e28b3a5a8dc9&amp;w=800&amp;hash=8D15B6655DE4C12337D80428C32BFE73 800w,/-/media/gfo/videos/womens-economic-power-youtube-thumb_1600x1000.jpg?rev=eaed83958e5348ea9318e28b3a5a8dc9&amp;w=1200&amp;hash=1FBAB9E37DA312AD238ECA1127EFB8D3 1200w,/-/media/gfo/videos/womens-economic-power-youtube-thumb_1600x1000.jpg?rev=eaed83958e5348ea9318e28b3a5a8dc9&amp;w=1600&amp;hash=F16388688F26DA134C356C23A158187F 1600w" alt="Womens Economic Power"  sizes="(min-width: 770px) 770px, 100vw" loading="lazy"/>
+                </a>
+            </figure>
+    <div class="article-promo__content">
+                        <h2 class="article-promo__title">
+                    <a class="link" href="/video" data-gtm-element="promo header" data-gtm-link="/video" data-gtm-text="What does Women’s Economic Power mean?">What does Women’s Economic Power mean?</a>
+                </h2>
+                        <div class="article-promo__description">
+                    Why we must go beyond empowerment programs and build economic systems that work for women.
+                </div>
+                    <div class="article-promo__author">
+                <span class="article-promo__author-text">
+                </span>
+            </div>
+    </div>
+</section>
+
+    </div>
+    <div class="container__col container__col--30">
+        <section class="article-promo component" lang="en" dir="ltr">
+            <figure class="article-promo__media" >
+                <a href="/video/darlington-akogo" title="A scientist uses AI to give Africans control of their health" data-gtm-element="promo image" data-gtm-link="/video/darlington-akogo">
+                    <img srcset="/-/media/gfo/5ideas_articles/articles/20231108-six-scientists-innovations-transform-future/darlington-akoko.png?rev=f7d36cef6ad54267a75cd0b0ed095a64&amp;w=400&amp;hash=2D5A31693872A79DD294C523FAAE42A1 400w,/-/media/gfo/5ideas_articles/articles/20231108-six-scientists-innovations-transform-future/darlington-akoko.png?rev=f7d36cef6ad54267a75cd0b0ed095a64&amp;w=800&amp;hash=877817A6535D79ED3181970FA771A2A9 800w,/-/media/gfo/5ideas_articles/articles/20231108-six-scientists-innovations-transform-future/darlington-akoko.png?rev=f7d36cef6ad54267a75cd0b0ed095a64&amp;w=1200&amp;hash=4C459803AD8053D6EA22C6A6A1CA663A 1200w,/-/media/gfo/5ideas_articles/articles/20231108-six-scientists-innovations-transform-future/darlington-akoko.png?rev=f7d36cef6ad54267a75cd0b0ed095a64&amp;w=1600&amp;hash=E5C2CA2FA804B304AE05D753319E8789 1600w" alt="Darlington Akoko"  sizes="(min-width: 770px) 770px, 100vw" loading="lazy"/>
+                </a>
+            </figure>
+    <div class="article-promo__content">
+                <div class="article-promo__eyebrow" >
+                    
+                </div>
+                        <h2 class="article-promo__title">
+                    <a class="link" href="/video/darlington-akogo" data-gtm-element="promo header" data-gtm-link="/video/darlington-akogo" data-gtm-text="A scientist uses AI to give Africans control of their health">A scientist uses AI to give Africans control of their health</a>
+                </h2>
+                        <div class="article-promo__description">
+                    Darlington Akogo, Founder &amp; CEO of minoHealth AI Labs, discusses how his product can save lives with a “digital doctor.”
+                </div>
+                    <div class="article-promo__author">
+                <span class="article-promo__author-text">
+                </span>
+            </div>
+    </div>
+</section>
+
+    </div>
+    <div class="container__col container__col--30">
+        <section class="article-promo component" lang="en" dir="ltr">
+            <figure class="article-promo__media" >
+                <a href="/video/bill-polio-survivors" title="Bill Gates talks with polio survivors" data-gtm-element="promo image" data-gtm-link="/video/bill-polio-survivors">
+                    <img srcset="/-/media/gfo/5ideas_articles/articles/20231113-bill-polio-survivors/polio-survivors-social-share_1600x1000.jpg?rev=4721f26df176446a86b491d78be7cc02&amp;w=400&amp;hash=664E4E65759E214F9D440963A037ACED 400w,/-/media/gfo/5ideas_articles/articles/20231113-bill-polio-survivors/polio-survivors-social-share_1600x1000.jpg?rev=4721f26df176446a86b491d78be7cc02&amp;w=800&amp;hash=8C1CB9C446F34A2E02E6623211F6CBD2 800w,/-/media/gfo/5ideas_articles/articles/20231113-bill-polio-survivors/polio-survivors-social-share_1600x1000.jpg?rev=4721f26df176446a86b491d78be7cc02&amp;w=1200&amp;hash=920B8365ACA6127602A8B2EBB77E7320 1200w,/-/media/gfo/5ideas_articles/articles/20231113-bill-polio-survivors/polio-survivors-social-share_1600x1000.jpg?rev=4721f26df176446a86b491d78be7cc02&amp;w=1600&amp;hash=350B4338F7676ED45B0FF201AC1C2A5C 1600w" alt="Bill Gates with polio survivors and their families."  sizes="(min-width: 770px) 770px, 100vw" loading="lazy"/>
+                </a>
+            </figure>
+    <div class="article-promo__content">
+                <div class="article-promo__eyebrow" >
+                    
+                </div>
+                        <h2 class="article-promo__title">
+                    <a class="link" href="/video/bill-polio-survivors" data-gtm-element="promo header" data-gtm-link="/video/bill-polio-survivors" data-gtm-text="Bill Gates talks with polio survivors">Bill Gates talks with polio survivors</a>
+                </h2>
+                        <div class="article-promo__description">
+                    Why is polio eradication important? On his recent trip to Brussels, Bill Gates sat down with polio survivors and their families (hosted by Jacob Beautemps from Breaking Lab) to learn about their experiences with this preventable disease. 
+                </div>
+                    <div class="article-promo__author">
+                <span class="article-promo__author-text">
+                </span>
+            </div>
+    </div>
+</section>
+
+    </div>
+</section>
+
+</section>
+<section class="component container container--100 ">
+    <div class="container__col container__col--100">
+        <section class="section-headline component component--headline container  "
+         lang="en" dir="ltr">
+    <h2 class="section-headline__title">Foundation facts</h2>
+
+
+        <div class="section-headline__subtitle">
+            For the year ended December 31, 2022. Amount in U.S. dollars.
+        </div>
+</section>
+    <section class="component manual-internal-promo-slider js-manual-internal-promo-slider manual-internal-promo-slider--footer-controls manual-internal-promo-slider--simple"
+             data-slides-to-show="5"
+             data-slides-to-scroll="1"
+             data-show-circles="false">
+        <div class="manual-internal-promo-slider__container container">
+
+            <div class="manual-internal-promo-slider__header\">
+                <div class="manual-internal-promo-slider__controls section-headline__cta">
+                    <button class="btn manual-internal-promo-slider__prev js-slide-prev-button"
+                            type="button"
+                            aria-label="previous">
+                        <svg class="icon icon--arrow-left manual-internal-promo-slider__icon-prev" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-left">
+
+	</use>
+</svg>
+                    </button>
+                    <button class="btn manual-internal-promo-slider__next js-slide-next-button"
+                            type="button"
+                            aria-label="next">
+                        <svg class="icon icon--arrow-right manual-internal-promo-slider__icon-next" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+                    </button>
+                </div>
+            </div>
+            <div class="manual-internal-promo-slider__controls-full">
+                <button class="btn manual-internal-promo-slider__prev js-slide-prev-button"
+                        type="button"
+                        aria-label="previous">
+                    <svg class="icon icon--arrow-left manual-internal-promo-slider__icon-prev" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-left">
+
+	</use>
+</svg>
+                </button>
+                <button class="btn manual-internal-promo-slider__next js-slide-next-button"
+                        type="button"
+                        aria-label="next">
+                    <svg class="icon icon--arrow-right manual-internal-promo-slider__icon-next" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#arrow-right">
+
+	</use>
+</svg>
+                </button>
+                <div class="manual-internal-promo-slider__slide-bar">
+                    <div class="manual-internal-promo-slider__slide-bar-pos js-slide-position-bar"></div>
+                </div>
+            </div>
+            <div class="manual-internal-promo-slider__slider js-slide-container"
+                 style="display:none">
+                    <section class="component quick-stat js-quick-stat">
+                        <div class="quick-stat__container">
+                            <div class="quick-stat__value">1,960</div>
+                            <div class="quick-stat__description">Number of grants</div>
+                        </div>
+                    </section>
+                    <section class="component quick-stat js-quick-stat">
+                        <div class="quick-stat__container">
+                            <div class="quick-stat__value">$7.0B</div>
+                            <div class="quick-stat__description">Total charitable support</div>
+                        </div>
+                    </section>
+                    <section class="component quick-stat js-quick-stat">
+                        <div class="quick-stat__container">
+                            <div class="quick-stat__value">1,217</div>
+                            <div class="quick-stat__description">Grantees</div>
+                        </div>
+                    </section>
+                    <section class="component quick-stat js-quick-stat">
+                        <div class="quick-stat__container">
+                            <div class="quick-stat__value">41</div>
+                            <div class="quick-stat__description">Program strategies</div>
+                        </div>
+                    </section>
+                    <section class="component quick-stat js-quick-stat">
+                        <div class="quick-stat__container">
+                            <div class="quick-stat__value">1,818</div>
+                            <div class="quick-stat__description">Employees</div>
+                        </div>
+                    </section>
+            </div>
+        </div>
+    </section>
+<section class="section-headline component component--headline container  "
+         lang="en" dir="ltr">
+    <h2 class="section-headline__title">More about the foundation</h2>
+
+
+</section>
+<section class="component grouped-cta-cards  " >
+    <div class="grouped-cta-cards__items">
+        <div class="cta-card component   " 
+      lang="en" dir="ltr">
+        <img alt="" srcset="/-/media/gfo/2home/our-role.png?rev=9eb9d0761ea34bac93765292c511b58e&amp;w=370&amp;h=296&amp;hash=682E4BFE128E986F5EAAA217763700E6 370w" />
+    <div class="cta-card__title">Our role</div>
+        <div class="cta-card__description">
+            <p>For 20 years, the Bill &amp; Melinda Gates Foundation has been committed to fighting the greatest inequities in the world. </p>
+        </div>
+            <ul class="cta-card__links" aria-label="Our role">
+
+                <li class="cta-card__link">
+                    <a href="/about/our-role" data-gtm-element="promo cta" data-gtm-link="https://www.gatesfoundation.org/about/our-role" class="arrow-link" data-gtm-text="Learn more">
+<span>Learn more</span>
+
+</a>
+                </li>
+                                                        </ul>
+</div>
+<div class="cta-card component   " 
+      lang="en" dir="ltr">
+        <img alt="" srcset="/-/media/gfo/2home/how-we-work.png?rev=de12196b805e4426994843125e8d6fa1&amp;w=370&amp;h=296&amp;hash=94A3E6A8981EC3708EC69A2A855881B4 370w" />
+    <div class="cta-card__title">How we work</div>
+        <div class="cta-card__description">
+            <p>We are focused on results. Those that can be measured. And those measured in ways beyond numbers.</p>
+        </div>
+            <ul class="cta-card__links" aria-label="How we work">
+
+                <li class="cta-card__link">
+                    <a href="/about/how-we-work" data-gtm-element="promo cta" data-gtm-link="https://www.gatesfoundation.org/about/how-we-work" class="arrow-link" data-gtm-text="Learn more">
+<span>Learn more</span>
+
+</a>
+                </li>
+                                                        </ul>
+</div>
+<div class="cta-card component   " 
+      lang="en" dir="ltr">
+        <img alt="" srcset="/-/media/gfo/2home/our-story.png?rev=cf4e13999a0d49009f046d9042c63a4e&amp;w=370&amp;h=296&amp;hash=19C98E89F90D8B1FB4A2662A5E01940E 370w" />
+    <div class="cta-card__title">Our story</div>
+        <div class="cta-card__description">
+            <p>Learn about the origins of the foundation and the values that drive our work.</p>
+        </div>
+            <ul class="cta-card__links" aria-label="Our story">
+
+                <li class="cta-card__link">
+                    <a href="/about/our-story" data-gtm-element="promo cta" data-gtm-link="https://www.gatesfoundation.org/about/our-story" class="arrow-link" data-gtm-text="Learn more">
+<span>Learn more</span>
+
+</a>
+                </li>
+                                                        </ul>
+</div>
+    </div>
+</section> 
+    </div>
+</section>
+</div>
+    </main>
+    <footer>
+        
+<section class="global-footer global-footer--dark" dir="ltr">
+    <div class="global-footer__container container">
+            <div class="global-footer__logo" lang="en" dir="ltr">
+        <a href="/" class="global-footer__logo-link">
+<img src="/-/media/logos/logolgwhite.svg?iar=0&amp;rev=425c4ec719be458db783caa5fa47d85d&amp;hash=069E27828A9E16C6797BC4DF01FFFBBF" class="global-footer__logo-image" alt="Bill & Melinda Gates Foundation" srcset="/-/media/logos/logolgwhite.svg?rev=425c4ec719be458db783caa5fa47d85d&#38;hash=A44C53851507848E18F83374DEC5F0A0">                    </a>
+    </div>
+
+        <div class="global-footer__main-content">
+                <div class="global-footer__description" lang="en">
+        We are a nonprofit fighting poverty, disease, and inequity around the world.
+    </div>
+
+    <nav class="global-footer__main-links global-footer__main-links--mobile"
+         aria-label="Main areas">
+        <ul class="global-footer__items">
+                    <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/about">About</a>                    </li>
+                    <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/our-work">Our work</a>                    </li>
+                    <li class="global-footer__link-item" lang="en" dir="ltr">
+<a href="/ideas" class="global-footer__link link">Ideas</a>                    </li>
+        </ul>
+    </nav>
+    <div class="global-footer__social-icons">
+                <div class="social-connect-icons">
+            <div class="social-connect-icons__icons">
+<a href="https://twitter.com/gatesfoundation" aria-label="follow Gates Foundation on X" rel="noopener noreferrer" title="follow Gates Foundation on X" class="social-connect-icons__button js-social-follow" target="_blank"><svg class="icon icon--social-twitter icon--32x32" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#social-twitter">
+
+	</use>
+</svg></a><a href="https://www.facebook.com/gatesfoundation/" aria-label="follow Gates Foundation on Facebook" rel="noopener noreferrer" title="follow Gates Foundation on Facebook" class="social-connect-icons__button js-social-follow" target="_blank"><svg class="icon icon--social-facebook icon--32x32" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#social-facebook">
+
+	</use>
+</svg></a><a href="https://www.linkedin.com/company/bill-&amp;-melinda-gates-foundation/" aria-label="follow Gates Foundation on LinkedIn" rel="noopener noreferrer" title="follow Gates Foundation on LinkedIn" class="social-connect-icons__button js-social-follow" target="_blank"><svg class="icon icon--social-linkedin icon--32x32" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#social-linkedin">
+
+	</use>
+</svg></a><a href="https://www.instagram.com/gatesfoundation/" aria-label="follow Gates Foundation on Instagram" rel="noopener noreferrer" title="follow Gates Foundation on Instagram" class="social-connect-icons__button js-social-follow" target="_blank"><svg class="icon icon--social-instagram icon--32x32" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#social-instagram">
+
+	</use>
+</svg></a><a href="https://www.youtube.com/user/GatesFoundation/" aria-label="follow Gates Foundation on YouTube" rel="noopener noreferrer" title="follow Gates Foundation on YouTube" class="social-connect-icons__button js-social-follow" target="_blank"><svg class="icon icon--social-youtube icon--32x32" aria-hidden="true" focusable="false">
+	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/Areas/GFO/assets/img/svg-sprite.svg?v=9e9d012ad1c988a7255f778228b235971dd2c4e3#social-youtube">
+
+	</use>
+</svg></a>            </div>
+        </div>
+
+        </div>
+        <nav class="global-footer__main-links global-footer__main-links--desktop"
+             aria-label="Main areas">
+            <ul class="global-footer__items">
+                        <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/about">About</a>                        </li>
+                        <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/our-work">Our work</a>                        </li>
+                        <li class="global-footer__link-item" lang="en" dir="ltr">
+<a href="/ideas" class="global-footer__link link">Ideas</a>                        </li>
+            </ul>
+        </nav>
+<nav class="global-footer__contact-links" aria-label="Contact Us">
+    <ul class="global-footer__items">
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/about/contact">Contact</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/ideas/media-center">Media Center</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/about/careers">Careers</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" rel="noopener noreferrer" href="https://www.discovergates.org/" target="_blank">Discovery Center</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" rel="noopener noreferrer" href="https://www.gatesphilanthropypartners.org/" target="_blank">Give with us</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" rel="noopener noreferrer" href="https://www.gatesfoundation.org/goalkeepers/" target="_blank">Goalkeepers</a>            </li>
+    </ul>
+</nav><nav class="global-footer__legal-links" aria-label="Legal Information">
+    <ul class="global-footer__items">
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/about/contact/reporting-scams">Reporting scams</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" rel="noopener noreferrer" href="https://secure.ethicspoint.com/domain/media/en/gui/7589/index.html " target="_blank">Ethics reporting</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/privacy-and-cookies-notice">Privacy &amp; Cookies Notice</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" href="/terms-of-use">Terms of Use</a>            </li>
+            <li class="global-footer__link-item" lang="en" dir="ltr">
+<a class="global-footer__link link" rel="noopener noreferrer" href="https://www.gatesfoundation.org/brandguidelines" target="_blank">Brand guidelines</a>            </li>
+    </ul>
+</nav>
+            <div class="global-footer__copyright">
+                    <div class="footer-copyright" lang="en" >1991-2024 Bill & Melinda Gates Foundation. All rights reserved.</div>
+
+                </div>
+        </div>
+    </div>
+</section>
+
+    </footer>
+</div>
+    <script src="/Areas/Common/assets/js/oldBrowser.js"></script>
+<script src="/Areas/GFO/assets/js/libraries-generated.js?v=9e9d012ad1c988a7255f778228b235971dd2c4e3"></script><script src="/Areas/GFO/assets/js/index-generated.js?v=9e9d012ad1c988a7255f778228b235971dd2c4e3"></script><script src="/assets/js/email-signup-generated.js?v=9e9d012ad1c988a7255f778228b235971dd2c4e3"></script>
+</body></html>

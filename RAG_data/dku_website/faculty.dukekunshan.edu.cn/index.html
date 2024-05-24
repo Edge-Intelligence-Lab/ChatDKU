@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+<meta name="Generator" content="Drupal 10 (https://www.drupal.org)" />
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script type="text/javascript" data-toolbar-anti-flicker-loading>(function() {
+  const toolbarState = sessionStorage.getItem('Drupal.toolbar.toolbarState')
+    ? JSON.parse(sessionStorage.getItem('Drupal.toolbar.toolbarState'))
+    : false;
+  // These are classes that toolbar typically adds to <body>, but this code
+  // executes before the first paint, when <body> is not yet present. The
+  // classes are added to <html> so styling immediately reflects the current
+  // toolbar state. The classes are removed after the toolbar completes
+  // initialization.
+  const classesToAdd = ['toolbar-loading', 'toolbar-anti-flicker'];
+  if (toolbarState) {
+    const {
+      orientation,
+      hasActiveTab,
+      isFixed,
+      activeTray,
+      activeTabId,
+      isOriented,
+      userButtonMinWidth
+    } = toolbarState;
+
+    classesToAdd.push(
+      orientation ? `toolbar-` + orientation + `` : 'toolbar-horizontal',
+    );
+    if (hasActiveTab !== false) {
+      classesToAdd.push('toolbar-tray-open');
+    }
+    if (isFixed) {
+      classesToAdd.push('toolbar-fixed');
+    }
+    if (isOriented) {
+      classesToAdd.push('toolbar-oriented');
+    }
+
+    if (activeTray) {
+      // These styles are added so the active tab/tray styles are present
+      // immediately instead of "flickering" on as the toolbar initializes. In
+      // instances where a tray is lazy loaded, these styles facilitate the
+      // lazy loaded tray appearing gracefully and without reflow.
+      const styleContent = `
+      .toolbar-loading #` + activeTabId + ` {
+        background-image: linear-gradient(rgba(255, 255, 255, 0.25) 20%, transparent 200%);
+      }
+      .toolbar-loading #` + activeTabId + `-tray {
+        display: block; box-shadow: -1px 0 5px 2px rgb(0 0 0 / 33%);
+        border-right: 1px solid #aaa; background-color: #f5f5f5;
+        z-index: 0;
+      }
+      .toolbar-loading.toolbar-vertical.toolbar-tray-open #` + activeTabId + `-tray {
+        width: 15rem; height: 100vh;
+      }
+     .toolbar-loading.toolbar-horizontal :not(#` + activeTray + `) > .toolbar-lining {opacity: 0}`;
+
+      const style = document.createElement('style');
+      style.textContent = styleContent;
+      style.setAttribute('data-toolbar-anti-flicker-loading', true);
+      document.querySelector('head').appendChild(style);
+
+      if (userButtonMinWidth) {
+        const userButtonStyle = document.createElement('style');
+        userButtonStyle.textContent = `#toolbar-item-user {min-width: ` + userButtonMinWidth +`px;}`
+        document.querySelector('head').appendChild(userButtonStyle);
+      }
+    }
+  }
+  document.querySelector('html').classList.add(...classesToAdd);
+})();</script>
+<link rel="icon" href="/sites/default/files/dku_faviocn_good-150x150_0.png" type="image/png" />
+<link rel="alternate" hreflang="en" href="https://faculty.dukekunshan.edu.cn/" />
+<link rel="canonical" href="https://faculty.dukekunshan.edu.cn/faculty-directory" />
+<link rel="shortlink" href="https://faculty.dukekunshan.edu.cn/node/195" />
+
+    <title>全体教职人员 | DKU Faculty</title>
+    <link rel="stylesheet" media="all" href="/core/modules/views/css/views-responsive-grid.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/ajax-progress.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/align.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/autocomplete-loading.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/fieldgroup.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/container-inline.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/clearfix.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/details.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/hidden.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/item-list.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/js.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/nowrap.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/position-container.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/progress.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/reset-appearance.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/resize.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/sticky-header.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-counter.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-report-counters.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/system-status-report-general-info.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tabledrag.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tablesort.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/system/css/components/tree-child.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/modules/views/css/views.module.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/core/misc/dropbutton/dropbutton.css?sb1biv" />
+<link rel="stylesheet" media="all" href="https://faculty.dukekunshan.edu.cn/libraries/fontawesome/css/all.css" />
+<link rel="stylesheet" media="all" href="/core/modules/layout_discovery/layouts/onecol/onecol.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/modules/contrib/better_exposed_filters/css/better_exposed_filters.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-extended-classes.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/base/base.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-camouflage.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-european-signal.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-fashion.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-flat-ui.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-food.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-ios.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-metro-ui.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-us-highway.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-us-safety.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-vivid.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css/w3css-color-libraries-win8.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/fonts/google-font-roboto.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/fonts/css/d8w3css-roboto.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/layout/layout-regions.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/layout/layout-width.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/system-messages.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/forms.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/breadcrumb.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/system-tabs.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/maintenance-page.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/system-admin.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/w3css-tables.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/global-menu.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/v-menu.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/site-branding.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/user-menu.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/user-login.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/footer-menu.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/default-node.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/page-title.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/search-page.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/search-block.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/pager.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/comments.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/default-views.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/layout-builder.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/webform.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/node-form.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/teaser-mode.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/sitemap.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/contact-form.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/components/ckeditor.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/a-image.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/min-width-993.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/max-width-992.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/max-min-width-992-601.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/max-width-767.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/max-width-600.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/border-animation.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/w3-css-theme/w3-theme-light-blue.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/custom/drupal8_w3css_subtheme/css/d8w3css-subtheme-style.css?sb1biv" />
+<link rel="stylesheet" media="all" href="/themes/contrib/d8w3css/css/theme/sitename-animation.css?sb1biv" />
+
+    
+  </head>
+  <body class="path-node-195 path-frontpage page-node-type-landing-page">
+        <a href="#main-content" class="visually-hidden focusable skip-link">
+      Skip to main content
+    </a>
+    
+      <div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas>
+      <!-- Start: Page Wrapper -->
+<div class="page-wrapper w3-col w3-clear w3-animate-opacity w3-text-theme ">
+
+    <!-- Start: Header -->
+  <header id="header" class="w3-col w3-clear w3-theme-l4 none " role="banner" aria-label="Site header">
+    <div id="header-inner" class="w3-container header-inner w3-width-100-percent">
+                  
+
+<section id="block-drupal8-w3css-subtheme-branding" data-block-plugin-id="system_branding_block" class="w3-block w3-block-wrapper block-system block-system-branding-block">
+  
+    
+        <a href="/" title="Home" rel="home" class="w3-left w3-padding-16 site-logo">
+      <img src="/sites/default/files/logo-header.png" alt="Home" />
+    </a>
+  <div class="site-name-slogan">
+    </div>
+</section>
+
+<section id="block-drupal8-w3css-subtheme-dropdownlanguage" data-block-plugin-id="dropdown_language:language_interface" class="w3-block w3-block-wrapper block-dropdown-language block-dropdown-languagelanguage-interface">
+  
+    
+      <div class="block__content">
+        <div class="dropbutton-wrapper" data-drupal-ajax-container><div class="dropbutton-widget"><ul class="dropdown-language-item dropbutton w3-ul"><li class="w3-left w3-small"><span class="language-link active-language">English</span></li><li class="w3-left w3-small"><a href="/zh-hans/node/195" class="language-link" title="Chinese, Simplified" hreflang="zh-hans">简体中文</a></li></ul></div></div>
+    </div>
+  </section>
+
+
+          </div>
+  </header>
+  <!-- End: Header -->
+  
+    <!-- Start: Main Navigation - Horizontal -->
+  <div id="main-navigation-h" class="w3-col w3-clear main-navigation-wrapper w3-theme " role="navigation" aria-label="Main Navigation" >
+    <div id="main-navigation-inner-h" class="w3-row main-navigation-inner-h w3-width-100-percent">
+      <div class="mobile-nav w3-hide-large w3-button w3-block w3-right-align w3-large w3-theme ">
+                <svg aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="butt" stroke-linejoin="bevel">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </div>
+      
+<nav role="navigation" aria-labelledby="block-drupal8-w3css-subtheme-main-menu-menu" id="block-drupal8-w3css-subtheme-main-menu" data-block-plugin-id="system_menu_block:main">
+            
+  <h2 class="visually-hidden" id="block-drupal8-w3css-subtheme-main-menu-menu">Main navigation</h2>
+  
+
+                    <ul  class="ul-parent ul-parent-main" role="menu">
+                                  <li class="li-item li-item-main" role="none">
+        <a href="https://www.dukekunshan.edu.cn" class="w3-button li-link li-link-main" role="menuitem">DKU Home</a>
+                  </li>
+                                <li class="li-item li-item-main" role="none">
+        <a href="/undergraduate-language-and-culture-center-faculty" class="custom-ug-lcc w3-button li-link li-link-main" role="menuitem" data-drupal-link-system-path="node/197">Undergraduate &amp; Language and Culture Center Faculty</a>
+                  </li>
+                                <li class="li-item li-item-main" role="none">
+        <a href="/graduate-faculty" class="w3-button li-link li-link-main" role="menuitem" data-drupal-link-system-path="node/198">Graduate Faculty</a>
+                  </li>
+                                <li class="li-item li-item-main" role="none">
+        <a href="https://ugstudies.dukekunshan.edu.cn/" class="w3-button li-link li-link-main" role="menuitem">UG Studies Home</a>
+                  </li>
+                                <li class="li-item li-item-main" role="none">
+        <a href="https://graduate.dukekunshan.edu.cn/" class="w3-button li-link li-link-main" role="menuitem">Graduate Home</a>
+                  </li>
+      </ul>
+    
+
+  </nav>
+
+
+    </div>
+  </div>
+  <!-- End: Main Navigation - Horizontal -->
+  
+  
+    <!-- Start: Highlighted -->
+  <div id="highlighted" class="w3-col w3-clear w3-theme-l2 ">
+    <div id="highlighted-inner" class="d8-fade w3-row highlighted-inner w3-width-100-percent">
+      
+    <div data-drupal-messages-fallback class="hidden"></div>
+
+
+    </div>
+  </div>
+  <!-- End: Highlighted -->
+  
+        <!-- Start: Top Container -->
+  <div id="top-container" class="w3-col w3-clear w3-theme-l4 ">
+    <div id="top-container-inner" class="w3-row-padding top-container-inner w3-width-100-percent">
+                  <!-- Start: Top Container Second  -->
+      <div class="w3-col top-box  second-top">
+        <div class="d8-fade w3-mobile  w3-theme-l5 ">
+         
+
+<section id="block-drupal8-w3css-subtheme-pagetitle" data-block-plugin-id="page_title_block" class="w3-block w3-block-wrapper block-core block-page-title-block">
+  
+    
+      <div class="block__content">
+      
+  <h1 class="page-title">
+<span>全体教职人员</span>
+</h1>
+
+
+    </div>
+  </section>
+
+
+        </div>
+      </div>
+      <!-- End: Top Container Second -->
+                </div>
+  </div>
+  <!-- End: Top container -->
+      
+  
+  <!-- Start: Main -->
+  <div id="main-container" class="w3-col w3-clear w3-theme-l5 ">
+    <div id="main-container-inner" class="w3-row main-container-inner w3-width-100-percent">
+            <!-- Start Main Container  -->
+      <div class="w3-col w3-clear w3-row-padding">
+                        <!-- Start: Main Content -->
+        <div class="w3-col main-box  w3css-content" role="main">
+          <div class="d8-fade w3-mobile ">
+            
+
+<section id="block-drupal8-w3css-subtheme-content" data-block-plugin-id="system_main_block" class="w3-block w3-block-wrapper block-system block-system-main-block">
+  
+    
+      <div class="block__content">
+      
+<article data-history-node-id="195" class="w3-row node node--type-landing-page node--view-mode-full">
+  <header class="w3-row node__header">
+    
+        
+
+    
+  </header>
+  <div class="w3-row node__content">
+      <div class="layout layout--onecol">
+    <div  class="layout__region layout__region--content">
+      
+<section class="custom-page-top-title w3-block w3-block-wrapper block-block-content block-block-contentc21031fc-ad1d-447f-a78a-ba415680e2ad" data-block-plugin-id="block_content:c21031fc-ad1d-447f-a78a-ba415680e2ad">
+  
+    
+      <div class="w3-width-1280 block__content">
+      
+            <div class="w3-row field field--name-body field--type-text-with-summary field--label-hidden w3-bar-item field__item"><h2><strong>Faculty</strong></h2></div>
+      
+    </div>
+  </section>
+
+<section class="views-element-container w3-block w3-block-wrapper block-views block-views-blocklisting-blocks-block-1" data-block-plugin-id="views_block:listing_blocks-block_1">
+  
+    
+      <div class="block-content-custom block__content">
+      <div class="w3-row element-container-wrapper"><div class="custom-faculty-bio w3-row view view-listing-blocks view-id-listing_blocks view-display-id-block_1 js-view-dom-id-12a9692a6bea4a1dd508055ddb1f803951c0a8f55ce355c1b3878ef155f5280e">
+  
+    
+        <div class="view-filters form-group">
+      <form class="views-exposed-form bef-exposed-form w3-row" data-bef-auto-submit-full-form="" data-bef-auto-submit="" data-bef-auto-submit-delay="1500" data-drupal-selector="views-exposed-form-listing-blocks-block-1" action="/faculty-directory" method="get" id="views-exposed-form-listing-blocks-block-1" accept-charset="UTF-8">
+  <div class="w3-block form--inline clearfix custom-exposed w3-width-1280">
+  <fieldset data-drupal-selector="edit-field-first-letter-target-id" id="edit-field-first-letter-target-id--wrapper" class="fieldgroup form-composite w3-container js-form-item form-item js-form-wrapper form-wrapper">
+      <legend>
+    <span class="w3-bar fieldset-legend">Filter by the Last Name</span>
+  </legend>
+  <div class="fieldset-wrapper w3-panel">
+                <div id="edit-field-first-letter-target-id" class="w3-section form-checkboxes w3-padding-0"><div class="form-checkboxes bef-checkboxes bef-nested form--inline">
+                        <ul><li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-11 form-item-field-first-letter-target-id-11"><input data-drupal-selector="edit-field-first-letter-target-id-11" type="checkbox" id="edit-field-first-letter-target-id-11" name="field_first_letter_target_id[11]" value="11" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-11" class="option">A</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-12 form-item-field-first-letter-target-id-12"><input data-drupal-selector="edit-field-first-letter-target-id-12" type="checkbox" id="edit-field-first-letter-target-id-12" name="field_first_letter_target_id[12]" value="12" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-12" class="option">B</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-13 form-item-field-first-letter-target-id-13"><input data-drupal-selector="edit-field-first-letter-target-id-13" type="checkbox" id="edit-field-first-letter-target-id-13" name="field_first_letter_target_id[13]" value="13" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-13" class="option">C</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-14 form-item-field-first-letter-target-id-14"><input data-drupal-selector="edit-field-first-letter-target-id-14" type="checkbox" id="edit-field-first-letter-target-id-14" name="field_first_letter_target_id[14]" value="14" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-14" class="option">D</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-15 form-item-field-first-letter-target-id-15"><input data-drupal-selector="edit-field-first-letter-target-id-15" type="checkbox" id="edit-field-first-letter-target-id-15" name="field_first_letter_target_id[15]" value="15" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-15" class="option">E</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-16 form-item-field-first-letter-target-id-16"><input data-drupal-selector="edit-field-first-letter-target-id-16" type="checkbox" id="edit-field-first-letter-target-id-16" name="field_first_letter_target_id[16]" value="16" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-16" class="option">F</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-17 form-item-field-first-letter-target-id-17"><input data-drupal-selector="edit-field-first-letter-target-id-17" type="checkbox" id="edit-field-first-letter-target-id-17" name="field_first_letter_target_id[17]" value="17" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-17" class="option">G</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-18 form-item-field-first-letter-target-id-18"><input data-drupal-selector="edit-field-first-letter-target-id-18" type="checkbox" id="edit-field-first-letter-target-id-18" name="field_first_letter_target_id[18]" value="18" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-18" class="option">H</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-19 form-item-field-first-letter-target-id-19"><input data-drupal-selector="edit-field-first-letter-target-id-19" type="checkbox" id="edit-field-first-letter-target-id-19" name="field_first_letter_target_id[19]" value="19" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-19" class="option">I</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-20 form-item-field-first-letter-target-id-20"><input data-drupal-selector="edit-field-first-letter-target-id-20" type="checkbox" id="edit-field-first-letter-target-id-20" name="field_first_letter_target_id[20]" value="20" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-20" class="option">J</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-21 form-item-field-first-letter-target-id-21"><input data-drupal-selector="edit-field-first-letter-target-id-21" type="checkbox" id="edit-field-first-letter-target-id-21" name="field_first_letter_target_id[21]" value="21" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-21" class="option">K</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-10 form-item-field-first-letter-target-id-10"><input data-drupal-selector="edit-field-first-letter-target-id-10" type="checkbox" id="edit-field-first-letter-target-id-10" name="field_first_letter_target_id[10]" value="10" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-10" class="option">L</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-22 form-item-field-first-letter-target-id-22"><input data-drupal-selector="edit-field-first-letter-target-id-22" type="checkbox" id="edit-field-first-letter-target-id-22" name="field_first_letter_target_id[22]" value="22" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-22" class="option">M</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-23 form-item-field-first-letter-target-id-23"><input data-drupal-selector="edit-field-first-letter-target-id-23" type="checkbox" id="edit-field-first-letter-target-id-23" name="field_first_letter_target_id[23]" value="23" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-23" class="option">N</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-24 form-item-field-first-letter-target-id-24"><input data-drupal-selector="edit-field-first-letter-target-id-24" type="checkbox" id="edit-field-first-letter-target-id-24" name="field_first_letter_target_id[24]" value="24" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-24" class="option">O</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-25 form-item-field-first-letter-target-id-25"><input data-drupal-selector="edit-field-first-letter-target-id-25" type="checkbox" id="edit-field-first-letter-target-id-25" name="field_first_letter_target_id[25]" value="25" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-25" class="option">P</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-26 form-item-field-first-letter-target-id-26"><input data-drupal-selector="edit-field-first-letter-target-id-26" type="checkbox" id="edit-field-first-letter-target-id-26" name="field_first_letter_target_id[26]" value="26" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-26" class="option">Q</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-27 form-item-field-first-letter-target-id-27"><input data-drupal-selector="edit-field-first-letter-target-id-27" type="checkbox" id="edit-field-first-letter-target-id-27" name="field_first_letter_target_id[27]" value="27" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-27" class="option">R</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-28 form-item-field-first-letter-target-id-28"><input data-drupal-selector="edit-field-first-letter-target-id-28" type="checkbox" id="edit-field-first-letter-target-id-28" name="field_first_letter_target_id[28]" value="28" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-28" class="option">S</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-29 form-item-field-first-letter-target-id-29"><input data-drupal-selector="edit-field-first-letter-target-id-29" type="checkbox" id="edit-field-first-letter-target-id-29" name="field_first_letter_target_id[29]" value="29" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-29" class="option">T</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-30 form-item-field-first-letter-target-id-30"><input data-drupal-selector="edit-field-first-letter-target-id-30" type="checkbox" id="edit-field-first-letter-target-id-30" name="field_first_letter_target_id[30]" value="30" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-30" class="option">U</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-31 form-item-field-first-letter-target-id-31"><input data-drupal-selector="edit-field-first-letter-target-id-31" type="checkbox" id="edit-field-first-letter-target-id-31" name="field_first_letter_target_id[31]" value="31" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-31" class="option">V</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-32 form-item-field-first-letter-target-id-32"><input data-drupal-selector="edit-field-first-letter-target-id-32" type="checkbox" id="edit-field-first-letter-target-id-32" name="field_first_letter_target_id[32]" value="32" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-32" class="option">W</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-33 form-item-field-first-letter-target-id-33"><input data-drupal-selector="edit-field-first-letter-target-id-33" type="checkbox" id="edit-field-first-letter-target-id-33" name="field_first_letter_target_id[33]" value="33" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-33" class="option">X</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-34 form-item-field-first-letter-target-id-34"><input data-drupal-selector="edit-field-first-letter-target-id-34" type="checkbox" id="edit-field-first-letter-target-id-34" name="field_first_letter_target_id[34]" value="34" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-34" class="option">Y</label></div>                                <li><div class="w3-section js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-field-first-letter-target-id-35 form-item-field-first-letter-target-id-35"><input data-drupal-selector="edit-field-first-letter-target-id-35" type="checkbox" id="edit-field-first-letter-target-id-35" name="field_first_letter_target_id[35]" value="35" class="form-checkbox w3-check" /><label for="edit-field-first-letter-target-id-35" class="option">Z</label></div></li></ul>            </div>
+</div>
+
+          </div>
+</fieldset>
+<div class="w3-section js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-title form-item-title">
+      <label for="edit-title">Search by name</label>
+        <input data-drupal-selector="edit-title" type="text" id="edit-title" name="title" value="" size="30" maxlength="128" class="form-text w3-input w3-border w3-theme-border" />
+
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions w3-row element-container-wrapper js-form-wrapper form-wrapper" id="edit-actions"><input data-bef-auto-submit-click="" data-drupal-selector="edit-submit-listing-blocks" type="submit" id="edit-submit-listing-blocks" value="Search" class="button js-form-submit form-submit w3-button w3-border w3-theme-border w3-margin-top w3-margin-bottom" /></div>
+
+</div>
+
+</form>
+
+    </div>
+    
+      <div class="view-content">
+      
+
+
+
+
+<div class="custom-view-class w3-width-1280">
+<div class="views-view-responsive-grid views-view-responsive-grid--horizontal" style="--views-responsive-grid--column-count:4;--views-responsive-grid--cell-min-width:200px;--views-responsive-grid--layout-gap:10px;">
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-08/cristiano-villa_0.jpg?itok=jmzWMIoJ" width="300" height="400" alt="cristiano-villa.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/cristiano-villa" hreflang="en">Cristiano Villa</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/cristiano-villa'>Associate Professor of Statistics, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-08/wilkerson-travis.png?itok=Lt_jZb0k" width="300" height="400" alt="wilkerson-travis.png" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/travis-wilkerson" hreflang="en">Travis Wilkerson</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/travis-wilkerson'>Associate Professor of Documentary Practice, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/yunguo-liu-headshot.jpg?itok=dTVk-qeO" width="300" height="400" alt="yunguo-liu-headshot.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/yunguo-liu" hreflang="en">Yunguo Liu</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/yunguo-liu'>Professor and Co-Director of Global Health, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-06/bing-luo.-jpg.jpg?itok=hqrot4uh" width="300" height="400" alt="Bing Luo" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/bing-luo" hreflang="en">Bing Luo</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/bing-luo'>Assistant Professor of Data and Computational Science, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/stephanie.anderson-300-400.jpg?itok=m6lSfBgd" width="300" height="400" alt="stephanie.anderson" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/stephanie-anderson" hreflang="en">Stephanie Anderson</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/stephanie-anderson'>Assistant Professor of Literature and Creative Writing, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/benjamin.bacon_.jpg?itok=wavlH-zn" width="300" height="400" alt="benjamin.bacon_.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/benjamin-bacon" hreflang="en">Benjamin Bacon</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/benjamin-bacon'>Associate Professor of Media and Arts, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/floyd.beckford.jpg?itok=cdY4r77b" width="300" height="400" alt="floyd.beckford.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/floyd-beckford" hreflang="en">Floyd Beckford</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/floyd-beckford'>Professor of Chemistry, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/bryce.beemer.jpg?itok=qqhxkRaC" width="300" height="400" alt="bryce.beemer.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/bryce-beemer" hreflang="en">Bryce Beemer</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/bryce-beemer'>Assistant Professor of History, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/quinlan.bowman.png?itok=um7ZWp2F" width="300" height="400" alt="quinlan.bowman.png" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/quinlan-bowman" hreflang="en">Quinlan Bowman</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/quinlan-bowman'>Assistant Professor of Ethics and Public Policy, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/xingshi.cai_.jpg?itok=hMBVmlJs" width="300" height="400" alt="xingshi.cai_.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/xingshi-cai" hreflang="en">Xingshi Cai</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/xingshi-cai'>Assistant professor of mathematics, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/huansheng.cao__0.jpg?itok=CCBeR37p" width="300" height="400" alt="huansheng.cao_.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/huansheng-cao" hreflang="en">Huansheng Cao</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/huansheng-cao'>Assistant Professor of Environmental Science, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+      <div class="views-view-responsive-grid__item">
+      <div class="views-view-responsive-grid__item-inner"><div class="views-field views-field-nothing"><span class="field-content"><div class="faculty-list">
+    <div class="list-content">
+        <div class="content-item item-image">
+              <img loading="lazy" src="/sites/default/files/styles/faculty_headshot/public/2023-07/yecheng.kent_.cao_.jpg?itok=aZIO8csI" width="300" height="400" alt="yecheng.kent_.cao_.jpg" class="w3-image image-style-faculty-headshot" />
+
+
+ 
+        </div>
+        <div class="content-item-text">
+            <div class="text-item item-name">
+                <a href="/faculty_profiles/yecheng-kent-cao" hreflang="en">Yecheng (Kent) Cao</a>
+            </div>
+            <div class="text-item item-profile-title">
+                <a href='https://faculty.dukekunshan.edu.cn/faculty_profiles/yecheng-kent-cao'>Assistant professor of art and archaeology, Duke Kunshan University</a>
+            </div>
+        </div>
+    </div>
+</div></span></div></div>
+    </div>
+  </div>
+</div>
+
+    </div>
+  
+        <nav class="w3-center pager" role="navigation" aria-labelledby="pagination-heading">
+    <h4 id="pagination-heading" class="visually-hidden">Pagination</h4>
+    <ul class="w3-bar pager__items js-pager__items">
+                                                        <li class="w3-button pager__item w3-light-gray w3-active-pager is-active">
+                                          <a href="?page=0" title="Current page">
+            <span class="visually-hidden">
+              Current page
+            </span>1</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=1" title="Go to page 2">
+            <span class="visually-hidden">
+              Page
+            </span>2</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=2" title="Go to page 3">
+            <span class="visually-hidden">
+              Page
+            </span>3</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=3" title="Go to page 4">
+            <span class="visually-hidden">
+              Page
+            </span>4</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=4" title="Go to page 5">
+            <span class="visually-hidden">
+              Page
+            </span>5</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=5" title="Go to page 6">
+            <span class="visually-hidden">
+              Page
+            </span>6</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=6" title="Go to page 7">
+            <span class="visually-hidden">
+              Page
+            </span>7</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=7" title="Go to page 8">
+            <span class="visually-hidden">
+              Page
+            </span>8</a>
+        </li>
+              <li class="w3-button pager__item">
+                                          <a href="?page=8" title="Go to page 9">
+            <span class="visually-hidden">
+              Page
+            </span>9</a>
+        </li>
+                          <li class="w3-button pager__item pager__item--ellipsis" role="presentation">&hellip;</li>
+                          <li class="w3-button pager__item pager__item--next">
+          <a href="?page=1" title="Go to next page" rel="next">
+            <span class="visually-hidden">Next page</span>
+            <span aria-hidden="true">››</span>
+          </a>
+        </li>
+                          <li class="w3-button pager__item pager__item--last">
+          <a href="?page=18" title="Go to last page">
+            <span class="visually-hidden">Last page</span>
+            <span aria-hidden="true">Last »</span>
+          </a>
+        </li>
+          </ul>
+  </nav>
+
+          </div>
+</div>
+
+    </div>
+  </section>
+
+    </div>
+  </div>
+
+  </div>
+
+</article>
+
+    </div>
+  </section>
+
+
+          </div>
+        </div>
+        <!-- End: Main Content -->
+                      </div>
+      <!-- Endn: Main Container  -->
+    </div>
+  </div>
+  <!-- End: Main -->
+
+        
+  
+      <!-- Start: Footer Menu -->
+  <div id="footer-menu" class="w3-col w3-clear w3-theme-d4 ">
+    <div id="footer-menu-inner" class="w3-row footer-menu-inner w3-width-100-percent">
+      
+      <!-- Start: Bottom Menu -->
+          </div>
+  </div>
+  <!-- End: Footer Menu -->
+  
+      
+  <!-- Start: Copyright -->
+  <div id="copyright" class="w3-col w3-clear w3-theme-d5 ">
+    <div class="elementor-background-overlay"></div>
+            <!-- Start: Social Media -->
+      <div class="w3-center w3-container copyright-inner w3-mobile">
+        <a href="/" title="Home" rel="home" class="w3-center w3-padding-16 site-logo">
+          <img src="/sites/default/files/logo-header.png" alt="Home">
+        </a>
+      </div>
+      <div class="d8-fade w3-center w3-container copyright-inner w3-mobile social-media w3-width-100-percent">
+                <a href="https://www.facebook.com/DukeKunshanUniversity" title="Facebook" class="w3-opacity w3-hover-opacity-off w3-hover-text-blue w3-show-inline-block w3-xlarge w3-padding" target="_blank"><i class="fa-brands w3-social-icon fa-facebook"></i></a>
+                        <a href="https://twitter.com/DukeKunshan" title="Twitter" class="w3-opacity w3-hover-opacity-off w3-hover-text-blue w3-show-inline-block w3-xlarge w3-padding" target="_blank"><i class="fa-brands w3-social-icon fa-twitter"></i></a>
+                                <a href="https://www.linkedin.com/school/duke-kunshan-university" title="Linkedin" class="w3-opacity w3-hover-opacity-off w3-hover-text-blue w3-show-inline-block w3-xlarge w3-padding" target="_blank"><i class="fa-brands w3-social-icon fa-linkedin"></i></a>
+                                <a href="https://www.youtube.com/channel/UCSoBlCyNXxOSek8TD6pld2A" title="Youtube" class="w3-opacity w3-hover-opacity-off w3-hover-text-red w3-show-inline-block w3-xlarge w3-padding" target="_blank"><i class="fa-brands w3-social-icon fa-youtube"></i></a>
+                                      </div>
+      <div class="w3-center w3-container copyright-inner w3-mobile">
+        <p class="w3-section w3-opacity w3-hover-opacity-off">Contact Us: <a href="mailto:dku-academicaffairs@dukekunshan.edu.cn">Office of Academic Affairs</a></p>
+      </div>
+      <!-- End: Social Media -->
+      <div id="copyright-inner" class="w3-row copyright-inner w3-center w3-width-100-percent">
+            <!-- Start: Copyright -->
+      <div class="copyright-inner w3-center w3-container w3-mobile">
+        <p class="w3-section w3-opacity w3-hover-opacity-off">
+                Copyright © 2024 Duke Kunshan University - 苏ICP备16021093号
+        </p>
+      </div>
+      <!-- End: Copyright -->
+                </div>
+  </div>
+  <!-- End: Copyright -->
+  </div>
+<!-- End: Page Wrapper -->
+
+  </div>
+
+    
+    <script type="application/json" data-drupal-selector="drupal-settings-json">{"path":{"baseUrl":"\/","scriptPath":null,"pathPrefix":"","currentPath":"node\/195","currentPathIsAdmin":false,"isFront":true,"currentLanguage":"en"},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"ajaxPageState":{"libraries":"better_exposed_filters\/auto_submit,better_exposed_filters\/general,better_exposed_filters\/select_all_none,core\/drupal.dropbutton,drupal8_w3css_subtheme\/d8w3css-subtheme-global,drupal8_w3css_theme\/d8w3css-gfex,drupal8_w3css_theme\/d8w3css-gfin,drupal8_w3css_theme\/d8w3css-gfin-roboto,drupal8_w3css_theme\/d8w3css-global-styling,drupal8_w3css_theme\/w3-css,drupal8_w3css_theme\/w3-css-theme-light-blue,fontawesome\/fontawesome.webfonts,layout_discovery\/onecol,system\/base,views\/views.module,views\/views.responsive-grid","theme":"drupal8_w3css_subtheme","theme_token":null},"ajaxTrustedUrl":{"\/faculty-directory":true},"user":{"uid":0,"permissionsHash":"3408100e683a954bcd292ec064ed11b6dd8292dab2ed8ebb00e957d97cdba06c"}}</script>
+<script src="/core/assets/vendor/jquery/jquery.min.js?v=3.7.0"></script>
+<script src="/core/assets/vendor/once/once.min.js?v=1.0.1"></script>
+<script src="/core/misc/drupalSettingsLoader.js?v=10.1.1"></script>
+<script src="/core/misc/drupal.js?v=10.1.1"></script>
+<script src="/core/misc/drupal.init.js?v=10.1.1"></script>
+<script src="/core/assets/vendor/tabbable/index.umd.min.js?v=6.1.2"></script>
+<script src="/core/misc/progress.js?v=10.1.1"></script>
+<script src="/core/assets/vendor/loadjs/loadjs.min.js?v=4.2.0"></script>
+<script src="/core/misc/debounce.js?v=10.1.1"></script>
+<script src="/core/misc/announce.js?v=10.1.1"></script>
+<script src="/core/misc/message.js?v=10.1.1"></script>
+<script src="/core/misc/ajax.js?v=10.1.1"></script>
+<script src="/themes/contrib/d8w3css/js/custom.js?sb1biv"></script>
+<script src="/themes/custom/drupal8_w3css_subtheme/js/d8w3css-subtheme-script.js?v=10.1.1"></script>
+<script src="/modules/contrib/better_exposed_filters/js/better_exposed_filters.js?v=4.x"></script>
+<script src="/modules/contrib/better_exposed_filters/js/auto_submit.js?v=4.x"></script>
+<script src="/modules/contrib/better_exposed_filters/js/bef_select_all_none.js?v=4.x"></script>
+<script src="/core/misc/dropbutton/dropbutton.js?v=10.1.1"></script>
+
+  </body>
+</html>

@@ -1,0 +1,1029 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+<meta charset="utf-8">
+<title>江苏省科技计划管理信息平台</title>
+<link href="https://kjjh.kxjst.jiangsu.gov.cn:443/default2/tabs.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="https://kjjh.kxjst.jiangsu.gov.cn:443/default2/tabs.js"></script>
+<script type="text/javascript" src="https://kjjh.kxjst.jiangsu.gov.cn:443/js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="https://kjjh.kxjst.jiangsu.gov.cn:443/js/jquery-migrate-1.2.1.js"></script>
+<script type="text/javascript" src="https://kjjh.kxjst.jiangsu.gov.cn:443/default2/js/MD5.js"></script>
+
+<script src="https://kjjh.kxjst.jiangsu.gov.cn:443/XMSB//js/openURL.js">
+var URL = 'https://kjjh.kxjst.jiangsu.gov.cn:443/';var titlebase='江苏省科技计划管理信息平台'
+</script>
+<link href="https://kjjh.kxjst.jiangsu.gov.cn:443/default2/index.css" rel="stylesheet" type="text/css">
+<SCRIPT LANGUAGE="JavaScript">
+function rmm2(str){var arr=str.split('');for(var i=1;i<arr.length-2;i++){var a=arr[i-1].charCodeAt();var b=arr[i].charCodeAt();var c=arr[i+1].charCodeAt();var d=arr[i+2].charCodeAt();if((d-c==1&&c-b==1&&b-a==1)||(a-b==1&&b-c==1&&c-d==1)||(a==b&&b==c&&c==d)){return true}}return false}
+var userAgent = navigator.userAgent.toLowerCase();
+
+    jQuery.browser = {
+        version: (userAgent.match(/.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/) || [])[1],
+        safari: /webkit/.test(userAgent),
+        opera: /opera/.test(userAgent),
+        msie: /msie/.test(userAgent) && !/opera/.test(userAgent),
+        mozilla: /mozilla/.test(userAgent) && !/(compatible|webkit)/.test(userAgent)
+    }; 
+
+if(parseInt($.browser.version)==9){
+	alert("您现在使用的是IE9.0浏览器，部分功能可能无法正常使用\n\n系统推荐使用IE10及以上版本\n\n如使用360或搜狗等浏览器，使用极速模式\n\n或者您可以下载Chrome、firefox浏览器");
+}
+
+function _change() {
+	// 得到img元素
+	var imgele = document.getElementById("vcodeimage");
+	// 修改src,其实还是原来的src
+	imgele.src = "https://kjjh.kxjst.jiangsu.gov.cn:443/default2/vcode.jsp?a=" + new Date().getTime();
+}
+
+function OpenWindow(htmurl)
+{
+   OpenURL(htmurl,550,450);
+}
+
+function checklogin()
+{
+	if (document.getElementById("f_user").value== "")
+	{
+		alert("\请输入用户名！");
+		document.getElementById("f_user").focus();
+		
+		return false;
+	}
+	
+	if (document.getElementById("D1").value== "")
+	{
+		alert("\请选择用户类型！");
+		return false;
+	}
+	if (document.getElementById("verifyCode").value== "")
+	{
+		alert("\请输入验证码！");
+		document.getElementById("verifyCode").focus();
+		return false;
+	}
+	if(document.getElementById("co").checked){
+		localStorage.f_user=document.getElementById("f_user").value;
+		localStorage.f_pass=document.getElementById("f_pass").value;
+		localStorage.D1=document.getElementById("D1").value;
+	}else{
+		localStorage.clear();
+	}
+	if (document.getElementById("D1").value== "3")
+	{
+		document.getElementById("EntLOG").action='LoginSvlt';
+	}
+	if (document.getElementById("D1").value== "4")
+	{
+		document.getElementById("EntLOG").action='JSKJLogin';
+	}
+	if (document.getElementById("D1").value== "6")
+	{
+		document.getElementById("EntLOG").action='SupLoginSvlt';
+	}
+	
+	var pwdRegex = new RegExp('^(?![A-Za-z0-9]+$)(?![a-z0-9\\W]+$)(?![A-Za-z\\W]+$)(?![A-Z0-9\\W]+$)[a-zA-Z0-9\\W]{8,}$');
+	if(!pwdRegex.test(document.getElementById("f_pass").value)||rmm2(document.getElementById("f_pass").value)){
+ 		document.getElementById("rmm").value = "true";
+ 	}
+	document.getElementById("f_pass").value = hex_md5(document.getElementById("f_pass").value);
+	document.getElementById("EntLOG").submit();
+}
+
+</script>
+</head>
+
+<body class="home" onload="_change();">
+
+
+
+
+
+<DIV id=flapimgdiv style='position: absolute;z-index:10000;'><a target='_blank'	href='https://kjjh.kxjst.jiangsu.gov.cn/showstinfo.jsp?infoid=archenzimooZDST1WBeni0kLwb91Q==JSKJ'><IMG border=0 src='flapimg/src/flapimgDownload.jsp'></a><div style="text-align:center;line-height:30px;cursor:pointer;font-size:16px;color:red;font-weight:bold;" onclick='$("#flapimgdiv").hide();'>关闭 X</div></DIV><SCRIPT language=JavaScript src='flapimg/js/flapimg.js'></SCRIPT><SCRIPT language=JavaScript>var flapimg=new AdMove('flapimgdiv');flapimg.Run();</SCRIPT>
+<div class="top">
+ 	<p>在线：83886&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;今天：4438&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;全部：26484638
+		<span><font style="font-size: 8px; color:#007BAF;">-------------------</font>欢迎访问江苏省科技计划管理信息平台!</span>
+	</p>
+</div>
+
+<div class="tit"><img src="default2/img/tit.png"></div>
+
+<div class="banner">
+	<div class="over">
+		<div class="nav-top">
+			
+<a href='https://kjjh.kxjst.jiangsu.gov.cn:443/default.jsp'>首 页</a><a href='https://kjjh.kxjst.jiangsu.gov.cn:443/allstinfo.jsp?itemid=8'>政策文件</a><a href='https://kjjh.kxjst.jiangsu.gov.cn:443/allstinfo.jsp?itemid=2760'>在线帮助</a><a href='https://kjjh.kxjst.jiangsu.gov.cn:443/allstinfo.jsp?itemid=2880'>联系我们</a><a href='https://kjjh.kxjst.jiangsu.gov.cn/jhpt/corpAdmin/corpAdminDirTel.jsp?itemid=2900'>联系主管部门</a>
+		</div>
+		<div class="photo"><img src="default2/img/banner.jpg"></div>
+		<div class="sales">
+		  <form  method="post" action="LandingServlet" name="EntLOG" id="EntLOG">
+		  
+		  <div style="border: 1px solid #007BAF;background-color: #007BAF;height:40px;line-height: 40px;width:200px;color:#fff;margin-top:40px;margin-left:60px">
+		  		<a href="" target="_self"><p style="text-align:center;font-size:21px;color:#FFF;" align="center">项目申报用户登录</p></a>
+		  </div>
+		  
+		  <div class="input">
+				<span>用户名：</span>
+				<input name="f_user" id="f_user" type="text" value="">
+			</div>
+		  <div class="input">
+			<span>密　码：</span>
+			<input  name="f_pass" id="f_pass" type="password" value="">
+			<input name="USER_INFO" id="USER_INFO" value="t3we486z6bu0v7y2y4crap8f0r2kci7jq2t" type="hidden">
+			</div>
+		  <select name=D1 id=D1 style="color:#fff;font-size:16px;">
+		  <option  value="" style="margin-left: 25px;color: #fff;font-size:16px;" disabled selected>　用户类型</option>		  
+			<option value="1" style="color: #fff;font-size:16px;">　申报人员</option>
+			<option value="2" style="color: #fff;font-size:16px;">　申报单位管理员</option> 
+			<option value="4" style="color: #fff;font-size:16px;">　系统维护单位</option>
+		  </select>
+		  <div class="jizhu">
+		  <input type="text" name="verifyCode" id="verifyCode"  size="4" />&nbsp;<img id="vcodeimage" /><a href="javascript:_change()"><font color='white'>&nbsp;换一张&nbsp;&nbsp;</font></a>
+		  	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>
+		  	<input type="checkbox" name="co" id="co" value="ON"/>
+		  	<span>记住密码</span>
+		  	</label>
+		  </div>
+		  <div class="anniu">
+		  	<div onclick="checklogin()" style="cursor:pointer;width:80px;height:32px;border:#CAFFFF 1px solid;text-align: center;float:left;margin-left:60px;">登录</div>
+		  	<div onclick="document.location='userreg.jsp'" style="cursor:pointer;width:80px;height:32px;border:#CAFFFF 1px solid;text-align: center;float:left;margin-left:30px">注册</div>
+		  	<div onclick="OpenWindow('XMSB/Eve_FindPass.jsp')" style="cursor:pointer;width:80px;height:32px;border:#CAFFFF 1px solid;text-align: center;float:left;margin-left:30px">找回密码</div>
+		  </div>
+		  <div class="houtai">
+		  	
+				<div style="border: 1px solid #CAFFFF;background-color: #13A9DC;height:40px;line-height: 40px;width:300px;color:#fff;margin-left:60px">
+					<a href="XMSB/Eve_Login.jsp" target="_blank"><p style="text-align:center;font-size:21px;color:#FFF;" align="center">项目管理及评审专家用户登录</p></a>
+				</div>
+				<div style="height:40px;line-height: 40px;width:100%;color:#E11;margin-left:60px">
+					项目主管部门、评审专家及省科技厅用户由此登录
+					<input type="hidden" name="rmm" id="rmm" value="false">
+				</div>
+		  </div>
+		  </form>
+	  </div>
+	  
+	</div>
+</div>
+<div class="guide">
+	<div style="width:100%;text-align: center;padding-top: 200px;"><p>常用指南</p></div>
+</div>
+
+<div class="con">
+	<div class="com">
+		
+		<!-- tab页开始 -->
+		<script type="text/javascript">
+		myFocus.setting({
+			style:'mF_tab',//样式名称
+			id:'tabs1',//id
+			trigger:'click',//触发换页方式
+			type:'slide',//换页方式
+			auto:true,//是否自动换页
+			time:86400,//自动换页间隔
+			width:1240,//宽度
+			height:320//高度
+		});
+		</script>
+		<div class="com-top">
+			<div id="tabs1">
+				<div class="loading"><span>请稍候...</span></div>
+				<ul class="btn">
+					
+						
+					<li><a>通知公告</a></li>
+						
+					
+						
+					
+						
+					<li><a>材料下载</a></li>
+						
+					
+						
+					<li><a>骨干查询</a></li>
+						
+					
+						
+					<li><a>证书查验</a></li>
+						
+					
+						
+					
+						
+					
+						
+					
+						
+					
+						
+					
+				</ul>
+				<ul class="cont"><!--内容-->
+				
+					
+						
+					<li>
+						
+						<span style="margin-top:30px;width:600px;float:left;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于转发国家重点研发计划“政府间国际科技创新合作”等重点专项2024年度第二批项目申报指南的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/5/13/art_82540_11242427.html" target="_blank">关于转发国家重点研发计划“政府间国际科技创新合作”等重点专项2024年度第二批项目申报指南的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于印发《2024年度省基础研究专项资金（基础研究计划重点项目）指南》及组织申报项目的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/4/3/art_82540_11210193.html" target="_blank">关于印发《2024年度省基础研究专项资金（基础研究计划重点项目）指南》及组织申报项目的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于组织申报2024年度高新技术企业的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/4/2/art_82540_11208375.html" target="_blank">关于组织申报2024年度高新技术企业的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="《2024年度省碳达峰碳中和科技创新专项资金项目指南》及组织申报项目的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/3/22/art_82540_11199248.html" target="_blank">《2024年度省碳达峰碳中和科技创新专项资金项目指南》及组织申报项目的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于印发《2024年度省基础研究专项资金（自然科学基金）项目指南》及组织申报项目的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/3/8/art_82540_11171407.html" target="_blank">关于印发《2024年度省基础研究专项资金（自然科学基金）项目指南》及组织申报项目的通知</a></div></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2024-05-13</li>
+									
+								
+									
+									
+									<li>2024-04-03</li>
+									
+								
+									
+									
+									<li>2024-04-02</li>
+									
+								
+									
+									
+									<li>2024-03-22</li>
+									
+								
+									
+									
+									<li>2024-03-08</li>
+									
+								
+							</ul>
+						</span>
+						<img src="default2/img/com-wire.png" style="float:left;margin-top:50px;margin-left:20px;width:2px;height:216px;">
+						<span style="margin-top:30px;width:600px;float:right;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于组织申报2024年度省基础研究专项资金（重大创新平台计划）项目的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/2/28/art_82540_11160687.html" target="_blank">关于组织申报2024年度省基础研究专项资金（重大创新平台计划）项目的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于组织申报2024年度省科技计划专项资金（国际科技合作/港澳台科技合作计划）项目的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/2/5/art_82540_11146892.html" target="_blank">关于组织申报2024年度省科技计划专项资金（国际科技合作/港澳台科技合作计划）项目的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于江苏省概念验证中心申报组织工作的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2023/11/29/art_82540_11084038.html" target="_blank">关于江苏省概念验证中心申报组织工作的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于开展2024年前沿技术指南建议和重大研发需求调研的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2023/11/28/art_82540_11083066.html" target="_blank">关于开展2024年前沿技术指南建议和重大研发需求调研的通知</a></div></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2024-02-29</li>
+									
+								
+									
+									
+									<li>2024-02-05</li>
+									
+								
+									
+									
+									<li>2023-11-29</li>
+									
+								
+									
+									
+									<li>2023-11-28</li>
+									
+								
+							</ul>
+						</span>
+						<a href="allstinfo.jsp?itemid=1839"><img src="default2/img/lj-big.png" style="margin-top:30px;float:right;"></a>
+					</li>
+						
+					
+						
+					
+						
+					<li>
+						
+						<span style="margin-top:30px;width:600px;float:left;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年省基础研究专项资金（基础研究计划）重点项目申报书模板（仅供参考）"><a href="showstinfo.jsp?infoid=b14NxoMrhcfs1SQB4pnsrw==JSKJ" target="_blank">2024年省基础研究专项资金（基础研究计划）重点项目申报书模板（仅供参考）</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年度省碳达峰碳中和科技创新专项资金项目申报书模板（仅供参考）"><a href="showstinfo.jsp?infoid=aKMiLQY4z0SkFwWvRBTl7Q==JSKJ" target="_blank">2024年度省碳达峰碳中和科技创新专项资金项目申报书模板（仅供参考）</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年江苏省自然科学基金项目申报代码"><a href="showstinfo.jsp?infoid=xStFB0E58E6B4ylecRlynQ==JSKJ" target="_blank">2024年江苏省自然科学基金项目申报代码</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年度省基础研究专项资金（自然科学基金）项目申报书模版（仅供参考）"><a href="showstinfo.jsp?infoid=1YSxZRwXXNb4yMO977Ppnw==JSKJ" target="_blank">2024年度省基础研究专项资金（自然科学基金）项目申报书模版（仅供参考）</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年省基础研究专项资金（重大创新平台计划）项目申报书模板（仅供参考）"><a href="showstinfo.jsp?infoid=oQu1tP6AfTj0j2vyGCTwpw==JSKJ" target="_blank">2024年省基础研究专项资金（重大创新平台计划）项目申报书模板（仅供参考）</a></div></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2024-04-08</li>
+									
+								
+									
+									
+									<li>2024-03-26</li>
+									
+								
+									
+									
+									<li>2024-03-13</li>
+									
+								
+									
+									
+									<li>2024-03-13</li>
+									
+								
+									
+									
+									<li>2024-03-07</li>
+									
+								
+							</ul>
+						</span>
+						<img src="default2/img/com-wire.png" style="float:left;margin-top:50px;margin-left:20px;width:2px;height:216px;">
+						<span style="margin-top:30px;width:600px;float:right;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2024年省科技计划专项资金（国际科技合作/港澳台科技合作计划）项目申报书模板（仅供参考）"><a href="showstinfo.jsp?infoid=oQu1tP6AfTj83GZ1GHOP0Q==JSKJ" target="_blank">2024年省科技计划专项资金（国际科技合作/港澳台科技合作计划）项目申报书模板（仅供参考）</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="关于转发《负责任研究行为规范指引（2023）》的通知"><a href="http://kxjst.jiangsu.gov.cn/art/2024/1/12/art_82540_11123834.html" target="_blank">关于转发《负责任研究行为规范指引（2023）》的通知</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="2023年度新型研发机构奖补项目研发经费专项审计报告模板"><a href="showstinfo.jsp?infoid=A9O99yDtLfX9wc8AYEx0Gw==JSKJ" target="_blank">2023年度新型研发机构奖补项目研发经费专项审计报告模板</a></div></li>
+									
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="科技服务骨干机构基本情况信息表"><a href="showstinfo.jsp?infoid=tlg6KGml/fonxkfqchenzimojBGSQ==JSKJ" target="_blank">科技服务骨干机构基本情况信息表</a></div></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2024-03-05</li>
+									
+								
+									
+									
+									<li>2024-01-12</li>
+									
+								
+									
+									
+									<li>2022-11-10</li>
+									
+								
+									
+									
+									<li>2019-01-25</li>
+									
+								
+							</ul>
+						</span>
+						<a href="allstinfo.jsp?itemid=1838"><img src="default2/img/lj-big.png" style="margin-top:30px;float:right;"></a>
+					</li>
+						
+					
+						
+					<li>
+						
+						<span style="margin-top:30px;width:600px;float:left;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="项目骨干查询"><a href="https://kjjh.kxjst.jiangsu.gov.cn/jhpt/searchXMGG.jsp" target="_blank">项目骨干查询</a></div></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2020-01-01</li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+							</ul>
+						</span>
+						<img src="default2/img/com-wire.png" style="float:left;margin-top:50px;margin-left:20px;width:2px;height:216px;">
+						<span style="margin-top:30px;width:600px;float:right;">
+							<ul style="float:left;">
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+							</ul>
+						</span>
+						<a href="allstinfo.jsp?itemid=1842"><img src="default2/img/lj-big.png" style="margin-top:30px;float:right;"></a>
+					</li>
+						
+					
+						
+					<li>
+						
+						<span style="margin-top:30px;width:600px;float:left;">
+							<ul style="float:left;">
+								
+									
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;" title="项目验收证书查验"><a href="https://kjjh.kxjst.jiangsu.gov.cn/jhpt/searchXMYSZS.jsp" target="_blank">项目验收证书查验</a></div></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li>2020-01-01</li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+							</ul>
+						</span>
+						<img src="default2/img/com-wire.png" style="float:left;margin-top:50px;margin-left:20px;width:2px;height:216px;">
+						<span style="margin-top:30px;width:600px;float:right;">
+							<ul style="float:left;">
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+									
+									
+									<li><div style="width:490px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</a></li>
+									
+								
+							</ul>
+							<ul style="float:right;">
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+									
+									
+									<li></li>
+									
+								
+							</ul>
+						</span>
+						<a href="allstinfo.jsp?itemid=1843"><img src="default2/img/lj-big.png" style="margin-top:30px;float:right;"></a>
+					</li>
+						
+					
+						
+					
+						
+					
+						
+					
+						
+					
+						
+					
+				</ul>
+			</div>
+		</div>
+	</div>
+<!--  
+	<div class="down">
+		<div class="synth">
+			<div class="cer">
+				
+				
+				
+				
+				<div class="cer-top">
+					<span></span>
+					
+				</div>
+				<ul style="float:left">
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="https://kjjh.kxjst.jiangsu.gov.cn/jhpt/searchXMYSZS.jsp" target="_blank">项目验收证书查验</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+				</ul>
+				<ul style="float:right;margin-right:10px;">
+					
+					<li>2020-01-01</li>
+					
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+				</ul>
+			</div>
+			<div class="work">
+				
+				
+				
+				
+				<div class="work-top">
+					<span>在线帮助</span>
+					<a href="allstinfo.jsp?itemid=2760"><img src="default2/img/lj-small.png"></a>
+				</div>
+				<ul style="float:left">
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=EjKiLHeQnI8ekwchenzimo9ByMzVg==JSKJ" target="_blank">项目主管部门打印科研诚信承诺书和推荐项目汇总表方式说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=qeqcWuqkR85DnLY6XIAQVg==JSKJ" target="_blank">项目申报单位和项目负责人科研诚信承诺书提交方式说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=wKobt/YQe86ZYfca5/6RGw==JSKJ" target="_blank">申报单位管理员激活个人账号及修改单位信息的说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=NwMZzczGI/czY/JH5iCmkw==JSKJ" target="_blank">申报人员个人账号注册、激活的流程</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=wKobt/YQe84aPkpQN701Qg==JSKJ" target="_blank">申报单位更名说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=wKobt/YQe87OXZo54UdcJg==JSKJ" target="_blank">关于修改单位主管部门的说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=NwMZzczGI/dsm4xosXU/fA==JSKJ" target="_blank">申报单位注册、激活、更新及找回单位管理员账号密码的流程</a></div></li>
+					
+					
+				</ul>
+				<ul style="float:right;margin-right:10px;">
+					
+					<li>2024-03-22</li>
+					
+					<li>2024-02-18</li>
+					
+					<li>2021-01-14</li>
+					
+					<li>2021-01-14</li>
+					
+					<li>2021-01-14</li>
+					
+					<li>2021-01-14</li>
+					
+					<li>2021-01-14</li>
+					
+					
+				</ul>
+			</div>
+			<div class="contact">
+				
+				
+				
+				
+				<div class="contact-top">
+					<span>联系我们</span>
+					<a href="allstinfo.jsp?itemid=2880"><img src="default2/img/lj-small.png"></a>
+				</div>
+				<ul style="float:left">
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=archenzimooZDST1WBeni0kLwb91Q==JSKJ" target="_blank">省科技计划管理信息平台联系电话</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=POUyPQZ4XCgoMdvVYum49g==JSKJ" target="_blank">主管部门管理QQ群：52767771</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=fLZHKTsaHNPTfFr3XKVEDw==JSKJ" target="_blank">信息平台申报单位统一社会信用代码校验流程说明</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=zr2xESMZAhLIJdD7naHQdg==JSKJ" target="_blank">科技报告审核电话（025-85400396）</a></div></li>
+					
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+					<li><div style="width:240px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;">&nbsp;</div></li>
+					
+				</ul>
+				<ul style="float:right;margin-right:10px;">
+					
+					<li>2023-01-06</li>
+					
+					<li>2021-01-14</li>
+					
+					<li>2020-12-01</li>
+					
+					<li>2020-12-01</li>
+					
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+					<li>&nbsp;</li>
+					
+				</ul>
+			</div>
+		</div>
+	</div>
+-->
+</div>
+<!-- 
+
+
+
+
+<div class="link">
+	<p><a href="allstinfo.jsp?itemid=2860" style="color:#FFF;">相关链接</a></p>
+	<div class="cor-link">
+		<table width="1280px" style="width:1280px;margin-left:30px;">
+		
+			
+			
+			
+			<tr height="50px">
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="https://kjj.jssti.cn/" target="_blank">江苏省科学技术奖提名评审系统</a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="http://www.jsstrs.cn/" target="_blank">省科技报告共享服务系统</a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="http://210.73.128.119/GQSB/SGQ/SJHLogin.jsp" target="_blank">省科技企业上市培育计划入库系统</a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="jhpt/XMSB/xmysinfo.jsp" target="_blank">历史项目验收</a></div></td>
+				
+			
+			</tr>
+			
+		
+			
+			
+			
+			<tr height="50px">
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="http://210.73.128.119/GQSB/SGQ/GJLogin.jsp" target="_blank">高新技术企业辅助材料提交系统</a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="http://210.73.128.119/GQSB/SGQ/login.jsp" target="_blank">省高企培育入库申报系统</a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=null" target="_blank"></a></div></td>
+				
+			
+		
+			
+			
+			
+				
+				<td><div style="width:300px;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis;overflow:hidden;"><a href="showstinfo.jsp?infoid=null" target="_blank"></a></div></td>
+				
+			
+			</tr>
+			
+		
+		</table>
+	</div>
+</div>
+-->
+
+
+
+<div class="last" align="center">
+	<table style="width:1200px;margin-left: auto;margin-right: auto;" align="center">
+		<tr>
+			<td style="width:246px;" align="center">
+			 <a href="http://bszs.conac.cn/sitename?method=show&amp;id=105E03E77D4721CFE053012819ACD4B6" target="_blank">
+                        <img id="imgConac"  vspace="0" hspace="0" border="0" src="default2/img/2107281055006672931.png" data-bd-imgshare-binded="1">
+                    </a>&nbsp;&nbsp;&nbsp;&nbsp;
+             <a href="https://zfwzgl.www.gov.cn/exposure/jiucuo.html?site_code=3200000051&amp;url=http%3A%2F%2Fkxjst.jiangsu.gov.cn%2F" target="_blank"><img src="default2/img/2107281055007123178.png"></a>       
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			</td>
+			<td style="width:728px;" align="center">
+				  <p align="left">&nbsp;&nbsp;&nbsp;&nbsp;主办：江苏省科学技术厅  地址：江苏省南京市北京东路39号  邮编：210008 &nbsp;&nbsp;97<br>&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_blank">  苏ICP备05009012号  </a>网站标识码:3200000051  
+                <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32010202010419" target="_blank">
+                 <img src="default2/img/2107281055006425692.png">              
+					苏公网安备 32010202010419号
+                    </a>
+               
+         </td>
+			<td style="width:70px;" align="center">
+			 <div class="img_box1" style=" margin-bottom:0px;">
+                        <a href="http://kxjst.jiangsu.gov.cn/col/col83336/index.html" target="_blank"><img  src="default2/img/2108161606122354048.png"></a>
+                    </div>
+                    <a href="http://kxjst.jiangsu.gov.cn/col/col83336/index.html" target="_blank">纪检监察</a>
+			</td>
+			<td style="width:70px;" align="center">
+			 <div class="img_box1" style=" margin-bottom:0px;">
+                        <a href="https://kjjh.kxjst.jiangsu.gov.cn/allstinfo.jsp?itemid=2880" target="_blank"><img  src="default2/img/2107281055006821654.png"></a>
+                    </div>
+                    <a href="https://kjjh.kxjst.jiangsu.gov.cn/allstinfo.jsp?itemid=2880" target="_blank">联系我们</a>
+			</td>
+				<td style="width:70px;" align="center">
+			 <div class="img_box1" style=" margin-bottom:0px;">
+                        <a href="http://kxjst.jiangsu.gov.cn/col/col83058/index.html" target="_blank"><img  src="default2/img/2107281055006978276.png"></a>
+                    </div>
+                    <a href="http://kxjst.jiangsu.gov.cn/col/col83058/index.html" target="_blank">网站地图</a>
+			</td>
+		</tr>
+		</table> 
+</div>
+
+</body>
+</html>
+
+<script>
+document.getElementById("f_user").value=localStorage.f_user!=null?localStorage.f_user:"";
+document.getElementById("f_pass").value=localStorage.f_pass!=null?localStorage.f_pass:"";
+document.getElementById("D1").value=localStorage.D1!=null?localStorage.D1:"";
+document.getElementById("co").checked=(localStorage.f_user!=null&&""!=localStorage.f_user)?true:false;
+
+</script>

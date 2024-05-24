@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>中华环境保护基金会</title>
+
+    <script type="text/javascript" src="./images/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" src="./images/jjh_pc_mobile_v2023.js"></script>
+    <link rel="stylesheet" href="./images/idangerous.swiper2.7.6.css">
+    <script src="./images/idangerous.swiper2.7.6.min.js"></script>
+
+    <link class="stylefile" rel="stylesheet" type="text/css" href="./images/jjh_pc_v2023.css">
+    <link class="mobileStyle" rel="stylesheet" type="text/css" href="./images/jjh_m_v2023.css">
+
+    <link class="stylefile" rel="stylesheet" type="text/css" href="./images/jjh_pc_index_v2024.css">
+    <link class="mobileStyle" rel="stylesheet" type="text/css" href="./images/jjh_m_index_v2023.css">
+
+    <script type="text/javascript">
+        var isPC = IsPC(); //获取是否为PC端
+        if (isPC) {
+            //如果是PC端加载PC的js和css
+            $(".mobileStyle").remove();
+            dynamicLoadJs('/images/jjh_index_v2023.js');
+        } else {
+            //如果是移动端加载移动端的js和css
+            $(".stylefile").remove();
+            dynamicLoadJs('/images/jjh_m_v2023.js');
+            dynamicLoadJs('/images/jjh_index_v2023_m.js');
+        }
+    </script>
+    <!--[if IE 9]>
+    <script src="./images/placeholder.js"></script>
+    <![endif]-->
+
+</head>
+<body class="index_body">
+<div class="index_nav_color">
+    <!-- 头部开始 -->
+    <div class="wrap">
+    <div class="top_bg">
+        <div class="top_links">
+            <div class="top">
+                <div class="search_box">
+                    <input class="search_input" id="keyword" type="text" placeholder="请输入需要搜索的内容" />
+                    <a class="search_btn" href="javascript:;"  onclick="checkForm()"></a>
+                </div>
+				<script type="text/javascript">
+					function checkForm(){
+						var searchword_txt = $("#keyword").val().replace(/[\-\_\,\!\|\~\`\(\)\#\$\%\^\&\*\{\}\:\;\"\L\<\>\?]/g, '');
+						var searchword = searchword_txt;
+						if(searchword==''){
+						   alert("请输入需要搜索的内容");
+						   return;
+						}
+						window.open("/search/index.html?page=1&perpage=10&keyword=" + searchword );
+					}
+				</script>
+            </div>
+            <a href="https://email.mee.gov.cn/" target="_blank">邮箱</a>
+            <span>|</span>
+            <a href="/">中</a><span>|</span>
+            <a href="/cepf_english/">EN</a>
+            <span>|</span><a href="http://former1.cepf.org.cn/" target="blank">旧站回顾</a>
+        </div>
+    </div>
+    <div class="wrapIn">
+        <div class="logo mNone"><a href="/"><img src="/images/logo.gif" alt="" /></a></div>
+        <div class="logo pcNone"><a href="/"><img src="/images/logo_m.gif" alt="" /></a></div>
+        <div class="menu-btn pcNone"></div>
+        <div class="nav mNone">
+            <a href="/">首页</a>
+            <a href="http://www.cepf.org.cn/gywm/" class="firLi" channel-id="34152">关于我们</a>
+            <a href="http://www.cepf.org.cn/zyzx/" class="firLi" channel-id="34163">重要资讯</a>
+            <a href="http://www.cepf.org.cn/jjhdt/" class="firLi" channel-id="34167">基金会动态</a>
+            <a href="http://www.cepf.org.cn/ddjs/" class="firLi" channel-id="34168">党的建设</a>
+            <a href="http://www.cepf.org.cn/xxgk/" class="firLi" channel-id="34172">信息公开</a>
+            <a href="http://www.cepf.org.cn/gyxm/" class="firLi" channel-id="34182">公益项目</a>
+            <a href="http://www.cepf.org.cn/cgzs/" class="firLi" channel-id="34194">研究成果</a>
+        </div>
+
+        <div class="nav pcNone">
+            <a href="/">首页</a>
+            <div class="has-chil">
+                <a href="javascript:;">关于我们</a>
+                <div class="chil-nav clear ch1">
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs/">基金会介绍</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs_35359/">基金会章程</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs_35360/">理事会</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs_35361/">组织机构</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs_35362/">发展历程</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/jjhjs_35363/">联系我们</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/dbc/">代表处</a>
+                    </div>
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gywm/zsbz/">证书表彰</a>
+                    </div>
+                </div>
+            </div>
+            <div class="has-chil">
+                <a href="javascript:;">重要资讯</a>
+                <div class="chil-nav clear ch2">
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/zyzx/szyw/">时政要闻</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/zyzx/hjyw/">环境要闻</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/zyzx/hbqf/">环保清风</a>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="has-chil nobg">
+                <a href="http://www.cepf.org.cn/jjhdt/">基金会动态</a>
+            </div>
+            <div class="has-chil">
+                <a href="javascript:;">党的建设</a>
+                <div class="chil-nav clear ch3">
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/ddjs/djdt/">党建动态</a>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="has-chil">
+                <a href="javascript:;">信息公开</a>
+                <div class="chil-nav clear ch4">
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/zj/">征集</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/gs/">公示</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/nb/">年报</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/sjbg/">审计报告</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/gzzd/">规章制度</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/zcfg/">政策法规</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/jzfs/">捐赠方式</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/xxgk/jzxx/">捐赠信息</a>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="has-chil">
+                <a href="javascript:;">公益项目</a>
+                <div class="chil-nav clear ch5">
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/ZHHJJ/">中华环境奖</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/swdyxbh/">生物多样性保护</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/ydqhbh/">应对气候变化</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/hzyjl/">合作与交流</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/hjfzjs/">环境法治建设</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/hjkj/">环境科技</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/hjxcycd/">环境宣传与倡导</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/sthf/">生态恢复</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/hybh/">海洋保护</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/lsfzyxczx/">绿色发展与乡村振兴</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/yjcs/">应急慈善</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/gyxm/qt/">其他</a>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="has-chil">
+                <a href="javascript:;">成果展示</a>
+                <div class="chil-nav clear ch6">
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/cgzs/cghb/">成果汇编</a>
+                    </div>
+                    
+                    <div class="chil-item">
+                        <a href="http://www.cepf.org.cn/cgzs/spk/">视频库、图片库</a>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- 头部结束 -->
+</div>
+
+<!-- banner -->
+<div class="banner_wrap">
+    <div class="swiper-container banner_s banner_sjs">
+        <ul class="swiper-wrapper">
+            <li class="swiper-slide">
+                <div class="imgs_w mobile_none" style="background-image: url(/images/jjh_banner1_v2024.jpg);"></div>
+                <div class="imgs_w pcNone" style="background-image: url(/images/jjh_banner2_w.jpg);"></div>
+            </li>
+            <li class="swiper-slide">
+                <div class="imgs_w mobile_none" style="background-image: url(/images/jjh_banner2_v2024.jpg);"></div>
+                <div class="imgs_w pcNone" style="background-image: url(/images/jjh_banner3_w.jpg);"></div>
+            </li>
+            <li class="swiper-slide">
+                <div class="imgs_w mobile_none" style="background-image: url(/images/jjh_banner3_v2024.jpg);"></div>
+                <div class="imgs_w pcNone" style="background-image: url(/images/jjh_banner4_w.jpg);"></div>
+            </li>
+            <li class="swiper-slide">
+                <div class="imgs_w mobile_none" style="background-image: url(/images/jjh_banner4_v2024.jpg);"></div>
+                <div class="imgs_w pcNone" style="background-image: url(/images/jjh_banner5_w.jpg);"></div>
+            </li>
+        </ul>
+        <div class="pageState"></div>
+        <div class="banner_s_but">
+            <div class="prev"></div>
+            <div class="next"></div>
+        </div>
+    </div>
+    <div class="clear banner_about">
+        <div class="fl banner_about_s">
+            <div class="titles">
+                <img class="img1 mobile_none" src="./images/jjh_banner_jj2.png" alt="" />
+                <img class="img2 mobile_none" src="./images/jjh_banner_jj3.png" alt="" />
+                <img class="img1 pcNone" src="./images/jjh_banner_jj2_w.png" alt="" />
+                <img class="img2 pcNone" src="./images/jjh_banner_jj3_w.png" alt="" />
+                <i class="xians"></i>
+            </div>
+            <div class="clear text_s">
+                <div class="fl jjh_scale_img b_imgs">
+                    <img class="imgs" src="./images/jjh_banner_jj5.jpg" alt="" />
+                </div>
+                <div class="fl b_about">
+                    <p>创始人：曲格平</p>
+                    <p>理事长：徐光</p>
+                    <p>副理事长：郭瑞林、汪劲</p>
+                    <p>秘书长：刘春龙</p>
+                    <p>副秘书长：房志、王振刚</p>
+                </div>
+            </div>
+            <div class="banner_about_more">
+                <a href="./csrzl/" target="_blank">
+                    <span class="sp">创始人专栏</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 重要资讯 -->
+<div class="clear wrapIn index_zyzx_w">
+    <div class="fl index_zyzx">
+        <div class="clear index_atitle_w index_zyzx_title">
+            <div class="fl index_atitle_as">
+                <a class="mNone" href="./zyzx/" target="_blank">重要资讯<i class="xians"></i></a>
+                <a class="pcNone" href="javascript:;">重要资讯<i class="xians"></i></a>
+                <i class="xians_r"></i>
+            </div>
+            <div class="fl index_atitle_as on">
+                <a class="mNone" href="./jjhdt/" target="_blank">基金会动态<i class="xians"></i></a>
+                <a class="pcNone" href="javascript:;">基金会动态<i class="xians"></i></a>
+                <i class="xians_r"></i>
+            </div>
+        </div>
+        <div class="index_zyzx_kj_w">
+            <div class="index_zyzx_kj">
+                <div class="clear index_zyzx_news">
+                    
+                        <a href="./ddjs/djdt/202404/t20240401_1069688.html" target="_blank" class="fl jjh_scale_img imgs_w">
+                            <img class="imgs" src="./ddjs/djdt/202404/W020240410503617556813.jpg" alt="" />
+                        </a>
+                        <div class="fr text_s">
+                            <a href="./ddjs/djdt/202404/t20240401_1069688.html" target="_blank" class="titles" title="中华环境保护基金会举行主题党日暨业务交流研学堂活动">
+                                中华环境保护基金会举行主题党日暨业务交流研学堂活动
+                            </a>
+                            <div class="texts">
+                                中华环境保护基金会举行主题党日暨业务交流研学堂活动
+                            </div>
+                            <p class="time">2024-04-01</p>
+                            <a href="./ddjs/djdt/202404/t20240401_1069688.html" target="_blank" class="fr mores">
+                                <span>详情</span>
+                            </a>
+                        </div>
+                    
+                </div>
+                <div class="index_text_news">
+                    <ul>
+                        
+                            <li class="clear">
+                                <a href="https://www.mee.gov.cn/ywdt/hjywnews/202403/t20240320_1068818.shtml" target="_blank" class="fl text" title="生态环境部党组书记孙金龙 部长黄润秋在《学习时报》发表署名文章 《加强生态环境分区管控 以高水平保护推动高质量发展创造高品质生活》">生态环境部党组书记孙金龙 部长黄润秋在《学习时报》发表署名文章 《加强生态环境...<span class="fr time pcNone">2024-03-21</span></a>
+                                <span class="fr time mobile_none">2024-03-21</span>
+                            </li>
+                        
+                            <li class="clear">
+                                <a href="./zyzx/szyw/202403/t20240313_1068297.html" target="_blank" class="fl text" title="政府工作报告">政府工作报告<span class="fr time pcNone">2024-03-13</span></a>
+                                <span class="fr time mobile_none">2024-03-13</span>
+                            </li>
+                        
+                            <li class="clear">
+                                <a href="./ddjs/djdt/202403/t20240311_1068125.html" target="_blank" class="fl text" title="我会组织开展纪念“三八”国际妇女节活动">我会组织开展纪念“三八”国际妇女节活动<span class="fr time pcNone">2024-03-11</span></a>
+                                <span class="fr time mobile_none">2024-03-11</span>
+                            </li>
+                        
+                    </ul>
+                </div>
+            </div>
+            <div class="index_zyzx_kj" style="display: block;">
+                <div class="clear index_zyzx_news">
+                    
+                        <a href="./gyxm/hjxcycd/TOTO/XMDT/202405/t20240522_1073839.html" target="_blank" class="fl jjh_scale_img imgs_w">
+                            <img class="imgs" src="./gyxm/hjxcycd/TOTO/XMDT/202405/W020240522548295400388.jpg" alt="" />
+                        </a>
+                        <div class="fr text_s">
+                            <a href="./gyxm/hjxcycd/TOTO/XMDT/202405/t20240522_1073839.html" target="_blank" class="titles" title="2024自然亲水教育培训及“爱水一课堂”项目资助活动在国家动物博物馆举办">
+                                2024自然亲水教育培训及“爱水一课堂”项目资助活动在国家动...
+                            </a>
+                            <div class="texts">
+                                2024自然亲水教育培训及“爱水一课堂”项目资助活动在国家动物博物馆举办
+
+                            </div>
+                            <p class="time">2024-05-22</p>
+                            <a href="./gyxm/hjxcycd/TOTO/XMDT/202405/t20240522_1073839.html" target="_blank" class="fr mores">
+                                <span>详情</span>
+                            </a>
+                        </div>
+                    
+                </div>
+                <div class="index_text_news">
+                    <ul>
+                        
+                            <li class="clear">
+                                <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240522_1073819.html" target="_blank" class="fl text" title="生物多样性 你我共参与|中华环境保护基金会携手美团青山计划助力生物多样性保护">生物多样性 你我共参与|中华环境保护基金会携手美团青山计划助力生物多样性保护<span class="fr time pcNone">2024-05-22</span></a>
+                                <span class="fr time mobile_none">2024-05-22</span>
+                            </li>
+                        
+                            <li class="clear">
+                                <a href="./gyxm/swdyxbh/ldfz/xmdtldfz/202405/t20240516_1073357.html" target="_blank" class="fl text" title="“绿电方舟”公益品牌项目2024年现场会成功举办｜“绿电方舟”守护万物共生美好地球">“绿电方舟”公益品牌项目2024年现场会成功举办｜“绿电方舟”守护万物共生美好地球<span class="fr time pcNone">2024-05-16</span></a>
+                                <span class="fr time mobile_none">2024-05-16</span>
+                            </li>
+                        
+                            <li class="clear">
+                                <a href="./jjhdt/202405/P020240513377025267119.pdf" target="_blank" class="fl text" title="中华环境保护基金会2024年部门预算">中华环境保护基金会2024年部门预算<span class="fr time pcNone">2024-05-13</span></a>
+                                <span class="fr time mobile_none">2024-05-13</span>
+                            </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="fr index_wyjz_w">
+        <div class="index_wyjz">
+            <div class="clear index_atitle_w">
+                <div class="fl index_atitle_as on">
+                    <a href="./xxgk/jzfs/" target="_blank">我要捐赠<i class="xians"></i></a>
+                    <i class="xians_r"></i>
+                </div>
+            </div>
+            <div class="index_wyjz_s">
+                <ul class="clear">
+                    <li class="lis li_zfb"><a target="_blank" href="./xxgk/jzfs/hlwgm_35379/"></a></li>
+                    <li class="lis li_txgy"><a target="_blank" href="./xxgk/jzfs/hlwgm/"></a></li>
+
+                    <li class="lis li_yhhk"><a target="_blank" href="./xxgk/jzfs/202311/t20231101_1044591.html"></a></li>
+
+                </ul>
+            </div>
+        </div>
+        <div class="index_bmdh">
+            <div class="clear index_atitle_w">
+                <div class="fl index_atitle_as on">
+                    <a>部门电话<i class="xians"></i></a>
+                    <i class="xians_r"></i>
+                </div>
+            </div>
+            <div class="index_bmdh_s">
+                <ul>
+                    <li>基金会传真：010-67118190</li>
+                    <li>办公室电话：010-67113272</li>
+                    <li>基金财务部：010-67118279</li>
+                    <li>宣传联络部：010-67130419</li>
+                    <li>项目管理部：010-67133047</li>
+                   
+                    <li>表彰工作部：010-67112884</li>
+                    <li>项目开发部：010-67102844</li>
+                    <li>事业拓展部：010-67173592</li>
+                    <li>网络信息办：010-67116117</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 信息公开 -->
+<div class="index_xxgk_w">
+    <div class="clear wrapIn index_xxgk">
+        <div class="fl index_xxgk_l">
+            <p class="ts1">信息公开</p>
+            <ul class="clear uls">
+                <li class="on">
+                    <a class="mobile_none" href="./xxgk/zj/" target="_blank">征集 <i class="xians"></i></a>
+                    <a class="pcNone" href="javascript:void(0);">征集 <i class="xians"></i></a>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./xxgk/gs/" target="_blank">公示 <i class="xians"></i></a>
+                    <a class="pcNone" href="javascript:void(0);">公示 <i class="xians"></i></a>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./xxgk/nb/" target="_blank">年报 <i class="xians"></i></a>
+                    <a class="pcNone" href="javascript:void(0);">年报 <i class="xians"></i></a>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./xxgk/sjbg/" target="_blank">审计报告 <i class="xians"></i></a>
+                    <a class="pcNone" href="javascript:void(0);">审计报告 <i class="xians"></i></a>
+                </li>
+            </ul>
+        </div>
+        <div class="fr index_xxgk_imgs_kjw">
+            <div class="index_xxgk_imgs_w on">
+                <div class="index_xxgk_imgs_s">
+                    <div class="swiper-container index_xxgk_imgs index_xxgk_imgs_js1">
+                        <ul class="swiper-wrapper">
+                            
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/lsfzyxczx/ZRTXMLY/ZRTXMLY_DONGTAI/202405/t20240523_1073876.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337513649445.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/lsfzyxczx/ZRTXMLY/ZRTXMLY_DONGTAI/202405/t20240523_1073876.html" target="_blank" class="titles" title="关于征集“种草·喜马拉雅”人工牧草种植项目执行单位的公告">
+                                                    关于征集“种草·喜马拉雅”人工牧草种植项目执行单位的公告
+                                                </a>
+                                                <p class="text">
+                                                    关于征集“种草·喜马拉雅”人工牧草种植项目执行单位的公告
+
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./xxgk/zj/202405/t20240521_1073720.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337574777078.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./xxgk/zj/202405/t20240521_1073720.html" target="_blank" class="titles" title="关于公开征集“生态种植及环保扶贫”酉阳乡村振兴项目的公告">
+                                                    关于公开征集“生态种植及环保扶贫”酉阳乡村振兴项目的公告
+                                                </a>
+                                                <p class="text">
+                                                    关于公开征集“生态种植及环保扶贫”酉阳乡村振兴项目的公告
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240520_1073656.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337628646076.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240520_1073656.html" target="_blank" class="titles" title="青山公益专项基金2024年度“盒聚变”餐盒回收及再生利用示范基地执行单位征集公告">
+                                                    青山公益专项基金2024年度“盒聚变”餐盒回收及再生利用示范基地执行单位...
+                                                </a>
+                                                <p class="text">
+                                                    青山公益专项基金2024年度“盒聚变”餐盒回收及再生利用示范基地执行单位征集公告
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240520_1073653.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337513649445.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240520_1073653.html" target="_blank" class="titles" title="青山公益专项基金2024年度“盒聚变”塑料餐盒规模化回收行动执行单位征集公告">
+                                                    青山公益专项基金2024年度“盒聚变”塑料餐盒规模化回收行动执行单位征集公告
+                                                </a>
+                                                <p class="text">
+                                                    青山公益专项基金2024年度“盒聚变”塑料餐盒规模化回收行动执行单位征集公告
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/swdyxbh/dtsh/xmdtdtsh/202405/t20240518_1073558.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337574777078.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/swdyxbh/dtsh/xmdtdtsh/202405/t20240518_1073558.html" target="_blank" class="titles" title="关于公开征集“滴碳守护公益项目”候鸟迁徙公益项目 （第二期）执行单位的公告">
+                                                    关于公开征集“滴碳守护公益项目”候鸟迁徙公益项目 （第二期）执行单位的...
+                                                </a>
+                                                <p class="text">
+                                                    关于公开征集“滴碳守护公益项目”候鸟迁徙公益项目 （第二期）执行单位的公告
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/sthf/gongyizaolin/lxfsgyxms/202405/t20240518_1073557.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/zj/images/P020240126337628646076.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/sthf/gongyizaolin/lxfsgyxms/202405/t20240518_1073557.html" target="_blank" class="titles" title="关于公开征集“蚂蚁森林公益项目”2023年敦煌市胡杨造林项目验收单位的公告">
+                                                    关于公开征集“蚂蚁森林公益项目”2023年敦煌市胡杨造林项目验收单位的公告
+                                                </a>
+                                                <p class="text">
+                                                    关于公开征集“蚂蚁森林公益项目”2023年敦煌市胡杨造林项目验收单位的公告
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="prev index_xxgk_imgs_prev1"></div>
+                <div class="next index_xxgk_imgs_next1"></div>
+            </div>
+            <div class="index_xxgk_imgs_w">
+                <div class="index_xxgk_imgs_s">
+                    <div class="swiper-container index_xxgk_imgs index_xxgk_imgs_js2">
+                        <ul class="swiper-wrapper">
+                            
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/ydqhbh/wnbc_35327/xmdt/202405/t20240522_1073817.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126337875197647.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/ydqhbh/wnbc_35327/xmdt/202405/t20240522_1073817.html" target="_blank" class="titles" title="关于“旧鞋新生公益项目”绿色消费公益网站搭建及运维工作、绿色消费公益倡导项目活动实施单位的公示">
+                                                    关于“旧鞋新生公益项目”绿色消费公益网站搭建及运维工作、绿色消费公益...
+                                                </a>
+                                                <p class="text">
+                                                    关于“旧鞋新生公益项目”绿色消费公益网站搭建及运维工作、绿色消费公益倡导项目活动实施单位的公示
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./xxgk/gs/202405/t20240515_1073278.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126338061963583.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./xxgk/gs/202405/t20240515_1073278.html" target="_blank" class="titles" title="关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示">
+                                                    关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示
+                                                </a>
+                                                <p class="text">
+                                                    关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/hybh/nanhaiwuzhong/xmdtnhwz/202405/t20240515_1073272.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126338122450327.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/hybh/nanhaiwuzhong/xmdtnhwz/202405/t20240515_1073272.html" target="_blank" class="titles" title="关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示">
+                                                    关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示
+                                                </a>
+                                                <p class="text">
+                                                    关于拟确定“南海物种守护计划”珊瑚保护及修复实施单位的公示
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202405/t20240513_1073108.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126337875197647.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202405/t20240513_1073108.html" target="_blank" class="titles" title="2024年度“三江源·沁源行动”拟确定项目实施单位公示">
+                                                    2024年度“三江源·沁源行动”拟确定项目实施单位公示
+                                                </a>
+                                                <p class="text">
+                                                    2024年度“三江源·沁源行动”拟确定项目实施单位公示
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./gyxm/sthf/shequshidi/xmdtsqsd/202405/t20240513_1073102.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126338061963583.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./gyxm/sthf/shequshidi/xmdtsqsd/202405/t20240513_1073102.html" target="_blank" class="titles" title="“社区湿地生境提升公益项目（第二期）”青州、徐州活动拟确定实施单位公示">
+                                                    “社区湿地生境提升公益项目（第二期）”青州、徐州活动拟确定实施单位公示
+                                                </a>
+                                                <p class="text">
+                                                    “社区湿地生境提升公益项目（第二期）”青州、徐州活动拟确定实施单位公示
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                                
+                                    <li class="swiper-slide">
+                                        <div class="kjs">
+                                            <a href="./xxgk/gs/202405/t20240513_1073042.html" target="_blank" class="img_w jjh_scale_img">
+                                                <img class="imgs" src="./xxgk/gs/images/P020240126338122450327.png" alt="" />
+                                            </a>
+                                            <div class="text_w">
+                                                <a href="./xxgk/gs/202405/t20240513_1073042.html" target="_blank" class="titles" title="IBM SkillsBuild平台可持续发展课程公益项目” 拟确定执行机构公示">
+                                                    IBM SkillsBuild平台可持续发展课程公益项目” 拟确定执行机构公示
+                                                </a>
+                                                <p class="text">
+                                                    IBM SkillsBuild平台可持续发展课程公益项目”
+拟确定执行机构公示
+
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="prev index_xxgk_imgs_prev2"></div>
+                <div class="next index_xxgk_imgs_next2"></div>
+            </div>
+            <div class="index_xxgk_imgs_w">
+                <div class="index_xxgk_imgs_s">
+                    <div class="swiper-container index_xxgk_imgs index_xxgk_imgs_js3">
+                        <ul class="swiper-wrapper">
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/202404/P020240428352220005825.pdf" target="_blank" title="中华环境保护基金会2023年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2023）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/202308/P020231102421708767371.pdf" target="_blank" title="中华环境保护基金会2022年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2022年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/202207/P020231102421696836169.pdf" target="_blank" title="中华环境保护基金会2021年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2021年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/202111/P020231102421683762462.pdf" target="_blank" title="中华环境保护基金会2020年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2020年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/202104/P020231102421673655278.pdf" target="_blank" title="中华环境保护基金会2019年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2019年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="nb_year">
+                                            <a href="./xxgk/nb/201907/P020231102421666397303.pdf" target="_blank" title="中华环境保护基金会2018年度工作报告">
+                                                工作报告
+                                                <p>
+                                                    （2018年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="prev index_xxgk_imgs_prev3"></div>
+                <div class="next index_xxgk_imgs_next3"></div>
+            </div>
+            <div class="index_xxgk_imgs_w">
+                <div class="index_xxgk_imgs_s">
+                    <div class="swiper-container index_xxgk_imgs index_xxgk_imgs_js4">
+                        <ul class="swiper-wrapper">
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202404/P020240428357143407484.pdf" target="_blank" title="中华环境保护基金会2023年度专项信息审核报告">
+                                                专项信息审核报告
+                                                <p>
+                                                    （2023）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202404/P020240428357593373064.pdf" target="_blank" title="中华环境保护基金会2023年度审计报告">
+                                                审计报告
+                                                <p>
+                                                    （2023）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202308/P020231102417269290882.pdf" target="_blank" title="中华环境保护基金会2022年度专项信息审核报告">
+                                                专项信息审核报告
+                                                <p>
+                                                    （2022年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202308/P020231102417260287320.pdf" target="_blank" title="中华环境保护基金会2022年度审计报告">
+                                                审计报告
+                                                <p>
+                                                    （2022年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202208/P020231102417252645435.pdf" target="_blank" title="中华环境保护基金会2021年度专项信息审核报告">
+                                                专项信息审核报告
+                                                <p>
+                                                    （2021年）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                                <li class="swiper-slide">
+                                    <div class="kjs">
+                                        <div class="sj_year">
+                                            <a href="./xxgk/sjbg/202208/P020231102417246381454.pdf" target="_blank" title="中华环境保护基金会2021年度审计报告">
+                                                审计报告
+                                                <p>
+                                                    （2021年度）
+                                                </p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            
+                        </ul>
+                    </div>
+                </div>
+                <div class="prev index_xxgk_imgs_prev4"></div>
+                <div class="next index_xxgk_imgs_next4"></div>
+            </div>
+        </div>
+        <a class="fr index_xxgk_more pcNone" href="./xxgk/" target="_blank">更多</a>
+    </div>
+</div>
+<!-- 党的建设 环保清风 -->
+<div class="clear wrapIn index_ddjs_w">
+    
+        <a href="/ddjs/djdt/" target="_blank" class="fl jjh_scale_img imgs_w">
+            <img class="imgs" src="./ad/202311/W020231101502081355351.jpg" alt="" />
+        </a>
+    
+    
+        <a href="/zyzx/hbqf/" target="_blank" class="fr jjh_scale_img imgs_w">
+            <img class="imgs" src="./ad/202311/W020231101501100806540.jpg" alt="" />
+        </a>
+    
+</div>
+<!-- 工作领域 -->
+<div class="index_gzly_w">
+    <div class="wrapIn index_gzly_s">
+        <div class="clear index_atitle_w index_atitle_w1">
+            <div class="index_atitle_as on">
+                <a>工作领域<i class="xians"></i></a>
+                <i class="xians_r"></i>
+            </div>
+        </div>
+        <div class="clear index_gzly_nav">
+            <ul>
+                <li class="on">
+                    <a class="mobile_none" href="./gyxm/ZHHJJ/" target="_blank"><span>中华环境奖</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>中华环境奖</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/swdyxbh/" target="_blank"><span>生物多样性保护</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>生物多样性保护</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/ydqhbh/" target="_blank"><span>应对气候变化</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>应对气候变化</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/hzyjl/" target="_blank"><span>合作与交流</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>合作与交流</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/hjfzjs/" target="_blank"><span>环境法治建设</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>环境法治建设</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/hjkj/" target="_blank"><span>环境科技</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>环境科技</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/hjxcycd/" target="_blank"><span>环境宣传与倡导</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>环境宣传与倡导</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/sthf/" target="_blank"><span>生态恢复</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>生态恢复</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/hybh/" target="_blank"><span>海洋保护</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>海洋保护</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/lsfzyxczx/" target="_blank"><span>绿色发展与乡村振兴</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>绿色发展与乡村振兴</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/yjcs/" target="_blank"><span>应急慈善</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>应急慈善</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+                <li>
+                    <a class="mobile_none" href="./gyxm/qt/" target="_blank"><span>其他</span><i class="bgs pcNone"></i></a>
+                    <a class="pcNone" href="javascript:void(0);"><span>其他</span><i class="bgs pcNone"></i></a>
+                    <i class="bgs mobile_none"></i>
+                </li>
+            </ul>
+        </div>
+        <div class="index_gzly_bw">
+            <div class="clear index_gzly_b on">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/ZHHJJ/" target="_blank" class="fl t1">中华环境奖<i class="xians"></i></a>
+                                <a href="./gyxm/ZHHJJ/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　为表彰和奖励为我国环境保护事业做出突出贡献和取得优异成绩的集体和个人，促进我国环境保护事业的发展，中华环境保护基金会于2000年设立了“...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js1">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="https://cszg.mca.gov.cn/biz/ma/csmh/b/csmhbdetail.html?id=2c944f4180d6da310180da0a9b171039" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="https://cszg.mca.gov.cn/biz/ma/csmh/b/csmhbdetail.html?id=2c944f4180d6da310180da0a9b171039" target="_blank" class="titles" title="中华环境奖信息公开">
+                                                中华环境奖信息公开
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/ZHHJJ/XMDT/202404/t20240422_1071327.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/ZHHJJ/XMDT/202404/t20240422_1071327.html" target="_blank" class="titles" title="关于征集“中华环境奖”启动及评选等相关工作实施单位的延期公告">
+                                                关于征集“中华环境奖”启动及评选等相关工作实施单位的延期公告
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ZHHJJ/XMDT/202404/t20240410_1070355.html" target="_blank" class="fl text" title="关于征集“中华环境奖”启动及评选等相关工作实施单位的公告">关于征集“中华环境奖”启动及评选等相关工作实施单位的公告</a>
+                                        <span class="fr time">2024-04-10</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ZHHJJ/XMDT/202312/t20231226_1059862.html" target="_blank" class="fl text" title="第十一届中华环境奖获奖单位（个人）先进事迹展播|环保宣教类优秀奖">第十一届中华环境奖获奖单位（个人）先进事迹展播|环保宣教类优秀奖</a>
+                                        <span class="fr time">2023-11-09</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ZHHJJ/XMDT/202311/t20231103_1053247.html" target="_blank" class="fl text" title="第十一届中华环境奖获奖单位（个人）先进事迹展播|生态保护类优秀奖">第十一届中华环境奖获奖单位（个人）先进事迹展播|生态保护类优秀奖</a>
+                                        <span class="fr time">2023-11-01</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ZHHJJ/XMDT/202311/t20231103_1053240.html" target="_blank" class="fl text" title="第十一届中华环境奖获奖单位（个人）先进事迹展播|生态保护类大奖：生态环境部卫星环境应用中心自然生态遥感部">第十一届中华环境奖获奖单位（个人）先进事迹展播|生态保护类大奖：生态环境部卫星环境应用中心自然生态遥感部</a>
+                                        <span class="fr time">2023-10-26</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/swdyxbh/" target="_blank" class="fl t1">生物多样性保护<i class="xians"></i></a>
+                                <a href="./gyxm/swdyxbh/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　生物多样性保护方向包含生物多样性保护基金-生物多样性保护基金、桃花源生态保护项目、蚂蚁森林公益保护地、滴碳守护公益项目、生物多样性保护...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js2">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/swdyxbh/bhjj/xmdtbhjj/202404/t20240429_1071936.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/swdyxbh/bhjj/xmdtbhjj/202404/W020240429345552292966.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/swdyxbh/bhjj/xmdtbhjj/202404/t20240429_1071936.html" target="_blank" class="titles" title="“我与家乡的野生动物朋友”野生动物实践调查探索活动顺利开展">
+                                                “我与家乡的野生动物朋友”野生动物实践调查探索活动顺利开展
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/swdyxbh/LSCSXT/LSCSXT_DT/202403/t20240320_1068829.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/swdyxbh/LSCSXT/LSCSXT_DT/202403/W020240320402510120056.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/swdyxbh/LSCSXT/LSCSXT_DT/202403/t20240320_1068829.html" target="_blank" class="titles" title="刘春龙秘书长一行调研抗疫复苏-食物与生物多样性专项基金项目">
+                                                刘春龙秘书长一行调研抗疫复苏-食物与生物多样性专项基金项目
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/swdyxbh/ghcj/xmdtghcj/202403/t20240304_1067528.html" target="_blank" class="fl text" title="“国航长江生态保护基金”“獐”显不凡公益项目启动">“国航长江生态保护基金”“獐”显不凡公益项目启动</a>
+                                        <span class="fr time">2024-03-04</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/swdyxbh/dtsh/xmdtdtsh/202311/t20231103_1053135.html" target="_blank" class="fl text" title="“滴碳守护”中华白海豚食料生物资源增殖放流活动在厦门举办">“滴碳守护”中华白海豚食料生物资源增殖放流活动在厦门举办</a>
+                                        <span class="fr time">2023-07-27</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/swdyxbh/ghcj/xmdtghcj/202311/t20231103_1052981.html" target="_blank" class="fl text" title="携手国航，追鲟长江|“中华鲟保护日” 国航公益放流站揭牌">携手国航，追鲟长江|“中华鲟保护日” 国航公益放流站揭牌</a>
+                                        <span class="fr time">2023-03-30</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/swdyxbh/mysl/xmdtmysl/202311/t20231103_1052891.html" target="_blank" class="fl text" title="中华环境保护基金会与蚂蚁集团签署“生物多样性保护基金”协议">中华环境保护基金会与蚂蚁集团签署“生物多样性保护基金”协议</a>
+                                        <span class="fr time">2022-12-19</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/ydqhbh/" target="_blank" class="fl t1">应对气候变化<i class="xians"></i></a>
+                                <a href="./gyxm/ydqhbh/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　应对气候变化方向包含万年冰川公益项目、碳达峰碳中和基金、蒙新河狸保护、“为爱发电”低碳校园、低碳校园行动、胜科可持续发展绿色环保项目...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js3">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/ydqhbh/wnbc_35371/xmdt/202404/t20240428_1071871.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/ydqhbh/wnbc_35371/xmdt/202404/W020240428579211802286.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/ydqhbh/wnbc_35371/xmdt/202404/t20240428_1071871.html" target="_blank" class="titles" title="“碳中和基金”启动仪式在清华大学举行">
+                                                “碳中和基金”启动仪式在清华大学举行
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/ydqhbh/wnbc_35327/xmdt/202404/t20240421_1071246.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/ydqhbh/wnbc_35327/xmdt/202404/t20240421_1071246.html" target="_blank" class="titles" title="关于公开征集“旧鞋新生公益项目”绿色消费公益网站搭建及运维工作、绿色消费公益倡导项目活动实施单位的公告">
+                                                关于公开征集“旧鞋新生公益项目”绿色消费公益网站搭建及运维工作、绿色消费公益倡导项目活动实施单位的公告
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./jjhdt/202312/t20231226_1059906.html" target="_blank" class="fl text" title="应对气候变化需要全社会共同努力——“加速低碳行动，凝聚应对气候变化的社会力量”主题边会在COP28中国角成功举办">应对气候变化需要全社会共同努力——“加速低碳行动，凝聚应对气候变化的社会力量”主题边会在COP28中国角成功举办</a>
+                                        <span class="fr time">2023-12-14</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ydqhbh/dtxy/xmdt/202312/t20231226_1059894.html" target="_blank" class="fl text" title="“为爱发电”低碳校园项目第一所学校顺利验收">“为爱发电”低碳校园项目第一所学校顺利验收</a>
+                                        <span class="fr time">2023-12-06</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ydqhbh/dtxy/xmdt/202311/t20231103_1052835.html" target="_blank" class="fl text" title="“为爱发电”低碳校园项目亮相世界互联网大会">“为爱发电”低碳校园项目亮相世界互联网大会</a>
+                                        <span class="fr time">2022-11-09</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/ydqhbh/wnbc/xmdt/202311/t20231103_1052305.html" target="_blank" class="fl text" title="《冰川之恋》上映发布会暨“万年冰川公益项目”启动仪式在成都举行">《冰川之恋》上映发布会暨“万年冰川公益项目”启动仪式在成都举行</a>
+                                        <span class="fr time">2021-07-26</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/hzyjl/" target="_blank" class="fl t1">合作与交流<i class="xians"></i></a>
+                                <a href="./gyxm/hzyjl/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　合作与交流方向包含能源与环境青年人才培养计划、绿碳行动等项目。</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js4">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/hzyjl/nyhj/xmdt/202312/t20231226_1059872.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hzyjl/nyhj/xmdt/202312/W020240202600836432836.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hzyjl/nyhj/xmdt/202312/t20231226_1059872.html" target="_blank" class="titles" title="邀您来听“能源与环境青年人才培养计划”公开课">
+                                                邀您来听“能源与环境青年人才培养计划”公开课
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/hzyjl/nyhj/xmdt/202312/t20231226_1059865.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hzyjl/nyhj/xmdt/202312/W020240229427337092070.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hzyjl/nyhj/xmdt/202312/t20231226_1059865.html" target="_blank" class="titles" title="邀您来听“能源与环境青年人才培养计划” 院士课堂">
+                                                邀您来听“能源与环境青年人才培养计划” 院士课堂
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hzyjl/nyhj/xmdt/202311/t20231103_1052333.html" target="_blank" class="fl text" title="邀您来听！“能源与环境青年人才培养计划”院士课堂">邀您来听！“能源与环境青年人才培养计划”院士课堂</a>
+                                        <span class="fr time">2022-10-24</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hzyjl/nyhj/xmdt/202311/t20231103_1052450.html" target="_blank" class="fl text" title="邀您来听！“能源与环境青年人才培养计划”院士课堂">邀您来听！“能源与环境青年人才培养计划”院士课堂</a>
+                                        <span class="fr time">2022-07-28</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/hjfzjs/" target="_blank" class="fl t1">环境法治建设<i class="xians"></i></a>
+                                <a href="./gyxm/hjfzjs/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　环境法治建设方向包含中国环境法治公益平台、环保民间组织能力建设基金、环境法人才能力培养、环境法律能力提升项目、环境损害鉴定公益基金、...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js5">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjfzjs/xmdtdyx/202405/t20240520_1073577.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjfzjs/xmdtdyx/202405/t20240520_1073577.html" target="_blank" class="titles" title="中华环境保护基金会关于环保社会组织能力提升培训交活动的通知">
+                                                中华环境保护基金会关于环保社会组织能力提升培训交活动的通知
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjfzjs/HBMJZZFL/HBMJZZFL_DONGTAI/202404/t20240408_1070205.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjfzjs/HBMJZZFL/HBMJZZFL_DONGTAI/202404/W020240408590729141256.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjfzjs/HBMJZZFL/HBMJZZFL_DONGTAI/202404/t20240408_1070205.html" target="_blank" class="titles" title="环保民间组织能力建设基金第一期至第四期资助计划公益项目评估报告发布">
+                                                环保民间组织能力建设基金第一期至第四期资助计划公益项目评估报告发布
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjfzjs/zghjfzpt/zghjfzpt_dongtai/202401/t20240102_1065076.html" target="_blank" class="fl text" title="中华环境保护基金会中国环境法治公益平台项目环保社会组织能力提升培训班圆满结束">中华环境保护基金会中国环境法治公益平台项目环保社会组织能力提升培训班圆满结束</a>
+                                        <span class="fr time">2024-01-02</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjfzjs/FLNLTS/FLNLTS_DONGTAI/202312/t20231226_1059905.html" target="_blank" class="fl text" title="美国环境法研究所（ELI）一行到访我会">美国环境法研究所（ELI）一行到访我会</a>
+                                        <span class="fr time">2023-12-14</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjfzjs/zghjfzpt/zghjfzpt_dongtai/202312/t20231226_1059904.html" target="_blank" class="fl text" title="中华环境保护基金会中国环境法治公益平台项目全国律师环境法律能力提升培训班圆满结束">中华环境保护基金会中国环境法治公益平台项目全国律师环境法律能力提升培训班圆满结束</a>
+                                        <span class="fr time">2023-12-14</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjfzjs/zghjfzpt/zghjfzpt_dongtai/202312/t20231226_1059898.html" target="_blank" class="fl text" title="中国环境法治公益平台项目全国律师环境法律能力提升培训班">中国环境法治公益平台项目全国律师环境法律能力提升培训班</a>
+                                        <span class="fr time">2023-12-07</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/hjkj/" target="_blank" class="fl t1">环境科技<i class="xians"></i></a>
+                                <a href="./gyxm/hjkj/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　环境科技包含绿色出行专项基金、电池污染防治和救助专项基金、生产者责任延伸制度推进基金、绿色交通公益基金、工业副产石膏循环利用专项基金...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js6">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202312/t20231226_1059860.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202312/W020240205558210646889.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202312/t20231226_1059860.html" target="_blank" class="titles" title="启零碳新程 续星航同行 绘生态未来|2023中华环境保护基金会支持开展零碳绿色出行主题活动">
+                                                启零碳新程 续星航同行 绘生态未来|2023中华环境保护基金会支持开展零碳绿色出行主题活动
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202009/t20200925_1062980.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202009/W020240301541789662881.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjkj/LSCXZXJJ/LSCXZXJJ_DONGTAI/202009/t20200925_1062980.html" target="_blank" class="titles" title="携手推进绿色共享出行可持续发展 第二届绿色共享出行主题学术沙龙在江苏南通举行">
+                                                携手推进绿色共享出行可持续发展 第二届绿色共享出行主题学术沙龙在江苏南通举行
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjkj/dianchi/CW_XMDT/202008/t20200828_1062229.html" target="_blank" class="fl text" title="生产者责任延伸制度推进基金试点项目启动——以信息化手段管住废铅蓄电池">生产者责任延伸制度推进基金试点项目启动——以信息化手段管住废铅蓄电池</a>
+                                        <span class="fr time">2020-08-28</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/hjxcycd/" target="_blank" class="fl t1">环境宣传与倡导<i class="xians"></i></a>
+                                <a href="./gyxm/hjxcycd/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　环境宣传与倡导方向包含宝洁中国先锋计划、安利环保基金、汰渍关爱环境基金、恒天然基金、大众汽车环境教育基金、爱心阅览室、美丽中国基金、...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js7">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjxcycd/TOTO/XMDT/202404/t20240429_1072052.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjxcycd/TOTO/XMDT/202404/W020240430320174709496.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjxcycd/TOTO/XMDT/202404/t20240429_1072052.html" target="_blank" class="titles" title="我会助力绿水守护者入选2024年“美丽中国， 我是行动者”十佳公众参与案例先进典型名单">
+                                                我会助力绿水守护者入选2024年“美丽中国， 我是行动者”十佳公众参与案例先进典型名单
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjxcycd/stdhbgyxcjywzjzxm/stdhbgyxcjywzjzxm_dongtai/202404/t20240428_1071881.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjxcycd/stdhbgyxcjywzjzxm/stdhbgyxcjywzjzxm_dongtai/202404/W020240428607925506245.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjxcycd/stdhbgyxcjywzjzxm/stdhbgyxcjywzjzxm_dongtai/202404/t20240428_1071881.html" target="_blank" class="titles" title="“人与自然和谐共生”环保公益宣传活动公益物资捐赠仪式成功举办">
+                                                “人与自然和谐共生”环保公益宣传活动公益物资捐赠仪式成功举办
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjxcycd/htr/xmdthtr/202404/t20240419_1071235.html" target="_blank" class="fl text" title="恒天然公益林活动在内蒙古巴彦淖尔市举办">恒天然公益林活动在内蒙古巴彦淖尔市举办</a>
+                                        <span class="fr time">2024-04-19</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjxcycd/TOTO/XMDT/202404/t20240417_1071016.html" target="_blank" class="fl text" title="关于TOTO水环境专项基金2024年自然亲水项目以及“爱水一课堂”资助活动执行单位的公示">关于TOTO水环境专项基金2024年自然亲水项目以及“爱水一课堂”资助活动执行单位的公示</a>
+                                        <span class="fr time">2024-04-17</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjxcycd/hjyjk_35111/xmdthj/202403/t20240308_1067923.html" target="_blank" class="fl text" title="“低碳从娃娃做起”九丰能源公益基金暨“绿色可持续发展”环境教育与意识提升活动启动仪式在乐昌举行">“低碳从娃娃做起”九丰能源公益基金暨“绿色可持续发展”环境教育与意识提升活动启动仪式在乐昌举行</a>
+                                        <span class="fr time">2024-03-08</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hjxcycd/BJXFJH/BJXFJH_DONGTAI/202312/t20231226_1059912.html" target="_blank" class="fl text" title="中华环境保护基金会“宝洁中国先锋计划”选派优秀大学生代表参加COP28大会活动">中华环境保护基金会“宝洁中国先锋计划”选派优秀大学生代表参加COP28大会活动</a>
+                                        <span class="fr time">2023-12-18</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/sthf/" target="_blank" class="fl t1">生态恢复<i class="xians"></i></a>
+                                <a href="./gyxm/sthf/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　生态植树方面包含蚂蚁森林公益项目（公益造林项目）、一棵树守护生态文明-一棵树守护生态文明 、三菱电机生态环保公益基金 滴碳守护公益项目、...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js8">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/sthf/sanlingdianji/xmdtsldj/202404/t20240428_1071878.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/sthf/sanlingdianji/xmdtsldj/202404/W020240428597667727172.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/sthf/sanlingdianji/xmdtsldj/202404/t20240428_1071878.html" target="_blank" class="titles" title="中华环境保护基金会支持2024年三菱电机雄安新区植树活动">
+                                                中华环境保护基金会支持2024年三菱电机雄安新区植树活动
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202404/t20240425_1071664.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/sthf/sanjiangyuan/xmdtsjy/202404/W020240425556790445753.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202404/t20240425_1071664.html" target="_blank" class="titles" title="三江源国家公园村级生态环保组织负责人培训班开班仪式在西宁举行">
+                                                三江源国家公园村级生态环保组织负责人培训班开班仪式在西宁举行
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202404/t20240419_1071228.html" target="_blank" class="fl text" title="关于征集2024年度“三江源·沁源行动” 实施单位的公告">关于征集2024年度“三江源·沁源行动” 实施单位的公告</a>
+                                        <span class="fr time">2024-04-19</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202403/t20240325_1069210.html" target="_blank" class="fl text" title="共护江源江尾 焕新致净未来 2024三江源·沁源行动启动仪式在沪举行">共护江源江尾 焕新致净未来 2024三江源·沁源行动启动仪式在沪举行</a>
+                                        <span class="fr time">2024-03-25</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/sthf/kanghenghuanjing/xmdtkh/202403/t20240312_1068227.html" target="_blank" class="fl text" title="“康恒环境基金”--“无废的城市 有爱的你”系列公益项目启动仪式在上海举行">“康恒环境基金”--“无废的城市 有爱的你”系列公益项目启动仪式在上海举行</a>
+                                        <span class="fr time">2024-03-12</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/sthf/sanjiangyuan/xmdtsjy/202401/t20240111_1065082.html" target="_blank" class="fl text" title="中华环境保护基金会“三江源•沁源行动”获公关案例大赛金奖及金钥匙荣誉奖">中华环境保护基金会“三江源•沁源行动”获公关案例大赛金奖及金钥匙荣誉奖</a>
+                                        <span class="fr time">2024-01-11</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/hybh/" target="_blank" class="fl t1">海洋保护<i class="xians"></i></a>
+                                <a href="./gyxm/hybh/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　海洋保护领域包含优衣库海洋环境保护项目、与海洋课堂一起长大、悦榕企业环保社会基金、南海物种守护计划、特普爱海岸卫士基金、迪士尼海洋保...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js9">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./jjhdt/202311/t20231103_1053114.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./jjhdt/202311/W020240202580824397240.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./jjhdt/202311/t20231103_1053114.html" target="_blank" class="titles" title="“优衣库海洋环境保护项目”持续助力美丽海湾建设">
+                                                “优衣库海洋环境保护项目”持续助力美丽海湾建设
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/hybh/shouhuweilan/xmdtshwl/202311/t20231103_1053054.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hybh/shouhuweilan/xmdtshwl/202311/W020240202579310695514.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hybh/shouhuweilan/xmdtshwl/202311/t20231103_1053054.html" target="_blank" class="titles" title="王国同行，守护蔚蓝海洋！">
+                                                王国同行，守护蔚蓝海洋！
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hybh/tepuaihaian/xmdttpa/202311/t20231103_1052979.html" target="_blank" class="fl text" title="开展海洋减塑净滩行动--特普爱海岸卫士在行动">开展海洋减塑净滩行动--特普爱海岸卫士在行动</a>
+                                        <span class="fr time">2023-03-28</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hybh/tepuaihaian/xmdttpa/202311/t20231103_1052849.html" target="_blank" class="fl text" title="保护海洋生态环境--特普爱海岸卫士在行动画展（二）">保护海洋生态环境--特普爱海岸卫士在行动画展（二）</a>
+                                        <span class="fr time">2022-11-18</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hybh/tepuaihaian/xmdttpa/202311/t20231103_1052832.html" target="_blank" class="fl text" title="保护海洋生态环境--特普爱海岸卫士在行动画展（一）">保护海洋生态环境--特普爱海岸卫士在行动画展（一）</a>
+                                        <span class="fr time">2022-11-08</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/hybh/LXWS/LXWS_DT/202203/t20220328_1060678.html" target="_blank" class="fl text" title="渔家大哥织网忙，蓝星卫士护海洋">渔家大哥织网忙，蓝星卫士护海洋</a>
+                                        <span class="fr time">2022-03-28</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/lsfzyxczx/" target="_blank" class="fl t1">绿色发展与乡村振兴<i class="xians"></i></a>
+                                <a href="./gyxm/lsfzyxczx/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　绿色发展与乡村振兴方向包含丰田隆化可持续发展乡村项目、关爱地球 我们在行动、“和路雪•心路计划”基金、新疆环保公益、2020公益林项目、新...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js10">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240509_1072705.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/W020240509414143869071.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202405/t20240509_1072705.html" target="_blank" class="titles" title="“2024年度青山计划餐饮外卖绿色包装推荐名录”正式发布，三大绿色包装类别，百余优质环保产品，为商家提供多样化绿色包装选择">
+                                                “2024年度青山计划餐饮外卖绿色包装推荐名录”正式发布，三大绿色包装类别，百余优质环保产品，为商家提供多样化绿色包装选择
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202404/t20240422_1071346.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202404/t20240422_1071346.html" target="_blank" class="titles" title="寻迹大相岭，青山公益带你走进大熊猫栖息地">
+                                                寻迹大相岭，青山公益带你走进大熊猫栖息地
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202311/t20231101_1062303.html" target="_blank" class="fl text" title="携手描绘美丽中国画卷|“青山公益自然守护行动”第二批资助揭晓">携手描绘美丽中国画卷|“青山公益自然守护行动”第二批资助揭晓</a>
+                                        <span class="fr time">2023-11-01</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/lsfzyxczx/QSJH/STWM_XMDT/202310/t20231019_1062302.html" target="_blank" class="fl text" title="“美丽中国 我是行动者” ——青山公益生态环境志愿服务项目第二期正式启动">“美丽中国 我是行动者” ——青山公益生态环境志愿服务项目第二期正式启动</a>
+                                        <span class="fr time">2023-10-19</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/lsfzyxczx/ZRTXMLY/ZRTXMLY_DONGTAI/202311/t20231103_1053183.html" target="_blank" class="fl text" title="迈向可持续未来，种草喜马拉雅第七季再添最美“丰”景">迈向可持续未来，种草喜马拉雅第七季再添最美“丰”景</a>
+                                        <span class="fr time">2023-09-08</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/lsfzyxczx/FTLH/FTLH_DT/202311/t20231103_1053132.html" target="_blank" class="fl text" title="中华环境保护基金会“礼·山溪”丰田隆化可持续发展乡村项目第二阶段启动仪式暨公益志愿服务活动在隆化举行">中华环境保护基金会“礼·山溪”丰田隆化可持续发展乡村项目第二阶段启动仪式暨公益志愿服务活动在隆化举行</a>
+                                        <span class="fr time">2023-07-25</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/yjcs/" target="_blank" class="fl t1">应急慈善<i class="xians"></i></a>
+                                <a href="./gyxm/yjcs/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　应急慈善方向包括救灾及灾后生态恢复、河南救灾与生态重建、支援抗疫医疗废物处置、百乡千村灾后重建、河南灾后水工程援建、灾区固废环境守护...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js11">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/yjcs/henanjiuzai/xmdthnjz/202403/t20240318_1068601.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/yjcs/henanjiuzai/xmdthnjz/202403/W020240318393999087240.jpg" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/yjcs/henanjiuzai/xmdthnjz/202403/t20240318_1068601.html" target="_blank" class="titles" title="首届“河南慈善奖”颁奖  中华环境保护基金会获表彰">
+                                                首届“河南慈善奖”颁奖  中华环境保护基金会获表彰
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/yjcs/baixiangqiancun_35331/xmdtbxqc/202401/t20240119_1065087.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/yjcs/baixiangqiancun_35331/xmdtbxqc/202401/W020240202546150233489.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/yjcs/baixiangqiancun_35331/xmdtbxqc/202401/t20240119_1065087.html" target="_blank" class="titles" title="中华环境保护基金会应邀参加甘肃省政协支持积石山县恢复重建工作座谈会并赴灾区落实环境能力建设项目">
+                                                中华环境保护基金会应邀参加甘肃省政协支持积石山县恢复重建工作座谈会并赴灾区落实环境能力建设项目
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/yjcs/henanjiuzai/xmdthnjz/202401/t20240118_1065085.html" target="_blank" class="fl text" title="中华环境保护基金会“河南救灾及生态重建”项目荣获首届河南慈善奖">中华环境保护基金会“河南救灾及生态重建”项目荣获首届河南慈善奖</a>
+                                        <span class="fr time">2024-01-18</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./jjhdt/202311/t20231103_1052325.html" target="_blank" class="fl text" title="同心救灾 不舍昼夜---西班牙inditex集团捐赠1058万元救灾物资驰援河南灾区">同心救灾 不舍昼夜---西班牙inditex集团捐赠1058万元救灾物资驰援河南灾区</a>
+                                        <span class="fr time">2021-08-05</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/yjcs/zhichiyiliao/xmdtzcyl/202311/t20231103_1051986.html" target="_blank" class="fl text" title="再捐医疗废物周转箱助力湖北十堰疫情防控常态化">再捐医疗废物周转箱助力湖北十堰疫情防控常态化</a>
+                                        <span class="fr time">2020-06-02</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./jjhdt/202311/t20231103_1051921.html" target="_blank" class="fl text" title="“科技为公益增添力量” 两台无人驾驶消毒清洁扫地机器人支援湖北十堰市新冠肺炎第二救治医院防疫">“科技为公益增添力量” 两台无人驾驶消毒清洁扫地机器人支援湖北十堰市新冠肺炎第二救治医院防疫</a>
+                                        <span class="fr time">2020-03-29</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="clear index_gzly_b">
+                <div class="fl index_gzly_bl">
+                    <div class="index_gzly_about">
+                        <div class="index_gzly_about_s">
+                            <div class="clear index_atitle_w2">
+                                <a href="./gyxm/qt/" target="_blank" class="fl t1">其他<i class="xians"></i></a>
+                                <a href="./gyxm/qt/" target="_blank" class="fr mores"><span>详情</span></a>
+                            </div>
+                            
+                                <p class="text">　　其他方面包含环保行动者资助基金、港口海岸生态保护修复项目、曲格平奖学金、菜鸟绿色联盟公益专项基金、“为爱发电”低碳校园、博天环境专项...</p>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="fr index_gzly_br">
+                    <div class="fr index_gzly_brimg swiper-container index_gzly_brimg_js12">
+                        <div class="swiper-wrapper">
+                            
+                                <ul class="swiper-slide">
+                                    
+                                        <li>
+                                            <a href="./gyxm/hjxcycd/LJYJTSG/LJYJTSG_DONGTAI/202109/t20210913_1062787.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/hjxcycd/LJYJTSG/LJYJTSG_DONGTAI/202109/W020240202552798378473.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/hjxcycd/LJYJTSG/LJYJTSG_DONGTAI/202109/t20210913_1062787.html" target="_blank" class="titles" title="松桃苗族自治县沙坝河乡完小爱心阅览室落成">
+                                                松桃苗族自治县沙坝河乡完小爱心阅览室落成
+                                            </a>
+                                        </li>
+                                    
+                                        <li>
+                                            <a href="./gyxm/qt/CAINIAO/CAINIAO_DONGTAI/202108/t20210816_1061947.html" target="_blank" class="img_w">
+                                                <div class="img_ws jjh_scale_img">
+                                                    <img class="imgs" src="./gyxm/qt/CAINIAO/CAINIAO_DONGTAI/202108/W020240202553454320073.png" alt="" />
+                                                </div>
+                                                <i class="bgs"></i>
+                                            </a>
+                                            <a href="./gyxm/qt/CAINIAO/CAINIAO_DONGTAI/202108/t20210816_1061947.html" target="_blank" class="titles" title="海洋版“蚂蚁森林”环保公益平台邀您一起减塑">
+                                                海洋版“蚂蚁森林”环保公益平台邀您一起减塑
+                                            </a>
+                                        </li>
+                                    
+                                </ul>
+                            
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="index_gzly_news">
+                        
+                            <ul>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/qt/BHGFDZFD/BHZGFFD_DONGTAI/202011/t20201112_1061474.html" target="_blank" class="fl text" title="我会“保护站光伏发电”项目入选《慈善与可持续发展——中国行动2020》报告">我会“保护站光伏发电”项目入选《慈善与可持续发展——中国行动2020》报告</a>
+                                        <span class="fr time">2020-11-12</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/qt/BHGFDZFD/BHZGFFD_DONGTAI/201803/t20180306_1061473.html" target="_blank" class="fl text" title="中华环境保护基金会为新疆霍城县边远无电牧区牧民送光明">中华环境保护基金会为新疆霍城县边远无电牧区牧民送光明</a>
+                                        <span class="fr time">2018-03-06</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/qt/MNXSN/MNXSN_DONGTAI/201903/t20190315_1063147.html" target="_blank" class="fl text" title="中华环境保护基金会携手蒙牛乳业助力“营养普惠”">中华环境保护基金会携手蒙牛乳业助力“营养普惠”</a>
+                                        <span class="fr time">2017-08-11</span>
+                                    </li>
+                                
+                                    <li class="clear">
+                                        <a href="./gyxm/qt/GPXD/XMDT/201403/t20140331_1062811.html" target="_blank" class="fl text" title="中国环境管理干部学院第十届“曲格平奖学金”颁发">中国环境管理干部学院第十届“曲格平奖学金”颁发</a>
+                                        <span class="fr time">2014-03-31</span>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新媒体平台 -->
+<div class="index_xmtpt_w">
+    <div class="wrapIn">
+        <a class="imgs_w jjh_scale_img">
+            <img class="imgs mobile_none" src="./images/jjh_index29.jpg" alt="" />
+            <img class="imgs pcNone" src="./images/jjh_index29_w.jpg" alt="" />
+        </a>
+    </div>
+</div>
+
+<!-- 合作伙伴 -->
+<div class="wrapIn index_hzhb_w">
+    <div class="clear index_atitle_w index_hzhb_title">
+        <div class="index_atitle_as on">
+            <a>合作伙伴<i class="xians"></i></a>
+            <i class="xians_r"></i>
+        </div>
+    </div>
+    <div class="clear index_hzhb mobile_none">
+        <ul>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202402/W020240205544853363919.png" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202402/W020240205544162954854.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595667996978.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595460446707.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595275417491.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595051343754.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130594871523309.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130593801111514.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301545138594532.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536121594482.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301544449840616.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130593069763042.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592899120582.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543833710201.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592521664777.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543691000472.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592065362159.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543515475339.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543283016900.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536105798197.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130498504952935.png" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130497340119824.png" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493951349256.png" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493595365307.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493206005883.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130422214923186.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130422073614457.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421907735844.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421729581114.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421567233893.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421429778528.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423563627591.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130424685611807.png" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130420223697910.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130419464823537.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130419993025933.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423772624952.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423143883065.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020240130414305232664.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536116670825.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536124238521.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423980771868.gif" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536131222739.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536130319408.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020240130416191326172.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536128223492.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536126812489.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536125574715.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536120264298.jpg" alt="" /></a></li>
+            
+                <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536115435887.jpg" alt="" /></a></li>
+            
+        </ul>
+    </div>
+    <div class="clear index_hzhb pcNone">
+        <div class="swiper-container index_hzhb_s index_hzhb_js">
+            <div class="swiper-wrapper">
+                <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202402/W020240205544853363919.png" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202402/W020240205544162954854.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595667996978.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595460446707.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595275417491.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130595051343754.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130594871523309.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130593801111514.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301545138594532.jpg" alt="" /></a></li>
+                    
+                </ul>
+                <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536121594482.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301544449840616.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130593069763042.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592899120582.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543833710201.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592521664777.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543691000472.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130592065362159.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543515475339.jpg" alt="" /></a></li>
+                    
+                </ul>
+                <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240301543283016900.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536105798197.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130498504952935.png" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130497340119824.png" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493951349256.png" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493595365307.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130493206005883.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130422214923186.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130422073614457.jpg" alt="" /></a></li>
+                    
+                </ul>
+                <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421907735844.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421729581114.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421567233893.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130421429778528.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423563627591.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130424685611807.png" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130420223697910.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130419464823537.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130419993025933.jpg" alt="" /></a></li>
+                    
+                </ul>
+                 <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423772624952.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423143883065.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020240130414305232664.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536116670825.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536124238521.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202401/W020240130423980771868.gif" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536131222739.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536130319408.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020240130416191326172.jpg" alt="" /></a></li>
+                    
+                </ul>
+                 <ul class="swiper-slide">
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536128223492.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536126812489.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536125574715.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536120264298.jpg" alt="" /></a></li>
+                    
+                        <li><a class="imgs_w jjh_scale_img"><img class="imgs" src="./hzhb/202311/W020231103536115435887.jpg" alt="" /></a></li>
+                    
+                </ul>
+                 <ul class="swiper-slide">
+                    
+                </ul>
+                 <ul class="swiper-slide">
+                    
+                </ul>
+                 <ul class="swiper-slide">
+                    
+                </ul>
+            </div>
+            <div class="pagination"></div>
+        </div>
+    </div>
+</div>
+<!-- 底部开始 -->
+<div class="footer">
+    <div class="footerIn">
+        <div class="footerIn_left_row1">
+            <span>Copyright &copy; 中华环境保护基金会</span>
+            <span>通讯地址：北京市东城区广渠门内大街16号</span>
+            <span>邮编：100062</span>
+            <span>联系电话：010-67116117</span>
+            <span>联系人：芦琰</span>
+        </div>
+        <div class="footerIn_left_row2">
+            <span>ICP备案编号：京ICP备17056386-1</span>
+            <span><a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010102004309"><img src="/images/babs.png" alt="" />京公网安备11010102004309号</a></span>
+            <span><a target="_blank" href="/wzjc/">网站纠错</a></span>
+        </div>
+    </div>
+</div>
+
+<!--访问统计202008-->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?e40a3cf2a392e34a2f4ffac2803bb080";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<!-- 底部结束 -->
+</body>
+</html>
