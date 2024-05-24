@@ -3,7 +3,7 @@
 
 爬虫
 ---
-目前我暂定使用 Beautiful Soup 4 作为 HTML 解析库，依此编写爬虫。
+林宇翔：目前我暂定使用 Beautiful Soup 4 作为 HTML 解析库，依此编写爬虫。
 
 爬取 dukekunshan.edu.cn 时有两类内容可能需要特殊处理：
 	1. 这种静态的 PDF: https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/mainsite/2023/10/Duke-Kunshan-University-Campus-Map-2023.pdf。
@@ -22,7 +22,9 @@ Cody's comments: For the PDF content, I solved this issue using OCR to collect s
 ---
 
 爬虫爬取到的文件请存放到RAG_data中
+林宇翔：已完成，爬虫直接爬取的文件放在 `RAG_data/dku_website`，而 Box 上的文件放在剩下的两个子文件夹内。
 
+---
 
 Cody：搜集到的一些具有参考价值的有关ChatGPT 3.5 turbo 的实用性资料（以下链接），包含现成的代码（包含：检查微调数据集格式、微调数据集上传、创建微调任务并完成微调）
 https://github.com/Logistic98/chatgpt-fine-tuning?tab=readme-ov-file
