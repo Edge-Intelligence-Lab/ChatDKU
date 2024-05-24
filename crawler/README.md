@@ -16,6 +16,11 @@ Do an editable install with pip to get the dependencies.
 pip install -e .
 ```
 
+It might be necessary to increase the OS limit on the number of file descriptors as this script opens a lot of files:
+```bash
+ulimit -n 100000 # Set this to at most the output of "ulimit -n -H"
+```
+
 Run the script:
 ```bash
 ./dku_site_crawler.py
