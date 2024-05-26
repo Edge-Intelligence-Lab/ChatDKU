@@ -16,10 +16,9 @@ if __name__ == "__main__":
     documents = SimpleDirectoryReader(
         "../RAG_data",
         recursive=True,
-        required_exts=[".html", ".htm", ".pdf"],
+        required_exts=[".md", ".pdf"],
         file_extractor={
-            ".htm": reader,
-            ".html": reader,
+            ".md": reader,
             ".pdf": reader,
         },
     ).load_data()
