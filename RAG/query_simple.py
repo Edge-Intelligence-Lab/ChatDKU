@@ -5,9 +5,10 @@ from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
 
-import settings  # noqa # pyright: ignore
 
 if __name__ == "__main__":
+    import settings  # noqa # pyright: ignore
+
     db = chromadb.PersistentClient(path="./chroma_db")
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
 
