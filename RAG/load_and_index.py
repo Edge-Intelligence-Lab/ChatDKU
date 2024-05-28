@@ -7,6 +7,11 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
 from llama_index.readers.file import UnstructuredReader
 
+#Override detect_filetype so that html files containing JavaScript code are loaded in html format.
+import unstructured.file_utils.filetype
+from custom_filetype_detect import custom_detect_filetype
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+
 import settings  # noqa # pyright: ignore
 
 if __name__ == "__main__":
