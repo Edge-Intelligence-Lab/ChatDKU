@@ -70,6 +70,11 @@ the default document reader as:
 - It provides advanced processing functionalities for PDF files such as OCR,
       though I did not use these functions yet.
 
+A custom reader using the `unstructured` library is used as opposed to the
+`UnstructuredReader` provided by LlamaIndex as it has a issue with HTML files
+containing large amounts of JavaScript, which would have their file types misidentified
+by `unstructured.partition.auto.partion` used in the origin implementation.
+
 I currently use a tiny embedding model (`bge-small-en-v1.5`) grabbed from the MTEB
 Leaderboard so that my VRAM would not explode.
 
@@ -80,13 +85,11 @@ LLM is not included yet and only the retrieval function is demonstrated.
 - Add an LLM.
 - Use a better embedding model.
 - Improve data reading.
-    - Some HTML tags could still be seen in the output so there might be some
-      parsing issues.
     - Special techniques should be used to handle, for example, PDF map files as
       they have spatial and graphical information in addition to the text.
 - Customize how the documents are transformed/partitioned.
     - The structure of the documents might need to be preserved in ways such as
-      adding emphasis to the headings (like converting HTML to Markdown and have \#
-      for headings), including a table of contents, summarize the chapters and
-      sections, and etc.
+      adding emphasis to the headings (similar to converting HTML to Markdown and
+      have \# for headings that the LLM might pick up), including a table of contents,
+      summarize the chapters and sections, and etc.
 - Customize the query engine/add a querying pipeline.
