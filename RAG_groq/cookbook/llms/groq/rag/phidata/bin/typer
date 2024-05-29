@@ -1,4 +1,4 @@
-#!/Users/codyqin/Desktop/SRS/WorkSpace/phidata/cookbook/llms/groq/rag/phidata/bin/python3.12
+#!/Users/codyqin/Desktop/SRS/WorkSpace/DKU_LLM/RAG_groq/cookbook/llms/groq/rag/phidata/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
