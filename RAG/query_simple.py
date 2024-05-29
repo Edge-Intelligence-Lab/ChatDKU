@@ -4,10 +4,11 @@ import chromadb
 from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
+from settings import parse_args_and_setup
 
 
-if __name__ == "__main__":
-    import settings  # noqa # pyright: ignore
+def main():
+    parse_args_and_setup()
 
     db = chromadb.PersistentClient(path="./chroma_db")
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
@@ -32,3 +33,7 @@ if __name__ == "__main__":
             print(response)
         except EOFError:
             break
+
+
+if __name__ == "__main__":
+    main()
