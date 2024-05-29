@@ -40,5 +40,7 @@ def parse_args_and_setup():
     )
     print("Loaded LLM")
 
+    # The same tokenizer as used by the LLM is used to count the number of tokens
+    # accurately.
     Settings.tokenizer = Settings.llm._model.tokenizer()
     print("Loaded tokenizer")

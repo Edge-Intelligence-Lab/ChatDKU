@@ -18,11 +18,29 @@ Do an editable install with pip to get the dependencies.
 pip install -e .
 ```
 
+Download an LLM such as
+[Llama 3 8B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct).
+Currently, only the support for Llama 3 is guaranteed.  To download a model from
+Hugging Face, you can use `huggingface-cli`, alternatively, use `git clone` with
+`git-lfs` installed.
+
+These scripts uses [llama.cpp](https://github.com/ggerganov/llama.cpp), thus, the
+model has to be in GGUF format. For example, to convert a Llama 3 downloaded from
+Hugging Face to GGUF, you should run the following
+```bash
+git clone https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+pip install -r requirements.txt
+python3 convert.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf] --outtype q8_0 --vocab-type bpe
+```
+Note that `--outtype` specifies the quantization type and 8-bit quantization is used
+in this case.
+
 ### Load and Index the Data
 
 Run
 ```bash
-./load_and_index.py
+./load_and_index.py -l [path_to_your_llm.gguf]
 ```
 and the vector store of the indexed data would be placed in the `Chroma DB`
 collection `dku_html_pdf` stored in database `./chroma_db`.
@@ -37,7 +55,7 @@ data on your computer.
 With a `Chroma DB` database stored in `./chroma_db` and the vector store of the data
 in the collection `dku_html_pdf`, run:
 ```bash
-./query_simple.py
+./query_simple.py -l [path_to_your_llm.gguf]
 ```
 This would provide an interactive interface where you can enter the query in CLI,
 press `Enter`, then get the response. Use `Ctrl-D` on Linux or `Ctrl-Z` followed by
@@ -54,35 +72,38 @@ to count the number of files and their total sizes grouped by their extensions i
 
 ## About
 
-This is a minimum working example of using `LlamaIndex` to provide the "retrieval"
-part of the RAG pipeline. It provides the functionality of loading and indexing the
+This is a minimal working RAG pipeline using [LlamaIndex](https://www.llamaindex.ai/)
+and Llama 3. It provides the functionality of loading and indexing the
 original data, storing them in a `Chroma DB` vector database, and querying the
-relevant information in the database.
+relevant information in the database to synthesize the response.
 
-The `unstructured` data preprocessing library is used for reading data from HTML
-(including .htm) and PDF files. Only these two file formats are considered as the
-remaining data are just a few images that do not provide much information. (I believe
-there might also be some DOC files on DKU website, but the crawler might encountered
-some network issues at the time of crawling.) Using `unstructured` is preferred over
-the default document reader as:
+The [unstructured](https://github.com/Unstructured-IO/unstructured) data preprocessing
+library is used for reading data from HTML (including .htm) and PDF files. Only these
+two file formats are considered as the remaining data are just a few images that do
+not provide much information. (I believe there might also be some DOC files on DKU
+website, but the crawler might encountered some network issues at the time of
+crawling.) Using `unstructured` is preferred over the default document reader as:
 - It parses the HTML files to extract their text instead of adding the entire
   file.
 - It provides advanced processing functionalities for PDF files such as OCR,
       though I did not use these functions yet.
 
-A custom reader using the `unstructured` library is used as opposed to the
-`UnstructuredReader` provided by LlamaIndex as it has a issue with HTML files
+The `UnstructuredReader` provided by LlamaIndex has a issue with HTML files
 containing large amounts of JavaScript, which would have their file types misidentified
-by `unstructured.partition.auto.partion` used in the origin implementation.
+by `unstructured.partition.auto.partion` as code and treated as plain text.
+Therefore, `unstructured.file_utils.filetype.detect_filetype` has been overridden
+with a custom function to mitigate this issue.
 
 I currently use a tiny embedding model (`bge-small-en-v1.5`) grabbed from the MTEB
 Leaderboard so that my VRAM would not explode.
 
-LLM is not included yet and only the retrieval function is demonstrated.
-
 ## Possible TODOs
 
-- Add an LLM.
+- Better integration with the LLM.
+  [LLM could be used at multiple stages:](https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/)
+    - Indexing: Determine the relevance of the data.
+    - Retrieval: Query different indices.
+    - Response synthesis: Combine query answers to a coherent response.
 - Use a better embedding model.
 - Improve data reading.
     - Special techniques should be used to handle, for example, PDF map files as
