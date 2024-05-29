@@ -8,6 +8,12 @@ from llama_index.core import StorageContext
 from llama_index.readers.file import UnstructuredReader
 from settings import parse_args_and_setup
 
+# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
+import unstructured.file_utils.filetype
+from custom_filetype_detect import custom_detect_filetype
+
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+
 
 def main():
     parse_args_and_setup()
