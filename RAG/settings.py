@@ -5,8 +5,6 @@ from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt,
     completion_to_prompt,
 )
-
-# from transformers import AutoTokenizer
 from argparse import ArgumentParser
 from pathlib import Path
 
