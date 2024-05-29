@@ -6,6 +6,12 @@ from typing import Any, Dict, List, Optional
 from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import Document
 
+import chromadb
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import StorageContext
+from settings import parse_args_and_setup
+
 
 # Custom reader using the `unstructured` library.
 # The `UnstructuredReader` provided by LlamaIndex has a issue with HTML files containing
@@ -84,13 +90,8 @@ class UnstructuredReader(BaseReader):
         return docs
 
 
-import chromadb
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core import StorageContext
-
-if __name__ == "__main__":
-    import settings  # noqa # pyright: ignore
+def main():
+    parse_args_and_setup()
 
     reader = UnstructuredReader()
     documents = SimpleDirectoryReader(
@@ -113,4 +114,8 @@ if __name__ == "__main__":
     # TODO: Data loading could be customized either by supplying a list of custom
     # transformations or use transformation modules explicitly. The transformation
     # modules could be used standalone or composed in the ingestion pipeline.
-    index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
+    VectorStoreIndex.from_documents(documents, storage_context=storage_context)
+
+
+if __name__ == "__main__":
+    main()
