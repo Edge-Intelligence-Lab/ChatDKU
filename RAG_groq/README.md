@@ -13,7 +13,7 @@ Without further ado, let's deploy it and get started.
 In your VPS or local development environment, enter the following code:
 
 ```
-cd phidata/cookbook/llms/groq/rag
+cd cookbook/llms/groq/rag
 ```
 
 ## The following 2 lines create a virtual environment (optional, suitable for Linux systems)
