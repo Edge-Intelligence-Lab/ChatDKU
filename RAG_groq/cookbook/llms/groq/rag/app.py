@@ -10,7 +10,7 @@ from phi.utils.log import logger
 from assistant import get_groq_assistant  # type: ignore
 
 st.set_page_config(
-    page_title="Groq RAG",
+    page_title="DKU LLM",
     page_icon=":orange_heart:",
 )
 st.title("DKU LLM")
