@@ -13,8 +13,9 @@ st.set_page_config(
     page_title="Groq RAG",
     page_icon=":orange_heart:",
 )
-st.title("RAG with Llama3 on Groq")
-st.markdown("##### :orange_heart: built using [phidata](https://github.com/phidatahq/phidata)")
+st.title("DKU LLM")
+st.subtitle("RAG with Llama3 on Groq")
+# st.markdown("##### :orange_heart: built using [phidata](https://github.com/phidatahq/phidata)")
 
 
 def restart_assistant():
