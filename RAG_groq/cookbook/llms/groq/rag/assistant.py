@@ -18,7 +18,7 @@ def get_groq_assistant(
     run_id: Optional[str] = None,
     debug_mode: bool = True,
 ) -> Assistant:
-    """Get a Groq RAG Assistant."""
+    """Get a DKU RAG Assistant."""
 
     # Define the embedder based on the embeddings model
     embedder = (
