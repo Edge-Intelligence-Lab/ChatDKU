@@ -14,7 +14,7 @@ st.set_page_config(
     page_icon=":orange_heart:",
 )
 st.title("DKU LLM")
-st.subtitle("RAG with Llama3 on Groq")
+st.markdown("##### RAG with Llama3 on Groq")
 # st.markdown("##### :orange_heart: built using [phidata](https://github.com/phidatahq/phidata)")
 
 
