@@ -46,7 +46,7 @@ def get_groq_assistant(
             # 2 references are added to the prompt
             num_documents=2,
         ),
-        description="You are an AI called 'GroqRAG' and your task is to answer questions using the provided information",
+        description="You are an AI called 'DKU LLM' and your task is to answer questions using the provided information",
         instructions=[
             "When a user asks a question, you will be provided with information about the question.",
             "Carefully read this information and provide a clear and concise answer to the user.",
