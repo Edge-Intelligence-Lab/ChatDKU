@@ -71,28 +71,28 @@ Thus, it is the following features that make a difference:
 
 - __Caching__: Each node + transformation combination is hashed and cached, saving
   time on subsequent runs over the same data.
-    - __Local cache__:
+  - __Local cache__:
 
-        ```python3
-        pipeline.persist("./pipeline_storage")
-        new_pipeline.load("./pipeline_storage")
-        ```
+    ```python3
+    pipeline.persist("./pipeline_storage")
+    new_pipeline.load("./pipeline_storage")
+    ```
 
-    - __Remote cache__:
-        ```python3
-        from llama_index.core.ingestion import IngestionPipeline, IngestionCache
-        from llama_index.core.ingestion.cache import RedisCache
+  - __Remote cache__:
+    ```python3
+    from llama_index.core.ingestion import IngestionPipeline, IngestionCache
+    from llama_index.core.ingestion.cache import RedisCache
 
 
-        pipeline = IngestionPipeline(
-            transformations = [...],
-            cache=IngestionCache(
-                cache=RedisCache(
-                    redis_uri="redis://127.0.0.1:6379", collection="test_cache"
-                )
-            ),
-        )
-        ```
+    pipeline = IngestionPipeline(
+        transformations = [...],
+        cache=IngestionCache(
+            cache=RedisCache(
+                redis_uri="redis://127.0.0.1:6379", collection="test_cache"
+            )
+        ),
+    )
+    ```
 
 - __Async support__: Async method `arun()`.
 
@@ -100,14 +100,14 @@ Thus, it is the following features that make a difference:
   document management. For each `doc_id`, the document will be reprocessed only when
   its hash has changed. Note that `doc_id` is usually the path to each file.
 
-    ```python3
-    from llama_index.core.ingestion import IngestionPipeline
-    from llama_index.core.storage.docstore import SimpleDocumentStore
+  ```python3
+  from llama_index.core.ingestion import IngestionPipeline
+  from llama_index.core.storage.docstore import SimpleDocumentStore
 
-    pipeline = IngestionPipeline(
-        transformations=[...], docstore=SimpleDocumentStore()
-    )
-    ```
+  pipeline = IngestionPipeline(
+      transformations=[...], docstore=SimpleDocumentStore()
+  )
+  ```
 
 - __Parallel processing__: `num_workers` parameter of `run()`.
 
@@ -184,15 +184,15 @@ by LlamaIndex. They have also done some
 
 - __SentenceSpliter__: Try to split text while not cutting a sentence in the middle.
 
-    ```python
-    from llama_index.core.node_parser import SentenceSplitter
+  ```python
+  from llama_index.core.node_parser import SentenceSplitter
 
-    splitter = SentenceSplitter(
-        chunk_size=1024,
-        chunk_overlap=20,
-    )
-    nodes = splitter.get_nodes_from_documents(documents)
-    ```
+  splitter = SentenceSplitter(
+      chunk_size=1024,
+      chunk_overlap=20,
+  )
+  nodes = splitter.get_nodes_from_documents(documents)
+  ```
 
 - __SentenceWindowNodeParser__: Split text into individual sentences and add
   `window_size` number of sentences before and after each sentence into its metadata.
@@ -209,13 +209,13 @@ by LlamaIndex. They have also done some
   when a large number of child nodes are retrieved, their parents would be returned
   instead to provide more context.
 
-    ```python
-    from llama_index.core.node_parser import HierarchicalNodeParser
+  ```python
+  from llama_index.core.node_parser import HierarchicalNodeParser
 
-    node_parser = HierarchicalNodeParser.from_defaults(
-        chunk_sizes=[2048, 512, 128]
-    )
-    ```
+  node_parser = HierarchicalNodeParser.from_defaults(
+      chunk_sizes=[2048, 512, 128]
+  )
+  ```
 
 ### [Metadata Extraction](https://docs.llamaindex.ai/en/stable/module_guides/indexing/metadata_extraction/#metadata-extraction)
 
@@ -248,33 +248,33 @@ There exists a few choices:
   would be possible that some output does not conform to the specification. I am not
   sure about how these cases are handled.
 
-    ```python
-    class Song(BaseModel):
-        """Data model for a song."""
+  ```python
+  class Song(BaseModel):
+      """Data model for a song."""
 
-        title: str
-        length_seconds: int
+      title: str
+      length_seconds: int
 
 
-    class Album(BaseModel):
-        """Data model for an album."""
+  class Album(BaseModel):
+      """Data model for an album."""
 
-        name: str
-        artist: str
-        songs: List[Song]
+      name: str
+      artist: str
+      songs: List[Song]
 
-    from llama_index.core.program import LLMTextCompletionProgram
+  from llama_index.core.program import LLMTextCompletionProgram
 
-    prompt_template_str = """\
-    Generate an example album, with an artist and a list of songs. \
-    Using the movie {movie_name} as inspiration.\
-    """
-    program = LLMTextCompletionProgram.from_defaults(
-        output_cls=Album,
-        prompt_template_str=prompt_template_str,
-        verbose=True,
-    )
-    ```
+  prompt_template_str = """\
+  Generate an example album, with an artist and a list of songs. \
+  Using the movie {movie_name} as inspiration.\
+  """
+  program = LLMTextCompletionProgram.from_defaults(
+      output_cls=Album,
+      prompt_template_str=prompt_template_str,
+      verbose=True,
+  )
+  ```
 
 - __FunctionCallingProgram__: For LLMs that support function calling, uses such
   capability to force their output to conform to the Pydantic specification. This
@@ -283,37 +283,183 @@ There exists a few choices:
 - __GuidancePydanticProgram__: This guarantees the validity of the output via
   [Guidance](https://github.com/microsoft/guidance).
 
-    ```python
-    from pydantic import BaseModel
-    from typing import List
-    from guidance.llms import OpenAI
+  ```python
+  from pydantic import BaseModel
+  from typing import List
+  from guidance.llms import OpenAI
 
-    from llama_index.program.guidance import GuidancePydanticProgram
+  from llama_index.program.guidance import GuidancePydanticProgram
 
-    program = GuidancePydanticProgram(
-        output_cls=Album,
-        prompt_template_str=(
-            "Generate an example album, with an artist and a list of songs. Using"
-            " the movie {{movie_name}} as inspiration"
-        ),
-        guidance_llm=OpenAI("text-davinci-003"),
-        verbose=True,
-    )
-    ```
+  program = GuidancePydanticProgram(
+      output_cls=Album,
+      prompt_template_str=(
+          "Generate an example album, with an artist and a list of songs. Using"
+          " the movie {{movie_name}} as inspiration"
+      ),
+      guidance_llm=OpenAI("text-davinci-003"),
+      verbose=True,
+  )
+  ```
 
-## Retrieve
+## [Querying](https://docs.llamaindex.ai/en/stable/understanding/querying/querying/#querying)
 
-1. Recursive Retrieve
-2. Hybrid Retieve
-3. Re-ranking
-4. Meta-data Filtering
+### [Query Pipeline](https://docs.llamaindex.ai/en/stable/module_guides/querying/pipeline/usage_pattern/#usage-pattern)
 
-## Prompt
+### [Query Transform](https://docs.llamaindex.ai/en/stable/examples/query_transformations/query_transform_cookbook/#query-transform-cookbook)
 
-1. Prompt compression
-2. context locations
+### [Retriever](https://docs.llamaindex.ai/en/stable/module_guides/querying/retriever/#retriever)
 
-## Evaluation
+Here are the usage patterns of retrievers:
+
+- __High-Level API__:
+
+  ```python
+  retriever = summary_index.as_retriever(
+      retriever_mode="llm",
+      choice_batch_size=5,
+  )
+  nodes = retriever.retrieve("Who is Paul Graham?")
+  ```
+
+- __Low-Level API__:
+
+  ```python
+  from llama_index.core.retrievers import SummaryIndexLLMRetriever
+
+  retriever = SummaryIndexLLMRetriever(
+      index=summary_index,
+      choice_batch_size=5,
+  )
+  ```
+
+#### Compose Indices
+
+There are two ways to recursively execute a query on a tree of indices:
+
+- [Using IndexNode](https://docs.llamaindex.ai/en/stable/examples/retrievers/composable_retrievers/#composing-objects):
+  A `IndexNode` references an `obj`, which could be indices, query engines, or
+  retrievers. Whenever a retrieval returns a `IndexNode`, the query would be
+  [executed recursively on the object it references](https://github.com/run-llama/llama_index/blob/4d2e8dbdc202eb58b3dc2e34b8da1bf7343f4a01/llama-index-core/llama_index/core/base/base_retriever.py#L243).
+  The retriever built from `SummaryIndex` simply returns all the nodes that the
+  `SummaryIndex` contains regardless of the query string.
+
+  Thus, suppose that you want to query both indices A and B, you can build two
+  `IndexNode`, each containing the retriever for the two indices respectively. Then,
+  you build a `SummaryIndex` out of the two `IndexNode`. By querying the
+  `SummaryIndex`, the two `IndexNode` would be returned, then the two indices A and B
+  would be recursively queried.
+
+  Alternatively, if you only want to query some indices, such as query only A, B, or
+  sometimes both, but depending on whether each index is related to the query or not,
+  you can let the `text` attribute of the two `IndexNode` be the description of
+  the two indices. Then, you build a `VectorStoreIndex` of the two `IndexNode`, so
+  that the two indices would be first queried according to the semantic meaning of
+  their description, and only the relevant indices out of the two would be further
+  queried recursively.
+
+  ```python
+  from llama_index.core.schema import IndexNode
+
+  vector_obj = IndexNode(
+      index_id="vector", obj=vector_retriever, text="Vector Retriever"
+  )
+  bm25_obj = IndexNode(
+      index_id="bm25", obj=bm25_retriever, text="BM25 Retriever"
+  )
+  ```
+
+- [RecursiveRetriever](https://docs.llamaindex.ai/en/stable/examples/query_engine/pdf_tables/recursive_retriever/#build-vector-index):
+  When using `RecursiveRetriever`, the indices that need to be queried recursively
+  should also contain `IndexNode`. However, these `IndexNode` should reference other
+  objects by `index_id` as opposed to `obj`. Then, all the retrievers and query
+  engines that could be involved in the query should be passed as two maps of
+  `index_id: obj` to `RecursiveRetriever`. The root/starting object to execute the
+  query on should also be passed to it.
+
+  ```python
+  # define index nodes
+  summaries = [
+      (
+          "This node provides information about the world's richest billionaires"
+          " in 2023"
+      ),
+      (
+          "This node provides information on the number of billionaires and"
+          " their combined net worth from 2000 to 2023."
+      ),
+  ]
+
+  df_nodes = [
+      IndexNode(text=summary, index_id=f"pandas{idx}")
+      for idx, summary in enumerate(summaries)
+  ]
+
+  df_id_query_engine_mapping = {
+      f"pandas{idx}": df_query_engine
+      for idx, df_query_engine in enumerate(df_query_engines)
+  }
+
+  # construct top-level vector index + query engine
+  vector_index = VectorStoreIndex(doc_nodes + df_nodes)
+  vector_retriever = vector_index.as_retriever(similarity_top_k=1)
+
+  from llama_index.core.retrievers import RecursiveRetriever
+
+  recursive_retriever = RecursiveRetriever(
+      "vector",
+      retriever_dict={"vector": vector_retriever},
+      query_engine_dict=df_id_query_engine_mapping,
+      verbose=True,
+  )
+  ```
+
+Overall, I think simply composing the retrievers and query engines using `IndexNode`
+seems to be a simpler approach as you don't have to worry about passing all the
+objects involved to the `RecursiveRetriever`.
+
+#### [Hybrid Fusion Retrieval](https://docs.llamaindex.ai/en/stable/examples/low_level/fusion_retriever/#define-advanced-retriever)
+
+While hybrid retrieval could simply be implemented using the approach outlined in
+the previous section by, for example, combining a vector index with a keyword search
+retriever, the ranking of the results could be further improved.
+`QueryFusionRetriever` would rerank the combined results from the retrieves using
+metrics such as reciprocal rerank, which would rerank each node use the sum of the
+reciprocal ranks of the node in different retrievers as its final rank.
+
+Additionally, `QueryFusionRetriever` has the function to generate different ways that
+the original query might be rephrased and execute all these paraphrased queries on
+the retrievers to improve the quality of the retrieval results.
+
+```python
+from llama_index.core.retrievers import QueryFusionRetriever
+
+retriever = QueryFusionRetriever(
+    [index_1.as_retriever(), index_2.as_retriever()],
+    similarity_top_k=2,
+    num_queries=4,  # set this to 1 to disable query generation
+    use_async=True,
+    verbose=True,
+    # query_gen_prompt="...",  # we could override the query generation prompt here
+)
+```
+
+#### [Auto-Retrieval (Automatic Metadata Filtering)](https://docs.llamaindex.ai/en/stable/examples/vector_stores/chroma_auto_retriever/#auto-retrieval-from-a-vector-database)
+
+### [Metadata Filter](https://medium.com/@sandyshah1990/exploring-rag-implementation-with-metadata-filters-llama-index-3c6c08a83428)
+
+### [Postprocessor](https://docs.llamaindex.ai/en/stable/module_guides/querying/node_postprocessors/node_postprocessors/#node-postprocessor-modules)
+
+#### [Reranking](https://docs.llamaindex.ai/en/stable/examples/node_postprocessor/LLMReranker-Gatsby/)
+
+#### [Prompt compression](https://www.llamaindex.ai/blog/longllmlingua-bye-bye-to-middle-loss-and-save-on-your-rag-costs-via-prompt-compression-54b559b9ddf7)
+
+Context location
+
+### [Prompt Engineering](https://docs.llamaindex.ai/en/latest/examples/prompts/prompts_rag/#viewingcustomizing-prompts)
+
+### [Response Synthesizer](https://docs.llamaindex.ai/en/stable/module_guides/querying/response_synthesizers/#response-synthesizer)
+
+## [Evaluation](https://docs.llamaindex.ai/en/stable/understanding/evaluating/evaluating/#evaluating)
 
 1. Relevancy
 2. Faithfulness
