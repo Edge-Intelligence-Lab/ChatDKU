@@ -4,6 +4,12 @@
 
 ### Prerequisites For RAG Scripts
 
+Install system dependencies for the `unstructured` reader: `libmagic-dev`,
+`poppler-utils`, and `tesseract-ocr`. For Debian based OSes, simply run:
+```bash
+sudo apt install libmagic-dev poppler-utils tesseract-ocr
+```
+
 Install Python 3.8 or above; install Python package virtualenv.
 
 Create and activate the virtual environment:
@@ -31,7 +37,7 @@ Hugging Face to GGUF, you should run the following
 git clone https://github.com/ggerganov/llama.cpp.git
 cd llama.cpp
 pip install -r requirements.txt
-python3 convert.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf] --outtype q8_0 --vocab-type bpe
+python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf] --outtype q8_0
 ```
 Note that `--outtype` specifies the quantization type and 8-bit quantization is used
 in this case.
