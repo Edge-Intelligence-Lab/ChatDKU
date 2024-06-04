@@ -53,7 +53,7 @@ Run
 and the vector store of the indexed data would be placed in the `Chroma DB`
 collection `dku_html_pdf` stored in database `./chroma_db`.
 
-### Perform Simple RAG Queries
+### Perform RAG Queries
 
 Before executing queries, you must have a vector store of the indexed data. It
 cannot be included in the repo as the single DB file is too large for GitHub to
@@ -63,7 +63,7 @@ data on your computer.
 With a `Chroma DB` database stored in `./chroma_db` and the vector store of the data
 in the collection `dku_html_pdf`, run:
 ```bash
-./query_simple.py \
+./query.py \
     --e [huggingface_embedding_model_name] (optional: use a small embedding model by default) \
     --l [path_to_your_llm.gguf] (optional: not using LLM by default)
 ```

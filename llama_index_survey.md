@@ -303,7 +303,7 @@ There exists a few choices:
 
 ## [Querying](https://docs.llamaindex.ai/en/stable/understanding/querying/querying/#querying)
 
-### [Query Pipeline](https://docs.llamaindex.ai/en/stable/module_guides/querying/pipeline/usage_pattern/#usage-pattern)
+### [Query Pipeline](https://docs.llamaindex.ai/en/stable/examples/pipeline/query_pipeline/#an-introduction-to-llamaindex-query-pipelines)
 
 ### [Query Transform](https://docs.llamaindex.ai/en/stable/examples/query_transformations/query_transform_cookbook/#query-transform-cookbook)
 
