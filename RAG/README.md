@@ -46,7 +46,9 @@ in this case.
 
 Run
 ```bash
-./load_and_index.py -l [path_to_your_llm.gguf]
+./load_and_index.py \
+    --e [huggingface_embedding_model_name] (optional: use a small embedding model by default) \
+    --l [path_to_your_llm.gguf] (optional: not using LLM by default)
 ```
 and the vector store of the indexed data would be placed in the `Chroma DB`
 collection `dku_html_pdf` stored in database `./chroma_db`.
@@ -61,7 +63,9 @@ data on your computer.
 With a `Chroma DB` database stored in `./chroma_db` and the vector store of the data
 in the collection `dku_html_pdf`, run:
 ```bash
-./query_simple.py -l [path_to_your_llm.gguf]
+./query_simple.py \
+    --e [huggingface_embedding_model_name] (optional: use a small embedding model by default) \
+    --l [path_to_your_llm.gguf] (optional: not using LLM by default)
 ```
 This would provide an interactive interface where you can enter the query in CLI,
 press `Enter`, then get the response. Use `Ctrl-D` on Linux or `Ctrl-Z` followed by
