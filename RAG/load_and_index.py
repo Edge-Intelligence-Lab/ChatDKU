@@ -24,11 +24,12 @@ def main():
     documents = SimpleDirectoryReader(
         "../RAG_data",
         recursive=True,
-        required_exts=[".html", ".htm", ".pdf"],
+        required_exts=[".html", ".htm", ".pdf",".csv"],
         file_extractor={
             ".htm": reader,
             ".html": reader,
             ".pdf": reader,
+            ".csv": reader,
         },
     ).load_data()
 
