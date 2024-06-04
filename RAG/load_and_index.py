@@ -35,11 +35,12 @@ def load_and_index(
     documents = SimpleDirectoryReader(
         data_dir,
         recursive=True,
-        required_exts=[".html", ".htm", ".pdf"],
+        required_exts=[".html", ".htm", ".pdf",".csv"],
         file_extractor={
             ".htm": reader,
             ".html": reader,
             ".pdf": reader,
+            ".csv": reader,
         },
     ).load_data()
 
