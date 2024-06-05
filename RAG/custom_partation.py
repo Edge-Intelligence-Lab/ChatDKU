@@ -1,10 +1,9 @@
-"""Provides partitioning with automatic file-type detection."""
-'''
+"""Provides partitioning with automatic file-type detection.
 Modification of Partation based on 'auto' .The changes made so far are:
 
 1. Strategy changed to 'hi-res' to improve the accuracy of image file processing.
 2. Partation of hmtl file skip header and footer.
-'''
+"""
 
 from __future__ import annotations
 
@@ -372,7 +371,7 @@ def partition(
             encoding=encoding,
             languages=languages,
             detect_language_per_element=detect_language_per_element,
-            skip_headers_and_footers= True,
+            skip_headers_and_footers=True,
             **kwargs,
         )
     elif filetype == FileType.XML:
@@ -549,7 +548,9 @@ def partition(
         elements = []
     else:
         msg = "Invalid file" if not filename else f"Invalid file {filename}"
-        raise ValueError(f"{msg}. The {filetype} file type is not supported in partition.")
+        raise ValueError(
+            f"{msg}. The {filetype} file type is not supported in partition."
+        )
 
     for element in elements:
         element.metadata.url = url
@@ -572,11 +573,14 @@ def file_and_type_from_url(
     ssl_verify: bool = True,
     request_timeout: Optional[int] = None,
 ) -> tuple[io.BytesIO, Optional[FileType]]:
-    response = requests.get(url, headers=headers, verify=ssl_verify, timeout=request_timeout)
+    response = requests.get(
+        url, headers=headers, verify=ssl_verify, timeout=request_timeout
+    )
     file = io.BytesIO(response.content)
 
     content_type = (
-        content_type or response.headers.get("Content-Type", "").split(";")[0].strip().lower()
+        content_type
+        or response.headers.get("Content-Type", "").split(";")[0].strip().lower()
     )
     encoding = response.headers.get("Content-Encoding", "utf-8")
 
@@ -599,3 +603,4 @@ def decide_table_extraction(
         return pdf_infer_table_structure or doc_type not in skip_infer_table_types
 
     return doc_type not in skip_infer_table_types
+
