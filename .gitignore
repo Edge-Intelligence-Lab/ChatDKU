@@ -183,3 +183,7 @@ tags
 
 # RAG vector data store generated from the raw data
 RAG/chroma_db
+# RAG pipeline cache
+RAG/pipeline_storage
+# RAG document store
+RAG/docstore
