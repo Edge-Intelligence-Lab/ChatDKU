@@ -71,6 +71,10 @@ This would provide an interactive interface where you can enter the query in CLI
 press `Enter`, then get the response. Use `Ctrl-D` on Linux or `Ctrl-Z` followed by
 `Enter` on Windows to terminate the script.
 
+Arize Phoenix is used for the observability/instrumentation of the RAG pipeline.
+You can open the link printed in stdout during startup in your browser to see how
+each stage of the RAG pipeline is run and their respective inputs/outputs.
+
 ### Utility for Counting and Get Size of Data Files by Extension
 
 Run
