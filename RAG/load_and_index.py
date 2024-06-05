@@ -20,6 +20,12 @@ from custom_filetype_detect import custom_detect_filetype
 
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
+# Override auto partation
+import unstructured.partition.auto
+from custom_partation import partation
+
+unstructured.partition.auto.partation = partation
+
 
 def load_and_index(
     data_dir: str,
