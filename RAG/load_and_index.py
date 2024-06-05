@@ -22,9 +22,9 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
 # Override auto partation
 import unstructured.partition.auto
-from custom_partation import partation
+from custom_partation import partition
 
-unstructured.partition.auto.partation = partation
+unstructured.partition.auto.partition = partition
 
 
 def load_and_index(
