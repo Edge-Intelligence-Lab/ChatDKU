@@ -36,11 +36,12 @@ Hugging Face to GGUF, you should run the following
 ```bash
 git clone https://github.com/ggerganov/llama.cpp.git
 cd llama.cpp
-pip install -r requirements.txt
+pip3.11 install -r requirements.txt  #Tip: "AttributeError: module 'pkgutil' has no attribute 'ImpImporter'" the error exists for python 3.12, so pip3.11 is required temporarily.
 python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf] --outtype q8_0
 ```
 Note that `--outtype` specifies the quantization type and 8-bit quantization is used
 in this case.
+
 
 ### Load and Index the Data
 
