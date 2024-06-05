@@ -10,8 +10,8 @@ from llama_index.core import (
 )
 from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.core.ingestion import IngestionPipeline
 from settings import parse_args_and_setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -35,7 +35,7 @@ def load_and_index(
     documents = SimpleDirectoryReader(
         data_dir,
         recursive=True,
-        required_exts=[".html", ".htm", ".pdf",".csv"],
+        required_exts=[".html", ".htm", ".pdf", ".csv"],
         file_extractor={
             ".htm": reader,
             ".html": reader,
@@ -43,11 +43,6 @@ def load_and_index(
             ".csv": reader,
         },
     ).load_data()
-
-    db = chromadb.PersistentClient(path="./chroma_db")
-    chroma_collection = db.get_or_create_collection("dku_html_pdf")
-
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
     trans = []
     if text_spliter == "sentence_splitter":
@@ -58,10 +53,15 @@ def load_and_index(
         raise ValueError(f"Unsupported text_splitter: {text_spliter}")
     trans.append(Settings.embed_model)
 
+    db = chromadb.PersistentClient(path="./chroma_db")
+    chroma_collection = db.get_or_create_collection("dku_html_pdf")
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    docstore = SimpleDocumentStore()
+
     pipeline = IngestionPipeline(
         transformations=trans,
         vector_store=vector_store,
-        docstore=SimpleDocumentStore(),
+        docstore=docstore,
     )
     pipeline_cache = "./pipeline_storage"
     if os.path.exists(pipeline_cache):
@@ -70,6 +70,7 @@ def load_and_index(
     pipeline.persist(pipeline_cache)
 
     VectorStoreIndex.from_vector_store(vector_store)
+    docstore.persist("./docstore")
 
 
 def main():
