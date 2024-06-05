@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-import chromadb
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
+import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.retrievers import QueryFusionRetriever
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
-from pprint import pp
+import phoenix as px
+from llama_index.core.callbacks.global_handlers import set_global_handler
 from settings import parse_args_and_setup
 
 
@@ -47,7 +48,9 @@ def get_pipeline(
         {
             "input": InputComponent(),
             "retriever": retriever,
-            "synthesizer": get_response_synthesizer(response_mode=response_mode),
+            "synthesizer": get_response_synthesizer(
+                response_mode=response_mode, streaming=True
+            ),
         }
     )
     pipeline.add_link("input", "retriever")
@@ -59,6 +62,10 @@ def get_pipeline(
 
 def main():
     parse_args_and_setup()
+
+    px.launch_app()
+    set_global_handler("arize_phoenix")
+
     pipeline = get_pipeline(
         vector_top_k=5,
         bm25_top_k=5,
@@ -71,12 +78,8 @@ def main():
         try:
             print("*" * 32)
             query = input("> ")
-            output, intermediates = pipeline.run_with_intermediates(input=query)
+            output = pipeline.run(input=query)
             print("+" * 32)
-            for k, v in intermediates.items():
-                print(f"{k}:")
-                pp(v.outputs)
-                print("+" * 32)
             print(output)
         except EOFError:
             break
