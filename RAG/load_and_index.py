@@ -25,8 +25,7 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 import unstructured.partition.auto
 from custom_partation import partition
 
-#Stop using hi-res document until APP goes live or solves multithreading bug
-#unstructured.partition.auto.partition = partition
+unstructured.partition.auto.partition = partition
 
 
 def load_documents(data_dir: str, output_dir: str):
@@ -89,10 +88,14 @@ def index_documents(document_dir: str, text_spliter: str = "sentence_splitter", 
 
 
 def main():
-    parse_args_and_setup()
     parser = argparse.ArgumentParser(description="Document loader and indexer")
     parser.add_argument('--load', action='store_true', help='Load documents before indexing')
+    parser.add_argument('-e', '--embedding', type=str, help='Embedding model')
+    parser.add_argument('-l', '--llm', type=str, help='LLM model')
+
     args = parser.parse_args()
+
+    parse_args_and_setup()
 
     document_dir = "./loaded_documents"
     if args.load or not os.listdir(document_dir):  # Load documents if --load is specified or if the directory is empty
@@ -103,7 +106,6 @@ def main():
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         pipeline_workers=1,
     )
-
 
 if __name__ == "__main__":
     main()
