@@ -88,14 +88,10 @@ def index_documents(document_dir: str, text_spliter: str = "sentence_splitter", 
 
 
 def main():
+    parse_args_and_setup()
     parser = argparse.ArgumentParser(description="Document loader and indexer")
     parser.add_argument('--load', action='store_true', help='Load documents before indexing')
-    parser.add_argument('-e', '--embedding', type=str, help='Embedding model')
-    parser.add_argument('-l', '--llm', type=str, help='LLM model')
-
     args = parser.parse_args()
-
-    parse_args_and_setup()
 
     document_dir = "./loaded_documents"
     if args.load or not os.listdir(document_dir):  # Load documents if --load is specified or if the directory is empty
