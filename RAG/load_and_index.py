@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import argparse
 import nltk
 import chromadb
 from llama_index.core import (
@@ -24,17 +25,11 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 import unstructured.partition.auto
 from custom_partation import partition
 
-unstructured.partition.auto.partition = partition
+#Stop using hi-res document until APP goes live or solves multithreading bug
+#unstructured.partition.auto.partition = partition
 
 
-def load_and_index(
-    data_dir: str,
-    text_spliter: str = "sentence_splitter",
-    text_spliter_args: dict = {},
-    # NOTE: Multiprocessing appears to have issues with HuggingFaceEmbedding,
-    # please use only a single process for now.
-    pipeline_workers: int = 1,
-):
+def load_documents(data_dir: str, output_dir: str):
     # Required for UnstructuredReader
     nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
@@ -49,7 +44,15 @@ def load_and_index(
             ".csv": reader,
         },
     ).load_data()
+    
+    # Save documents to output directory
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    for i, document in enumerate(documents):
+        with open(os.path.join(output_dir, f"document_{i}.txt"), "w") as f:
+            f.write(document)
 
+def index_documents(document_dir: str, text_spliter: str = "sentence_splitter", text_spliter_args: dict = {}, pipeline_workers: int = 1):
     trans = []
     if text_spliter == "sentence_splitter":
         from llama_index.core.node_parser import SentenceSplitter
@@ -65,6 +68,11 @@ def load_and_index(
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     docstore = SimpleDocumentStore()
 
+    documents = []
+    for filename in os.listdir(document_dir):
+        with open(os.path.join(document_dir, filename), "r") as f:
+            documents.append(f.read())
+    
     pipeline = IngestionPipeline(
         transformations=trans,
         vector_store=vector_store,
@@ -82,8 +90,15 @@ def load_and_index(
 
 def main():
     parse_args_and_setup()
-    load_and_index(
-        data_dir="../RAG_data",
+    parser = argparse.ArgumentParser(description="Document loader and indexer")
+    parser.add_argument('--load', action='store_true', help='Load documents before indexing')
+    args = parser.parse_args()
+
+    document_dir = "./loaded_documents"
+    if args.load or not os.listdir(document_dir):  # Load documents if --load is specified or if the directory is empty
+        load_documents(data_dir="../RAG_data", output_dir=document_dir)
+    index_documents(
+        document_dir=document_dir,
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         pipeline_workers=1,
