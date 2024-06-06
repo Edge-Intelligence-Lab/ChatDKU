@@ -35,6 +35,11 @@ def get_pipeline(
     # otherwise errors will be reported at the synthesizer stage. While this might
     # be due to the need of using an LLM at the query generation stage, it still
     # won't work if you set num_queries=1.
+    #
+    # FIXME: When generating similar queries, the LLM is supposed to ONLY generate
+    # the queries, one on each line. However, the LLM sometimes says things like
+    # `Here are two queries:` on the first line. Further prompt engineering might
+    # be needed.
     retriever = QueryFusionRetriever(
         [vector_retriever, bm25_retriever],
         similarity_top_k=fusion_top_k,
