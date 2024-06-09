@@ -1,0 +1,1 @@
+The following chart outlines which services are appropriate for use with research data classified in Levels 1-5:126 Service Duke OIT Common Internet File System/ Network File System ( Home Drive Service (US-hosted) Duke OIT- or Dept.- Hosted File Shares (US-hosted)

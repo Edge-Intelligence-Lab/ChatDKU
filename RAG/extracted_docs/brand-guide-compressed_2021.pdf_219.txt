@@ -1,0 +1,1 @@
+The Supergraphic Pattern is composed of rows of Supergraphic , and is the extension of the Supergraphic. It's typically used as background, can be used alone or with the Supergraphic.

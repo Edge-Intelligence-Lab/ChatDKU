@@ -1,0 +1,1 @@
+This is a follow-up lab course after MATSCI 301. It strengthens students’ experimental skills and covers the manufacturing and synthesis of common materials primarily with chemical methods. Topics may include: processing and etching of metals, sintering of ceramics, synthesis of polymers, self-assembly of nanomaterials, 3D printing, chemical vapor deposition of thin films.

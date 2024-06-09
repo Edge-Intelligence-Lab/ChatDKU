@@ -1,0 +1,1 @@
+Numerical methods for ODE. Finite difference method and finite element method for elliptic and parabolic PDE. Basic training for mathematical simulation programming. Introduction to numerical analysis foundations including Sobolev spaces and Fourier analysis.

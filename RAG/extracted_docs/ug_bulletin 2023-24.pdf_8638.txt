@@ -1,0 +1,1 @@
+Prerequisite(s): STATS 101 or STATS 102 or COMPSCI 101 or COMPSCI 201

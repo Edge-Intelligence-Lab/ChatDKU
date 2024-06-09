@@ -1,0 +1,1 @@
+2 If students take a two-credit course from one division, they need to take two of these courses (four credits in total) to fulfill the requirement.

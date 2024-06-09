@@ -1,0 +1,1 @@
+This course covers probability models, random variables with discrete and continuous distributions, independence, joint distributions, conditional distributions, expectations, functions of random variables, central limit theorem, stochastic processes, random walks, and Markov chains.

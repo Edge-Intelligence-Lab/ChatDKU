@@ -1,0 +1,1 @@
+First course in probability. Topics include: Probability models, random variables with discrete and continuous distributions. Independence, joint distributions, conditional distributions. Expectations, functions of random variables, central limit theorem.

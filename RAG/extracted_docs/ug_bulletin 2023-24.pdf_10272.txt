@@ -1,0 +1,1 @@
+Prerequisite(s): STATS 302 or COMPSCI 309; or MATH 405 and COMPSCI 201

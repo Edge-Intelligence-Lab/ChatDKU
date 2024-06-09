@@ -1,0 +1,1 @@
+In order to maximize the potential for re-use of research data, researchers should, where possible, generate and manage data using existing, widely accepted formats and methodologies.

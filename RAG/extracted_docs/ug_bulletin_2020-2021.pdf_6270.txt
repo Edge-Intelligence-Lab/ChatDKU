@@ -1,0 +1,1 @@
+This course covers Gaussian elimination, LU factorization, Cholesky decomposition, QR decomposition, Newton-Raphson method, binary search, convex function, convex set, gradient method, Newton method, Lagrange dual, KKT condition, interior point method, conjugate gradient method, random walk, and stochastic optimization.

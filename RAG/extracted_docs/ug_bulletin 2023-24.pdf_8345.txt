@@ -1,0 +1,1 @@
+This course focuses on techniques for design and construction of reliable, maintainable and useful software systems. Programming paradigms and tools for medium to large projects are explored, including revision control, UNIX tools, performance analysis, GUI, software engineering, testing, documentation.

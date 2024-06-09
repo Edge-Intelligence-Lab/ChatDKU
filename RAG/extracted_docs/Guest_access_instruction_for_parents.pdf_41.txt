@@ -1,0 +1,1 @@
+5. Input the new password twice and click “Reset Password”. 您需要输入新密码两次，然后点击“Reset Password”按钮。

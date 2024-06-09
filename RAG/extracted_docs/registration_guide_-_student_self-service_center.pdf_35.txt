@@ -1,0 +1,1 @@
+2.2 Shopping Cart and Class Validation Navigate to the “Plan” tab and then click on “Shopping Cart”, you will be able to view the classes that you have added to your Shopping Cart.

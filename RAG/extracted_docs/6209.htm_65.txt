@@ -1,0 +1,1 @@
+Dan Wu, Jing Liu. (2022). A Systematic Review of Human-centered Algorithmic Fairness: Methods, Scheme, and Patterns. In International Conference on Information (iConference 2022).

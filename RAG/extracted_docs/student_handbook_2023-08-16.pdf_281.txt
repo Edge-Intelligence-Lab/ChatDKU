@@ -1,0 +1,1 @@
+Adjudication Body: The entity to which a case is referred for administration of the student conduct process Adjudicator: The individual representing an Adjudication Body who administers the student conduct

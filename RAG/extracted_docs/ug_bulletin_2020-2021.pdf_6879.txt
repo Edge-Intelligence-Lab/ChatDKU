@@ -1,0 +1,1 @@
+This course covers maximum likelihood estimation, linear discriminant analysis, logistic regression, support vector machine, decision tree, linear regression, Bayesian inference, unsupervised learning, and semi-supervised learning.

@@ -1,0 +1,1 @@
+This course covers uninformed search, informed search, constraint satisfaction, classical planning, neural network, deep learning, hidden Markov model, Bayesian network, Markov decision process, reinforcement learning, active learning and game theory.
