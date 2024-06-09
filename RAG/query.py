@@ -12,42 +12,76 @@ import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
 from settings import parse_args_and_setup
 
+# When generating similar queries, the LLM is supposed to ONLY generate the
+# queries themselves, one on each line. However, the LLM sometimes says things
+# like `Here are n queries:` on the first line. This prompt used to explictly
+# discourage this kind of output.
+QUERY_GEN_PROMPT = (
+    "You are a helpful assistant that generates multiple search queries based on a "
+    "single input query. Do not output any additional information such as 'here are n queries'. "
+    "Generate {num_queries} search queries, one on each line, related to the following input query:\n"
+    "Query: {query}\n"
+)
+
 
 def get_pipeline(
+    retriever_type: str = "fusion",
     vector_top_k: int = 5,
     bm25_top_k: int = 5,
     fusion_top_k: int = 5,
     num_queries: int = 3,
     synthesize_response: bool = True,
     response_mode: ResponseMode = ResponseMode.COMPACT,
-):
+) -> QueryPipeline:
+    """
+    Constructs a RAG query pipeline.
+
+    Args:
+        retriever_type: Type of retriever to use. Supported values are `vector` and `fusion`.
+        vector_top_k: Top k similar nodes to retrieve using vector retriever (they are the inputs to fusion retriever if used).
+        bm25_top_k: Top k similar nodes to retrieve using BM25 retriever (they are the inputs to fusion retriever if used).
+        fusion_top_k: Top k similar documents to retrieve using fusion retriever.
+        num_queries: Number of queries to generate for fusion retriever.
+        synthesize_response: Synthesize responses using LLM if `True`, or output a list of nodes retrived if `False`.
+        response_mode: Mode of response synthesis, see `llama_index.core.response_synthesizers.ResponseMode` for more details.
+
+    Returns:
+        A query pipeline that could be executed by supplying input to its `run()` method.
+
+    Raises:
+        ValueError: If an unsupported or invalid parameters are provided.
+    """
+
     db = chromadb.PersistentClient(path="./chroma_db")
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     index = VectorStoreIndex.from_vector_store(vector_store)
     vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
 
-    docstore = SimpleDocumentStore.from_persist_path("./docstore")
-    bm25_retriever = BM25Retriever.from_defaults(
-        docstore=docstore, similarity_top_k=bm25_top_k
-    )
+    if retriever_type == "vector":
+        retriever = vector_retriever
 
-    # NOTE: I am not sure why, but when using this retriever you MUST supply an LLM,
-    # otherwise errors will be reported at the synthesizer stage. While this might
-    # be due to the need of using an LLM at the query generation stage, it still
-    # won't work if you set num_queries=1.
-    #
-    # FIXME: When generating similar queries, the LLM is supposed to ONLY generate
-    # the queries, one on each line. However, the LLM sometimes says things like
-    # `Here are two queries:` on the first line. Further prompt engineering might
-    # be needed.
-    retriever = QueryFusionRetriever(
-        [vector_retriever, bm25_retriever],
-        similarity_top_k=fusion_top_k,
-        num_queries=num_queries,
-        use_async=True,
-        verbose=True,
-    )
+    elif retriever_type == "fusion":
+        docstore = SimpleDocumentStore.from_persist_path("./docstore")
+        bm25_retriever = BM25Retriever.from_defaults(
+            docstore=docstore, similarity_top_k=bm25_top_k
+        )
+
+        # NOTE: I am not sure why, but when using this retriever you MUST supply an LLM,
+        # otherwise errors will be reported at the synthesizer stage. While this might
+        # be due to the need of using an LLM at the query generation stage, it still
+        # won't work if you set num_queries=1.
+        retriever = QueryFusionRetriever(
+            [vector_retriever, bm25_retriever],
+            similarity_top_k=fusion_top_k,
+            num_queries=num_queries,
+            query_gen_prompt=QUERY_GEN_PROMPT,
+            use_async=True,
+            verbose=True,
+        )
+
+    else:
+        raise ValueError(f"Unsupported retriever_type: {retriever_type}")
 
     pipeline = QueryPipeline(verbose=True)
     pipeline.add_modules(
@@ -79,6 +113,7 @@ def main():
     set_global_handler("arize_phoenix")
 
     pipeline = get_pipeline(
+        retriever_type="fusion",
         vector_top_k=5,
         bm25_top_k=5,
         fusion_top_k=5,
