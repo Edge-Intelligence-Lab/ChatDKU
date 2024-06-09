@@ -1,0 +1,1 @@
+This will land you to the Student Homepage with four tiles, which will give you quick access to different information.

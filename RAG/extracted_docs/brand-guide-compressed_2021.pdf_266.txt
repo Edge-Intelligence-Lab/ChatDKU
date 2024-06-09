@@ -1,0 +1,1 @@
+Example Three Incorrect Usage: Supergraphic can not be used horizontally.

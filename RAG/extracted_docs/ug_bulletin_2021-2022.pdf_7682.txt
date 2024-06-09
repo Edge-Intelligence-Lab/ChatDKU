@@ -1,0 +1,1 @@
+Introduction to analysis of functions of complex variables. Topics include complex numbers, analytic functions, complex integration, Taylor and Laurent series, theory of residues, argument and maximum principles, conformal mapping.

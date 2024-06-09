@@ -1,0 +1,1 @@
+page should be used to achieve consistency. Chinese System Font is Microsoft Yahei.

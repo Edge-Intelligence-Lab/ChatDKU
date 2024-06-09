@@ -1,0 +1,1 @@
+Note: 1. When the color patch is placed on the Supergraphic Pattern, there should be one or more rows of Supergraphic above and below the patch.

@@ -1,0 +1,1 @@
+1. courses with two divisional area attributes can be only counted as one area attribute; 2. courses with a QR attribute and a divisional area attribute can only be counted as one of these attributes;

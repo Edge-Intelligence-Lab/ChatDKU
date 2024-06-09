@@ -1,0 +1,1 @@
+Advanced introduction to basic, non-measure theoretic probability. Topics include random variables with discrete and continuous distributions. Independence, joint distributions, conditional distributions, generating functions, Bayes’ formula, and Markov chains. Rigorous arguments are presented for the law of large numbers, central limit theorem, and Poisson limit theorems.

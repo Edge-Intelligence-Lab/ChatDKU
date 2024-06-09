@@ -1,0 +1,1 @@
+Connecting to the VPN requires phone verification through Duo Mobile. After entering your user name and password, you will be prompted to enter a verification code which you obtain through the Duo Mobile app’ on your phone. For assistance uploading and setting up Duo Mobile please take you phone to the IT help desk.

@@ -1,0 +1,1 @@
+3. Creating and maintaining data documentation, implementing the security controls corresponding to the requirements of the data security level and developing and following a data security plan and procedures over the course of their projects.

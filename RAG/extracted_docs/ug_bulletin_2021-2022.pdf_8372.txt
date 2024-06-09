@@ -1,0 +1,1 @@
+data. Design and analysis of causal studies including randomized experiments, blocking, fractional factorial designs, non-randomized studies, propensity score analysis. Applications involving big data, health, policy, natural and social sciences.

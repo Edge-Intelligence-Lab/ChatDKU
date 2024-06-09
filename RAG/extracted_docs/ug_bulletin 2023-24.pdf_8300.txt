@@ -1,0 +1,1 @@
+Anti-requisite(s): COMPSCI 201 and STATS 102

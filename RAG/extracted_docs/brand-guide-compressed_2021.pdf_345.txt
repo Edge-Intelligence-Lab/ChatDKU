@@ -1,0 +1,1 @@
+The internal element of Supergraphic should not be zoomed in or out.

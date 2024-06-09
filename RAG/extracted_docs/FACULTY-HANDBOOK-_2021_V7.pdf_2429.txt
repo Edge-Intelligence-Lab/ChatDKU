@@ -1,0 +1,1 @@
+Each user is responsible for knowing Duke Kunshan’s research data classification standard and the associated risks in order to understand how to classify and secure research data.110

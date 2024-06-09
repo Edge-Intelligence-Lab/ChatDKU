@@ -1,0 +1,1 @@
+This course covers Bayesian inference, prior and posterior distributions, multi-level models, model checking and selection, and stochastic simulation by Markov Chain Monte Carlo.

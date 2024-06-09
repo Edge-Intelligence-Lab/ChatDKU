@@ -1,0 +1,1 @@
+This course covers speech production and perception, feature extraction, template-based recognition, hidden Markov modeling, language model, sub-word units, robust recognition and applications.

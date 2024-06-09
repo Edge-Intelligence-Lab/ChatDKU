@@ -1,0 +1,1 @@
+Built-in LAN Gigabit (Ethernet) for all systems; wireless for laptops (Windows: 802.11n; Mac: Airport Extreme)

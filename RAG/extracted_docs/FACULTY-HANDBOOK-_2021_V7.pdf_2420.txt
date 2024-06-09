@@ -1,0 +1,1 @@
+It is important that all research data are reasonably and appropriately managed to maintain data integrity, availability, and when required, confidentiality to protect against accidental or unauthorized access, modification, disclosure and destruction.

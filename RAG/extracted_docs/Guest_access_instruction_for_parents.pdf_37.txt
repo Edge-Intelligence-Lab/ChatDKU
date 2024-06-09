@@ -1,0 +1,1 @@
+2. When you login using OneLink account , If you forget OneLink password, click “Forgot your ID or password” to reset password . 如果您在使用 OneLink 账号登录时忘记了密码，可以点击“Forgot your ID or password”链接重 新设置密码。
