@@ -18,6 +18,7 @@ def get_pipeline(
     bm25_top_k: int = 5,
     fusion_top_k: int = 5,
     num_queries: int = 3,
+    synthesize_response: bool = True,
     response_mode: ResponseMode = ResponseMode.COMPACT,
 ):
     db = chromadb.PersistentClient(path="./chroma_db")
@@ -53,14 +54,20 @@ def get_pipeline(
         {
             "input": InputComponent(),
             "retriever": retriever,
-            "synthesizer": get_response_synthesizer(
-                response_mode=response_mode, streaming=True
-            ),
         }
     )
     pipeline.add_link("input", "retriever")
-    pipeline.add_link("input", "synthesizer", dest_key="query_str")
-    pipeline.add_link("retriever", "synthesizer", dest_key="nodes")
+
+    if synthesize_response:
+        pipeline.add_modules(
+            {
+                "synthesizer": get_response_synthesizer(
+                    response_mode=response_mode, streaming=True
+                )
+            }
+        )
+        pipeline.add_link("input", "synthesizer", dest_key="query_str")
+        pipeline.add_link("retriever", "synthesizer", dest_key="nodes")
 
     return pipeline
 
@@ -76,6 +83,7 @@ def main():
         bm25_top_k=5,
         fusion_top_k=5,
         num_queries=3,
+        synthesize_response=True,
         response_mode=ResponseMode.COMPACT,
     )
 
