@@ -1,11 +1,9 @@
+#!/usr/bin/env python3
+
 import os
 import nltk
 import chromadb
-from llama_index.core import (
-    Settings,
-    VectorStoreIndex,
-    Document
-)
+from llama_index.core import Settings, VectorStoreIndex, Document
 from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
@@ -20,41 +18,43 @@ from custom_filetype_detect import custom_detect_filetype
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
 # Override auto partation
-import unstructured.partition.auto
-from custom_partation import partition
+# import unstructured.partition.auto
+# from custom_partation import partition
 
-#unstructured.partition.auto.partition = partition
+# unstructured.partition.auto.partition = partition
 
 
 def extract_and_save_documents(data_dir, reader, output_dir):
     os.makedirs(output_dir, exist_ok=True)
-    
-    for root, dirs, files in os.walk(data_dir):
+
+    for root, _, files in os.walk(data_dir):
         for file in files:
             file_path = Path(root) / file
             if file_path.suffix in [".html", ".htm", ".pdf", ".csv"]:
                 documents = reader.load_data(file=file_path, split_documents=True)
                 for i, doc in enumerate(documents):
                     output_file_path = Path(output_dir) / (file + f"_{i}.txt")
-                    with open(output_file_path, 'w', encoding='utf-8') as text_file:
+                    with open(output_file_path, "w", encoding="utf-8") as text_file:
                         text_file.write(doc.text)
 
 
-def load_and_index(data_dir, text_spliter, text_spliter_args, pipeline_workers,output_dir):
+def load_and_index(
+    data_dir, text_spliter, text_spliter_args, pipeline_workers, output_dir
+):
     nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
     # Extract and save the documents using UnstructuredReader
     if not os.path.exists(output_dir):
         print("Create text_documents")
-        extract_and_save_documents(data_dir, reader,output_dir)
+        extract_and_save_documents(data_dir, reader, output_dir)
 
     # Load documents from saved text files
     documents = []
-    for root,dirs,files in os.walk(output_dir):
+    for root, _, files in os.walk(output_dir):
         for file_name in files:
-            file_path = os.path.join(root, file_name) 
-            with open(file_path, 'r', encoding='utf-8') as file: 
+            file_path = os.path.join(root, file_name)
+            with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
                 doc_id = os.path.splitext(os.path.basename(file_path))[0]
                 documents.append(Document(text=content, id=doc_id))
@@ -62,6 +62,7 @@ def load_and_index(data_dir, text_spliter, text_spliter_args, pipeline_workers,o
     trans = []
     if text_spliter == "sentence_splitter":
         from llama_index.core.node_parser import SentenceSplitter
+
         trans.append(SentenceSplitter(**text_spliter_args))
     else:
         raise ValueError(f"Unsupported text_splitter: {text_spliter}")
@@ -89,10 +90,9 @@ def load_and_index(data_dir, text_spliter, text_spliter_args, pipeline_workers,o
     docstore.persist("./docstore")
 
 
-
 def main():
     parse_args_and_setup()
-    output_dir = "./extracted_docs" 
+    output_dir = "./extracted_docs"
     load_and_index(
         data_dir="../RAG_data",
         text_spliter="sentence_splitter",
@@ -102,7 +102,5 @@ def main():
     )
 
 
-
 if __name__ == "__main__":
     main()
-
