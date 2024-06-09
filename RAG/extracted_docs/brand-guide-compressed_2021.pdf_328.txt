@@ -1,0 +1,1 @@
+The maximum width of the Supergraphic is 3X, and the minimum width is X (one row of triangle). The position of the Supergraphic can be flexible but with the same length with the layout.

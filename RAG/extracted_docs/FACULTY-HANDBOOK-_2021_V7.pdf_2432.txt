@@ -1,0 +1,1 @@
+The following security levels (described in more detail, with examples, in Appendix A: Data Classification Table) reflect the basic principle that as the risk associated with the research data increases more exacting security requirements must be implemented:

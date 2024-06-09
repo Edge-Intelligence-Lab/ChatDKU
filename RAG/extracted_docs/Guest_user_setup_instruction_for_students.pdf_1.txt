@@ -1,0 +1,1 @@
+This instruction guides students to setup guest user(s) to allow them access to DKU hub system and relevant information authorized by students.

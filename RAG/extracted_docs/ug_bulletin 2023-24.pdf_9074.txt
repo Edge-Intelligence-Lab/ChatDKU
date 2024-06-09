@@ -1,0 +1,1 @@
+This course explores the use of existing tools and APIs for conducting text and image analysis for purposes of aggregated study and analysis. Students will learn to use the Python programming language in conjunction with various existing toolkits in order to examine diverse collections of text and image materials.

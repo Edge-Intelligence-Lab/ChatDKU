@@ -1,0 +1,1 @@
+Investigation of study designs collecting data and their implications for statistical inference. Design and analysis of surveys of populations, including stratification, clustering, multi-stage sampling, design-based inference, considerations when analyzing convenience samples and big

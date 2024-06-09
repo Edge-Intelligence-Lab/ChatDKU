@@ -1,0 +1,1 @@
+Prerequisite(s): MATH 101 or 105; and COMPSCI 101 or 201 or MATH 205 or STATS 101 or 102.

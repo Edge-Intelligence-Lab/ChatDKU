@@ -1,0 +1,1 @@
+Payment Students who receive the RMB invoice should pay in RMB; while students who receive the USD invoice should pay in USD. For detail payment instructions, please refer to the student bill.

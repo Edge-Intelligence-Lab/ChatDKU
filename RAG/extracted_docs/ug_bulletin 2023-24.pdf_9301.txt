@@ -1,0 +1,1 @@
+Sequences, series, and their convergence properties. Power series, Taylor series, and Fourier series. Solution methods for first and second order differential equations.

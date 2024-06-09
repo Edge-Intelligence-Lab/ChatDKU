@@ -1,0 +1,1 @@
+This course covers Bayesian network, Markov random field, Gaussian graphical model, message passing, generalized linear model, expectation-maximization, factor analysis, state space model, conditional random field, variational inference, approximate inference, Dirichlet process, kernel graphical model and spectral algorithm.

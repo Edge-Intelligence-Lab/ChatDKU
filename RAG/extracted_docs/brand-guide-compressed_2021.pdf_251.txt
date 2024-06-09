@@ -1,0 +1,1 @@
+Example One When horizontally used, brand blue on the bottom, brand green on the top, and can't be the reversed way.

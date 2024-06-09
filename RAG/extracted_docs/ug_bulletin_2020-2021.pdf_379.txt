@@ -1,0 +1,1 @@
+From the class start date, as calculated in the Student Information System.

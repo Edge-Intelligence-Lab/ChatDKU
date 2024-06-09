@@ -1,0 +1,1 @@
+Plans should provide suitable quality assurance concerning the extent to which “raw” data may be modified. The processes for obtaining “derived” data should be specified and conform to the accepted procedures within the research field, if “raw” data is not be retained.

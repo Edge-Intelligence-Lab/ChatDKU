@@ -1,0 +1,1 @@
+The EVC shall read the VCAA’s report and determine the final outcome based on the

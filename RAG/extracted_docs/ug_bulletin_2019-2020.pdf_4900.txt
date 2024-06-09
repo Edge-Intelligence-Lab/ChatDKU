@@ -1,0 +1,1 @@
+The course will discuss the origin of mechanical properties in materials, mostly solid-state materials. Topics will include: continuum elasticity and plasticity, slip geometry and dislocation theory, Strengthening mechanisms in metals and alloys, thermal effects, creep, fracture and fatigue etc. This course will include basic mechanisms and engineering analysis.

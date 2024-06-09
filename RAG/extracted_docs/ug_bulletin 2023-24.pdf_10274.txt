@@ -1,0 +1,1 @@
+This course covers neural network, deep belief network, Boltzmann machine, convolutional neural network, recurrent neural network, and deep learning applications for speech, image, video, etc.

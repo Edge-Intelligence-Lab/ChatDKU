@@ -1,0 +1,1 @@
+In order to meet special layout design situation, the left end of Supergraphic should be cropped to the triangle center when used horizontally an d the top end should be cropped to the triangel center when used vertically.

@@ -1,0 +1,1 @@
+This course covers pseudo inverse, inner product, vector spaces and subspaces, orthogonality, linear transformations and operators, projections, matrix factorization, and singular value decomposition.

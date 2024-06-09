@@ -1,0 +1,1 @@
+3 Courses with more than one attribute can only be counted as one of these attributes.
