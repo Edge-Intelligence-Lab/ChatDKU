@@ -1,0 +1,1 @@
+and whether access will be open or granted only to specific user groups should be included in the

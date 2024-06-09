@@ -1,0 +1,1 @@
+unless the device or media is encrypted.

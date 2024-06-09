@@ -1,0 +1,1 @@
+and shading models, surface details, radiosity; achromatic light, color specification, colorimetry, different color models; graphics pipeline; animation, levels of detail.

@@ -1,0 +1,1 @@
+This course introduces the principles and methodologies for data acquisition and visualization, along with tools and techniques used to clean and process data for visual analysis. It also covers the practical software tools and languages such as Tableau, OpenRefine and Python/Matlab.

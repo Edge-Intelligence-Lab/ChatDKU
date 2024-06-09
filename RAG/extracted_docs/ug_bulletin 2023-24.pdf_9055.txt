@@ -1,0 +1,1 @@
+This course covers basic concepts of 3D modeling and animation; fundamentals of computer geometry; knowledge of basic tools of 3D software, introduction to modeling, texturing, lighting, and rendering; combination of these techniques in a final project.

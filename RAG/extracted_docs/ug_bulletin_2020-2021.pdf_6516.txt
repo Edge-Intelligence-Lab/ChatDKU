@@ -1,0 +1,1 @@
+Builds on and extends the core concepts introduced in Introduction to Biophysics. Advanced topics and recent developments in biophysics.

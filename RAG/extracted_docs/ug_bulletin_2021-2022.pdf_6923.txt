@@ -1,0 +1,1 @@
+Prerequisite(s): COMPSCI 201, MATH 205, and MATH 202

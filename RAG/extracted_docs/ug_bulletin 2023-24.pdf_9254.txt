@@ -1,0 +1,1 @@
+This lab course is designed to expose student to synthesis and characterization methods commonly used in materials science. Solution based methods, chemical vapor deposition, solid-solid reaction, SEM, TEM, x-ray diffraction RAMAN, IR, and electrochemical characterization will be the topics with which students will have hands-on experience.

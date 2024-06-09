@@ -1,0 +1,1 @@
+After clicking “Validate”, the system will give you messages to let you know if a class is ok to add or has potential problems. If there is time conflict, you will need to go back to class search to add another class that has no time conflict. If a requisite needs to be met, you will need to choose a lower level class.

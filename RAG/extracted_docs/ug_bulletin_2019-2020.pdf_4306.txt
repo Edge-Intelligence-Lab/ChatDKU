@@ -1,0 +1,1 @@
+This course covers data and representations, functions, conditions, loops, strings, lists, sets, maps, hash tables, trees, stacks, graphs, object-oriented programming, programming interface and software engineering.

@@ -1,0 +1,1 @@
+Introductory course on numerical analysis. Topics include: Development of numerical techniques for accurate, efficient solution of problems in science, engineering, and mathematics through the use of computers. Linear systems, nonlinear equations, optimization, numerical integration, differential equations, simulation of dynamical systems, error analysis.

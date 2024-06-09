@@ -1,0 +1,1 @@
+A first course to differential geometry focusing on the study of curves and surfaces in 2- and 3- dimensional Euclidean space using the techniques of differential and integral calculus and linear algebra. Topics include curvature and torsion of curves, Frenet-Serret frames, global properties of

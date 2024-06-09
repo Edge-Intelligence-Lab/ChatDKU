@@ -1,0 +1,1 @@
+Prerequisite(s): COMPSCI 201, BIOL 201, BIOL 202, plus MATH 205 or STATS 101

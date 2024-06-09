@@ -1,0 +1,1 @@
+Plans should consider dependencies on software and whether specific software packages or code will need to be made available to enable the data to be read and interpreted and results reproduced or reanalyzed.

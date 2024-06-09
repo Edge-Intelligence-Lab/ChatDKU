@@ -1,0 +1,1 @@
+When displayed on screen, the minimum size can't be less than the minimum size indicated on this page in order to achieve visibility.

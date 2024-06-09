@@ -1,0 +1,1 @@
+This course covers theoretical and practical issues in modern machine learning techniques. Topics considered include statistical foundations, supervised and unsupervised learning, decision trees, hidden Markov models, neural networks, and reinforcement learning.

@@ -1,0 +1,1 @@
+This course covers cloud infrastructures, virtualization, distributed file system, software defined networks and storage, cloud storage, and programming models such as MapReduce and Spark.

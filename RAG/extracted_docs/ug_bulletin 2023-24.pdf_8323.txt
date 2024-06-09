@@ -1,0 +1,1 @@
+Everything Data is the study of data and its acquisition, integration, querying, analysis, and visualization. Concepts and computational tools for working with unstructured, semi-structured,
