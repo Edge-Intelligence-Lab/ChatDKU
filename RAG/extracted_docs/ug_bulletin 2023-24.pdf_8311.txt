@@ -1,1 +1,0 @@
-This course focuses on the following: computer structure, assembly language, instruction execution, addressing techniques, and digital representation of data. Computer system organization, logic design, microprogramming, cache and memory systems, and input/output interfaces are also central.

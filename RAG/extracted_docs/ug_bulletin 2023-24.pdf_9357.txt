@@ -1,1 +1,0 @@
-Anti-requisite: COMPSCI 309 and STATS 302

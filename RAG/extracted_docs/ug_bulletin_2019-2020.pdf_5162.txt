@@ -1,1 +1,0 @@
-This course is intended to provide an introduction to the physics of solids and soft materials. It will discuss topics including properties of static (crystal structure) and dynamic (lattice vibrations) arrangements of atoms; electrons in solids; key features in metals, insulators and semiconductors; semiconductor devices; structure and assembly of a variety of soft materials

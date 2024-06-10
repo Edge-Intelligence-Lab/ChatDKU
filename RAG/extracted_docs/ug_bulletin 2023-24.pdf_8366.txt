@@ -1,1 +1,0 @@
-Prerequisite(s): COMPSCI 301 or 306 or 308 or 310 or 311

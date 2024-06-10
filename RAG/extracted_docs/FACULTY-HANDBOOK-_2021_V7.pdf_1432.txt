@@ -1,1 +1,0 @@
-Each division is responsible for initializing faculty mentoring, annual reviews, mid-term

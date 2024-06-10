@@ -1,1 +1,0 @@
-This course introduces the logical structure of digital media and explores computational media manipulation. The course uses the Python programming language to explore media manipulation and transformation. Topics include spatial and temporal resolution, color, texture, filtering, compression and feature detection.

@@ -1,1 +1,0 @@
-function by mutation or RNAi and examining a phenotype. Cellular location approaches using GFP fusions, yeast two-hybrid, and proteomics approaches will also be reviewed.

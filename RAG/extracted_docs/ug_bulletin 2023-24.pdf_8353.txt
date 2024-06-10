@@ -1,1 +1,0 @@
-Anti-requisites: MATH 405 and STATS 302

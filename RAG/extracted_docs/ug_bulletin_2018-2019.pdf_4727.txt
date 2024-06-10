@@ -1,1 +1,0 @@
-This course covers statistical inference, parametric method, sparsity, nonparametric methods, learning theory, kernel methods, computation algorithms and advanced learning topics.

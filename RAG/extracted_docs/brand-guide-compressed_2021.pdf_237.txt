@@ -1,1 +1,0 @@
-Example One It should be cut to the center of the triangle by both ends when the Supergraphic is cropped.

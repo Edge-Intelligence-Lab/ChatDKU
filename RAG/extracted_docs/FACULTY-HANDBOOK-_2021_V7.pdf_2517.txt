@@ -1,1 +1,0 @@
-Configuring Storage Devices: All devices must be configured for secure storage,

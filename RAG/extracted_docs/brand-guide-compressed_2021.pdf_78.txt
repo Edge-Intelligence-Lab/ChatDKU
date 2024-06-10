@@ -1,1 +1,0 @@
-background shouldn't be messy or have other logos in it, nor should the color too black:and:reversed 'white:logo:can:be-applled'on:a:monochrome-background

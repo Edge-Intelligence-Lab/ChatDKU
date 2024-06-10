@@ -1,1 +1,0 @@
-Any security incident, or suspected security incident, involving a Duke Kunshan system, particularly containing research data classified in Level 3, 4, or 5, must be reported immediately to the Office of the VCAA.

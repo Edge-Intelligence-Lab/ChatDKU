@@ -1,1 +1,0 @@
-How the data will be managed during the project, with information about version control, naming conventions, etc.

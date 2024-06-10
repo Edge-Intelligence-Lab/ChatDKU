@@ -1,1 +1,0 @@
-approaches. A focus on transcription networks, and the types of network motifs they contain, including feed-forward loops, autoregulation, and the single-input module will be discussed. Examples of networks in development will be covered.

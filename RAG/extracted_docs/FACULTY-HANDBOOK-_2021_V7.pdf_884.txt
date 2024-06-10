@@ -1,1 +1,0 @@
-salary should be used to cover the indirect cost (IDC) up to the default DKU IDC rate, if the funds

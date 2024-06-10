@@ -1,1 +1,0 @@
-Introduction to analysis of functions of real variables. Topics include Lebesgue measure and integration; L^p spaces; absolute continuity; abstract measure theory; Radon-Nikodym Theorem; connection with probability; Fourier series and integrals.

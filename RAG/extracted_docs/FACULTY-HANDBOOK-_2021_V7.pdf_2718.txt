@@ -1,1 +1,0 @@
-The individuals who have been approved by the Data Steward to access the data. They are responsible for their access to the data, including the security of the account and any data they may access or possess.

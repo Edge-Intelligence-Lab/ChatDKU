@@ -1,1 +1,0 @@
-2.1 Class Search “Class Search” function allows you to search for classes offered by a semester. Click on “Search” on the upper left corner in your Student Center.

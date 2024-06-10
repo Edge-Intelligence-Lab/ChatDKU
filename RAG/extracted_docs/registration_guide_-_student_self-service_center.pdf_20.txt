@@ -1,1 +1,0 @@
-1.2 Student Verification At the beginning of each semester, the university will implement a mandatory verification/update of students’ personal information. A registration “Hold” is assigned to each student for this task. Without completing this task, students will be prevented from any registration activities.

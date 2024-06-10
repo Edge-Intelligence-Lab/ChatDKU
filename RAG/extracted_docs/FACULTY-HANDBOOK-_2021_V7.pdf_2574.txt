@@ -1,1 +1,0 @@
-Backup records containing Level 5 information must be encrypted. • Disposal of electronic Level 5 research data must be by overwriting the information or by physically destroying the media.

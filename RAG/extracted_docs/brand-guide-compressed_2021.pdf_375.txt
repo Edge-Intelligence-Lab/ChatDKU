@@ -1,1 +1,0 @@
-Note: The Supergraphic Pattern can't be crop vertically in order to maintain the consistency of the Supergraphic Pattern, or rotate the pattern 90 degrees clockwise before making the cut

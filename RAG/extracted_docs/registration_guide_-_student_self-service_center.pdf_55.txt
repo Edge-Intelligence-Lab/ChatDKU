@@ -1,1 +1,0 @@
-The system will give you a “Success” message if the class is removed successfully from your schedule.

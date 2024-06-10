@@ -1,1 +1,0 @@
-1. Courses with two divisional area attributes can be only counted as one area attribute; 2. Courses with both a Quantitative Reasoning (QR) attribute and a divisional area attribute can only be counted as one of these attributes;

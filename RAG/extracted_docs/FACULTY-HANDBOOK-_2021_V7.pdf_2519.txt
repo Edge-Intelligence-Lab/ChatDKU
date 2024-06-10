@@ -1,1 +1,0 @@
-o All user devices must be configured for secure operation and to limit access to

@@ -142,7 +142,7 @@ def partition(
     file_filename: Optional[str] = None,
     url: Optional[str] = None,
     include_page_breaks: bool = False,
-    strategy: str = "hi_res",
+    strategy: str = PartitionStrategy.AUTO,
     encoding: Optional[str] = None,
     paragraph_grouper: Optional[Callable[[str], str]] | Literal[False] = None,
     headers: dict[str, str] = {},
@@ -603,4 +603,5 @@ def decide_table_extraction(
         return pdf_infer_table_structure or doc_type not in skip_infer_table_types
 
     return doc_type not in skip_infer_table_types
+
 

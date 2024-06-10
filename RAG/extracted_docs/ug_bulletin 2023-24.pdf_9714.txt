@@ -1,1 +1,0 @@
-trajectory prediction with time series analysis, deep learning analysis of images, protein folding, etc.

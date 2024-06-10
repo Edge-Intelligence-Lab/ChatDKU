@@ -1,1 +1,0 @@
-Example One When Supergraphic is used on pictures, its color should be set to white, with 60% transparency.

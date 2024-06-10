@@ -1,1 +1,0 @@
-Prerequisite(s): MATH 201; MATH 202; MATH 205; and COMPSCI 201 or COMPSCI 101 or STATS 102. Anti-requisite: MATH 302.

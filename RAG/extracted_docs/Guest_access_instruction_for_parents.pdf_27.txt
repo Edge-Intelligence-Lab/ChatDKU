@@ -1,1 +1,0 @@
-7. You need to wait for a while until page redirect to login page.

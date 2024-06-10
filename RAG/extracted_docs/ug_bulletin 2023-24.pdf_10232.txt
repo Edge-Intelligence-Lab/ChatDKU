@@ -1,1 +1,0 @@
-As an introductory course in data science, this course will show students not only the big picture of data science but also the detailed essential skills of loading, cleaning, manipulating, visualizing, analyzing and interpreting data with hands on programming experience.

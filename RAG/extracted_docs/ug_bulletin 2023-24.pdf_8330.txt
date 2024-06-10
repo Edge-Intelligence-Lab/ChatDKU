@@ -1,1 +1,0 @@
-Anti-requisites: COMPSCI 308 and 310

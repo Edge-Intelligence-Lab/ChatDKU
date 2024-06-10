@@ -1,1 +1,0 @@
-Documentation may include: technical descriptions, code commenting, project guidelines, information supporting technical decisions, and resource metadata. All types of documentation may not be relevant to all projects and the quantity of documentation proposed should be proportionate to the anticipated value of the data.
