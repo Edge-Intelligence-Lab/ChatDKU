@@ -1,1 +1,0 @@
-STATS 201 Introduction to Machine Learning for Social Science (4 credits)

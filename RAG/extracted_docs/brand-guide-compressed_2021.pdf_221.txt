@@ -1,1 +1,0 @@
-2. The Supergraphic and Supergraphic Pattern can be only rotated 90 degrees clockwise when they need to be used vertically or rotated, and can't be rotated freely or symmetrically.

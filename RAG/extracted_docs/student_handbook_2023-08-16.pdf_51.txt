@@ -1,1 +1,0 @@
-2.07.04 Lockouts Every time a student is locked out, they are required to prove their identity and their room assignment to the security guard at the first floor desk of their residence hall.

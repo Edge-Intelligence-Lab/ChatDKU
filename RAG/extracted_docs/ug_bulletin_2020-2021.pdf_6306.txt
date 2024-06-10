@@ -1,1 +1,0 @@
-Elementary introduction to topology. Topics include surfaces, covering spaces, Euler characteristic, fundamental group, homology theory, exact sequences.

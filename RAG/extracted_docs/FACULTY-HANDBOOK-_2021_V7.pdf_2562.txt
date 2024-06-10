@@ -1,1 +1,0 @@
-Only the applications that are actually required to support the services used in

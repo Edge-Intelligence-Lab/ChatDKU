@@ -1,1 +1,0 @@
-PHYS 305 Machine Learning for Physical Science (4 credits)

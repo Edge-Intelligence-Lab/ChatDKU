@@ -1,1 +1,0 @@
-The width of the Supergraphic is 2X and can be horizontally aligned with the layout or kept a space X to the margin. The length can be leveled with the layout.

@@ -1,1 +1,0 @@
-The Typeface used in the Brand Application System is InterstatePlus for English and Hiragino Sans GB for Chinese.

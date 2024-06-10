@@ -1,1 +1,0 @@
-Topics include heat, wave, and potential equations: scientific context, derivation, techniques of solution, and qualitative properties. Topics to include Fourier series and transforms, eigenvalue problems, maximum principles, Green’s functions, and characteristics.

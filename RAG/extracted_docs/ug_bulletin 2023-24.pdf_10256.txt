@@ -1,1 +1,0 @@
-Anti-requisite: MATH 405 and COMPSCI 309

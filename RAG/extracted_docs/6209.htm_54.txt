@@ -1,1 +1,0 @@
-Dan Wu, Shaobo Liang, Renmin Bi. (2018). Characterizing Queries in Cross-device OPAC Search: A Large-scale Log Study. Library Hi Tech, Vol.36, No.3.

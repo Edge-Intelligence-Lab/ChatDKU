@@ -1,1 +1,0 @@
-This course covers the algorithms and representations used in artificial intelligence. It provides an introduction to and implementation of algorithms for search, planning, decision, theory, logic, Bayesian networks, robotics and machine learning.

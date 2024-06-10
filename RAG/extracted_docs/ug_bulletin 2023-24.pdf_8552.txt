@@ -1,1 +1,0 @@
-Prerequisites: MATH 201 and 202; and MATH 205 or 206 or equivalent probability course. Some coding experience is encouraged, but not strictly required.

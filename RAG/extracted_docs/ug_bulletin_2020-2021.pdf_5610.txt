@@ -1,1 +1,0 @@
-This course covers Boolean retrieval, dictionary, index, vector space model, score, query, XML, language model, text classification, clustering, and web search.

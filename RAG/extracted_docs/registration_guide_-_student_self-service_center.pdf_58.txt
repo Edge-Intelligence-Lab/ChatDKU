@@ -1,1 +1,0 @@
-Class Swap function will allow you to change one class in your existing schedule to a new class. The difference from dropping and then adding a class is that you will be able to keep you original class if the swap is not successful.

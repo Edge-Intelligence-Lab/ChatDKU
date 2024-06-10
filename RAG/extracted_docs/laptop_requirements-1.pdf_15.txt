@@ -1,1 +1,0 @@
-Memory demands for Windows 10 will require at least 4 gigabyte (GB) of memory.

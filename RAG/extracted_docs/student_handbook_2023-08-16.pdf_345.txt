@@ -1,1 +1,0 @@
-5.06.03 Resolution Notification When a case is resolved, the student(s) involved will receive an email from the Adjudicator listing each alleged policy violation and whether or not they were found responsible. The resolution notification will include:

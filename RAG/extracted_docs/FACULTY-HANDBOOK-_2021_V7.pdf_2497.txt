@@ -1,1 +1,0 @@
-The Duke Kunshan Security Policy defines a 5-level categorization schedule for research information and the minimum protections required for each level. The basic principle of this policy is that more exacting storage measures must be followed as the information risk posed by a research project increases.

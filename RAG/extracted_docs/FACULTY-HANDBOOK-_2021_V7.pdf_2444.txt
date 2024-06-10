@@ -1,1 +1,0 @@
-All Data Stewards at Duke Kunshan must document their procedures and other requirements that pertain to the security of the research data for which they are responsible. This documentation must comply with all Duke Kunshan standards regarding research data management.

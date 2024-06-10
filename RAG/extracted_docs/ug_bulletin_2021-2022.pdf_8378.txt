@@ -1,1 +1,0 @@
-This course covers interdisciplinary applications of data analysis for social science, behavioral modeling, health care, financial modeling, advanced manufacturing, etc. Students are expected to solve a number of practical problems by implementing data algorithms with R during their course projects.

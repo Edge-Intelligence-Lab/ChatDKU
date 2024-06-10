@@ -1,1 +1,0 @@
-5. You can click “Edit” to update the Guest information or click “Delete” to remove a guest.

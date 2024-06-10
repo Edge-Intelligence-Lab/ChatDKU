@@ -1,1 +1,0 @@
-This course focuses on the design and analysis of efficient algorithms including sorting, searching, dynamic programming, graph algorithms, fast multiplication, and others. It also includes nondeterministic algorithms and computationally hard problems.

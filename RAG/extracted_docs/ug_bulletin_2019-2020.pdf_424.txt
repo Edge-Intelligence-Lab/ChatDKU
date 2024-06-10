@@ -1,1 +1,0 @@
-medical withdrawals are not counted in this number. Thus, there are only two possible enrollment patterns involving two underloads:

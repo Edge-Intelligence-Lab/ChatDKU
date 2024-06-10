@@ -1,1 +1,0 @@
-Research data designated Level 4 or higher must not be stored on unencrypted user devices, including portable devices. Level 4 research data may be stored on portable encrypted media. (See note below about collecting Level 4 information)

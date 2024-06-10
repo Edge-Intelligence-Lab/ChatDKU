@@ -1,1 +1,0 @@
-An introduction to the principles and concepts of abstract algebra. Abstract algebra studies the structure of sets with operations on them. The course studies three basic kinds of "sets with

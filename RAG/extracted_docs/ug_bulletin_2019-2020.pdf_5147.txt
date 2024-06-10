@@ -1,1 +1,0 @@
-models. The chemical potential is defined and the three thermodynamic potentials are discussed with use of Legendre transforms. It will also cover topics including the power of thermodynamics in gases and condensed matter, phase transitions, probability theory, and quantum statistics.

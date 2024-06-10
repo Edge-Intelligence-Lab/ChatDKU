@@ -1,1 +1,0 @@
-the directives of the Data Steward. Data managers should have a good working knowledge of how to securely manage systems and applications.

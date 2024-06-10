@@ -1,1 +1,0 @@
-Subjects include optimization problems; optimality conditions; convex optimization; dynamic programming; and control of dynamic systems (model predictive control).

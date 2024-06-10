@@ -1,1 +1,0 @@
-Several research initiatives at Duke Kunshan require storage of sensitive/restricted data. Chinese laws and regulations may require some of this research (e.g., personally identifiable health information) to be stored within the PRC, which makes storage in the U.S. and/or Singapore undesirable.

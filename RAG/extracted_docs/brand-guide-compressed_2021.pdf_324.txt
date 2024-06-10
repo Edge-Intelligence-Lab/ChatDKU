@@ -1,1 +1,0 @@
-This page shows the specification of Supergraphic in the horizontal layout. When set the ratio relationship and position of Supergraphic in a Horizontal layout, the height of the layout should be divided into 16 equal parts, and every part is marked as an X.

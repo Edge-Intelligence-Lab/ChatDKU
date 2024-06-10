@@ -1,1 +1,0 @@
-Electrostatic fields and potentials, boundary value problems, magnetic induction, energy in electromagnetic fields, Maxwell’s equations, introduction to electromagnetic radiation.
