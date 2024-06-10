@@ -4,8 +4,9 @@ from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.core.retrievers import QueryFusionRetriever
+from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
 import phoenix as px
@@ -26,6 +27,7 @@ QUERY_GEN_PROMPT = (
 
 def get_pipeline(
     retriever_type: str = "fusion",
+    hyde: bool = True,
     vector_top_k: int = 5,
     bm25_top_k: int = 5,
     fusion_top_k: int = 5,
@@ -38,6 +40,7 @@ def get_pipeline(
 
     Args:
         retriever_type: Type of retriever to use. Supported values are `vector` and `fusion`.
+        hyde: If `True`, first use HyDE (Hypothetical Document Embeddings) to transform the query string before retrieval.
         vector_top_k: Top k similar nodes to retrieve using vector retriever (they are the inputs to fusion retriever if used).
         bm25_top_k: Top k similar nodes to retrieve using BM25 retriever (they are the inputs to fusion retriever if used).
         fusion_top_k: Top k similar documents to retrieve using fusion retriever.
@@ -83,6 +86,17 @@ def get_pipeline(
     else:
         raise ValueError(f"Unsupported retriever_type: {retriever_type}")
 
+    if hyde:
+        # NOTE: `HyDEQueryTransform` would effectively not work if used as an
+        # component of the query pipeline by itself, since it returns a `QueryBundle`
+        # with custom embedding strings that would be dropped when passed down the
+        # pipeline as only the `query_str` attribute would be sent to the next
+        # component.
+        retriever = TransformRetriever(
+            retriever=retriever,
+            query_transform=HyDEQueryTransform(include_original=True),
+        )
+
     pipeline = QueryPipeline(verbose=True)
     pipeline.add_modules(
         {
@@ -114,6 +128,7 @@ def main():
 
     pipeline = get_pipeline(
         retriever_type="fusion",
+        hyde=True,
         vector_top_k=5,
         bm25_top_k=5,
         fusion_top_k=5,
