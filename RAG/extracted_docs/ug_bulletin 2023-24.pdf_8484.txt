@@ -1,1 +1,0 @@
-Introduction to the theory and practice of econometrics. Estimation, hypothesis testing and model evaluation in the linear regression model. Observational and experimental methods to identify causal effects including instrumental variable and panel data methods. Lectures are supplemented by labs that use STATA.

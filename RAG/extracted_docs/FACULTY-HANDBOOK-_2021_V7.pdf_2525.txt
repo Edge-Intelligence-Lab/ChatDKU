@@ -1,1 +1,0 @@
-o Upon disposal of the device, research data stored on the device must be

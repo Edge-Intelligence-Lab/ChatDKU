@@ -1,1 +1,0 @@
-o Research data stored on the device must be protected against access if the device

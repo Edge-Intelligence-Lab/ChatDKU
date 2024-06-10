@@ -1,1 +1,0 @@
-Protocols for the use, calibration, and maintenance of equipment should be clearly documented to ensure optimal performance and research data quality. When protocols change, they should be version controlled and the current version should be available and readily accessible.

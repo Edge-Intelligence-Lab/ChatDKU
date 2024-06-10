@@ -1,1 +1,0 @@
-Prerequisite(s): MATH 201 and MATH 202; COMPSCI 201 or COMPSCI 101 or STATS 102 is recommended

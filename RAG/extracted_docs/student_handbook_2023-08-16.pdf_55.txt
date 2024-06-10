@@ -1,1 +1,0 @@
-2.07.08 Room Charge, Payment, and Deposit Residence Life charges student Bursar accounts each semester for their room and the Bursar communicates the bills and collects the payment. The official policy is listed in the Room Assignment Agreement.

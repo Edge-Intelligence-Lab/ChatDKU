@@ -1,1 +1,0 @@
-You will see a message of “Success: This class has been added to your schedule” to confirm that you have successfully enrolled in this class.

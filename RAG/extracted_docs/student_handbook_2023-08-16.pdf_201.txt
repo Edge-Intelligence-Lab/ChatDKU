@@ -1,1 +1,0 @@
-4.13 Fire Safety 4.13.01 Fire Alarms Failing to evacuate if the fire alarm system is activated, including routine fire drills (each semester) is prohibited. Causing a fire or triggering a false alarm is prohibited.

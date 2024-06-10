@@ -1,1 +1,0 @@
-Functional genomics aims to identify a function for every gene in a genome. Using model systems like yeast, fruit flies and human cell lines, scientists can work toward this goal using a variety of methods. Approaches discussed will include a genetic approach by systematically reducing gene

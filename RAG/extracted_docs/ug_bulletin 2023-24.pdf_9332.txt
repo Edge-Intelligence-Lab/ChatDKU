@@ -1,1 +1,0 @@
-Divisibility properties of integers, prime numbers, congruences, quadratic reciprocity, number- theoretic functions, simple continued fractions, rational approximations; contributions of Fermat, Euler, and Gauss.

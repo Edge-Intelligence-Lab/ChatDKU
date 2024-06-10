@@ -1,1 +1,0 @@
-Second course on probability focusing on stochastic process and stochastic simulations. Topics include discrete-time and continuous-time Markov chains, Poisson processes and renewal theory, branching processes, generating random numbers and variates, Monte Carlo simulation, statistical analysis of simulation results, variance reduction techniques, etc.

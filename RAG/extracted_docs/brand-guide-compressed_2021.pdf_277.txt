@@ -1,1 +1,0 @@
-This page shows the specification of Supergraphic in the vertical layout. When set the ratio relationship and position of Supergraphic in a vertical layout, the width of the layout should be divided into 16 equal parts, and every part is marked as an X.

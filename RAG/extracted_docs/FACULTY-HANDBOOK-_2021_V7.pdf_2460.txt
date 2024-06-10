@@ -1,1 +1,0 @@
-The policy also applies to Data Stewards, in assisting researchers in identifying and assessing data confidentiality risks, and to Data Managers and Information Technology Officers working with researchers and research team members to ensure implementation of the security controls for the requirements of the security level designated for research data.115

@@ -1,1 +1,0 @@
-Systems of linear equations and elementary row operations, Euclidean n-space and subspaces, linear representations, Gram-Schmidt orthogonalization process, transformations and matrix determinants, eigenvectors and eigenvalues; applications.

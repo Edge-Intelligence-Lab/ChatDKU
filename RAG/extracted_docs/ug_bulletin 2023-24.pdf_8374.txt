@@ -1,1 +1,0 @@
-COMPSCI 404 Computer Architecture and Hardware Design (4 credits)

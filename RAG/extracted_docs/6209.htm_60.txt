@@ -1,1 +1,0 @@
-Dan Wu, Jing Dong, Yuan Tang. (2018). Identifying and Modeling Information Resumption Behaviors in Cross-Device Search. In The 41st International ACM SIGIR Conference on Research & Development in Information Retrieval (SIGIR 2018).

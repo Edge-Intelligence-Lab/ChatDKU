@@ -1,1 +1,0 @@
-Incorrect Usage: Supergraphic can not be used with other set of transparency than 60%.

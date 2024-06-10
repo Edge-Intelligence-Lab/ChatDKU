@@ -1,1 +1,0 @@
-We use “Cisco AnyConnect” for the VPN. The group is INTL-DUKE. (Use

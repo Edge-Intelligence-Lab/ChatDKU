@@ -1,1 +1,0 @@
-The maximum width of the Supergraphic is 3X, and the minimum width is 2X. It can be horizontally aligned with the layout or kept a space X to the margin, and the length can be leveled with the layout.

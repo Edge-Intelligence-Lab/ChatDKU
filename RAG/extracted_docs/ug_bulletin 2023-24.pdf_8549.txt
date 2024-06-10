@@ -1,1 +1,0 @@
-This is a course in mathematical models in ﬁnance, centered around the problem of how to apply quantitative methods to accurately solve finance problems. The first part of the course focuses on

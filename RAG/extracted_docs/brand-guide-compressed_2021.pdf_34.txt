@@ -1,1 +1,0 @@
-In the illustration on the right, take the height of logo as “100X", the length and height of clear space for the horizontal logo combination is “SOX", and the length and height of clear space for the vertical logo combination is “40X". When the size of the logo combination changes, the area's size has to be changed accordingly.

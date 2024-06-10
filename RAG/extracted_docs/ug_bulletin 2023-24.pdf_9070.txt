@@ -1,1 +1,0 @@
-Prerequisite(s): INFOSCI 202; COMPSCI 101 or 201 or STATS 102

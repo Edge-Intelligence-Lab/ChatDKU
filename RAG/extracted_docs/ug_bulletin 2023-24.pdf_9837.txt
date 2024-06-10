@@ -1,1 +1,0 @@
-simple mathematical models to quantify it. Furthermore, the conditions under which risk specific models are most accurate and useful will be explored, as well as the situations in which they are prone to failure.

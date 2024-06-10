@@ -1,1 +1,0 @@
-Topics include Boolean logic, first-order and second-order logic, resolution, Boolean computation, constraint and satisfiability solving, linear temporal and computation tree logic, model checking algorithms, applications and tools in digital system verification. COMPSCI 308 or COMPSCI 301 is recommended.

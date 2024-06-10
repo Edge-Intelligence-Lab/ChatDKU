@@ -1,1 +1,0 @@
-o Client applications on the device that might be used to access or transfer

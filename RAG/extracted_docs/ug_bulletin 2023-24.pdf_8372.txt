@@ -1,1 +1,0 @@
-Implementation of programming languages, compilers and interpreters, lexical analysis, parsing, semantic analysis, type checking, code generation, optimization, automatic memory management.

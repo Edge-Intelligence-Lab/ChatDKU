@@ -1,1 +1,0 @@
-A user with authorized access to research data will maintain the security (confidentiality, integrity and availability) of the data, consistent with Duke Kunshan requirements. When research data classified in Level 3, 4, or 5 must be disposed of that disposal must, to the extent permissible under law, be done in a manner that renders it unrecoverable.
