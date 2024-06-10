@@ -1,1 +1,0 @@
-This course covers speech production and perception, template-based recognition, hidden Markov modeling, language processing, robust recognition, speech inference, multimodal interface and applications.

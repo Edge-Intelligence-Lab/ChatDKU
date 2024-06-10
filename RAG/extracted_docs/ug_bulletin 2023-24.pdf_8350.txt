@@ -1,1 +1,0 @@
-COMPSCI 309 Elements of Machine Learning (4 credits)

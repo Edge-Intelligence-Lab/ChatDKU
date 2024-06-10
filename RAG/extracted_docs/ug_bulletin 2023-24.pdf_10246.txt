@@ -1,1 +1,0 @@
-The course begins with a brief overview of sequences and series followed by an introduction to stochastic processes and applications. Several examples of stochastic processes are covered: Markov chains, random walks, branching processes, the Poisson process, and Brownian motion.

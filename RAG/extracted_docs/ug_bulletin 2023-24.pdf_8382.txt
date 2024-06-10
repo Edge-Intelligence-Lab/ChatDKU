@@ -1,1 +1,0 @@
-Prerequisite(s): COMPSCI 201, COMPSCI 203

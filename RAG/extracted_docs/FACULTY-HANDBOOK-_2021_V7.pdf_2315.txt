@@ -1,1 +1,0 @@
-Researchers should ensure that appropriately structured metadata, using recognized standard schema, where these exist, for describing their research data are created and recorded in a timely manner. The metadata should include information about regulatory and ethical requirements relating to access and use.

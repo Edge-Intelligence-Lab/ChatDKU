@@ -1,1 +1,0 @@
-Information commonly used to establish identity that is protected by state, federal, or foreign privacy laws and regulations, including laws requiring data to be domiciled within the People’s Republic of China (PRC). Individually identifiable genetic information that is not Level 5 Note: Research data that must be stored within the PRC must be classified as Level 4 or Level 5.

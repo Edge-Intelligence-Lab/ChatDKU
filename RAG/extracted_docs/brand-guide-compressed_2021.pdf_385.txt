@@ -1,1 +1,0 @@
-This page shows a simple guideline for combination of color patch on Supergraphic Pattern. There are two for the color patch: trapezoidal or rectangular. Trapezoidal patch can be horizontally or vertically symmetric with the layout. Rectangular patch should have the same width with the Supergraphic Pattern.

@@ -1,1 +1,0 @@
-10/100 (Ethernet) for all systems; wireless for laptops (Windows: 802.11b/g/n; Mac: Airport Extreme)

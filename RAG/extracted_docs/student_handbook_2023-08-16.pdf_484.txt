@@ -1,1 +1,0 @@
-adds the professor in case they need help completing class assignments. The professor then encourages the student to talk outside of class

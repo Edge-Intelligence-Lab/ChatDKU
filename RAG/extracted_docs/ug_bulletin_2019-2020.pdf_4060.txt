@@ -1,1 +1,0 @@
-A range of genetic traits can be mapped and investigated using molecular approaches. Here we will utilize several model systems to examine different molecular methods to identify genetic traits ranging from single gene complementation/rescue in yeast to recombination and SNP mapping in Drosophila to whole genome association studies in human populations.

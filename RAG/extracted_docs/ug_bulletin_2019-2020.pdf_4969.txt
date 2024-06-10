@@ -1,1 +1,0 @@
-Geometry of high dimensional data sets. Linear dimension reduction, principal component analysis, kernel methods. Nonlinear dimension reduction, manifold models. Graphs. Random

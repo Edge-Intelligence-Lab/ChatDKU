@@ -1,1 +1,0 @@
-Main topics of this course include vectors and vector functions, the geometry of higher dimensional Euclidean spaces, partial derivatives, multiple integrals, line integrals, vector fields, Green’s Theorem, Stokes’ Theorem and the Divergence Theorem.

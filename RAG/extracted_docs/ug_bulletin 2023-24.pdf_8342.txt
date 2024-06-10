@@ -1,1 +1,0 @@
-This course focuses on basic concepts and principles of multiprogrammed operating systems. Topics covered include processes, interprocess communication, CPU scheduling, mutual exclusion, deadlocks, memory management, I/O devices, file systems, protection mechanisms.

@@ -1,1 +1,0 @@
-a. Project number; b. Project title; c. Principal Investigator or lead Principal Investigator if a multiple PI model is used; d. Name of the Investigator with the FCOI; e. Name of the entity with which the Investigator has a FCOI; f. Reason(s) for the retrospective review; g. Detailed methodology used for the retrospective review (e.g., methodology of the

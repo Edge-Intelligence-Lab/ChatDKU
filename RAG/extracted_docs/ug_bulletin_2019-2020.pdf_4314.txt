@@ -1,1 +1,0 @@
-This course covers image formation and representation, camera geometry and calibration, multi-view geometry, stereo, 3D reconstruction from images, motion analysis, image segmentation, and object recognition.

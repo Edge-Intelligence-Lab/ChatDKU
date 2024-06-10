@@ -1,1 +1,0 @@
-The course will discuss the origin of mechanical properties in materials, mostly solid-state materials. Topics will include: continuum elasticity and plasticity, slip geometry and dislocation theory,

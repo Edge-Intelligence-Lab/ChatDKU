@@ -1,1 +1,0 @@
-This course introduces game theory to undergraduate students in various disciplines. It focuses on the fundamentals of game theory, including basic concepts and techniques, various ways of describing and solving games, and various applications in economics, political science, and business.

@@ -1,1 +1,0 @@
-Theory of ordinary differential equations with some of the modern theory of dynamical systems. Topics include differential equations and linear systems of DEs, the general theory of nonlinear

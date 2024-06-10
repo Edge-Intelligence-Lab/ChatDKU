@@ -1,1 +1,0 @@
-Prerequisite(s): COMPSCI 201, STATS 210 or STATS 211; and Pre or Co-requisite(s): MATH 304, MATH 305.

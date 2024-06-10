@@ -1,1 +1,0 @@
-This course covers sorting, order statistics, binary search, dynamic programming, greedy algorithms, graph algorithms, minimum spanning trees, shortest paths, SQL, file organization, hashing, sorting, query, schema, transaction management, concurrency control, rash recovery, distributed database, and database as a service.

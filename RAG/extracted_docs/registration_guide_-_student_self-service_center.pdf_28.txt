@@ -1,1 +1,0 @@
-On the “Search for Classes” page, you will be allowed to search for classes by “Search Criteria”. If you want to have an overview of all the classes offered in the semester, you can choose “Undergraduate” in the dropdown list in “Course Career”. Click on “Search”, then the system will give you a list of open classes offered in the term you selected.
