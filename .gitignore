@@ -186,4 +186,4 @@ RAG/chroma_db
 # RAG pipeline cache
 RAG/pipeline_storage
 # RAG document store
-# RAG/docstore
+RAG/docstore
