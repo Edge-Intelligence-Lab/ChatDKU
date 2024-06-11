@@ -18,7 +18,8 @@ from custom_partation import partition
 unstructured.partition.auto.partition = partition
 
 def update_data(data_dir="../RAG_data"):
-    
+
+    # Required for UnstructuredReader
     nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
