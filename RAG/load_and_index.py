@@ -82,11 +82,11 @@ def load_and_index(
         vector_store=vector_store,
         docstore=docstore,
     )
-    pipeline_cache = "./pipeline_storage"
-    if os.path.exists(pipeline_cache):
-        pipeline.load(pipeline_cache)
+
+    #The current llamindex pipeline_cache has bug and cannot be updated on its own. 
+    #Please remove pipeline_cache from your personal directory and do not add any related functions for the time being.
+    
     pipeline.run(documents=documents, num_workers=pipeline_workers)
-    pipeline.persist(pipeline_cache)
 
     VectorStoreIndex.from_vector_store(vector_store)
     docstore.persist("./docstore")
