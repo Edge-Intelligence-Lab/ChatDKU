@@ -18,7 +18,7 @@ from custom_partation import partition
 unstructured.partition.auto.partition = partition
 
 def update_data(data_dir="../RAG_data"):
-
+    
     # Required for UnstructuredReader
     nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
@@ -41,9 +41,11 @@ def update_data(data_dir="../RAG_data"):
         pickle.dump(documents, f)
 
     print("Length of documents:",len(documents))
+    return documents
 
 def main():
     update_data()
 
 if __name__ == "__main__":
     main()
+
