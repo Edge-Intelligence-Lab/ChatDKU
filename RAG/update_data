@@ -1,0 +1,48 @@
+import os
+import nltk
+import pickle
+from llama_index.core import SimpleDirectoryReader
+
+from llama_index.readers.file import UnstructuredReader
+
+# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
+import unstructured.file_utils.filetype
+from custom_filetype_detect import custom_detect_filetype
+
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+
+# Override auto partation
+import unstructured.partition.auto
+from custom_partation import partition
+
+unstructured.partition.auto.partition = partition
+
+def update_data(data_dir="../RAG_data"):
+    
+    nltk.download("averaged_perceptron_tagger")
+    reader = UnstructuredReader()
+
+    documents_path = os.path.join(data_dir, "documents.pkl")
+
+    reader = UnstructuredReader()
+    documents = SimpleDirectoryReader(
+        data_dir,
+        recursive=True,
+        required_exts=[".html", ".htm", ".pdf", ".csv"],
+        file_extractor={
+            ".htm": reader,
+            ".html": reader,
+            ".pdf": reader,
+            ".csv": reader,
+        },
+    ).load_data()
+    with open(documents_path, "wb") as f:
+        pickle.dump(documents, f)
+
+    print("Length of documents:",len(documents))
+
+def main():
+    update_data()
+
+if __name__ == "__main__":
+    main()
