@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
 import os
-import nltk
 import chromadb
 import pickle
 from llama_index.core import (
     Settings,
-    SimpleDirectoryReader,
     VectorStoreIndex,
 )
-from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from settings import parse_args_and_setup
+from update_data import update_data
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -27,6 +25,28 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
+import hashlib
+
+def hash_file(filename):
+    h = hashlib.sha256()
+    with open(filename, 'rb') as file:
+        while True:
+            chunk = file.read(h.block_size)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
+
+def hash_directory(directory):
+    all_hashes = ''
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            file_hash = hash_file(filepath)
+            all_hashes += file_hash
+    final_hash = hashlib.sha256(all_hashes.encode('utf-8')).hexdigest()
+    return final_hash
+
 
 def load_and_index(
     data_dir: str,
@@ -36,31 +56,25 @@ def load_and_index(
     # please use only a single process for now.
     pipeline_workers: int = 1,
 ):
-    # Required for UnstructuredReader
-    nltk.download("averaged_perceptron_tagger")
-    reader = UnstructuredReader()
 
     documents_path = os.path.join(data_dir, "documents.pkl")
-    if os.path.exists(documents_path):
-        with open(documents_path, "rb") as f:
-            documents = pickle.load(f)
+    hash_path= os.path.join("./","hash.pkl")
+    now_hash=hash_directory(data_dir)
+    if os.path.exists(documents_path) and os.path.exists(hash_path):
+        with open(hash_path, "rb") as f:
+            origin_hash=pickle.load(f)
+            if(origin_hash==now_hash):
+                with open(documents_path, "rb") as file:
+                    documents = pickle.load(file)
+            else:
+                documents=update_data()
+                with open(hash_path, "wb") as hf:
+                    pickle.dump(now_hash,hf)
+        
     else:
-        reader = UnstructuredReader()
-        documents = SimpleDirectoryReader(
-            data_dir,
-            recursive=True,
-            required_exts=[".html", ".htm", ".pdf", ".csv"],
-            file_extractor={
-                ".htm": reader,
-                ".html": reader,
-                ".pdf": reader,
-                ".csv": reader,
-            },
-        ).load_data()
-        with open(documents_path, "wb") as f:
-            pickle.dump(documents, f)
-
-    print("Length of documents:",len(documents))
+        documents=update_data()
+        with open(hash_path, "wb") as hf:
+            pickle.dump(now_hash,hf)
 
     trans = []
     if text_spliter == "sentence_splitter":
@@ -104,4 +118,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
