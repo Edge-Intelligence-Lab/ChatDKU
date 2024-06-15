@@ -129,3 +129,10 @@ Leaderboard so that my VRAM would not explode.
       have \# for headings that the LLM might pick up), including a table of contents,
       summarize the chapters and sections, and etc.
 - Customize the query engine/add a querying pipeline.
+
+
+
+# Auto-Retrieval Example for Duke Kunshan University
+
+This project demonstrates how to perform auto-retrieval from a vector database using LlamaIndex and Chroma. The sample data used is based on the introduction and key aspects of Duke Kunshan University (DKU).
+
