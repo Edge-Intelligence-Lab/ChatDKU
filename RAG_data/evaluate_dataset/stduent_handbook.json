@@ -1,0 +1,428 @@
+[
+    {
+        "Question": "Where can the electronic version of the DKU Student Handbook be found?",
+        "Context": "The handbook can be found electronically [online](https://www.dukekunshan.edu.cn/campus-life/student-conduct/about/).",
+        "Answer": "The electronic version of the DKU Student Handbook can be found online at [this link](https://www.dukekunshan.edu.cn/campus-life/student-conduct/about/)."
+      },
+      {
+        "Question": "What are the key principles that the DKU Community Standard commits to upholding?",
+        "Context": "Members of this community commit to reflecting upon and upholding these principles in all academic and non-academic endeavors, and to protecting and promoting a culture of integrity and trust. To uphold the DKU Community Standard: I will hold myself to the highest standards for honesty, integrity, fairness, and responsibility in my academic and non-academic endeavors; I will respect other cultures and embrace all forms of diversity; I will uphold the standards if they are compromised.",
+        "Answer": "The key principles are honesty, integrity, fairness, responsibility, respect for other cultures, and embracing diversity."
+      },
+      {
+        "Question": "What is DKU’s stance on diversity and inclusion?",
+        "Context": "We affirm the diverse histories, perspectives, experiences, identities, languages and cultures that enhance our community, and we aim to create an environment where all members of our community are accepted, appreciated and celebrated.",
+        "Answer": "DKU welcomes diversity and aims to create an environment where all members are accepted, appreciated, and celebrated."
+      },
+      {
+        "Question": "Are undergraduate students required to live on campus at DKU?",
+        "Context": "All undergraduate students are required to reside on campus, all four years. Graduate students are encouraged, but neither required nor guaranteed to reside on campus.",
+        "Answer": "Yes, all undergraduate students are required to reside on campus for all four years."
+      },
+      {
+        "Question": "How can students access the Mercury system for room assignments and maintenance requests?",
+        "Context": "Mercury is the online system used by both the Residence Life department and the Housing department... To log into Mercury: Visit <https://student.rms.dukekunshan.edu.cn/page/homepage> Log in with your NetID credentials.",
+        "Answer": "Students can access the Mercury system by visiting [this link](https://student.rms.dukekunshan.edu.cn/page/homepage) and logging in with their NetID credentials."
+      },
+      {
+        "Question": "What is the policy on having guests in DKU residence halls?",
+        "Context": "Residents are allowed to have visitors in their room with the approval of their roommate(s)... People who are not DKU students are not allowed in the residence halls between 11:00 PM – 8:00 AM and are required to sign in at the entrance of the residence hall.",
+        "Answer": "Residents can have guests with roommate approval, but non-DKU students are not allowed in the residence halls between 11:00 PM and 8:00 AM and must sign in at the entrance."
+      },
+      {
+        "Question": "What are the designated quiet hours in DKU residence halls?",
+        "Context": "Quiet Hours are in effect nightly Sun night – Fri morning from 11:00 PM – 8:00 AM, and Sat and Sun mornings from 1:00 AM – 10:00 AM.",
+        "Answer": "Quiet Hours are from 11:00 PM to 8:00 AM from Sunday night to Friday morning, and from 1:00 AM to 10:00 AM on Saturday and Sunday mornings."
+      },
+      {
+        "Question": "What should students do if they are locked out of their residence hall rooms?",
+        "Context": "Every time a student is locked out, they are required to prove their identity and their room assignment to the security guard at the first floor desk of their residence hall.",
+        "Answer": "Students must prove their identity and room assignment to the security guard at the first floor desk of their residence hall."
+      },
+      {
+        "Question": "What are the consequences for students who abuse the kitchen space in the residence halls?",
+        "Context": "Students found to abuse the space or equipment or cause the fire alarm to activate may be charged for relevant damages, may be referred to the student conduct process, and may have their use privileges revoked.",
+        "Answer": "Students may be charged for damages, referred to the student conduct process, and have their kitchen use privileges revoked."
+      },
+      {
+        "Question": "What is the policy on posting fliers in DKU residence halls?",
+        "Context": "Posting fliers on walls in the hallways and common spaces of residence halls is prohibited. Residents may post things on their door using painters’ tape, to prevent damaging the finish on the door.",
+        "Answer": "Posting fliers on walls in hallways and common spaces is prohibited; residents can post things on their door using painters' tape."
+      },
+      {
+        "question": "What rights do DKU students have regarding academic topics and freedom of expression?",
+        "context": "All students will be active learners guaranteed the right to pursue academic topics of interest, the freedom to express their opinions and conclusions with full access to information and relevant scholarship.",
+        "answer": "DKU students have the right to pursue academic topics of interest and the freedom to express their opinions and conclusions with full access to information and relevant scholarship."
+      },
+      {
+        "question": "What are DKU students entitled to in terms of course selection and program study?",
+        "context": "All students are entitled to select courses and programs of academic study according to their interests and to freely express their ideas and conclusions.",
+        "answer": "DKU students are entitled to select courses and programs of academic study according to their interests and to freely express their ideas and conclusions."
+      },
+      {
+        "question": "What rights do DKU students have regarding further study and research opportunities?",
+        "context": "All students have the right to pursue further study, with equal access to scientific research and academic and cultural exchange opportunities.",
+        "answer": "DKU students have the right to pursue further study with equal access to scientific research and academic and cultural exchange opportunities."
+      },
+      {
+        "question": "What protections are in place for DKU students' private information?",
+        "context": "The students and their property shall be respected, and their private information obtained through work, study, and personal exchange shall be protected according to U.S. educational practices involving student rights and privacy.",
+        "answer": "DKU students' private information obtained through work, study, and personal exchange is protected according to U.S. educational practices involving student rights and privacy."
+      },
+      {
+        "question": "What rights do DKU students have regarding organizing or participating in student organizations?",
+        "context": "All students shall have the right to organize or participate in a self-governing student organization and a students’ association in accordance with the law and the University’s rules.",
+        "answer": "DKU students have the right to organize or participate in a self-governing student organization and a students’ association in accordance with the law and the University’s rules."
+      },
+      {
+        "question": "How can DKU students raise objections or file grievances?",
+        "context": "All students shall have the right to raise objections or file a grievance in relation to matters such as academic awards, discipline, and other matters that significantly affect their interests.",
+        "answer": "DKU students can raise objections or file grievances related to academic awards, discipline, and other matters significantly affecting their interests."
+      },
+      {
+        "question": "What is the confidentiality policy for Student Health Services at DKU?",
+        "context": "Students have the right to privacy concerning their health care. All care and counseling received at Student Health Services will be kept strictly confidential, except as required by law.",
+        "answer": "Student Health Services at DKU ensures that all care and counseling received will be kept strictly confidential, except as required by law."
+      },
+      {
+        "question": "What are the responsibilities of DKU students regarding academic integrity?",
+        "context": "Students shall adhere to academic integrity and respect all other students and the faculty. Violation of these standards may subject the student to sanctions according to the relevant rules adopted by the Board of Trustees of the University.",
+        "answer": "DKU students are responsible for adhering to academic integrity and respecting all other students and faculty. Violations may result in sanctions according to the relevant rules adopted by the Board of Trustees."
+      },
+      {
+        "question": "What rights do DKU students have regarding free expression?",
+        "context": "The right to free expression must be fiercely guarded and genuinely embraced. Those who exercise these rights must serve the University community by accepting the responsibilities to uphold the right of free expression.",
+        "answer": "DKU students have the right to free expression, which must be fiercely guarded and genuinely embraced, with the responsibility to uphold this right within the University community."
+      },
+      {
+        "question": "What is the process for DKU students to file a formal complaint?",
+        "context": "To submit a formal complaint, you must use the DKU Community Student Incident Report online and submit as a 'General Complaint' under the 'Nature of Incident/Policy Violation' section.",
+        "answer": "DKU students can file a formal complaint by using the DKU Community Student Incident Report online and submitting it as a 'General Complaint' under the 'Nature of Incident/Policy Violation' section."
+      },
+      {
+        "question": "What is the philosophy behind DKU's alcohol policy?",
+        "context": "DKU respects the choices of those who consume alcohol within reasonable and legal bounds and those who avoid it altogether. But, because the consumption of alcohol can impair an individual’s judgment and lead to behavior that compromises the security and comfort of one’s self and others, this policy aims to limit those negative consequences to sustain a positive, livable, learning environment on campus.",
+        "answer": "The philosophy is to respect individual choices while limiting negative consequences of alcohol consumption to maintain a positive and safe learning environment."
+      },
+      {
+        "question": "What are students accountable for even when drinking?",
+        "context": "In order to sustain that environment, students remain accountable to all University policies even when drinking. Intoxication does not serve as an excuse for violating any University policies or any laws or regulations of China.",
+        "answer": "Students are accountable to all University policies and the laws and regulations of China even when drinking."
+      },
+      {
+        "question": "What are the three areas of respect outlined in DKU's General Alcohol Policy?",
+        "context": "Respect is the foundation upon which the University bases its General Alcohol Policy as outlined in the following areas: • Respect for Oneself • Respect for Others • Respect for Property",
+        "answer": "The three areas of respect are Respect for Oneself, Respect for Others, and Respect for Property."
+      },
+      {
+        "question": "What behaviors are prohibited under DKU's Alcohol Policy?",
+        "context": "Such behavior includes, but is not limited to: • Verbal or physical harassment of another person(s), or sexual misconduct • Exhibiting disorderly conduct, damaging property, and/or fighting • Noise disturbance(s) • Littering • Running away or hiding from University or public officials, including law enforcement • Vomiting and/or urinating in public • Operating vehicles, bikes, e-bikes, skateboards, or any other form of transportation under the influence of alcohol",
+        "answer": "Prohibited behaviors include harassment, disorderly conduct, noise disturbances, littering, evading officials, public vomiting/urination, and operating vehicles under the influence."
+      },
+      {
+        "question": "What types of alcohol are students allowed to possess in DKU buildings and residence halls?",
+        "context": "Students, who are at least 18 years of age, are permitted to possess only alcohol with a 12% Alcohol by Volume (ABV) level or less in DKU buildings and designated residence halls. Any alcohol above 12% ABV is prohibited regardless of the student’s age.",
+        "answer": "Students are allowed to possess alcohol with a 12% ABV level or less."
+      },
+      {
+        "question": "Are guests allowed to bring alcoholic beverages into university residence halls?",
+        "context": "Guests of residents, regardless of age, may not bring alcoholic beverages into university residence halls.",
+        "answer": "No, guests are not allowed to bring alcoholic beverages into university residence halls."
+      },
+      {
+        "question": "What is the Good Samaritan Policy?",
+        "context": "Good Samaritan Policy – When a student contacts University officials or other helping professionals out of concern for the health and safety of another student, staff or faculty member, none of the students present (including the intoxicated student) will be considered for Alcohol Policy violations for a specific incident.",
+        "answer": "The Good Samaritan Policy ensures that students who seek help for others in distress due to alcohol will not face Alcohol Policy violations for that incident."
+      },
+      {
+        "question": "Are animals allowed in university buildings?",
+        "context": "Absolutely no animals of any kind are allowed in any university building. Service animals are permitted for people with disabilities as long as they have been registered with the Student Accessibility Services Office.",
+        "answer": "No, animals are not allowed in university buildings, except for registered service animals for people with disabilities."
+      },
+      {
+        "question": "Where should bicycles and motorized vehicles be stored on campus?",
+        "context": "Bicycles and motorized (electrical or fuel-propelled) vehicles are not permitted to be stored anywhere inside University buildings. Enclosed storage spaces are available on campus to store bicycles and electrical bikes.",
+        "answer": "Bicycles and motorized vehicles should be stored in enclosed storage spaces available on campus."
+      },
+      {
+        "question": "What is the official method of communication at DKU?",
+        "context": "Email is the official university method for correspondence and communication at DKU regarding academic, student, and administrative affairs.",
+        "answer": "The official method of communication at DKU is email."
+      },
+      {
+        "question": "What should students do in the event of a campus emergency?",
+        "context": "In the event of a campus emergency, members of the University will be sent information and/or alerts via, but not limited to, e-mail, outdoor warning systems, and text messages. All university constituents are required to keep their contact information up to date and comply with any requests or requirements set forth by university leadership.",
+        "answer": "Students should keep their contact information up to date and comply with any requests or requirements set forth by university leadership."
+      },
+      {
+        "question": "What constitutes disorderly conduct at DKU?",
+        "context": "Disorderly conduct is defined as: • Any unreasonable or reckless conduct by an individual or group that is inherently or potentially unsafe to other persons or their real or personal property • Any behavior by an individual or group that disrupts the peace or interferes with the normal operation of the University or University-sponsored activities • Any lewd, disruptive, indecent, aggressive, or obscene behavior at a University-related event/activity or directed toward or interfering with regular University operations",
+        "answer": "Disorderly conduct includes unsafe behavior, disrupting peace, and lewd or aggressive behavior at University events or operations."
+      },
+      {
+        "question": "What is DKU's policy on drug use?",
+        "context": "Possession, consumption, manufacture, distribution, sale and/or being under the influence of illicit drugs is strictly prohibited on the entire campus of the University and other University-related activities and occasions.",
+        "answer": "DKU strictly prohibits the possession, consumption, manufacture, distribution, sale, and being under the influence of illicit drugs on campus and during University-related activities."
+      },
+      {
+        "question": "What actions are prohibited under DKU's fire safety policy?",
+        "context": "Failing to evacuate if the fire alarm system is activated, including routine fire drills (each semester) is prohibited. Causing a fire or triggering a false alarm is prohibited. Misuse of and tampering with fire safety equipment (e.g., extinguishers, sprinklers, detectors, etc.) is a serious offense and is strictly prohibited.",
+        "answer": "Prohibited actions include failing to evacuate during fire alarms, causing fires, triggering false alarms, and tampering with fire safety equipment."
+      },
+      {
+        "question": "Under what conditions are poker nights and casino games permitted at DKU?",
+        "context": "Poker nights and casino games are permitted only if no admission is charged, no buy-in is required, and no real money is wagered.",
+        "answer": "Poker nights and casino games are permitted if no admission is charged, no buy-in is required, and no real money is wagered."
+      },
+      {
+        "question": "What is the main purpose of the Good Samaritan Policy at DKU?",
+        "context": "The Good Samaritan Policy is in place to ease concerns and eliminate any reason for hesitation that DKU students may have in seeking help for others should an emergency or crisis arise.",
+        "answer": "The main purpose of the Good Samaritan Policy at DKU is to encourage students to seek help for others in emergencies without hesitation, even if it involves alcohol or drug use, by ensuring no formal University disciplinary actions or sanctions will be assigned for such violations."
+      },
+      {
+        "question": "What actions are expected from students in a medical emergency involving alcohol or drugs?",
+        "context": "In any situation involving danger to the health or safety of others who are part of the DKU community, students are expected to take appropriate actions to protect life and health, regardless of the potential for being found responsible for violations of policy involving alcohol or drug use.",
+        "answer": "Students are expected to take appropriate actions to protect life and health, such as seeking help from appropriate University staff members or other helping professionals."
+      },
+      {
+        "question": "Are there any consequences for students who abuse the Good Samaritan Policy?",
+        "context": "Students who abuse the protections of this policy will not be able to claim the benefits of the policy.",
+        "answer": "Yes, students who abuse the protections of the Good Samaritan Policy will not be able to claim its benefits."
+      },
+      {
+        "question": "How does DKU handle situations where a student fails to take appropriate action in a medical emergency?",
+        "context": "Students who fail to take appropriate action in situations involving danger to the health or safety of others who are part of the DKU community remain liable for violations of handbook policies.",
+        "answer": "Students who fail to take appropriate action remain liable for violations of handbook policies."
+      },
+      {
+        "question": "What should a student do if they believe another student requires medical attention?",
+        "context": "The best option when you feel someone requires medical attention is to seek help. Remember the three steps to comply with the policy: Get Help, Stay With the Individual, Follow Up Afterward.",
+        "answer": "A student should seek help, stay with the individual until emergency help arrives, and follow up afterward by meeting with appropriate University officials and cooperating with any University investigation."
+      },
+      {
+        "question": "Will a student face disciplinary actions if they have been drinking but call for help for someone else?",
+        "context": "No formal University disciplinary actions or sanctions will be assigned to the reporting student(s) for alcohol violations relating to the incident.",
+        "answer": "No, a student will not face formal University disciplinary actions or sanctions for alcohol violations if they call for help for someone else."
+      },
+      {
+        "question": "Is a student required to reveal their identity when reporting an incident under the Good Samaritan Policy?",
+        "context": "Yes, reporting students are expected to provide identity (name, contact info, etc.) to assist in avoiding false reporting of incidents.",
+        "answer": "Yes, a student is required to reveal their identity when reporting an incident."
+      },
+      {
+        "question": "How does DKU protect students from retaliation after reporting an incident?",
+        "context": "Yes, students will be protected against retaliation as per our policy.",
+        "answer": "DKU protects students from retaliation as per their policy."
+      },
+      {
+        "question": "Can the Good Samaritan Policy be applied to multiple people in one incident?",
+        "context": "Yes, it can be applied to multiple people in one incident.",
+        "answer": "Yes, the Good Samaritan Policy can be applied to multiple people in one incident."
+      },
+      {
+        "question": "What should students do if they have concerns about their own or a friend’s alcohol or drug use?",
+        "context": "Students who have concerns about their personal possession, consumption, distribution, or being under the influence of alcohol, drugs and/or other illegal substances, or students who are concerned about a friend’s possession, consumption, distribution, or being under the influence of alcohol, drugs and/or other illegal substances are encouraged to seek guidance through Student Health Services and/or Counseling and Psychological Services.",
+        "answer": "Students should seek guidance through Student Health Services and/or Counseling and Psychological Services."
+      },
+      {
+        "question": "What type of insurance are all DKU students covered by upon arrival on campus?",
+        "context": "All students are covered by the accident insurance purchased by the university upon their arrival on campus.",
+        "answer": "All DKU students are covered by accident insurance purchased by the university upon their arrival on campus."
+      },
+      {
+        "question": "Are Chinese mainland students required to purchase the Social Insurance Plan from Kunshan?",
+        "context": "Chinese mainland students are strongly recommended to purchase and enroll in the Social Insurance Plan from Kunshan.",
+        "answer": "No, Chinese mainland students are not required but are strongly recommended to purchase and enroll in the Social Insurance Plan from Kunshan."
+      },
+      {
+        "question": "What options do Hong Kong, Macau, and Taiwan (HMT) students have for medical insurance?",
+        "context": "HMT students also have the option to purchase and enroll in the international students’ medical health insurance.",
+        "answer": "HMT students have the option to purchase and enroll in the international students’ medical health insurance in addition to the Social Insurance Plan from Kunshan."
+      },
+      {
+        "question": "Are international students required to enroll in any specific health plan?",
+        "context": "All international students are required to be enrolled in a medical health insurance plan. DKU offers sponsored plans.",
+        "answer": "Yes, international students are required to enroll in a medical health insurance plan, and DKU offers sponsored plans."
+      },
+      {
+        "question": "What must international students do before coming to China regarding immunizations?",
+        "context": "International students are required to receive certain immunizations before coming to China.",
+        "answer": "International students must receive certain immunizations before coming to China."
+      },
+      {
+        "question": "What is prohibited under the unauthorized surveillance or photography policy?",
+        "context": "Capturing or recording audio, video, or photographic images of an individual in a location or under circumstances in which that person has a reasonable expectation of privacy... is prohibited.",
+        "answer": "Capturing or recording audio, video, or photographic images of an individual in a location or under circumstances where they have a reasonable expectation of privacy is prohibited."
+      },
+      {
+        "question": "What actions are prohibited regarding university property?",
+        "context": "The theft, sale, unauthorized entry, presence in, access to, misuse of, vandalism, damage, or destruction of University property is prohibited.",
+        "answer": "The theft, sale, unauthorized entry, presence in, access to, misuse of, vandalism, damage, or destruction of University property is prohibited."
+      },
+      {
+        "question": "What activities are prohibited near and in the water reserves on campus?",
+        "context": "Horseplay near and in the water reserves on campus is strictly prohibited. Activities such as, but not limited to, cycling, blading, skateboarding, scootering, etc. are prohibited on the walkways over the pond.",
+        "answer": "Horseplay near and in the water reserves on campus, as well as activities such as cycling, blading, skateboarding, and scootering on the walkways over the pond, are prohibited."
+      },
+      {
+        "question": "Are weapons allowed on university premises?",
+        "context": "The University specifically prohibits the possession, sale, or transportation of weapons by any employee or student while on, or near, University-owned or controlled premises.",
+        "answer": "No, weapons are not allowed on university premises."
+      },
+      {
+        "question": "What is the purpose of notifying parents or legal guardians about a student's policy violations?",
+        "context": "The primary goal of notifying parents or legal guardians is to promote the health and wellness of the student.",
+        "answer": "The purpose of notifying parents or legal guardians about a student's policy violations is to promote the health and wellness of the student."
+      },
+      {
+        "Question": "What details are included in the hearing notification?",
+        "Context": "The notification letter will include the context of the alleged policy violation, the Adjudicator, and the hearing meeting setting.",
+        "Answer": "The hearing notification includes the context of the alleged policy violation, the Adjudicator, and the hearing meeting setting."
+      },
+      {
+        "Question": "Can a Respondent have a lawyer present during the hearing?",
+        "Context": "A lawyer, legal representation, parent/legal guardian (except in the case of a student who is a minor), or family member is not permitted in hearings.",
+        "Answer": "No, a Respondent cannot have a lawyer present during the hearing."
+      },
+      {
+        "Question": "What can a Respondent do if they believe a board member is biased?",
+        "Context": "Respondent(s) may challenge the objectivity of any Student Affairs Review Board or Sexual Misconduct Review Board member, giving reasonable cause to believe the member may be biased or have some conflict of interest.",
+        "Answer": "A Respondent can challenge the objectivity of a board member by providing reasonable cause to believe the member may be biased or have a conflict of interest."
+      },
+      {
+        "Question": "What is the standard of evidence used by the Adjudicator to determine responsibility?",
+        "Context": "The Adjudicator will make a determination of responsibility for each alleged policy violation listed in the notification email, based on a preponderance of the evidence.",
+        "Answer": "The standard of evidence used is a preponderance of the evidence."
+      },
+      {
+        "Question": "What type of sanction involves writing a formal apology?",
+        "Context": "Formal Apology: A requirement to write a formal apology to individuals involved and/or affected by actions/violation.",
+        "Answer": "The sanction that involves writing a formal apology is called a \"Formal Apology.\""
+      },
+      {
+        "Question": "What happens if a student violates the conditions of Disciplinary Probation?",
+        "Context": "Disciplinary Probation: A status imposed on a student for a specific period of time during which another violation of university policy or violation of any of the conditions of the probation shall result in an augmented disciplinary action, including the possibility of suspension and/or expulsion.",
+        "Answer": "If a student violates the conditions of Disciplinary Probation, it may result in an augmented disciplinary action, including the possibility of suspension and/or expulsion."
+      },
+      {
+        "Question": "What information is included in the resolution notification email?",
+        "Context": "The resolution notification will include: Basic information of the student; Facts and evidence for the sanctions; Type, basis, and duration of the sanctions; Ways and time limit for appeal; Any other relevant content;",
+        "Answer": "The resolution notification email includes basic information of the student, facts and evidence for the sanctions, type, basis, and duration of the sanctions, ways and time limit for appeal, and any other relevant content."
+      },
+      {
+        "Question": "On what grounds can sanctions eligible for Appeal Type A be appealed?",
+        "Context": "Sanctions eligible for Appeal Type A can only be appealed on grounds 1 and/or 2: New information, not available at the time of the hearing, has been collected; Procedural errors that may have substantially affected the fairness of the process occurred.",
+        "Answer": "Sanctions eligible for Appeal Type A can be appealed on the grounds of new information not available at the time of the hearing or procedural errors that may have substantially affected the fairness of the process."
+      },
+      {
+        "Question": "Who reviews the appeal if it passes the preliminary review?",
+        "Context": "If the appeal passes the preliminary review, the appeal will be reviewed by the Student Affairs Appeals Committee which consists of various DKU community members.",
+        "Answer": "If the appeal passes the preliminary review, it will be reviewed by the Student Affairs Appeals Committee."
+      },
+      {
+        "Question": "What are the possible outcomes after the Student Affairs Appeals Committee reviews an appeal?",
+        "Context": "Once the appeal has been reviewed, the Student Affairs Appeals Committee will determine one of the following outcomes: Affirmation of the original sanction; Suggest to the original Adjudication Body to revoke the original sanction; Suggest to the original Adjudication Body to amend the original sanction.",
+        "Answer": "The possible outcomes are affirmation of the original sanction, suggestion to the original Adjudication Body to revoke the original sanction, or suggestion to the original Adjudication Body to amend the original sanction."
+      },
+      {
+        "question": "What is the primary commitment of Duke Kunshan University (DKU) as stated in the introduction?",
+        "context": "DKU is committed to encouraging and sustaining a learning and work community free from discrimination, harassment, relationship violence, stalking, and related misconduct.",
+        "answer": "DKU is committed to encouraging and sustaining a learning and work community free from discrimination, harassment, relationship violence, stalking, and related misconduct."
+      },
+      {
+        "question": "What types of misconduct are prohibited by DKU's policy?",
+        "context": "This Policy prohibits discrimination, harassment, relationship violence, stalking, and other related misconduct defined in this Policy on the basis of race, color, ethnicity, national origin, sex (including pregnancy), gender, gender identity, gender expression, sexual orientation, religion, age, disability (collectively, “Protected Status or Characteristic”).",
+        "answer": "DKU's policy prohibits discrimination, harassment, relationship violence, stalking, and other related misconduct based on Protected Status or Characteristics such as race, color, ethnicity, national origin, sex, gender, gender identity, gender expression, sexual orientation, religion, age, and disability."
+      },
+      {
+        "question": "Who is protected by DKU's policy?",
+        "context": "Members of the DKU community protected by this Policy include, but are not limited to, (1) all DKU students including full and part-time students, undergraduate students, graduate students, or any other students enrolled at DKU; (2) all student applicants for admission to DKU, all student participants in DKU sponsored or affiliated activities; and (3) visiting students.",
+        "answer": "DKU's policy protects all DKU students, student applicants for admission, student participants in DKU sponsored or affiliated activities, and visiting students."
+      },
+      {
+        "question": "What is the definition of consent according to DKU's policy?",
+        "context": "Consent is defined as a voluntary and affirmative mutually understandable communication of willingness and agreement to participate in particular sexual activity or behavior, expressed either by words or clear, unambiguous action.",
+        "answer": "Consent is defined as a voluntary and affirmative mutually understandable communication of willingness and agreement to participate in particular sexual activity or behavior, expressed either by words or clear, unambiguous action."
+      },
+      {
+        "question": "What constitutes bullying according to DKU's policy?",
+        "context": "Bullying and/or Cyber Bullying is defined as the process of intentional electronic, written, verbal, or physical acts directed at another student or students, or member(s) of the DKU community where there is intimidation or mistreatment that is severe, persistent, and/or pervasive and has the effect of interference with a student’s or students’, or member(s) of the DKU community’s educational environment, creates a threatening environment, or disrupts the orderly operation of DKU.",
+        "answer": "Bullying is defined as intentional electronic, written, verbal, or physical acts directed at another student or members of the DKU community where there is intimidation or mistreatment that is severe, persistent, and/or pervasive, interfering with the educational environment, creating a threatening environment, or disrupting the orderly operation of DKU."
+      },
+      {
+        "question": "What is the policy on retaliation at DKU?",
+        "context": "This Policy also prohibits retaliation against an individual: (1) who files a complaint or report of discrimination, harassment, or related misconduct; (2) against whom a complaint is filed; (3) who participates in the reporting, investigation, or adjudication of possible violations of this Policy; or (4) who engages in good faith opposition to what the individual reasonably believes to be discrimination, harassment, or related misconduct under this Policy.",
+        "answer": "DKU's policy prohibits retaliation against individuals who file a complaint or report, are the subject of a complaint, participate in the investigation or adjudication process, or oppose in good faith what they reasonably believe to be discrimination, harassment, or related misconduct."
+      },
+      {
+        "question": "What is the definition of relationship violence according to DKU's policy?",
+        "context": "Relationship violence is defined as any act of violence or pattern of abusive behavior in an intimate relationship that is used by one partner to gain or maintain power and control over another partner. Relationship violence can be physical, sexual, emotional, economic, or psychological actions or threats of actions that influence another person.",
+        "answer": "Relationship violence is defined as any act of violence or pattern of abusive behavior in an intimate relationship used by one partner to gain or maintain power and control over another partner. It can include physical, sexual, emotional, economic, or psychological actions or threats."
+      },
+      {
+        "question": "What are the criteria for a hostile environment harassment under DKU's policy?",
+        "context": "Hostile Environment Harassment is defined as unwelcome conduct based on Protected Status or Characteristic that is so severe, persistent, and/or pervasive that it alters the conditions of education, being hired as a student worker, or participation in a program or activity, thereby creating an environment that a reasonable person in similar circumstances and with similar identities would find hostile, intimidating, or abusive.",
+        "answer": "Hostile environment harassment is defined as unwelcome conduct based on Protected Status or Characteristic that is so severe, persistent, and/or pervasive that it alters the conditions of education, being hired as a student worker, or participation in a program or activity, creating an environment that a reasonable person would find hostile, intimidating, or abusive."
+      },
+      {
+        "question": "What is the policy on consent in sexual activities at DKU?",
+        "context": "Consent must be present throughout the entire sexual activity and can be revoked at any time. Consent cannot be obtained from a person who does not have the capacity to give consent under the laws of the applicable jurisdiction because of the person's physical or mental disability.",
+        "answer": "Consent must be present throughout the entire sexual activity and can be revoked at any time. Consent cannot be obtained from a person who does not have the capacity to give consent due to physical or mental disability."
+      },
+      {
+        "question": "What does DKU's policy say about discrimination based on disability?",
+        "context": "Discrimination includes failing to provide reasonable accommodations to, for example, a qualified person with a disability, to an ethnic minority student, or to a female student, as required by any applicable law.",
+        "answer": "DKU's policy states that discrimination includes failing to provide reasonable accommodations to a qualified person with a disability, as required by applicable law."
+      },
+      {
+        "question": "What should individuals do if they experience discrimination, harassment, or related misconduct that may involve criminal conduct?",
+        "context": "As a priority, DKU encourages all individuals to report discrimination, harassment, or related misconduct that may involve criminal conduct to the local Police Department. This could include sexual violence, relationship violence, stalking, and conduct that could be a hate crime. Local Police can be contacted at 110 (Chinese only) and you may reach the Campus Emergency Hotline at (0512) 3665-7110 for help.",
+        "answer": "Individuals should report the incident to the local Police Department or contact the Campus Emergency Hotline."
+      },
+      {
+        "question": "What resources does DKU recommend individuals seek after an incident of sexual violence, sexual exploitation, relationship violence, or stalking?",
+        "context": "For incidents of sexual violence, sexual exploitation, relationship violence, and stalking, DKU also encourages individuals to seek assistance from a medical provider or crisis response service immediately after an incident. This provides the opportunity to address physical well-being or health concerns, preserve any available evidence, and begin a timely investigative and remedial response.",
+        "answer": "DKU recommends seeking assistance from a medical provider or crisis response service immediately after the incident."
+      },
+      {
+        "question": "Who can provide confidential counseling, information, and support at DKU?",
+        "context": "The following DKU resources can provide counseling, information, and support in a confidential setting. These confidential resources will not share information about a report of discrimination, harassment, relationship violence, stalking and related misconduct without the individual’s expressed written permission.",
+        "answer": "Student Health Services and Counseling and Psychological Services (CAPS) can provide confidential counseling, information, and support."
+      },
+      {
+        "question": "How can students report allegations of sexual misconduct against another student at DKU?",
+        "context": "Allegations of sexual misconduct against a student are managed by the Dean of Student Affairs under the Student Sexual Misconduct Policy and hearing procedures outlined in the DKU Student Handbook. An incident report may be filed directly with the Dean of Student Affairs Office.",
+        "answer": "Students can report allegations of sexual misconduct to the Dean of Student Affairs Office."
+      },
+      {
+        "question": "What should students do if they have a concern or question regarding the Policy or procedures for filing a complaint?",
+        "context": "If you are a DKU student and have a concern or question regarding this Policy or the procedures for filing a complaint, you can contact the Dean of Student Affairs Office at dku-studentaffairs@dukekunshan.edu.cn or by phone at (+86) (0512) 3665-7123.",
+        "answer": "Students should contact the Dean of Student Affairs Office via email or phone."
+      },
+      {
+        "question": "What does DKU urge students to do to maintain a respectful and discrimination-free community?",
+        "context": "In order to maintain and support a community that is respectful and free from discrimination, harassment, and related misconduct and to maximize DKU’s ability to respond promptly and effectively, we urge students to come forward with full-disclosure reports of concerns or with complaints as soon as possible.",
+        "answer": "DKU urges students to come forward with full-disclosure reports of concerns or complaints as soon as possible."
+      },
+      {
+        "question": "What happens if the individual accused of misconduct is no longer affiliated with DKU?",
+        "context": "In some cases, e.g., where the individual accused of misconduct is no longer affiliated with DKU, we may not be able to take disciplinary action. However, DKU will strive to provide other fair and reasonable measures to support the reporting party and minimize any future misconduct.",
+        "answer": "DKU may not be able to take disciplinary action but will strive to provide other fair and reasonable measures to support the reporting party and minimize future misconduct."
+      },
+      {
+        "question": "What are the possible exceptions to maintaining confidentiality according to DKU's policy?",
+        "context": "Examples of situations in which confidentiality cannot be maintained include: When DKU is required by law to disclose information (such as in response to a court order or the requirement of other authority of competent jurisdiction)...",
+        "answer": "Confidentiality cannot be maintained when required by law, when necessary for an effective investigation, when outweighed by DKU’s interest in protecting safety or rights, or when the subject matter has been made public through no fault of DKU."
+      },
+      {
+        "question": "What is the informal process for resolving a complaint about the food in the Cafeteria?",
+        "context": "Informal Process: The student reaches out to the DKU Campus Food Service Committee to express their concerns about the food.",
+        "answer": "The student should reach out to the DKU Campus Food Service Committee to express their concerns."
+      },
+      {
+        "question": "How is a formal complaint about a professor making a racist remark handled?",
+        "context": "Formal Process: The student submits a student incident form with a complaint about the two events and the faculty member involved. The student should note in the report the instance in which the professor apologized and assured the student that the situation would not happen again... The incident report is forwarded to the Dean of Undergraduate Studies.",
+        "answer": "The student submits a student incident form, which is then forwarded to the Dean of Undergraduate Studies for investigation and resolution."
+      }
+
+]
