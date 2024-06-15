@@ -3,6 +3,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.llama_cpp import LlamaCPP
 from argparse import ArgumentParser
 from pathlib import Path
+from update_data import update_data
 
 # FIXME: I have contributed these two functions to llama_index.llms.llama_cpp.llama_utils.
 # Thus, the versions of them from LlamaIndex should be used whenever they were included
@@ -14,7 +15,11 @@ def parse_args_and_setup():
     parser = ArgumentParser()
     parser.add_argument("-e", "--embedding", type=str)
     parser.add_argument("-l", "--llm", type=Path)
+    parser.add_argument("-u","--update",action='store_true')
     args = parser.parse_args()
+
+    if args.update is not None:
+        update_data()
 
     # TODO: Use a better embedding model
     if args.embedding is None:
@@ -44,7 +49,7 @@ def parse_args_and_setup():
             generate_kwargs={},
             # kwargs to pass to __init__()
             # set to at least 1 to use GPU
-            model_kwargs={"n_gpu_layers": 1},
+            model_kwargs={"n_gpu_layers": -1},
             # transform inputs into Llama format
             messages_to_prompt=messages_to_prompt_v3_instruct,
             completion_to_prompt=completion_to_prompt_v3_instruct,
@@ -56,3 +61,4 @@ def parse_args_and_setup():
         # accurately.
         Settings.tokenizer = Settings.llm._model.tokenizer()
         print("Loaded tokenizer")
+
