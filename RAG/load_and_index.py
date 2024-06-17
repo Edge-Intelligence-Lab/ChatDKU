@@ -10,8 +10,8 @@ from llama_index.core import (
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
-from settings import parse_args_and_setup
-from update_data import update_data
+from settings import parse_args_and_setup,Setting
+from update_data import update_data,hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -25,29 +25,6 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
-import hashlib
-
-def hash_file(filename):
-    h = hashlib.sha256()
-    with open(filename, 'rb') as file:
-        while True:
-            chunk = file.read(h.block_size)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
-
-def hash_directory(directory):
-    all_hashes = ''
-    for root, _, files in os.walk(directory):
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            file_hash = hash_file(filepath)
-            all_hashes += file_hash
-    final_hash = hashlib.sha256(all_hashes.encode('utf-8')).hexdigest()
-    return final_hash
-
-
 def load_and_index(
     data_dir: str,
     text_spliter: str = "sentence_splitter",
@@ -60,7 +37,14 @@ def load_and_index(
     documents_path = os.path.join(data_dir, "documents.pkl")
     hash_path= os.path.join("./","hash.pkl")
     now_hash=hash_directory(data_dir)
-    if os.path.exists(documents_path) and os.path.exists(hash_path):
+    
+    if Setting.update==True:
+        documents=update_data()
+        now_hash=hash_directory(data_dir)
+        with open(hash_path, "wb") as hf:
+            pickle.dump(now_hash,hf)
+
+    elif os.path.exists(documents_path) and os.path.exists(hash_path):
         with open(hash_path, "rb") as f:
             origin_hash=pickle.load(f)
             if(origin_hash==now_hash):
@@ -68,11 +52,13 @@ def load_and_index(
                     documents = pickle.load(file)
             else:
                 documents=update_data()
+                now_hash=hash_directory(data_dir)
                 with open(hash_path, "wb") as hf:
                     pickle.dump(now_hash,hf)
         
     else:
         documents=update_data()
+        now_hash=hash_directory(data_dir)
         with open(hash_path, "wb") as hf:
             pickle.dump(now_hash,hf)
 
@@ -109,7 +95,7 @@ def load_and_index(
 def main():
     parse_args_and_setup()
     load_and_index(
-        data_dir="../RAG_data",
+        data_dir=Setting.data_dir,
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         pipeline_workers=1,
@@ -118,5 +104,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
