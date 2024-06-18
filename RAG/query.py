@@ -13,17 +13,6 @@ import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
 from settings import parse_args_and_setup
 
-# When generating similar queries, the LLM is supposed to ONLY generate the
-# queries themselves, one on each line. However, the LLM sometimes says things
-# like `Here are n queries:` on the first line. This prompt used to explictly
-# discourage this kind of output.
-QUERY_GEN_PROMPT = (
-    "You are a helpful assistant that generates multiple search queries based on a "
-    "single input query. Do not output any additional information such as 'here are n queries'. "
-    "Generate {num_queries} search queries, one on each line, related to the following input query:\n"
-    "Query: {query}\n"
-)
-
 
 def get_pipeline(
     retriever_type: str = "fusion",
@@ -78,7 +67,6 @@ def get_pipeline(
             [vector_retriever, bm25_retriever],
             similarity_top_k=fusion_top_k,
             num_queries=num_queries,
-            query_gen_prompt=QUERY_GEN_PROMPT,
             use_async=True,
             verbose=True,
         )
