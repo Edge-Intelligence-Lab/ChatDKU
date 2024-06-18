@@ -10,7 +10,7 @@ from pathlib import Path
 from llama_utils import messages_to_prompt_v3_instruct, completion_to_prompt_v3_instruct
 
 class Setting:
-    data_dir="../RAG_data"
+    data_dir="/opt/RAG_data"
     update=False
 
 
