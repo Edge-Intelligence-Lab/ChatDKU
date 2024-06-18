@@ -40,7 +40,10 @@ def hash_directory(directory):
     final_hash = hashlib.sha256(all_hashes.encode('utf-8')).hexdigest()
     return final_hash
 
-def update_data(data_dir=Setting.data_dir):
+def update_data(data_dir=None):
+    
+    if data_dir is None:
+        data_dir=Setting.data_dir
     
     # Required for UnstructuredReader
     nltk.download("averaged_perceptron_tagger")
@@ -66,7 +69,11 @@ def update_data(data_dir=Setting.data_dir):
     print("Length of documents:",len(documents))
     return documents
 
-def main(data_dir=Setting.data_dir):
+def main(data_dir=None):
+    
+    if data_dir is None:
+        data_dir=Setting.data_dir
+
     update_data(data_dir)
     hash=hash_directory(data_dir)
     hash_path= os.path.join("./","hash.pkl")
