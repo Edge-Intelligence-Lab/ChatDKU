@@ -43,8 +43,8 @@ def set_system_prompt(
 
 
 class Setting:
-    data_dir="/opt/RAG_data"
-    update=False
+    data_dir = "/opt/RAG_data"
+    update = False
 
 
 def parse_args_and_setup():
