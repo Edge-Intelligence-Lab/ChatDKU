@@ -23,23 +23,22 @@ from llama_utils import (
 # Also note that I have tried other things like `do not begin your answer with
 # "here are the generated queries"` to discourage such messages at the beginning of
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
+
 COERCED_SYSTEM_PROMPT = (
     DEFAULT_SYSTEM_PROMPT
-    + """\
-Do not begin your answer with phrases like "here is an answer"\
-and respond with only the content of the answer.\
-"""
+    + ' Do not begin your answer with phrases like "here is an answer"'
+    "and respond with only the content of the answer."
 )
 
 
-def set_system_prompt(
-    func: Callable[[Union[Sequence[ChatMessage], str], Optional[str]], str],
-    system_prompt: str,
-) -> Callable[[Union[Sequence[ChatMessage], str]], str]:
-    def f(message: Union[Sequence[ChatMessage], str]) -> str:
-        return func(message, system_prompt)
+class UseCoercedPrompt:
+    def __init__(
+        self, func: Callable[[Union[Sequence[ChatMessage], str], Optional[str]], str]
+    ):
+        self.func = func
 
-    return f
+    def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
+        return self.func(message, COERCED_SYSTEM_PROMPT)
 
 
 class Setting:
@@ -91,12 +90,8 @@ def parse_args_and_setup():
             # set to at least 1 to use GPU
             model_kwargs={"n_gpu_layers": -1},
             # transform inputs into Llama format
-            messages_to_prompt=set_system_prompt(
-                messages_to_prompt_v3_instruct, COERCED_SYSTEM_PROMPT
-            ),
-            completion_to_prompt=set_system_prompt(
-                completion_to_prompt_v3_instruct, COERCED_SYSTEM_PROMPT
-            ),
+            messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
+            completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
             verbose=True,
         )
         print("Loaded LLM")
