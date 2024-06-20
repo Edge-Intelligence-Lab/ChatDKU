@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-import chromadb
 import pickle
+import chromadb
 from llama_index.core import (
     Settings,
     VectorStoreIndex,
@@ -31,6 +31,7 @@ def load_and_index(
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, any] = {},
     extractors: list[str] = [],
+    use_recursive_directory_summarize: bool = False,
     # NOTE: Multiprocessing appears to have issues with HuggingFaceEmbedding and LlamaCPP,
     # please use only a single process for now.
     pipeline_workers: int = 1,
@@ -82,6 +83,11 @@ def load_and_index(
     else:
         raise ValueError(f"Unsupported text_splitter: {text_spliter}")
 
+    if use_recursive_directory_summarize:
+        from recursive_directory_summarize import RecursiveDirectorySummarize
+
+        trans.append(RecursiveDirectorySummarize())
+
     if "keyword" in extractors:
         from llama_index.core.extractors import KeywordExtractor
 
@@ -116,8 +122,7 @@ def load_and_index(
     # The current llamindex pipeline_cache has bug and cannot be updated on its own.
     # Please remove pipeline_cache from your personal directory and do not add any related functions for the time being.
 
-    pipeline.run(documents=documents, num_workers=pipeline_workers)
-
+    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
     VectorStoreIndex.from_vector_store(vector_store)
     docstore.persist("./docstore")
 
@@ -129,6 +134,7 @@ def main():
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         extractors=[],
+        use_recursive_directory_summarize=False,
         pipeline_workers=1,
     )
 
