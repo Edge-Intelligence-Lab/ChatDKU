@@ -10,6 +10,7 @@ from llama_index.core import (
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
+from typing import Any
 from settings import parse_args_and_setup, Setting
 from update_data import update_data, hash_directory
 
@@ -29,7 +30,7 @@ unstructured.partition.auto.partition = partition
 def load_and_index(
     data_dir: str,
     text_spliter: str = "sentence_splitter",
-    text_spliter_args: dict[str, any] = {},
+    text_spliter_args: dict[str, Any] = {},
     extractors: list[str] = [],
     use_recursive_directory_summarize: bool = False,
     # NOTE: Multiprocessing appears to have issues with HuggingFaceEmbedding and LlamaCPP,
@@ -41,28 +42,40 @@ def load_and_index(
     now_hash = hash_directory(data_dir)
 
     if Setting.update:
+        print(f"Force updating {documents_path}")
         documents = update_data()
         now_hash = hash_directory(data_dir)
         with open(hash_path, "wb") as hf:
             pickle.dump(now_hash, hf)
+        print(f"Hashes of data files written at {hash_path}")
 
     elif os.path.exists(documents_path) and os.path.exists(hash_path):
+        print(f"Both {documents_path} and {hash_path} exist")
         with open(hash_path, "rb") as f:
             origin_hash = pickle.load(f)
+            print(f"Loaded hashes from {origin_hash}")
             if origin_hash == now_hash:
+                print(f"Hashes match, loading documents from {documents_path}")
                 with open(documents_path, "rb") as file:
                     documents = pickle.load(file)
+                print(f"Loaded documents from from {documents_path}")
             else:
+                print(f"Hashes disagree with data files, updating {documents_path}")
                 documents = update_data()
                 now_hash = hash_directory(data_dir)
                 with open(hash_path, "wb") as hf:
                     pickle.dump(now_hash, hf)
+                print(f"Hashes of data files written at {hash_path}")
 
     else:
+        print(
+            f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
+        )
         documents = update_data()
         now_hash = hash_directory(data_dir)
         with open(hash_path, "wb") as hf:
             pickle.dump(now_hash, hf)
+        print(f"Hashes of data files written at {hash_path}")
 
     trans = []
 

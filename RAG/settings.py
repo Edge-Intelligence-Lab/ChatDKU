@@ -33,7 +33,11 @@ COERCED_SYSTEM_PROMPT = (
 
 class UseCoercedPrompt:
     def __init__(
-        self, func: Callable[[Union[Sequence[ChatMessage], str], Optional[str]], str]
+        self,
+        func: Union[
+            Callable[[Sequence[ChatMessage], Optional[str]], str],
+            Callable[[str, Optional[str]], str],
+        ],
     ):
         self.func = func
 
@@ -42,35 +46,25 @@ class UseCoercedPrompt:
 
 
 class Setting:
-    data_dir = "/opt/RAG_data"
-    update = False
+    data_dir = None
+    update = None
 
 
 def parse_args_and_setup():
     parser = ArgumentParser()
-    parser.add_argument("-e", "--embedding", type=str)
+    parser.add_argument("-e", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
     parser.add_argument("-l", "--llm", type=Path)
     parser.add_argument("-u", "--update", action="store_true")
-    parser.add_argument("-d", "--data_dir", type=Path)
+    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
     args = parser.parse_args()
 
-    if args.data_dir is not None:
-        Setting.data_dir = args.data_dir
-
-    if args.update is not None:
-        Setting.update = True
-
-    # TODO: Use a better embedding model
-    if args.embedding is None:
-        embedding_name = "BAAI/bge-small-en-v1.5"
-        print(f"Using default embedding {embedding_name}")
-    else:
-        embedding_name = args.embedding
+    Setting.data_dir = args.data_dir
+    Setting.update = args.update
 
     Settings.embed_model = HuggingFaceEmbedding(
-        model_name=embedding_name, trust_remote_code=True
+        model_name=args.embedding, trust_remote_code=True
     )
-    print("Loaded embedding model")
+    print(f"Loaded embedding model {args.embedding}")
 
     if args.llm is None:
         Settings.llm = None
