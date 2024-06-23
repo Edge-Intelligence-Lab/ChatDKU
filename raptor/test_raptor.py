@@ -7,6 +7,10 @@ from raptor import (
 )
 from sentence_transformers import SentenceTransformer
 from llama_cpp import Llama
+from argparse import ArgumentParser
+from pathlib import Path
+from llama_index.core.schema import MetadataMode
+import pickle
 
 
 class LlamaSummarizationModel(BaseSummarizationModel):
@@ -56,22 +60,49 @@ class BgeEmbeddingModel(BaseEmbeddingModel):
         return self.model.encode(text)
 
 
-llm = Llama(model_path="/opt/llm/Meta-Llama-3-8B-Instruct-q8_0.gguf", n_gpu_layers=-1, n_ctx=8192)
+def main():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-l",
+        "--llm",
+        type=Path,
+        default=Path("/opt/llm/Meta-Llama-3-8B-Instruct-q8_0.gguf"),
+    )
+    parser.add_argument(
+        "-d", "--data-file", type=Path, default=Path("/opt/RAG_data/documents.pkl")
+    )
+    args = parser.parse_args()
 
-RAC = RetrievalAugmentationConfig(
-    summarization_model=LlamaSummarizationModel(llm),
-    qa_model=LlamaQAModel(llm),
-    embedding_model=BgeEmbeddingModel(),
-    tb_max_tokens=1024,
-)
-RA = RetrievalAugmentation(config=RAC)
+    with open(args.data_file, "rb") as file:
+        documents = pickle.load(file)
+    text = "\n".join(
+        [doc.get_content(metadata_mode=MetadataMode.LLM) for doc in documents]
+    )
 
-with open("demo/sample.txt", "r") as file:
-    text = file.read()
-RA.add_documents(text)
+    llm = Llama(
+        model_path=str(args.llm),
+        n_gpu_layers=-1,
+        n_ctx=8192,
+    )
+    RAC = RetrievalAugmentationConfig(
+        summarization_model=LlamaSummarizationModel(llm),
+        qa_model=LlamaQAModel(llm),
+        embedding_model=BgeEmbeddingModel(),
+        tb_max_tokens=1024,
+    )
+    RA = RetrievalAugmentation(config=RAC)
+    RA.add_documents(text)
 
-question = "How did Cinderella reach her happy ending?"
+    while True:
+        try:
+            print("*" * 32)
+            question = input("> ")
+            answer = RA.answer_question(question=question, max_tokens=7000)
+            print("+" * 32)
+            print(answer)
+        except EOFError:
+            break
 
-answer = RA.answer_question(question=question, max_tokens=7000)
 
-print("Answer: ", answer)
+if __name__ == "__main__":
+    main()
