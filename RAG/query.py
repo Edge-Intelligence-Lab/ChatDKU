@@ -193,10 +193,10 @@ def get_pipeline(
     ):
         """Parse ReAct output into a reasoning step."""
         output_parser = ReActOutputParser()
-        # if isinstance(chat_response, CompletionResponse):
-        #     reasoning_step = output_parser.parse(chat_response.text)
-        # else:
-        reasoning_step = output_parser.parse(chat_response.message.content)
+        if isinstance(chat_response, CompletionResponse):
+            reasoning_step = output_parser.parse(chat_response.text)
+        else:
+            reasoning_step = output_parser.parse(chat_response.message.content)
         return {"done": reasoning_step.is_done, "reasoning_step": reasoning_step}
 
     parse_react_output = AgentFnComponent(fn=parse_react_output_fn)
