@@ -67,6 +67,10 @@ QUERY_GEN_PROMPT = (
 
 tool = None
 
+# Maximum iteration of the agent
+MAX_ITER = 3
+
+
 def get_pipeline(
     retriever_type: str = "fusion",
     hyde: bool = True,
@@ -139,7 +143,9 @@ def get_pipeline(
             query_transform=HyDEQueryTransform(include_original=True),
         )
 
-    query_engine = RetrieverQueryEngine(retriever=retriever, response_synthesizer=get_response_synthesizer())
+    query_engine = RetrieverQueryEngine(
+        retriever=retriever, response_synthesizer=get_response_synthesizer()
+    )
 
     global tool
     tool = QueryEngineTool.from_defaults(
@@ -165,6 +171,7 @@ def get_pipeline(
         # initialize current_reasoning
         if "current_reasoning" not in state:
             state["current_reasoning"] = []
+            state["count"] = 0
         reasoning_step = ObservationReasoningStep(observation=task.input)
         state["current_reasoning"].append(reasoning_step)
         return {"input": task.input}
@@ -196,7 +203,10 @@ def get_pipeline(
             reasoning_step = output_parser.parse(chat_response.text)
         else:
             reasoning_step = output_parser.parse(chat_response.message.content)
-        return {"done": reasoning_step.is_done, "reasoning_step": reasoning_step}
+        return {
+            "done": reasoning_step.is_done or (state["count"] >= MAX_ITER),
+            "reasoning_step": reasoning_step,
+        }
 
     parse_react_output = AgentFnComponent(fn=parse_react_output_fn)
 
@@ -211,7 +221,9 @@ def get_pipeline(
             tool_name=reasoning_step.action,
             tool_input=reasoning_step.action_input,
         )
-        observation_step = ObservationReasoningStep(observation=str(tool_output["output"]))
+        observation_step = ObservationReasoningStep(
+            observation=str(tool_output["output"])
+        )
         state["current_reasoning"].append(observation_step)
         # TODO: get output
 
@@ -239,6 +251,7 @@ def get_pipeline(
         task: Task, state: Dict[str, Any], response_dict: dict
     ):
         """Process agent response."""
+        state["ount"] += 1
         return (
             AgentChatResponse(response_dict["response_str"]),
             response_dict["is_done"],
