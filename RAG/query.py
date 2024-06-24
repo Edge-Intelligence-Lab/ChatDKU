@@ -67,7 +67,6 @@ QUERY_GEN_PROMPT = (
 
 tool = None
 
-
 def get_pipeline(
     retriever_type: str = "fusion",
     hyde: bool = True,
@@ -140,7 +139,7 @@ def get_pipeline(
             query_transform=HyDEQueryTransform(include_original=True),
         )
 
-    query_engine = RetrieverQueryEngine(retriever)
+    query_engine = RetrieverQueryEngine(retriever=retriever, response_synthesizer=get_response_synthesizer())
 
     global tool
     tool = QueryEngineTool.from_defaults(
@@ -212,7 +211,7 @@ def get_pipeline(
             tool_name=reasoning_step.action,
             tool_input=reasoning_step.action_input,
         )
-        observation_step = ObservationReasoningStep(observation=str(tool_output))
+        observation_step = ObservationReasoningStep(observation=str(tool_output["output"]))
         state["current_reasoning"].append(observation_step)
         # TODO: get output
 
@@ -338,6 +337,8 @@ def main():
             print(str(output))
         except EOFError:
             break
+        except:
+            print("FAILED")
 
 
 if __name__ == "__main__":
