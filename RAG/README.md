@@ -23,7 +23,7 @@ Do an editable install with pip to get the dependencies. The follow example sets
 appropriate variables to enable CUDA for llama.cpp. `CUDA_VISIBLE_DEVICES` should
 correspond to your GPU setup. The example lets llama.cpp use the first two GPUs.
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 CMAKE_ARGS="-DLLAMA_CUDA=on" FORCE_CMAKE=1 pip install -e.
+CUDA_VISIBLE_DEVICES=0,1 CMAKE_ARGS="-DLLAMA_CUDA=on" FORCE_CMAKE=1 pip install -e .
 ```
 
 Download an LLM such as
