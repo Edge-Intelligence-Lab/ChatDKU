@@ -203,6 +203,8 @@ def get_pipeline(
             reasoning_step = output_parser.parse(chat_response.text)
         else:
             reasoning_step = output_parser.parse(chat_response.message.content)
+
+        # FIXME: This would still generate an ActionResponse when reaching the maximum iteration, which would not be compatible with `process_agent_response`
         return {
             "done": reasoning_step.is_done or (state["count"] >= MAX_ITER),
             "reasoning_step": reasoning_step,
