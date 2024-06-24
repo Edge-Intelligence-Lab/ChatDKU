@@ -11,6 +11,7 @@ from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
 
+import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk import trace as trace_sdk
@@ -126,6 +127,7 @@ def get_pipeline(
 def main():
     parse_args_and_setup()
 
+    px.launch_app()
     endpoint = "http://127.0.0.1:6006/v1/traces"
     tracer_provider = trace_sdk.TracerProvider()
     tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
