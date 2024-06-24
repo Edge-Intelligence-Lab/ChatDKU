@@ -45,14 +45,13 @@ import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
 from settings import parse_args_and_setup
 
-
 # Override the fucking Llamaindex code
-import llama_index.core.base.query_pipeline.query
-from custom_query import validate_and_convert_stringable
+#import llama_index.core.base.query_pipeline.query
+#from custom_query import validate_and_convert_stringable
 
-llama_index.core.base.query_pipeline.query.validate_and_convert_stringable = (
-    validate_and_convert_stringable
-)
+#llama_index.core.base.query_pipeline.query.validate_and_convert_stringable = (
+#    validate_and_convert_stringable
+#)
 
 
 # When generating similar queries, the LLM is supposed to ONLY generate the
@@ -258,7 +257,6 @@ def get_pipeline(
             "run_tool": run_tool,
             "process_response": process_response,
             "process_agent_response": process_agent_response,
-            "retriever": retriever,
         }
     )
 
@@ -317,6 +315,15 @@ def main():
         synthesize_response=True,
         response_mode=ResponseMode.COMPACT,
     )
+
+    #import networkx
+    #import matplotlib
+    #import matplotlib.pyplot as plt
+
+    #fig = plt.figure()
+    #networkx.draw(pipeline.clean_dag)
+    #matplotlib.use("Agg")
+    #fig.savefig("pipeline.png")
 
     agent_worker = QueryPipelineAgentWorker(pipeline)
     agent = agent_worker.as_agent(callback_manager=CallbackManager([]), verbose=True)
