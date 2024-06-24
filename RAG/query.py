@@ -251,7 +251,7 @@ def get_pipeline(
         task: Task, state: Dict[str, Any], response_dict: dict
     ):
         """Process agent response."""
-        state["ount"] += 1
+        state["count"] += 1
         return (
             AgentChatResponse(response_dict["response_str"]),
             response_dict["is_done"],
