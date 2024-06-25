@@ -41,3 +41,5 @@ https://github.com/xing61/xiaoyi-robot/blob/main/fine-tune.%E5%BE%AE%E8%B0%83/%E
 以student handbook为例，原来的partition处理只需要4.5秒作用，新的partition要160秒，慢了30多倍。
 在partition的时候可以考虑保留已有document，只对新数据处理，可以大大减少运行时间。
 当然如果能搞定hf——embedding的多线程问题那是最好的。
+---
+https://www.overleaf.com/project/6679281296633cfd7d73f583
