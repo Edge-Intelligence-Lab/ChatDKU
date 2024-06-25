@@ -14,6 +14,17 @@ import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
 from settings import parse_args_and_setup
 
+from llama_index.core.retrievers.postprocessors import NodePostprocessor
+from llama_index.core.indices.query.query_result import QueryResult
+
+class NodePostprocessor(NodePostprocessor):
+    def postprocess(self, query_result: QueryResult) -> QueryResult:
+        filtered_nodes = [node for node in query_result.nodes if self.meets_criteria(node)]
+        query_result.nodes = filtered_nodes
+        return query_result
+
+    def meets_criteria(self, node):
+        return node.relevance >= 0.5
 
 def get_pipeline(
     retriever_type: str = "fusion",
