@@ -44,7 +44,6 @@ python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to
 Note that `--outtype` specifies the quantization type and 8-bit quantization is used
 in this case.
 
-
 ### Load and Index the Data
 
 Run
@@ -76,7 +75,10 @@ press `Enter`, then get the response. Use `Ctrl-D` on Linux or `Ctrl-Z` followed
 
 Arize Phoenix is used for the observability/instrumentation of the RAG pipeline.
 You can open the link printed in stdout during startup in your browser to see how
-each stage of the RAG pipeline is run and their respective inputs/outputs.
+each stage of the RAG pipeline is run and their respective inputs/outputs. __Note:
+Port collision may happen if you run multiple instances of `query.py`, which in turn
+starts multiple instances of Phoenix. To avoid this issue, set a different port for
+Phoenix by changing the environment variable `PHOENIX_PORT`.__
 
 ### Utility for Counting and Get Size of Data Files by Extension
 
