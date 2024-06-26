@@ -10,8 +10,13 @@ from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
+
 import phoenix as px
-from llama_index.core.callbacks.global_handlers import set_global_handler
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
 from settings import parse_args_and_setup
 
 
@@ -123,7 +128,10 @@ def main():
     parse_args_and_setup()
 
     px.launch_app()
-    set_global_handler("arize_phoenix")
+    endpoint = "http://127.0.0.1:6006/v1/traces"
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
     pipeline = get_pipeline(
         retriever_type="fusion",

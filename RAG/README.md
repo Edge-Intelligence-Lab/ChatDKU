@@ -10,7 +10,7 @@ Install system dependencies for the `unstructured` reader: `libmagic-dev`,
 sudo apt install libmagic-dev poppler-utils tesseract-ocr
 ```
 
-Install Python 3.8 or above; install Python package virtualenv.
+Install Python 3.9 or above; install Python package virtualenv.
 
 Create and activate the virtual environment:
 ```bash
@@ -19,9 +19,11 @@ source .venv/bin/activate # For Unix-like operating systems
 .venv\bin\activate.bat    # For Windows
 ```
 
-Do an editable install with pip to get the dependencies.
+Do an editable install with pip to get the dependencies. The follow example sets the
+appropriate variables to enable CUDA for llama.cpp. `CUDA_VISIBLE_DEVICES` should
+correspond to your GPU setup. The example lets llama.cpp use the first two GPUs.
 ```bash
-pip install -e .
+CUDA_VISIBLE_DEVICES=0,1 CMAKE_ARGS="-DLLAMA_CUDA=on" FORCE_CMAKE=1 pip install -e .
 ```
 
 Download an LLM such as

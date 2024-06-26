@@ -1,19 +1,15 @@
 from llama_index.core import Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.llama_cpp import LlamaCPP
-from argparse import ArgumentParser
-from pathlib import Path
-from typing import Callable, Union, Sequence, Optional
 from llama_index.core.base.llms.types import ChatMessage
-
-# FIXME: I have contributed these two functions to llama_index.llms.llama_cpp.llama_utils.
-# Thus, the versions of them from LlamaIndex should be used whenever they were included
-# in a stable release.
-from llama_utils import (
+from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt_v3_instruct,
     completion_to_prompt_v3_instruct,
     DEFAULT_SYSTEM_PROMPT,
 )
+from argparse import ArgumentParser
+from pathlib import Path
+from typing import Callable, Union, Sequence, Optional
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -23,7 +19,6 @@ from llama_utils import (
 # Also note that I have tried other things like `do not begin your answer with
 # "here are the generated queries"` to discourage such messages at the beginning of
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
-
 COERCED_SYSTEM_PROMPT = (
     DEFAULT_SYSTEM_PROMPT
     + ' Do not begin your answer with phrases like "here is an answer"'
