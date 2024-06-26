@@ -15,7 +15,7 @@ def main():
     parse_args_and_setup()
 
     pipeline = get_pipeline(
-        retriever_type="fusion",
+        retriever_type="vector",
         hyde=True,
         vector_top_k=5,
         bm25_top_k=5,
@@ -44,7 +44,7 @@ def main():
         json_datas[num]["contexts"] = context
         num += 1
 
-    save_file_path = "../RAG_evaluate/data_for_ragas/ragas_dataset.json"
+    save_file_path = "../RAG_evaluate/data_for_ragas/vector_hyde_true.json"
     with open(save_file_path, 'w', encoding='utf-8') as file:
         json.dump(json_datas, file, indent=2, ensure_ascii=False)
 
