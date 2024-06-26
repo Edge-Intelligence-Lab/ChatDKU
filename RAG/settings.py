@@ -48,6 +48,7 @@ class UseCoercedPrompt:
 class Setting:
     data_dir = None
     update = None
+    read_only = None
 
 
 def parse_args_and_setup():
@@ -55,11 +56,13 @@ def parse_args_and_setup():
     parser.add_argument("-e", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
     parser.add_argument("-l", "--llm", type=Path)
     parser.add_argument("-u", "--update", action="store_true")
+    parser.add_argument("-r", "--read-only", action="store_true")
     parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
     args = parser.parse_args()
 
     Setting.data_dir = args.data_dir
     Setting.update = args.update
+    Setting.read_only = args.read_only
 
     Settings.embed_model = HuggingFaceEmbedding(
         model_name=args.embedding, trust_remote_code=True

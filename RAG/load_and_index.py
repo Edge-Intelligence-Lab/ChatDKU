@@ -77,6 +77,10 @@ def load_and_index(
             pickle.dump(now_hash, hf)
         print(f"Hashes of data files written at {hash_path}")
 
+    print("Data reading done")
+    if Setting.read_only:
+        return
+
     trans = []
 
     supported_extractors = ["title", "keyword", "questions_answered", "summary"]
