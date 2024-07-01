@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
 import os
+from argparse import ArgumentParser
+from pathlib import Path
 import pickle
 import chromadb
-from llama_index.core import (
-    Settings,
-    VectorStoreIndex,
-)
+from llama_index.core import Settings
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from typing import Any
-from settings import parse_args_and_setup, Setting
+from settings import Config, get_parser, setup
 from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -28,7 +27,10 @@ unstructured.partition.auto.partition = partition
 
 
 def load_and_index(
+    update: bool,
+    read_only: bool,
     data_dir: str,
+    pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
     extractors: list[str] = [],
@@ -41,9 +43,9 @@ def load_and_index(
     hash_path = os.path.join("./", "hash.pkl")
     now_hash = hash_directory(data_dir)
 
-    if Setting.update:
+    if update:
         print(f"Force updating {documents_path}")
-        documents = update_data()
+        documents = update_data(data_dir)
         now_hash = hash_directory(data_dir)
         with open(hash_path, "wb") as hf:
             pickle.dump(now_hash, hf)
@@ -61,7 +63,7 @@ def load_and_index(
                 print(f"Loaded documents from from {documents_path}")
             else:
                 print(f"Hashes disagree with data files, updating {documents_path}")
-                documents = update_data()
+                documents = update_data(data_dir)
                 now_hash = hash_directory(data_dir)
                 with open(hash_path, "wb") as hf:
                     pickle.dump(now_hash, hf)
@@ -71,14 +73,14 @@ def load_and_index(
         print(
             f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
         )
-        documents = update_data()
+        documents = update_data(data_dir)
         now_hash = hash_directory(data_dir)
         with open(hash_path, "wb") as hf:
             pickle.dump(now_hash, hf)
         print(f"Hashes of data files written at {hash_path}")
 
     print("Data reading done")
-    if Setting.read_only:
+    if read_only:
         return
 
     trans = []
@@ -123,31 +125,51 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     db = chromadb.PersistentClient(
-        path="./chroma_db", settings=chromadb.Settings(allow_reset=True)
+        path=Config.vector_store_path, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    docstore = SimpleDocumentStore()
 
+    # NOTE: Currently, LlamaIndex has bug with using both caching and docstore.
+    # I am using only caching here and there is not much need for attaching a
+    # docstore for deduplication anyways.
+    # See https://github.com/run-llama/llama_index/issues/14068 for details.
     pipeline = IngestionPipeline(
         transformations=trans,
         vector_store=vector_store,
-        docstore=docstore,
     )
+    if os.path.exists(pipeline_cache_path):
+        pipeline.load(pipeline_cache_path)
+    nodes = pipeline.run(
+        documents=documents, num_workers=pipeline_workers, show_progress=True
+    )
+    pipeline.persist(pipeline_cache_path)
 
-    # The current llamindex pipeline_cache has bug and cannot be updated on its own.
-    # Please remove pipeline_cache from your personal directory and do not add any related functions for the time being.
-
-    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-    VectorStoreIndex.from_vector_store(vector_store)
-    docstore.persist("./docstore")
+    docstore = SimpleDocumentStore()
+    docstore.add_documents(nodes)
+    docstore.persist(Config.docstore_path)
 
 
 def main():
-    parse_args_and_setup()
+    parser = ArgumentParser(parents=[get_parser()])
+    parser.add_argument("-u", "--update", action="store_true")
+    parser.add_argument("-r", "--read-only", action="store_true")
+    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
+    parser.add_argument(
+        "-c",
+        "--pipeline-cache",
+        type=Path,
+        default=Path("./pipeline_storage"),
+    )
+    args = parser.parse_args()
+    setup(args)
+
     load_and_index(
-        data_dir=Setting.data_dir,
+        update=args.update,
+        read_only=args.read_only,
+        data_dir=str(args.data_dir),
+        pipeline_cache_path=str(args.pipeline_cache),
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         extractors=[],

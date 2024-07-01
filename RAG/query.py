@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import ArgumentParser
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -18,7 +19,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-from settings import parse_args_and_setup
+from settings import Config, get_parser, setup
 
 
 def get_pipeline(
@@ -60,7 +61,7 @@ def get_pipeline(
         ValueError: If an unsupported or invalid parameters are provided.
     """
 
-    db = chromadb.PersistentClient(path="./chroma_db")
+    db = chromadb.PersistentClient(path=Config.vector_store_path)
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     index = VectorStoreIndex.from_vector_store(vector_store)
@@ -81,7 +82,7 @@ def get_pipeline(
         retriever = vector_retriever
 
     elif retriever_type == "fusion":
-        docstore = SimpleDocumentStore.from_persist_path("./docstore")
+        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
         bm25_retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=bm25_top_k
         )
@@ -126,7 +127,9 @@ def get_pipeline(
 
 
 def main():
-    parse_args_and_setup()
+    parser = ArgumentParser(parents=[get_parser()])
+    args = parser.parse_args()
+    setup(args)
 
     # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
     # pass in port 0 to make it easier to avoid port collision.

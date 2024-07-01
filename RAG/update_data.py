@@ -4,7 +4,6 @@ import pickle
 import argparse
 from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
-from settings import Setting
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -43,12 +42,9 @@ def hash_directory(directory):
     return final_hash
 
 
-def update_data(data_dir=None):
-    if data_dir is None:
-        data_dir = Setting.data_dir
-
+def update_data(data_dir):
     # Required for UnstructuredReader
-    nltk.download("averaged_perceptron_tagger")
+    # nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
     documents_path = os.path.join(data_dir, "documents.pkl")

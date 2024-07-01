@@ -40,55 +40,65 @@ class UseCoercedPrompt:
         return self.func(message, COERCED_SYSTEM_PROMPT)
 
 
-class Setting:
-    data_dir = None
-    update = None
-    read_only = None
+class Config:
+    vector_store_path: str
+    docstore_path: str
 
 
-def parse_args_and_setup():
-    parser = ArgumentParser()
+def get_parser() -> ArgumentParser:
+    parser = ArgumentParser(add_help=False)
     parser.add_argument("-e", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
-    parser.add_argument("-l", "--llm", type=Path)
-    parser.add_argument("-u", "--update", action="store_true")
-    parser.add_argument("-r", "--read-only", action="store_true")
-    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
-    args = parser.parse_args()
+    parser.add_argument(
+        "-l",
+        "--llm",
+        type=Path,
+        default=Path("/opt/llm/Meta-Llama-3-8B-Instruct-q8_0.gguf"),
+    )
+    parser.add_argument(
+        "-s",
+        "--vector-store",
+        type=Path,
+        default=Path("./chroma_db"),
+    )
+    parser.add_argument(
+        "-o",
+        "--docstore",
+        type=Path,
+        default=Path("./docstore"),
+    )
+    return parser
 
-    Setting.data_dir = args.data_dir
-    Setting.update = args.update
-    Setting.read_only = args.read_only
 
+def setup(args) -> None:
     Settings.embed_model = HuggingFaceEmbedding(
         model_name=args.embedding, trust_remote_code=True
     )
     print(f"Loaded embedding model {args.embedding}")
 
-    if args.llm is None:
-        Settings.llm = None
-        print("Not using LLM")
-    else:
-        # NOTE: Arguments default to those that work with Llama3 8B, might consider adding
-        # some arguments to change these values from CLI
-        Settings.llm = LlamaCPP(
-            model_path=str(args.llm),
-            temperature=0.1,
-            max_new_tokens=256,
-            # Llama3 8B has a context window of 8192 tokens
-            context_window=8192,
-            # kwargs to pass to __call__()
-            generate_kwargs={},
-            # kwargs to pass to __init__()
-            # set to at least 1 to use GPU
-            model_kwargs={"n_gpu_layers": -1},
-            # transform inputs into Llama format
-            messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
-            completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
-            verbose=True,
-        )
-        print("Loaded LLM")
+    # NOTE: Arguments default to those that work with Llama3 8B, might consider adding
+    # some arguments to change these values from CLI
+    Settings.llm = LlamaCPP(
+        model_path=str(args.llm),
+        temperature=0.1,
+        max_new_tokens=256,
+        # Llama3 8B has a context window of 8192 tokens
+        context_window=8192,
+        # kwargs to pass to __call__()
+        generate_kwargs={},
+        # kwargs to pass to __init__()
+        # set to at least 1 to use GPU
+        model_kwargs={"n_gpu_layers": -1},
+        # transform inputs into Llama format
+        messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
+        completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
+        verbose=True,
+    )
+    print("Loaded LLM")
 
-        # The same tokenizer as used by the LLM is used to count the number of tokens
-        # accurately.
-        Settings.tokenizer = Settings.llm._model.tokenizer()
-        print("Loaded tokenizer")
+    # The same tokenizer as used by the LLM is used to count the number of tokens
+    # accurately.
+    Settings.tokenizer = Settings.llm._model.tokenizer()
+    print("Loaded tokenizer")
+
+    Config.vector_store_path = str(args.vector_store)
+    Config.docstore_path = str(args.docstore)
