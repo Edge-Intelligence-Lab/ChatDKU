@@ -1,5 +1,27 @@
 # RAG Using LlamaIndex
 
+## Notes for `RouterRetriever`
+
+The `query.py` in this branch performs query using __only one of__
+`VectorIndexRetriever` or `BM25Retriever` during query. This choice would be made by
+the LLM with the knowledge that the vector retriever would rely on semantic
+similarity for query, while the keyword retriever would rely on the occurrence of
+keywords in the texts. `HyDEQueryTransform` and `QueryFusionRetriever` are not
+available in this branch.
+
+### Known Issue
+
+The LLM for prefer to use keyword retriever for
+```
+do you know prof. bing luo
+```
+while preferring to use vector retriever for
+```
+what is prof. bing luo's research
+```
+Thus, it appears that the LLM does not actually understand what I meant by "query
+according to semantic similarity".
+
 ## Usage
 
 ### Prerequisites For RAG Scripts
