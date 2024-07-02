@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 from argparse import ArgumentParser
 from typing import Any
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
@@ -25,6 +26,8 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from dsp import LM
 import dspy
+from dspy.teleprompt import BootstrapFewShot
+from dspy.evaluate import Evaluate
 
 from settings import Config, get_parser, setup
 
@@ -198,6 +201,17 @@ class CoT(dspy.Module):
         return self.prog(question=question)
 
 
+class Judge(dspy.Signature):
+    """Judge if the current answer is equivalent to the ground truth answer to the question."""
+
+    question: str = dspy.InputField(desc="The question to be answered.")
+    ground_truth: str = dspy.InputField(desc="The ground truth answer to the question.")
+    answer: str = dspy.InputField(desc="The current answer to be judged.")
+    judgement: bool = dspy.OutputField(
+        desc="Whether the current answer is equivalent to the ground truth."
+    )
+
+
 def main():
     parser = ArgumentParser(parents=[get_parser()])
     args = parser.parse_args()
@@ -216,35 +230,46 @@ def main():
     llama_client = LlamaClient()
     dspy.settings.configure(lm=llama_client)
 
-    from dspy.datasets.gsm8k import GSM8K, gsm8k_metric
+    file_path = "../RAG_evaluate/data_for_rag/before_RAG_dataset.json"
+    with open(file_path, "r", encoding="utf-8") as file:
+        json_data = json.load(file)
+    dataset = [
+        dspy.Example(question=d["question"], answer=d["ground_truth"]).with_inputs(
+            "question"
+        )
+        for d in json_data
+    ]
 
-    gms8k = GSM8K()
-    gsm8k_trainset, gsm8k_devset = gms8k.train[:10], gms8k.dev[:10]
+    trainset, devset = dataset[0:10], dataset[0:10]
 
-    from dspy.teleprompt import BootstrapFewShot
+    judge_predictor = dspy.TypedPredictor(Judge)
 
-    # Set up the optimizer: we want to "bootstrap" (i.e., self-generate) 4-shot examples of our CoT program.
+    def metric(example, pred, trace=None):
+        prediction = judge_predictor(
+            question=example.question, ground_truth=example.answer, answer=pred.answer
+        )
+        return prediction.judgement
+
     config = dict(max_bootstrapped_demos=4, max_labeled_demos=4)
-
-    # Optimize! Use the `gms8k_metric` here. In general, the metric is going to tell the optimizer how well it's doing.
-    teleprompter = BootstrapFewShot(metric=gsm8k_metric, **config)
-    optimized_cot = teleprompter.compile(CoT(), trainset=gsm8k_trainset)
-
-    from dspy.evaluate import Evaluate
+    teleprompter = BootstrapFewShot(metric=metric, **config)
+    optimized_cot = teleprompter.compile(CoT(), trainset=trainset)
+    optimized_cot.save("compiled_cot.json")
 
     # Set up the evaluator, which can be used multiple times.
     evaluate = Evaluate(
-        devset=gsm8k_devset,
-        metric=gsm8k_metric,
+        devset=devset,
+        metric=metric,
         num_threads=1,  # Multi-threading won't work for our local model
         display_progress=True,
-        display_table=0,
+        display_table=True,
     )
 
     # Evaluate our `optimized_cot` program.
     evaluate(optimized_cot)
 
     print(llama_client.inspect_history(n=1))
+
+    input()
 
     # pipeline = get_pipeline(
     #     retriever_type="fusion",
