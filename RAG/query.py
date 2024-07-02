@@ -3,16 +3,13 @@
 import json
 from argparse import ArgumentParser
 from typing import Any
+from enum import Enum
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
-from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
-from llama_index.core.response_synthesizers import ResponseMode
-from llama_index.core.query_pipeline import QueryPipeline, InputComponent
+from llama_index.core.query_engine import RetrieverQueryEngine
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
@@ -30,110 +27,6 @@ from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate import Evaluate
 
 from settings import Config, get_parser, setup
-
-
-def get_pipeline(
-    retriever_type: str = "fusion",
-    hyde: bool = True,
-    vector_top_k: int = 5,
-    bm25_top_k: int = 5,
-    fusion_top_k: int = 5,
-    fusion_mode: FUSION_MODES = FUSION_MODES.RECIPROCAL_RANK,
-    num_queries: int = 3,
-    synthesize_response: bool = True,
-    response_mode: ResponseMode = ResponseMode.COMPACT,
-) -> QueryPipeline:
-    """
-    Constructs a RAG query pipeline.
-
-    Args:
-        retriever_type: Type of retriever to use.
-            Supported values are `vector` and `fusion`.
-        hyde: If `True`, first use HyDE (Hypothetical Document Embeddings)
-            to transform the query string before retrieval.
-        vector_top_k: Top k similar nodes to retrieve using vector retriever
-            (they are the inputs to fusion retriever if used).
-        bm25_top_k: Top k similar nodes to retrieve using BM25 retriever
-            (they are the inputs to fusion retriever if used).
-        fusion_top_k: Top k similar documents to retrieve using fusion retriever.
-        fusion_mode: How fusion retriever should calculate the score of the nodes.
-            See `llama_index.core.retrievers.fusion_retriever.FUSION_MODES` for details.
-        num_queries: Number of queries to generate for fusion retriever.
-        synthesize_response: Synthesize responses using LLM if `True`,
-            or output a list of nodes retrived if `False`.
-        response_mode: Mode of response synthesis, see
-            `llama_index.core.response_synthesizers.ResponseMode` for details.
-
-    Returns:
-        A query pipeline that could be executed by supplying input to its `run()` method.
-
-    Raises:
-        ValueError: If an unsupported or invalid parameters are provided.
-    """
-
-    db = chromadb.PersistentClient(path=Config.vector_store_path)
-    chroma_collection = db.get_or_create_collection("dku_html_pdf")
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    index = VectorStoreIndex.from_vector_store(vector_store)
-    vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
-
-    if hyde:
-        # NOTE: `HyDEQueryTransform` would effectively not work if used as an
-        # component of the query pipeline by itself, since it returns a `QueryBundle`
-        # with custom embedding strings that would be dropped when passed down the
-        # pipeline as only the `query_str` attribute would be sent to the next
-        # component.
-        vector_retriever = TransformRetriever(
-            retriever=vector_retriever,
-            query_transform=HyDEQueryTransform(include_original=True),
-        )
-
-    if retriever_type == "vector":
-        retriever = vector_retriever
-
-    elif retriever_type == "fusion":
-        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
-        bm25_retriever = BM25Retriever.from_defaults(
-            docstore=docstore, similarity_top_k=bm25_top_k
-        )
-
-        # NOTE: I am not sure why, but when using this retriever you MUST supply an LLM,
-        # otherwise errors will be reported at the synthesizer stage. While this might
-        # be due to the need of using an LLM at the query generation stage, it still
-        # won't work if you set num_queries=1.
-        retriever = QueryFusionRetriever(
-            [vector_retriever, bm25_retriever],
-            similarity_top_k=fusion_top_k,
-            mode=fusion_mode,
-            num_queries=num_queries,
-            use_async=True,
-            verbose=True,
-        )
-
-    else:
-        raise ValueError(f"Unsupported retriever_type: {retriever_type}")
-
-    pipeline = QueryPipeline(verbose=True)
-    pipeline.add_modules(
-        {
-            "input": InputComponent(),
-            "retriever": retriever,
-        }
-    )
-    pipeline.add_link("input", "retriever")
-
-    if synthesize_response:
-        pipeline.add_modules(
-            {
-                "synthesizer": get_response_synthesizer(
-                    response_mode=response_mode, streaming=True
-                )
-            }
-        )
-        pipeline.add_link("input", "synthesizer", dest_key="query_str")
-        pipeline.add_link("retriever", "synthesizer", dest_key="nodes")
-
-    return pipeline
 
 
 class LlamaClient(LM):
@@ -192,13 +85,59 @@ class LlamaClient(LM):
         return [self.request(prompt, **kwargs).text]
 
 
-class CoT(dspy.Module):
-    def __init__(self):
+class RetrieverType(Enum):
+    VECTOR = "vector"
+    KEYWORD = "keyword"
+
+
+class RetrieverSelector(dspy.Signature):
+    """
+    Choose the best retriever for querying database for relevant texts that could answer the given question.
+    "vector": retrieves texts that are semantically similar to the question.
+    "keyword": retrieves texts that contain the same keywords used in the question.
+    """
+
+    question: str = dspy.InputField(
+        desc="The question to be answered, which would also be passed to the retriever you chose."
+    )
+    retriever_type: RetrieverType = dspy.OutputField(
+        desc="The best type of retriever to use for the given question."
+    )
+
+
+class Rag(dspy.Module):
+    def __init__(self, vector_top_k: int = 5, keyword_top_k: int = 5):
         super().__init__()
-        self.prog = dspy.ChainOfThought("question -> answer")
+        db = chromadb.PersistentClient(path=Config.vector_store_path)
+        chroma_collection = db.get_or_create_collection("dku_html_pdf")
+        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        index = VectorStoreIndex.from_vector_store(vector_store)
+        self.vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
+
+        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
+        self.keyword_retriever = BM25Retriever.from_defaults(
+            docstore=docstore, similarity_top_k=keyword_top_k
+        )
+
+        self.retriever_selector = dspy.TypedChainOfThought(RetrieverSelector)
 
     def forward(self, question):
-        return self.prog(question=question)
+        # retriever_type = self.retriever_selector(question=question).retriever_type
+        # if retriever_type == RetrieverType.VECTOR:
+        #     retriever = self.vector_retriever
+        # elif retriever_type == RetrieverType.KEYWORD:
+        #     retriever = self.keyword_retriever
+        # else:
+        #     print(
+        #         f"Unsupported retriever_type: {retriever_type}, fall back to vector retriever"
+        #     )
+        #     retriever = self.vector_retriever
+
+        retriever = self.vector_retriever
+        query_engine = RetrieverQueryEngine(
+            retriever=retriever, response_synthesizer=get_response_synthesizer()
+        )
+        return dspy.Prediction(answer=str(query_engine.query(question)))
 
 
 class Judge(dspy.Signature):
@@ -240,20 +179,23 @@ def main():
         for d in json_data
     ]
 
-    trainset, devset = dataset[0:10], dataset[0:10]
+    trainset, devset = dataset[50:55], dataset[50:55]
 
-    judge_predictor = dspy.TypedPredictor(Judge)
+    judge = dspy.TypedPredictor(Judge)
 
     def metric(example, pred, trace=None):
-        prediction = judge_predictor(
+        prediction = judge(
             question=example.question, ground_truth=example.answer, answer=pred.answer
         )
         return prediction.judgement
 
     config = dict(max_bootstrapped_demos=4, max_labeled_demos=4)
     teleprompter = BootstrapFewShot(metric=metric, **config)
-    optimized_cot = teleprompter.compile(CoT(), trainset=trainset)
-    optimized_cot.save("compiled_cot.json")
+    try:
+        rag = teleprompter.compile(Rag(), trainset=trainset)
+    except:
+        input()
+    rag.save("compiled_rag.json")
 
     # Set up the evaluator, which can be used multiple times.
     evaluate = Evaluate(
@@ -265,23 +207,11 @@ def main():
     )
 
     # Evaluate our `optimized_cot` program.
-    evaluate(optimized_cot)
+    evaluate(rag)
 
     print(llama_client.inspect_history(n=1))
 
     input()
-
-    # pipeline = get_pipeline(
-    #     retriever_type="fusion",
-    #     hyde=True,
-    #     vector_top_k=5,
-    #     bm25_top_k=5,
-    #     fusion_top_k=5,
-    #     fusion_mode=FUSION_MODES.RECIPROCAL_RANK,
-    #     num_queries=3,
-    #     synthesize_response=True,
-    #     response_mode=ResponseMode.COMPACT,
-    # )
 
     # while True:
     #     try:
