@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from argparse import ArgumentParser
+from typing import Any
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -12,12 +13,18 @@ from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
 
+from llama_index.core import Settings
+from llama_index.core.base.llms.types import CompletionResponse
+
 import os
 import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+from dsp import LM
+import dspy
 
 from settings import Config, get_parser, setup
 
@@ -126,6 +133,71 @@ def get_pipeline(
     return pipeline
 
 
+class LlamaClient(LM):
+    def __init__(self) -> None:
+        self.provider = "default"
+        self.history = []
+        self.kwargs = {
+            "temperature": Settings.llm.temperature,
+            "max_tokens": Settings.llm.max_new_tokens,
+        }
+
+    def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
+        response = Settings.llm.complete(prompt, **kwargs)
+        self.history.append(
+            {
+                "prompt": prompt,
+                "response": response,
+                "kwargs": kwargs,
+            }
+        )
+        return response
+
+    def inspect_history(self, n: int = 1, skip: int = 0) -> str:
+        last_prompt = None
+        printed = []
+        n = n + skip
+
+        for x in reversed(self.history[-100:]):
+            prompt = x["prompt"]
+            if prompt != last_prompt:
+                printed.append((prompt, x["response"].text))
+            last_prompt = prompt
+            if len(printed) >= n:
+                break
+
+        printing_value = ""
+        for idx, (prompt, text) in enumerate(reversed(printed)):
+            # skip the first `skip` prompts
+            if (n - idx - 1) < skip:
+                continue
+            printing_value += "\n\n\n"
+            printing_value += prompt
+            printing_value += self.print_green(text, end="")
+            printing_value += "\n\n\n"
+
+        print(printing_value)
+        return printing_value
+
+    def __call__(
+        self,
+        prompt: str,
+        only_completed: bool = True,
+        return_sorted: bool = False,
+        **kwargs: Any,
+    ) -> list[str]:
+        return [self.request(prompt, **kwargs).text]
+
+
+class CoT(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.prog = dspy.ChainOfThought("question -> answer")
+
+    def forward(self, question):
+        return self.prog(question=question)
+
+
 def main():
     parser = ArgumentParser(parents=[get_parser()])
     args = parser.parse_args()
@@ -141,27 +213,60 @@ def main():
     tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
-    pipeline = get_pipeline(
-        retriever_type="fusion",
-        hyde=True,
-        vector_top_k=5,
-        bm25_top_k=5,
-        fusion_top_k=5,
-        fusion_mode=FUSION_MODES.RECIPROCAL_RANK,
-        num_queries=3,
-        synthesize_response=True,
-        response_mode=ResponseMode.COMPACT,
+    llama_client = LlamaClient()
+    dspy.settings.configure(lm=llama_client)
+
+    from dspy.datasets.gsm8k import GSM8K, gsm8k_metric
+
+    gms8k = GSM8K()
+    gsm8k_trainset, gsm8k_devset = gms8k.train[:10], gms8k.dev[:10]
+
+    from dspy.teleprompt import BootstrapFewShot
+
+    # Set up the optimizer: we want to "bootstrap" (i.e., self-generate) 4-shot examples of our CoT program.
+    config = dict(max_bootstrapped_demos=4, max_labeled_demos=4)
+
+    # Optimize! Use the `gms8k_metric` here. In general, the metric is going to tell the optimizer how well it's doing.
+    teleprompter = BootstrapFewShot(metric=gsm8k_metric, **config)
+    optimized_cot = teleprompter.compile(CoT(), trainset=gsm8k_trainset)
+
+    from dspy.evaluate import Evaluate
+
+    # Set up the evaluator, which can be used multiple times.
+    evaluate = Evaluate(
+        devset=gsm8k_devset,
+        metric=gsm8k_metric,
+        num_threads=1,  # Multi-threading won't work for our local model
+        display_progress=True,
+        display_table=0,
     )
 
-    while True:
-        try:
-            print("*" * 32)
-            query = input("> ")
-            output = pipeline.run(input=query)
-            print("+" * 32)
-            print(output)
-        except EOFError:
-            break
+    # Evaluate our `optimized_cot` program.
+    evaluate(optimized_cot)
+
+    print(llama_client.inspect_history(n=1))
+
+    # pipeline = get_pipeline(
+    #     retriever_type="fusion",
+    #     hyde=True,
+    #     vector_top_k=5,
+    #     bm25_top_k=5,
+    #     fusion_top_k=5,
+    #     fusion_mode=FUSION_MODES.RECIPROCAL_RANK,
+    #     num_queries=3,
+    #     synthesize_response=True,
+    #     response_mode=ResponseMode.COMPACT,
+    # )
+
+    # while True:
+    #     try:
+    #         print("*" * 32)
+    #         query = input("> ")
+    #         output = pipeline.run(input=query)
+    #         print("+" * 32)
+    #         print(output)
+    #     except EOFError:
+    #         break
 
 
 if __name__ == "__main__":
