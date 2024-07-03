@@ -19,7 +19,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-from settings import Config, get_parser, setup
+from settings import Config, setup, get_parser
 
 
 def get_pipeline(
@@ -156,7 +156,7 @@ def main():
     while True:
         try:
             print("*" * 32)
-            query = input("> ")
+            query = input("Enter your query about DKU: ")
             output = pipeline.run(input=query)
             print("+" * 32)
             print(output)
