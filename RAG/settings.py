@@ -1,13 +1,15 @@
 from llama_index.core import Settings
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.llama_cpp import LlamaCPP
-from llama_index.core.base.llms.types import ChatMessage
+from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.llms.openai_like import OpenAILike
 from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt_v3_instruct,
     completion_to_prompt_v3_instruct,
     DEFAULT_SYSTEM_PROMPT,
 )
-from argparse import ArgumentParser
+from llama_index.core.base.llms.types import ChatMessage
+import transformers
+from transformers import AutoTokenizer
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Union, Sequence, Optional
 
@@ -21,7 +23,7 @@ from typing import Callable, Union, Sequence, Optional
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
 COERCED_SYSTEM_PROMPT = (
     DEFAULT_SYSTEM_PROMPT
-    + ' Do not begin your answer with phrases like "here is an answer"'
+    + 'Do not begin your answer with phrases like "here is an answer" '
     "and respond with only the content of the answer."
 )
 
@@ -46,22 +48,31 @@ class Config:
 
 
 def get_parser() -> ArgumentParser:
+    """
+    Get the parent parser for the common arguments between different scripts.
+
+    The common arguments should use uppercase letters for their short forms,
+    while the script-specific arguments should use lowercase letters for the
+    short forms.
+    """
     parser = ArgumentParser(add_help=False)
-    parser.add_argument("-e", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
+    parser.add_argument("-E", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
     parser.add_argument(
-        "-l",
+        "-L",
         "--llm",
-        type=Path,
-        default=Path("/opt/llm/Meta-Llama-3-8B-Instruct-q8_0.gguf"),
+        type=str,
+        default="meta-llama/Meta-Llama-3-8B-Instruct",
     )
+    parser.add_argument("--ollama-url", type=str, default="http://localhost:11434")
+    parser.add_argument("--llm-url", type=str, default="http://localhost:8000/v1")
     parser.add_argument(
-        "-s",
+        "-V",
         "--vector-store",
         type=Path,
         default=Path("./chroma_db"),
     )
     parser.add_argument(
-        "-o",
+        "-D",
         "--docstore",
         type=Path,
         default=Path("./docstore"),
@@ -69,36 +80,40 @@ def get_parser() -> ArgumentParser:
     return parser
 
 
-def setup(args) -> None:
-    Settings.embed_model = HuggingFaceEmbedding(
-        model_name=args.embedding, trust_remote_code=True
+def setup(args: Namespace) -> None:
+    """Setup common resources from command line arguments."""
+
+    # An Ollama server is used to serve the embedding model
+    Settings.embed_model = OllamaEmbedding(
+        model_name=args.embedding,
+        base_url=args.ollama_url,
     )
     print(f"Loaded embedding model {args.embedding}")
 
-    # NOTE: Arguments default to those that work with Llama3 8B, might consider adding
-    # some arguments to change these values from CLI
-    Settings.llm = LlamaCPP(
-        model_path=str(args.llm),
-        temperature=0.1,
-        max_new_tokens=256,
-        # Llama3 8B has a context window of 8192 tokens
-        context_window=8192,
-        # kwargs to pass to __call__()
-        generate_kwargs={},
-        # kwargs to pass to __init__()
-        # set to at least 1 to use GPU
-        model_kwargs={"n_gpu_layers": -1},
-        # transform inputs into Llama format
-        messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
-        verbose=True,
-    )
-    print("Loaded LLM")
+    # Suppress warning
+    # "Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained."
+    transformers.logging.set_verbosity_error()
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenizer = Settings.llm._model.tokenizer()
+    Settings.tokenzier = AutoTokenizer.from_pretrained(args.llm)
     print("Loaded tokenizer")
+
+    # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
+    # with e.g. vLLM
+    Settings.llm = OpenAILike(
+        model=args.llm,
+        api_base=args.llm_url,
+        api_key="fake",  # A dummy API key is needed or else connection error would occur
+        context_window=8192,
+        temperature=0.7,
+        is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
+        is_function_calling_model=False,
+        tokenizer=args.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+        messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
+        completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
+    )
+    print("Loaded LLM")
 
     Config.vector_store_path = str(args.vector_store)
     Config.docstore_path = str(args.docstore)
