@@ -1,8 +1,39 @@
 # RAG Using LlamaIndex
 
-## Usage
+## Setup
 
-### Prerequisites For RAG Scripts
+### Embedding Model and LLM
+
+The RAG scripts require an embedding model hosted on an Ollama server and an LLM
+server with OpenAI compatible API. You can skip this section if you already have them
+set up.
+
+To host an embedding model, first install [Ollama](https://ollama.com/). Then, if
+your embedding model is already available on the
+[Ollama library](https://ollama.com/library), simply run
+```bash
+ollama pull [model_name]
+```
+However, it is more likely that you need to use an embedding model hosted on Hugging
+Face. To download a model from Hugging Face, you can use `huggingface-cli`,
+alternatively, use `git clone` with `git-lfs` installed. Then, you need to convert it
+to GGUF format:
+```bash
+git clone https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+pip3.11 install -r requirements.txt  # Tip: "AttributeError: module 'pkgutil' has no attribute 'ImpImporter'" the error exists for python 3.12, so pip3.11 is required temporarily.
+python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf]
+```
+Then follow the tutorial for
+[Import from GGUF](https://github.com/ollama/ollama?tab=readme-ov-file#import-from-gguf).
+
+To host an LLM server with OpenAI compatible API, one option is vLLM. You can follow
+the tutorials below to set it up:
+- [Installation](https://docs.vllm.ai/en/stable/getting_started/installation.html)
+- [Run an OpenAI compatible server](https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html)
+- [Setup with multiple GPUs](https://docs.vllm.ai/en/stable/serving/distributed_serving.html)
+
+### Dependencies
 
 Install system dependencies for the `unstructured` reader: `libmagic-dev`,
 `poppler-utils`, and `tesseract-ocr`. For Debian based OSes, simply run:
@@ -19,55 +50,49 @@ source .venv/bin/activate # For Unix-like operating systems
 .venv\bin\activate.bat    # For Windows
 ```
 
-Do an editable install with pip to get the dependencies. The follow example sets the
-appropriate variables to enable CUDA for llama.cpp. `CUDA_VISIBLE_DEVICES` should
-correspond to your GPU setup. The example lets llama.cpp use the first two GPUs.
+Do an editable install with pip to get the dependencies.
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 CMAKE_ARGS="-DLLAMA_CUDA=on" FORCE_CMAKE=1 pip install -e .
+pip install -e .
 ```
 
-Download an LLM such as
-[Llama 3 8B Instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct).
-Currently, only the support for Llama 3 is guaranteed.  To download a model from
-Hugging Face, you can use `huggingface-cli`, alternatively, use `git clone` with
-`git-lfs` installed.
+## Usage
 
-These scripts uses [llama.cpp](https://github.com/ggerganov/llama.cpp), thus, the
-model has to be in GGUF format. For example, to convert a Llama 3 downloaded from
-Hugging Face to GGUF, you should run the following
-```bash
-git clone https://github.com/ggerganov/llama.cpp.git
-cd llama.cpp
-pip3.11 install -r requirements.txt  #Tip: "AttributeError: module 'pkgutil' has no attribute 'ImpImporter'" the error exists for python 3.12, so pip3.11 is required temporarily.
-python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf] --outtype q8_0
-```
-Note that `--outtype` specifies the quantization type and 8-bit quantization is used
-in this case.
+### Overview and Common Options
+
+Pass in the `-h` to view all the available command line options.
+
+The scripts need to access the embedding model via the Ollama API, and the LLM via an
+OpenAI compatible API. Therefore, you may have to specify the following options if
+they differ from the default:
+- `--ollama-url`: Ollama API endpoint such as `http://localhost:11434`.
+- `--llm-url`: OpenAI compatible API endpoint such as `http://localhost:8000/v1`.
+
+`./load_and_index.py` would load data into a vector store and a document store, while
+`./query.py` would query both stores for relevant information. Therefore, you can use
+`-V` and `-E` to specify the location of the vector store and the document store
+respectively.
+
+To specify the embedding model and the LLM, use `-E` and `-L` respectively.
 
 ### Load and Index the Data
 
 Run
 ```bash
-./load_and_index.py \
-    --e [huggingface_embedding_model_name] (optional: use a small embedding model by default) \
-    --l [path_to_your_llm.gguf] (optional: not using LLM by default)
+./load_and_index.py
 ```
-and the vector store of the indexed data would be placed in the `Chroma DB`
-collection `dku_html_pdf` stored in database `./chroma_db`.
+and the vector-indexed nodes (chunked and metadata-attached texts) would be stored in
+the Chroma DB collection `dku_html_pdf` of the vector store, and the nodes would also
+be be stored in the specified document store.
+
+Use `-d` to specify the directory to load data from.
 
 ### Perform RAG Queries
 
-Before executing queries, you must have a vector store of the indexed data. It
-cannot be included in the repo as the single DB file is too large for GitHub to
-store, so please refer to the previous section for loading and indexing the
-data on your computer.
-
-With a `Chroma DB` database stored in `./chroma_db` and the vector store of the data
-in the collection `dku_html_pdf`, run:
+Before executing queries, you must load and index the data first to have a vector
+store of the indexed data stored in the Chroma DB collection `dku_html_pdf` and the
+document store file containing the ingested nodes. Then, you may run:
 ```bash
-./query.py \
-    --e [huggingface_embedding_model_name] (optional: use a small embedding model by default) \
-    --l [path_to_your_llm.gguf] (optional: not using LLM by default)
+./query.py
 ```
 This would provide an interactive interface where you can enter the query in CLI,
 press `Enter`, then get the response. Use `Ctrl-D` on Linux or `Ctrl-Z` followed by
