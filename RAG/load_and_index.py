@@ -37,45 +37,47 @@ def load_and_index(
     # please use only a single process for now.
     pipeline_workers: int = 1,
 ):
-    documents_path = os.path.join(data_dir, "documents.pkl")
+    documents_path = os.path.join(data_dir, "eng_documents.pkl")
     hash_path = os.path.join("./", "hash.pkl")
     now_hash = hash_directory(data_dir)
 
-    if Setting.update:
-        print(f"Force updating {documents_path}")
-        documents = update_data()
-        now_hash = hash_directory(data_dir)
-        with open(hash_path, "wb") as hf:
-            pickle.dump(now_hash, hf)
-        print(f"Hashes of data files written at {hash_path}")
+    # if Setting.update:
+    #     print(f"Force updating {documents_path}")
+    #     documents = update_data()
+    #     now_hash = hash_directory(data_dir)
+    #     with open(hash_path, "wb") as hf:
+    #         pickle.dump(now_hash, hf)
+    #     print(f"Hashes of data files written at {hash_path}")
 
-    elif os.path.exists(documents_path) and os.path.exists(hash_path):
-        print(f"Both {documents_path} and {hash_path} exist")
-        with open(hash_path, "rb") as f:
-            origin_hash = pickle.load(f)
-            print(f"Loaded hashes from {origin_hash}")
-            if origin_hash == now_hash:
-                print(f"Hashes match, loading documents from {documents_path}")
-                with open(documents_path, "rb") as file:
-                    documents = pickle.load(file)
-                print(f"Loaded documents from from {documents_path}")
-            else:
-                print(f"Hashes disagree with data files, updating {documents_path}")
-                documents = update_data()
-                now_hash = hash_directory(data_dir)
-                with open(hash_path, "wb") as hf:
-                    pickle.dump(now_hash, hf)
-                print(f"Hashes of data files written at {hash_path}")
+    # elif os.path.exists(documents_path) and os.path.exists(hash_path):
+    #     print(f"Both {documents_path} and {hash_path} exist")
+    #     with open(hash_path, "rb") as f:
+    #         origin_hash = pickle.load(f)
+    #         print(f"Loaded hashes from {origin_hash}")
+    #         if origin_hash == now_hash:
+    #             print(f"Hashes match, loading documents from {documents_path}")
+    #             with open(documents_path, "rb") as file:
+    #                 documents = pickle.load(file)
+    #             print(f"Loaded documents from from {documents_path}")
+    #         else:
+    #             print(f"Hashes disagree with data files, updating {documents_path}")
+    #             documents = update_data()
+    #             now_hash = hash_directory(data_dir)
+    #             with open(hash_path, "wb") as hf:
+    #                 pickle.dump(now_hash, hf)
+    #             print(f"Hashes of data files written at {hash_path}")
 
-    else:
-        print(
-            f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
-        )
-        documents = update_data()
-        now_hash = hash_directory(data_dir)
-        with open(hash_path, "wb") as hf:
-            pickle.dump(now_hash, hf)
-        print(f"Hashes of data files written at {hash_path}")
+    # else:
+    #     print(
+    #         f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
+    #     )
+    #     documents = update_data()
+    #     now_hash = hash_directory(data_dir)
+    #     with open(hash_path, "wb") as hf:
+    #         pickle.dump(now_hash, hf)
+    #     print(f"Hashes of data files written at {hash_path}")
+    with open(documents_path, "rb") as file:
+        documents = pickle.load(file)
 
     trans = []
 
@@ -119,7 +121,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     db = chromadb.PersistentClient(
-        path="./chroma_db", settings=chromadb.Settings(allow_reset=True)
+        path="./eng_large_bge_chroma_db", settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
@@ -135,9 +137,13 @@ def load_and_index(
     # The current llamindex pipeline_cache has bug and cannot be updated on its own.
     # Please remove pipeline_cache from your personal directory and do not add any related functions for the time being.
 
-    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    # 序列化并保存到 pkl 文件
+    with open("./nodes_large_bge.pkl", 'wb') as f:
+        pickle.dump(nodes, f)
+
     VectorStoreIndex.from_vector_store(vector_store)
-    docstore.persist("./docstore")
+    docstore.persist("./eng_large_bge_docstore")
 
 
 def main():

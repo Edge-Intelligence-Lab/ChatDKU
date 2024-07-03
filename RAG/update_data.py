@@ -1,9 +1,14 @@
 import os
 import nltk
+import nest_asyncio
+
+nest_asyncio.apply()
+
 import pickle
 import argparse
 from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
+from llama_parse import LlamaParse
 from settings import Setting
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -54,6 +59,12 @@ def update_data(data_dir=None):
     documents_path = os.path.join(data_dir, "documents.pkl")
 
     reader = UnstructuredReader()
+    llama_parse_api_key = ""
+    pdf_parser = LlamaParse(
+        api_key=llama_parse_api_key, 
+        result_type="markdown",
+        verbose=True,
+    )
     documents = SimpleDirectoryReader(
         data_dir,
         recursive=True,
@@ -61,7 +72,7 @@ def update_data(data_dir=None):
         file_extractor={
             ".htm": reader,
             ".html": reader,
-            ".pdf": reader,
+            ".pdf": pdf_parser,
             ".csv": reader,
         },
     ).load_data()

@@ -187,3 +187,14 @@ RAG/chroma_db
 RAG/pipeline_storage
 # RAG document store
 RAG/docstore
+RAG/eng_chroma_db
+RAG/eng_large_bge_chroma_db
+RAG/eng_docstore
+RAG/eng_large_bge_docstore
+RAG/docstore
+RAG/docstore
+RAG/nodes.pkl
+RAG/nodes_large_bge.pkl
+RAG/get_new_documents/documents
+RAG/get_new_documents/others_doc
+RAG/hash.pkl

@@ -15,11 +15,11 @@ def main():
     parse_args_and_setup()
 
     pipeline = get_pipeline(
-        retriever_type="vector",
+        retriever_type="fusion",
         hyde=True,
-        vector_top_k=5,
-        bm25_top_k=5,
-        fusion_top_k=5,
+        vector_top_k=10,
+        bm25_top_k=10,
+        fusion_top_k=10,
         num_queries=3,
         synthesize_response=True,
         response_mode=ResponseMode.COMPACT,
@@ -39,12 +39,15 @@ def main():
         print(output)
         json_datas[num]["answer"] = output.response_txt
         context = []
-        for i in range(0,5):
-            context.append([output.source_nodes[i].node.text])
+        try:
+            for i in range(0,5):
+                context.append([output.source_nodes[i].node.text])
+        except:
+            json_datas[num]["context_error"] = True
         json_datas[num]["contexts"] = context
         num += 1
 
-    save_file_path = "../RAG_evaluate/data_for_ragas/vector_hyde_true.json"
+    save_file_path = "../RAG_evaluate/data_for_ragas/fusion_hyde_true_eng_top10.json"
     with open(save_file_path, 'w', encoding='utf-8') as file:
         json.dump(json_datas, file, indent=2, ensure_ascii=False)
 
