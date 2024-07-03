@@ -32,6 +32,8 @@ def get_pipeline(
     num_queries: int = 3,
     synthesize_response: bool = True,
     response_mode: ResponseMode = ResponseMode.COMPACT,
+    weight1: int = 0.6,
+    weight2: int = 0.4
 ) -> QueryPipeline:
     """
     Constructs a RAG query pipeline.
@@ -53,6 +55,7 @@ def get_pipeline(
             or output a list of nodes retrived if `False`.
         response_mode: Mode of response synthesis, see
             `llama_index.core.response_synthesizers.ResponseMode` for details.
+        weight1, weight2: Weights for the distribution based fusion.
 
     Returns:
         A query pipeline that could be executed by supplying input to its `run()` method.
@@ -91,10 +94,27 @@ def get_pipeline(
         # otherwise errors will be reported at the synthesizer stage. While this might
         # be due to the need of using an LLM at the query generation stage, it still
         # won't work if you set num_queries=1.
+        # NOTE: by Cody Jul 3, in the documentation I found that "num_queries=1" is to disable query generation
         retriever = QueryFusionRetriever(
             [vector_retriever, bm25_retriever],
             similarity_top_k=fusion_top_k,
             mode=fusion_mode,
+            num_queries=num_queries,
+            use_async=True,
+            verbose=True,
+        )
+    
+    elif retriever_type == "distribution based fusion":
+        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
+        bm25_retriever = BM25Retriever.from_defaults(
+            docstore=docstore, similarity_top_k=bm25_top_k
+        )
+        
+        retriever = QueryFusionRetriever(
+            [vector_retriever, bm25_retriever],
+            retriever_weights=[weight1, weight2],
+            similarity_top_k=fusion_top_k,
+            mode="dist_based_score",
             num_queries=num_queries,
             use_async=True,
             verbose=True,
