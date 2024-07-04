@@ -13,6 +13,17 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Union, Sequence, Optional
 
+import llama_index
+
+
+def mydeepcopy(self, memo):
+    return self
+
+
+# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
+# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
+llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
+
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
 # `here is a summary of the given text` before the summary. This prompt used to

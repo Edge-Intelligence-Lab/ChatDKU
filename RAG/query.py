@@ -2,7 +2,7 @@
 
 import json
 from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Optional, Union
 from enum import Enum
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
@@ -21,21 +21,34 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
+import functools
 from dsp import LM
 import dspy
 from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate import Evaluate
+from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
 from settings import Config, get_parser, setup
 
+import llama_index
 
-class LlamaClient(LM):
+
+def mydeepcopy(self, memo):
+    return self
+
+
+# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
+# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
+llama_index.vector_stores.chroma.ChromaVectorStore.__deepcopy__ = mydeepcopy
+
+
+class CustomClient(LM):
     def __init__(self) -> None:
         self.provider = "default"
         self.history = []
         self.kwargs = {
             "temperature": Settings.llm.temperature,
-            "max_tokens": Settings.llm.max_new_tokens,
+            "max_tokens": Settings.llm.context_window,
         }
 
     def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
@@ -85,29 +98,27 @@ class LlamaClient(LM):
         return [self.request(prompt, **kwargs).text]
 
 
-class RetrieverType(Enum):
-    VECTOR = "vector"
-    KEYWORD = "keyword"
-
-
 class RetrieverSelector(dspy.Signature):
-    """
-    Choose the best retriever for querying database for relevant texts that could answer the given question.
-    "vector": retrieves texts that are semantically similar to the question.
-    "keyword": retrieves texts that contain the same keywords used in the question.
-    """
+    """Choose the best retriever type and generate a query for querying the database for texts that could answer the question."""
 
-    question: str = dspy.InputField(
-        desc="The question to be answered, which would also be passed to the retriever you chose."
+    question = dspy.InputField(desc="The question to be answered.")
+    retriever_type = dspy.OutputField(
+        desc="The best type of retriever to use for the given question.\n"
+        '"vector": Retrieves texts that are semantically similar to the query.\n'
+        '"keyword": Retrieves texts that contain the same keywords used in the query.'
     )
-    retriever_type: RetrieverType = dspy.OutputField(
-        desc="The best type of retriever to use for the given question."
+    query = dspy.OutputField(
+        desc="The query string to use for querying relevant texts.\n"
+        'If retriever is "vector", write a passage that might be semantically similar to the real answer to the question.\n'
+        'If retriever is "keyword", generate some keywords that might appear in the answer to the question.'
     )
 
 
 class Rag(dspy.Module):
-    def __init__(self, vector_top_k: int = 5, keyword_top_k: int = 5):
+    def __init__(self, vector_top_k, keyword_top_k):
         super().__init__()
+        self.retriever_selector = dspy.ChainOfThought(RetrieverSelector)
+
         db = chromadb.PersistentClient(path=Config.vector_store_path)
         chroma_collection = db.get_or_create_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -119,25 +130,27 @@ class Rag(dspy.Module):
             docstore=docstore, similarity_top_k=keyword_top_k
         )
 
-        self.retriever_selector = dspy.TypedChainOfThought(RetrieverSelector)
+        self.response_synthesizer = get_response_synthesizer()
 
     def forward(self, question):
-        # retriever_type = self.retriever_selector(question=question).retriever_type
-        # if retriever_type == RetrieverType.VECTOR:
-        #     retriever = self.vector_retriever
-        # elif retriever_type == RetrieverType.KEYWORD:
-        #     retriever = self.keyword_retriever
-        # else:
-        #     print(
-        #         f"Unsupported retriever_type: {retriever_type}, fall back to vector retriever"
-        #     )
-        #     retriever = self.vector_retriever
-
-        retriever = self.vector_retriever
-        query_engine = RetrieverQueryEngine(
-            retriever=retriever, response_synthesizer=get_response_synthesizer()
+        s = self.retriever_selector(question=question)
+        dspy.Suggest(
+            s.retriever_type in ["vector", "keyword"],
+            'The retriever type should be either "vector" or "keyword".',
         )
-        return dspy.Prediction(answer=str(query_engine.query(question)))
+        if s.retriever_type == "vector":
+            retriever = self.vector_retriever
+        elif s.retriever_type == "keyword":
+            retriever = self.keyword_retriever
+        else:
+            print(
+                f"Unsupported retriever_type: {s.retriever_type}, fall back to vector retriever"
+            )
+            retriever = self.vector_retriever
+
+        nodes = retriever.retrieve(s.query)
+        response = self.response_synthesizer.synthesize(question, nodes=nodes)
+        return dspy.Prediction(answer=str(response))
 
 
 class Judge(dspy.Signature):
@@ -166,7 +179,7 @@ def main():
     tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
-    llama_client = LlamaClient()
+    llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
     file_path = "../RAG_evaluate/data_for_rag/before_RAG_dataset.json"
@@ -179,7 +192,7 @@ def main():
         for d in json_data
     ]
 
-    trainset, devset = dataset[50:55], dataset[50:55]
+    trainset, devset = dataset[50:60], dataset[60:70]
 
     judge = dspy.TypedPredictor(Judge)
 
@@ -189,12 +202,19 @@ def main():
         )
         return prediction.judgement
 
-    config = dict(max_bootstrapped_demos=4, max_labeled_demos=4)
+    config = dict(max_bootstrapped_demos=4, max_labeled_demos=4, max_errors=1)
     teleprompter = BootstrapFewShot(metric=metric, **config)
-    try:
-        rag = teleprompter.compile(Rag(), trainset=trainset)
-    except:
-        input()
+
+    # try:
+
+    rag_with_assertions = assert_transform_module(
+        Rag(vector_top_k=5, keyword_top_k=5),
+        functools.partial(backtrack_handler, max_backtracks=3),
+    )
+    rag = teleprompter.compile(rag_with_assertions, trainset=trainset)
+    # except:
+    #     input()
+
     rag.save("compiled_rag.json")
 
     # Set up the evaluator, which can be used multiple times.
