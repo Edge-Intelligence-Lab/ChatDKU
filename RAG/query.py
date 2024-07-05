@@ -36,7 +36,7 @@ def get_pipeline(
     weight1: int = 0.6,
     weight2: int = 0.4,
     cohere_rerank: bool = True,
-    cohere_top_k: int = 5
+    cohere_top_k: int = 5,
     cohere_api_key: str = 'your-cohere-api-key'
 ) -> QueryPipeline:
     """
