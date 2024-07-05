@@ -10,6 +10,7 @@ from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from settings import Setting
+from markdownify import markdownify as md
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -76,6 +77,15 @@ def update_data(data_dir=None):
             ".csv": reader,
         },
     ).load_data()
+
+    for doc in documents:
+        if doc.metadata["file_type"] == 'text/html':
+            with open(doc.metadata["file_path"], 'r') as f:
+                html = f.read()
+            try:
+                doc.text = md(html)
+            except:
+                print(f"fail trans to md:{doc.metadata['file_path']}")
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
