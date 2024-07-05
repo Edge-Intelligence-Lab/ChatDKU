@@ -11,6 +11,7 @@ from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_pipeline import QueryPipeline, InputComponent
+from llama_index.postprocessor.cohere_rerank import CohereRerank
 
 import os
 import phoenix as px
@@ -33,7 +34,10 @@ def get_pipeline(
     synthesize_response: bool = True,
     response_mode: ResponseMode = ResponseMode.COMPACT,
     weight1: int = 0.6,
-    weight2: int = 0.4
+    weight2: int = 0.4,
+    cohere_rerank: bool = True,
+    cohere_top_k: int = 5
+    cohere_api_key: str = 'your-cohere-api-key'
 ) -> QueryPipeline:
     """
     Constructs a RAG query pipeline.
@@ -56,6 +60,8 @@ def get_pipeline(
         response_mode: Mode of response synthesis, see
             `llama_index.core.response_synthesizers.ResponseMode` for details.
         weight1, weight2: Weights for the distribution based fusion.
+        cohere_rerank: boolean value to decide to use cohere reranking
+        cohere_top_k: Top k relevant nodes to retrieve with Cohere Rerank
 
     Returns:
         A query pipeline that could be executed by supplying input to its `run()` method.
@@ -69,6 +75,7 @@ def get_pipeline(
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     index = VectorStoreIndex.from_vector_store(vector_store)
     vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
+
 
     if hyde:
         # NOTE: `HyDEQueryTransform` would effectively not work if used as an
@@ -132,6 +139,20 @@ def get_pipeline(
     )
     pipeline.add_link("input", "retriever")
 
+    if cohere_rerank: # VPN required to get access to Cohere
+        cohere_rerank = CohereRerank(api_key=cohere_api_key,top_n=cohere_top_k)
+
+        # query_engine = index.as_query_engine(
+        #     similarity_top_k=10,
+        #     node_postprocessors=[cohere_rerank],
+        # )
+        pipeline.add_modules(
+            {
+                "rerank": cohere_rerank,
+            }
+        )
+        pipeline.add_link("retriever", "rerank", dest_key="nodes")
+    
     if synthesize_response:
         pipeline.add_modules(
             {
