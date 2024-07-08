@@ -18,15 +18,11 @@ from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-<<<<<<< HEAD
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from settings import setup
 from config import Config
-config = Config()
-=======
 
-from settings import Config, setup, get_parser
->>>>>>> main
+config = Config()
 
 
 def get_pipeline(
@@ -42,7 +38,7 @@ def get_pipeline(
     weight1: int = 0.6,
     weight2: int = 0.4,
     colbert_rerank: bool = True,
-    rerank_top_n = 10,
+    rerank_top_n=10,
 ) -> QueryPipeline:
     """
     Constructs a RAG query pipeline.
@@ -81,7 +77,6 @@ def get_pipeline(
     index = VectorStoreIndex.from_vector_store(vector_store)
     vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
 
-
     if hyde:
         # NOTE: `HyDEQueryTransform` would effectively not work if used as an
         # component of the query pipeline by itself, since it returns a `QueryBundle`
@@ -115,17 +110,13 @@ def get_pipeline(
             use_async=True,
             verbose=True,
         )
-    
+
     elif retriever_type == "distribution based fusion":
-<<<<<<< HEAD
         docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
-=======
-        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
->>>>>>> main
         bm25_retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=bm25_top_k
         )
-        
+
         retriever = QueryFusionRetriever(
             [vector_retriever, bm25_retriever],
             retriever_weights=[weight1, weight2],
@@ -148,7 +139,7 @@ def get_pipeline(
     )
     pipeline.add_link("input", "retriever")
 
-    if colbert_rerank: 
+    if colbert_rerank:
         colbert_reranker = ColbertRerank(
             top_n=rerank_top_n,
             model="colbert-ir/colbertv2.0",
@@ -161,9 +152,9 @@ def get_pipeline(
                 "rerank": colbert_reranker,
             }
         )
-        pipeline.add_link("input", "rerank",dest_key="query_str")
-        pipeline.add_link("retriever", "rerank",dest_key="nodes")
-    
+        pipeline.add_link("input", "rerank", dest_key="query_str")
+        pipeline.add_link("retriever", "rerank", dest_key="nodes")
+
     if synthesize_response:
         pipeline.add_modules(
             {
@@ -177,8 +168,6 @@ def get_pipeline(
             pipeline.add_link("rerank", "synthesizer", dest_key="nodes")
         else:
             pipeline.add_link("retriever", "synthesizer", dest_key="nodes")
-            
-        
 
     return pipeline
 
@@ -206,9 +195,8 @@ def main():
         num_queries=3,
         synthesize_response=True,
         response_mode=ResponseMode.COMPACT,
-        colbert_rerank = False,
-        rerank_top_n = 10,
-
+        colbert_rerank=False,
+        rerank_top_n=10,
     )
 
     while True:

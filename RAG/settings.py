@@ -12,10 +12,7 @@ from transformers import AutoTokenizer
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable, Union, Sequence, Optional
-<<<<<<< HEAD
 from config import Config
-=======
->>>>>>> main
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -45,8 +42,6 @@ class UseCoercedPrompt:
 
     def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
         return self.func(message, COERCED_SYSTEM_PROMPT)
-
-
 
 
 def setup() -> None:
