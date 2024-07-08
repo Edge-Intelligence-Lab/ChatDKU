@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dku_web_scraper"
+version = "1.0.0"
+authors = [
+    { name="Yuxiang Lin", email="theta.lin@yandex.com" },
+]
+description = ""
+readme = ""
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+	"aiohttp>=3.9.5",
+	"beautifulsoup4>=4.12.3",
+]
+
+[tool.setuptools]
+py-modules = []
