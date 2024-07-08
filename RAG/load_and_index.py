@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-from argparse import ArgumentParser
 from pathlib import Path
 import pickle
 import chromadb
@@ -26,6 +25,7 @@ from custom_partation import partition
 unstructured.partition.auto.partition = partition
 
 from config import Config
+
 config = Config()
 
 
@@ -128,7 +128,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     db = chromadb.PersistentClient(
-        path=config.chunk_overlap, settings=chromadb.Settings(allow_reset=True)
+        path=config.vector_store_path, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
@@ -155,17 +155,6 @@ def load_and_index(
 
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument("-u", "--update", action="store_true")
-    parser.add_argument("-r", "--read-only", action="store_true")
-    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
-    parser.add_argument(
-        "-c",
-        "--pipeline-cache",
-        type=Path,
-        default=Path("./pipeline_storage"),
-    )
-    args = parser.parse_args()
     setup()
 
     load_and_index(

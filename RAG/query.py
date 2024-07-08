@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from argparse import ArgumentParser
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -19,10 +18,15 @@ from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+<<<<<<< HEAD
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from settings import setup
 from config import Config
 config = Config()
+=======
+
+from settings import Config, setup, get_parser
+>>>>>>> main
 
 
 def get_pipeline(
@@ -113,7 +117,11 @@ def get_pipeline(
         )
     
     elif retriever_type == "distribution based fusion":
+<<<<<<< HEAD
         docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
+=======
+        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
+>>>>>>> main
         bm25_retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=bm25_top_k
         )

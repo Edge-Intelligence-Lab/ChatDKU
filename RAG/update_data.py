@@ -49,12 +49,9 @@ def hash_directory(directory):
     return final_hash
 
 
-def update_data(data_dir=None):
-    if data_dir is None:
-        data_dir = Setting.data_dir
-
+def update_data(data_dir):
     # Required for UnstructuredReader
-    nltk.download("averaged_perceptron_tagger")
+    # nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
     documents_path = os.path.join(data_dir, "documents.pkl")
@@ -62,7 +59,7 @@ def update_data(data_dir=None):
     reader = UnstructuredReader()
     llama_parse_api_key = ""
     pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key, 
+        api_key=llama_parse_api_key,
         result_type="markdown",
         verbose=True,
     )
@@ -79,8 +76,8 @@ def update_data(data_dir=None):
     ).load_data()
 
     for doc in documents:
-        if doc.metadata["file_type"] == 'text/html':
-            with open(doc.metadata["file_path"], 'r') as f:
+        if doc.metadata["file_type"] == "text/html":
+            with open(doc.metadata["file_path"], "r") as f:
                 html = f.read()
             try:
                 doc.text = md(html)
