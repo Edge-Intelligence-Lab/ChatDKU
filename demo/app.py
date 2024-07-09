@@ -11,17 +11,13 @@ client = OpenAI(
     base_url="https://35.aigcbest.top/v1",
 )
 
-def simple_prompt_template(text):
-    prompt_text = [
-            {"role":"user","content":f"{text}"},
-                    ]
-    return prompt_text
-
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    
+    # example data : 
+    # {'messages': [{'role': 'user', 'content': 'Hello'}, {'role': 'assistant', 'content': 'Hey there! How can I assist you today? 😊'}, {'role': 'user', 'content': 'What do you know about DKU?'}]}
     data = request.json
-    print(data)
     user_message = data.get('messages')
 
     if not user_message:
