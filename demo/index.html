@@ -6,67 +6,78 @@
     <title>ChatGPT</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f7f7f7;
+            background-color: #f0f2f5;
         }
         #chat-container {
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 800px;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
             border: 1px solid #ccc;
-            padding: 20px;
             border-radius: 8px;
             background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         #chat-log {
-            height: 300px;
+            flex: 1;
+            padding: 20px;
             overflow-y: auto;
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f1f1f1;
+            border-bottom: 1px solid #eee;
         }
         .message {
             margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
         }
         .user-message {
-            text-align: right;
+            justify-content: flex-end;
         }
         .user-message span, .bot-message span {
-            padding: 10px;
-            border-radius: 8px;
+            max-width: 70%;
+            padding: 12px;
+            border-radius: 12px;
             display: inline-block;
-            max-width: 100%;
             word-wrap: break-word;
             box-sizing: border-box;
+            font-size: 16px;
         }
         .user-message span {
-            background-color: #d1ecf1;
+            background-color: #007bff;
+            color: #fff;
         }
         .bot-message span {
-            background-color: #c3e6cb;
+            background-color: #f1f0f0;
+            color: #333;
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #eee;
         }
         #message-input {
-            width: calc(100% - 22px);
-            padding: 10px;
+            flex: 1;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 8px;
+            font-size: 16px;
             box-sizing: border-box;
         }
         #send-button {
-            margin-top: 10px;
-            padding: 10px 20px;
+            margin-left: 10px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
             background-color: #007bff;
             color: white;
             cursor: pointer;
+            font-size: 16px;
         }
         #send-button:hover {
             background-color: #0056b3;
@@ -77,8 +88,10 @@
 <body>
     <div id="chat-container">
         <div id="chat-log"></div>
-        <input type="text" id="message-input" placeholder="Type a message..." />
-        <button id="send-button">Send</button>
+        <div id="input-container">
+            <input type="text" id="message-input" placeholder="Type a message..." />
+            <button id="send-button">Send</button>
+        </div>
     </div>
 
     <script>
