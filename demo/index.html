@@ -113,20 +113,61 @@
             chatHistory.push({ role: 'user', content: message });
             input.value = '';
 
-            fetch('http://127.0.0.1:5000/chat', {
+            // FIXME: Don't use hard-coded URL
+            fetch('http://10.201.8.54:5000/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ messages: chatHistory })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    addMarkdownMessage('bot-message', data.message);
-                    chatHistory.push({ role: 'assistant', content: data.message });
+            .then(response => {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    // If the response is JSON, handle it as an error
+                    return response.json().then(data => {
+                        if (data.error) {
+                            addMessage('bot-message', 'Error: ' + data.error);
+                        }
+                    });
+
                 } else {
-                    addMessage('bot-message', 'Error: ' + data.error);
+                    // If the response is not JSON, handle it as a stream
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let receivedText = '';
+
+                    // Create a new message element for the streaming text
+                    const chatLog = document.getElementById('chat-log');
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'message bot-message';
+                    const messageContent = document.createElement('span');
+                    messageElement.appendChild(messageContent);
+                    chatLog.appendChild(messageElement);
+                    chatLog.scrollTop = chatLog.scrollHeight;
+
+                    function readStream() {
+                        reader.read().then(({ done, value }) => {
+                            if (done) {
+                                // End of stream
+                                if (receivedText) {
+                                    chatHistory.push({ role: 'assistant', content: receivedText });
+                                }
+                                return;
+                            }
+                            // Process the chunk of text
+                            const chunk = decoder.decode(value, { stream: true });
+                            receivedText += chunk;
+                            messageContent.innerHTML = marked.parse(receivedText);
+                            chatLog.scrollTop = chatLog.scrollHeight;
+                            // Continue reading
+                            readStream();
+                        }).catch(error => {
+                            addMessage('bot-message', 'Error: ' + error.message);
+                        });
+                    }
+
+                    // Start reading the stream
+                    readStream();
                 }
             })
             .catch(error => {

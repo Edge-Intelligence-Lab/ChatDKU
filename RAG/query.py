@@ -9,17 +9,10 @@ from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
-from llama_index.core.query_pipeline import QueryPipeline, InputComponent
-from llama_index.postprocessor.cohere_rerank import CohereRerank
-
-import os
-import phoenix as px
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk import trace as trace_sdk
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
-from settings import setup
+from llama_index.core.query_pipeline import QueryPipeline, InputComponent
+
+from settings import setup, use_phoenix
 from config import Config
 
 config = Config()
@@ -28,9 +21,9 @@ config = Config()
 def get_pipeline(
     retriever_type: str = "fusion",
     hyde: bool = True,
-    vector_top_k: int = 5,
-    bm25_top_k: int = 5,
-    fusion_top_k: int = 5,
+    vector_top_k: int = 10,
+    bm25_top_k: int = 10,
+    fusion_top_k: int = 10,
     fusion_mode: FUSION_MODES = FUSION_MODES.RECIPROCAL_RANK,
     num_queries: int = 3,
     synthesize_response: bool = True,
@@ -174,38 +167,21 @@ def get_pipeline(
 
 def main():
     setup()
+    use_phoenix()
 
-    # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
-    # pass in port 0 to make it easier to avoid port collision.
-    # os.environ["PHOENIX_GRPC_PORT"] = "0"
-    # px.launch_app()
-    # phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
-    # endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
-    # tracer_provider = trace_sdk.TracerProvider()
-    # tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
-    # LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
-
-    pipeline = get_pipeline(
-        retriever_type="vector",
-        hyde=True,
-        vector_top_k=20,
-        bm25_top_k=10,
-        fusion_top_k=10,
-        fusion_mode=FUSION_MODES.RECIPROCAL_RANK,
-        num_queries=3,
-        synthesize_response=True,
-        response_mode=ResponseMode.COMPACT,
-        colbert_rerank=False,
-        rerank_top_n=10,
-    )
+    pipeline = get_pipeline()
 
     while True:
         try:
             print("*" * 32)
             query = input("Enter your query about DKU: ")
+            # output = pipeline.run(input=query)
+            # print("+" * 32)
+            # print(output)
             output = pipeline.run(input=query)
             print("+" * 32)
-            print(output)
+            for text in output.response_gen:
+                print(text, end="")
         except EOFError:
             break
 

@@ -9,9 +9,15 @@ from llama_index.llms.llama_cpp.llama_utils import (
 from llama_index.core.base.llms.types import ChatMessage
 import transformers
 from transformers import AutoTokenizer
-from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from typing import Callable, Union, Sequence, Optional
+
+import os
+import phoenix as px
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
 from config import Config
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
@@ -79,3 +85,15 @@ def setup() -> None:
         completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
     )
     print("Loaded LLM")
+
+
+def use_phoenix():
+    # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
+    # pass in port 0 to make it easier to avoid port collision.
+    os.environ["PHOENIX_GRPC_PORT"] = "0"
+    px.launch_app()
+    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
+    endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
