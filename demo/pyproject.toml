@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dku_llm_rag_demo"
+version = "1.0.0"
+authors = [
+    { name="Mingxi Li" },
+    { name="Yuxiang Lin", email="theta.lin@yandex.com" },
+    { name="Cody Qin" },
+    { name="Ningyuan Yang" },
+]
+description = ""
+readme = ""
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "Flask~=3.0.3",
+    "Flask-Cors~=4.0.1",
+]
+
+[tool.setuptools]
+py-modules = []

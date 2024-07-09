@@ -2,6 +2,11 @@
 
 ## Usage
 
+Install dependencies in a virtual environment:
+```bash
+pip install -e .
+```
+
 Start backend:
 ```bash
 ./app.py
