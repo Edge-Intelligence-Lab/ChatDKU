@@ -19,7 +19,7 @@ config = Config()
 
 
 def get_pipeline(
-    retriever_type: str = "fusion",
+    retriever_type: str = "vector",
     hyde: bool = True,
     vector_top_k: int = 10,
     bm25_top_k: int = 10,

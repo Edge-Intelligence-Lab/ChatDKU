@@ -45,3 +45,4 @@ if __name__ == "__main__":
     pipeline = get_pipeline()
     # NOTE: Might want to make it easier to change the port
     app.run(host="0.0.0.0", port=5000)
+

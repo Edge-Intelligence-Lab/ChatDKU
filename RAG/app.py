@@ -14,7 +14,7 @@ def main():
     if "pipeline" not in st.session_state:
         print("1111" * 50)
         st.session_state.pipeline = get_pipeline(
-            retriever_type="fusion",
+            retriever_type="vector",
             hyde=True,
             vector_top_k=5,
             bm25_top_k=5,

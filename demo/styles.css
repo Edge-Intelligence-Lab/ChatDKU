@@ -1,0 +1,135 @@
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: white;
+    flex-direction: column;
+}
+
+#chat-container {
+    width: 90%;
+    max-width: 1000px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: black;
+    }
+    #chat-log {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .message {
+        margin: 10px 0;
+        display: flex;
+        align-items: flex-start;
+    }
+    .user-message {
+        justify-content: flex-end;
+    }
+    .user-message span, .bot-message span {
+        max-width: 70%;
+        padding: 12px;
+        border-radius: 12px;
+        display: inline-block;
+        word-wrap: break-word;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+    .user-message span {
+        background-color: #007bff;
+        color: #fff;
+    }
+    .bot-message span {
+        /* background-color: #f1f0f0; */
+        color: #333;
+    }
+    #input-container {
+        display: flex;
+        background-color: #d6d6d1;
+        padding: 10px;
+        border-radius: 40px;
+    }
+    #message-input {
+        flex: 1;
+        padding: 5px;
+        border: none;
+        font-size: 16px;
+        background-color: #d6d6d1;
+        outline: none; /* 输入文字时边框不高亮 */
+    }
+    #send-button {
+        margin-left: 10px;
+        width: 40px; /* 设置宽度 */
+        height: 40px; /* 设置高度 */
+        border: none;
+        border-radius: 50%; /* 圆形边框 */
+        background-color: grey;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0; /* 移除内边距 */
+    }
+    
+    #send-button.active {
+        background-color: black; /* 输入框有内容时的按钮颜色 */
+    }
+}
+
+.answer_div{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.img_head{
+    width: 30px;
+    height: 30px;
+    margin-top: 14px;
+}
+
+.message_from_llm{
+    flex: 1;
+    margin-left: 10px;
+    font-size: large;
+    line-height: 1.5;
+}
+
+#declaration{
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color:grey;
+}
+
+#head{
+    display: flex;
+    justify-content: space-between; /* Space between children */
+    align-items: center; /* Center items vertically */
+    width: 97%; /* Adjust width as needed */
+    padding: 10px; /* Example padding */
+    color:grey;
+}
+
+#head_title{
+    font-size: 30px;
+    font-family: serif;
+}
+
+#head_logo{
+
+}
