@@ -128,7 +128,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     db = chromadb.PersistentClient(
-        path=config.vector_store_path, settings=chromadb.Settings(allow_reset=True)
+        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
