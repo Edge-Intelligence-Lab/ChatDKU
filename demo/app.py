@@ -3,6 +3,7 @@
 
 from flask import Flask, request
 from flask_cors import CORS
+from llama_index.core.base.llms.types import ChatMessage, MessageRole
 
 import os
 import sys
@@ -32,8 +33,11 @@ def chat():
         return {"error": "No message provided"}, 400
 
     try:
-        # TODO: Support conversation instead of only responding to the last message
-        stream = pipeline.run(input=messages[-1]["content"])
+        chat_history = [
+            ChatMessage(role=MessageRole(m["role"]), content=m["content"])
+            for m in messages
+        ]
+        stream = pipeline.run(chat_history=chat_history)
         return stream.response_gen, 200
     except Exception as e:
         return {"error": str(e)}, 500
@@ -45,4 +49,3 @@ if __name__ == "__main__":
     pipeline = get_pipeline()
     # NOTE: Might want to make it easier to change the port
     app.run(host="0.0.0.0", port=5000)
-

@@ -10,16 +10,84 @@ from llama_index.core.retrievers import QueryFusionRetriever, TransformRetriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
-from llama_index.core.query_pipeline import QueryPipeline, InputComponent
+from llama_index.core.llms import LLM
+from llama_index.core import Settings
+from llama_index.core.base.llms.types import ChatMessage, MessageRole
+from llama_index.core.query_pipeline import QueryPipeline, CustomQueryComponent
+from llama_index.core.bridge.pydantic import Field
+from typing import Dict, Any
+import asyncio
 
 from settings import setup, use_phoenix
 from config import Config
 
 config = Config()
 
+DEFAULT_CONDENSE_PROMPT = (
+    "I have a conversation between a human user and an AI assistant, containing "
+    "a previous conversation between the user and the assistant, and a current "
+    "user message that continues the previous conversation. I want to get a summary "
+    "of the previous conversation and an explanation so that when these are sent"
+    "to another AI assistant, the conversation could be continued.\n\n"
+    "Respond with the following three parts:\n"
+    "1. Repeat the user message verbatim. "
+    'Begin this part with "Current user message:"\n\n'
+    "2. Summary of the previous conversation, emphasizing the parts that are "
+    'related to the current message. Begin this part with "Summary of our previous conversation:". '
+    "If there is no previous conversation, skip this part entirely.\n"
+    "3. Explain the current user message regarding how it connects with the summary you gave. "
+    'Begin this part with "Explanation:"\n\n'
+    "Previous conversation:\n"
+    "---\n"
+    "{previous}\n"
+    "---\n\n"
+    "Current user message:\n"
+    "---\n"
+    "{current}\n"
+    "---"
+)
+
+
+class CondenseChatHistory(CustomQueryComponent):
+    """
+    Condense the previous conversations and connect with the current user message
+
+    FIXME: The previous conversations might exceed the context window, which is not yet handled.
+    """
+
+    llm: LLM = Field()
+    condense_prompt: str = Field(default=DEFAULT_CONDENSE_PROMPT)
+
+    def _validate_component_inputs(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate component inputs during run_component."""
+        return input
+
+    @property
+    def _input_keys(self) -> set:
+        return {"chat_history"}
+
+    @property
+    def _output_keys(self) -> set:
+        return {"query_str"}
+
+    async def _arun_component(self, **kwargs: Any) -> Dict[str, Any]:
+        chat_history = kwargs["chat_history"].copy()
+        if len(chat_history) > 1:
+            previous = "\n\n".join([str(c) for c in chat_history[:-1]])
+        else:
+            previous = ""
+        rewrite_str = self.condense_prompt.format(
+            previous=previous, current=str(chat_history[-1])
+        )
+        response = await self.llm.acomplete(rewrite_str)
+        return {"query_str": response.text}
+
+    def _run_component(self, **kwargs) -> Dict[str, Any]:
+        return asyncio.run(self.arun_component(**kwargs))
+
 
 def get_pipeline(
-    retriever_type: str = "vector",
+    retriever_type: str = "fusion",
     hyde: bool = True,
     vector_top_k: int = 10,
     bm25_top_k: int = 10,
@@ -28,8 +96,8 @@ def get_pipeline(
     num_queries: int = 3,
     synthesize_response: bool = True,
     response_mode: ResponseMode = ResponseMode.COMPACT,
-    weight1: int = 0.6,
-    weight2: int = 0.4,
+    weight1: float = 0.6,
+    weight2: float = 0.4,
     colbert_rerank: bool = True,
     rerank_top_n=10,
 ) -> QueryPipeline:
@@ -126,7 +194,7 @@ def get_pipeline(
     pipeline = QueryPipeline(verbose=True)
     pipeline.add_modules(
         {
-            "input": InputComponent(),
+            "input": CondenseChatHistory(llm=Settings.llm),
             "retriever": retriever,
         }
     )
@@ -168,20 +236,21 @@ def get_pipeline(
 def main():
     setup()
     use_phoenix()
-
     pipeline = get_pipeline()
-
+    chat_history = []
     while True:
         try:
             print("*" * 32)
-            query = input("Enter your query about DKU: ")
-            # output = pipeline.run(input=query)
-            # print("+" * 32)
-            # print(output)
-            output = pipeline.run(input=query)
+            inp = input("Enter your query about DKU: ")
+            chat_history.append(ChatMessage(role=MessageRole.USER, content=inp))
+            stream = pipeline.run(chat_history=chat_history)
             print("+" * 32)
-            for text in output.response_gen:
-                print(text, end="")
+            stream.print_response_stream()
+            chat_history.append(
+                ChatMessage(
+                    role=MessageRole.ASSISTANT, content=str(stream.get_response())
+                )
+            )
         except EOFError:
             break
 
