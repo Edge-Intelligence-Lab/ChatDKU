@@ -31,7 +31,7 @@ DEFAULT_CONDENSE_PROMPT = (
     "to another AI assistant, the conversation could be continued.\n\n"
     "Respond with the following three parts:\n"
     "1. Repeat the user message verbatim. "
-    'Begin this part with "Current user message:"\n\n'
+    'Begin this part with "Current user message:"\n'
     "2. Summary of the previous conversation, emphasizing the parts that are "
     'related to the current message. Begin this part with "Summary of our previous conversation:". '
     "If there is no previous conversation, skip this part entirely.\n"
