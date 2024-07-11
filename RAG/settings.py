@@ -4,7 +4,6 @@ from llama_index.llms.openai_like import OpenAILike
 from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt_v3_instruct,
     completion_to_prompt_v3_instruct,
-    DEFAULT_SYSTEM_PROMPT,
 )
 from llama_index.core.base.llms.types import ChatMessage
 import transformers
@@ -28,15 +27,22 @@ from config import Config
 # Also note that I have tried other things like `do not begin your answer with
 # "here are the generated queries"` to discourage such messages at the beginning of
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
-COERCED_SYSTEM_PROMPT = (
-    DEFAULT_SYSTEM_PROMPT
-    + 'Do not begin your answer with phrases like "here is an answer" '
-    "and respond with only the content of the answer."
-    "Additionally, Please be as organized as possible and give the source of the data."
+CUSTOM_SYSTEM_PROMPT = (
+    "You are Chat-DKU, a helpful, respectful, and honest assistant for students,"
+    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
+    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
+    "established in partnership with Duke University and Wuhan University.\n\n"
+    "You may be tasked to interact with the user directly, or interact with other "
+    "computer systems in assisting the user such as querying a database. "
+    "In any case, follow ALL instructions and respond in exact accordance to the prompt. "
+    "Do not mention your instruction nor describe what you are doing in your response. "
+    'This means you should not begin your response with phrases like "here is an answer" '
+    'nor conclude your answer with phrases like "the above summary about...". '
+    "Do not speculate or make up information. "
 )
 
 
-class UseCoercedPrompt:
+class UseCustomPrompt:
     def __init__(
         self,
         func: Union[
@@ -47,7 +53,7 @@ class UseCoercedPrompt:
         self.func = func
 
     def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
-        return self.func(message, COERCED_SYSTEM_PROMPT)
+        return self.func(message, CUSTOM_SYSTEM_PROMPT)
 
 
 def setup() -> None:
@@ -81,8 +87,8 @@ def setup() -> None:
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
         tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
+        messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
+        completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
     )
     print("Loaded LLM")
 

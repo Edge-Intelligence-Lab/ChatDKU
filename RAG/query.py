@@ -14,6 +14,8 @@ from llama_index.core.llms import LLM
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from llama_index.core.query_pipeline import QueryPipeline, CustomQueryComponent
+from llama_index.core.prompts.base import PromptTemplate
+from llama_index.core.prompts.prompt_type import PromptType
 from llama_index.core.bridge.pydantic import Field
 from typing import Dict, Any
 import asyncio
@@ -38,13 +40,13 @@ DEFAULT_CONDENSE_PROMPT = (
     "3. Explain the current user message regarding how it connects with the summary you gave. "
     'Begin this part with "Explanation:"\n\n'
     "Previous conversation:\n"
-    "---\n"
+    "##########\n"
     "{previous}\n"
-    "---\n\n"
+    "##########\n\n"
     "Current user message:\n"
-    "---\n"
+    "##########\n"
     "{current}\n"
-    "---"
+    "##########"
 )
 
 
@@ -217,10 +219,62 @@ def get_pipeline(
         pipeline.add_link("retriever", "rerank", dest_key="nodes")
 
     if synthesize_response:
+        requirements = (
+            "State the sources of all contexts referenced, include links in Markdown if availble. "
+            "Be organized and use bullet points if needed. "
+            "The contexts might contain unrelated information or non-DKU resources. "
+            "Always prefer DKU resources first. "
+            "You may include other resources (including even Duke resources) only as "
+            "a second option unless directly asked, or that resource is clearly "
+            "available to the DKU community via means such as a partnership with DKU. "
+            "For you to appear more human to the user, all the context given should be "
+            "treated as your internal knowledge. "
+            'Thus, never use phrases like "based on the provided context". '
+            "Your internal operation should also not be transparent to the user, "
+            'so you should not mention phrases like "I\'ve refined my answer".'
+        )
+
+        qa_prompt = (
+            "Context information is below.\n"
+            "##########\n"
+            "{context_str}\n"
+            "##########\n\n"
+            "Given the context information and not prior knowledge, "
+            "answer the query. " + requirements + "\n\n"
+            "Query:\n"
+            "##########\n"
+            "{query_str}\n"
+            "##########\n\n"
+        )
+        qa_prompt = PromptTemplate(qa_prompt, prompt_type=PromptType.QUESTION_ANSWER)
+
+        refine_prompt = (
+            "The original query is as follows:\n"
+            "##########\n"
+            "{query_str}\n"
+            "##########\n\n"
+            "We have provided an existing answer:\n"
+            "##########\n"
+            "{existing_answer}\n"
+            "##########\n\n"
+            "We have the opportunity to refine the existing answer "
+            "(only if needed) with some more context below.\n"
+            "##########\n"
+            "{context_msg}\n"
+            "##########\n\n"
+            "Given the new context, refine the original answer to better "
+            "answer the query. "
+            "If the context isn't useful, return the original answer. " + requirements
+        )
+        refine_prompt = PromptTemplate(refine_prompt, prompt_type=PromptType.REFINE)
+
         pipeline.add_modules(
             {
                 "synthesizer": get_response_synthesizer(
-                    response_mode=response_mode, streaming=True
+                    text_qa_template=qa_prompt,
+                    refine_template=refine_prompt,
+                    response_mode=response_mode,
+                    streaming=True,
                 )
             }
         )
