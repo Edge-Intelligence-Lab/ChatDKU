@@ -4,7 +4,7 @@ class Config:
         # about settings.py
         self.embedding = f"BAAI/bge-{str(embedding_model_type)}-en-v1.5"
         self.llm = "meta-llama/Meta-Llama-3-8B-Instruct"
-        self.ollama_url = "http://localhost:11434"
+        self.tei_url = "http://localhost:18080"
         self.llm_url = "http://localhost:8000/v1"
 
         # about load_and_index

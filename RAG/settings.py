@@ -1,5 +1,5 @@
 from llama_index.core import Settings
-from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.llms.openai_like import OpenAILike
 from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt_v3_instruct,
@@ -61,12 +61,13 @@ def setup() -> None:
     """Setup common resources from command line arguments."""
     config = Config()
 
-    # An Ollama server is used to serve the embedding model
-    Settings.embed_model = OllamaEmbedding(
+    # A Text Embeddings Inference server is used to serve the embedding model
+    # The endpoint should be of the format [base_url]/[author]/[model_name]
+    Settings.embed_model = TextEmbeddingsInference(
         model_name=config.embedding,
-        base_url=config.ollama_url,
+        base_url=config.tei_url + "/" + config.embedding,
     )
-    print(f"Loaded embedding model {config.embedding}")
+    print(f"Using embedding model {config.embedding}")
 
     # Suppress warning
     # "Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained."
@@ -91,7 +92,7 @@ def setup() -> None:
         messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
         completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
     )
-    print("Loaded LLM")
+    print("Using LLM")
 
 
 def use_phoenix():
