@@ -1,26 +1,96 @@
 const chatHistory = [];
 
+
 document.getElementById('send-button').addEventListener('click', sendMessage);
 document.getElementById('message-input').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         sendMessage();
+    }
+});
+
+// 动态更改发送按钮的颜色
+document.getElementById('message-input').addEventListener('input', function() {
+    const input = this.value.trim();
+    const sendButton = document.getElementById('send-button');
+
+    if (input.length > 0) {
+        sendButton.classList.add('active');
+    } else {
         sendButton.classList.remove('active');
     }
 });
 
-let svgContent = '';
+document.addEventListener('DOMContentLoaded', function() {
+    const blocks = document.querySelectorAll('.block');
+    const input = document.getElementById('message-input');
 
-// Fetch SVG content when the script loads
-fetch('res/edge_logo.svg')
-    .then(response => response.text())
-    .then(data => {
-        svgContent = data;
-    })
-    .catch(error => {
-        console.error('Error loading SVG:', error);
+    blocks.forEach(block => {
+        block.addEventListener('click', function() {
+            // const content = block.getAttribute('data-content');
+            // input.value = content;
+            // sendMessage();
+            replaceBlocks()
+        });
     });
+});
+
+function replaceBlocks() {
+    const useCaseDiv = document.getElementById('usecase-div');
+    useCaseDiv.style.flexDirection = 'column';  // 设置为垂直排列
+    useCaseDiv.style.gap = '10px';  // 设置子元素之间的间距
+    // 删除现有的四个block
+    useCaseDiv.innerHTML = '';
+
+    
+    // 添加五个新的block
+    const newBlocks = [
+        { id: 'block1', text: 'Do we have courses to learn other foreign languages? How to take it?' },
+        { id: 'block2', text: 'Considering their workloads, would you recommend taking CS205 and CS310 in the same session?' },
+        { id: 'block3', text: 'What’s the difference between CS101 and stats102?' },
+        { id: 'block4', text: 'Is it better to have one mentor or two for my signature work?' },
+        { id: 'block5', text: 'How do I go about changing my mentor for signature work, and whom should I contact?' } ]
+
+    newBlocks.forEach(blockInfo => {
+        const block = document.createElement('div');
+        
+        block.classList.add('newblock');
+        block.id = blockInfo.id;
+        block.setAttribute('data-content', blockInfo.text);
+
+
+        const text = document.createElement('div');
+        text.classList.add('text');
+        text.textContent = blockInfo.text;
+
+        block.appendChild(text);
+
+        block.addEventListener('click', function() {
+            const content = block.getAttribute('data-content');
+            document.getElementById('message-input').value = content;
+            sendMessage();
+        });
+
+        useCaseDiv.appendChild(block);
+        });
+
+}
+
 
 function sendMessage() {
+    // 删除原decoration
+    const page_center_logo = document.getElementById('page-center-logo-div');
+    if (page_center_logo) {
+        page_center_logo.remove();
+    }
+    const use_case = document.getElementById('usecase-div');
+    if (use_case) {
+        use_case.remove();
+    }
+
+    // 按钮变色
+    const sendButton = document.getElementById('send-button');
+    sendButton.classList.remove('active');
+
     const input = document.getElementById('message-input');
     const message = input.value.trim();
     if (message === '') return;
@@ -30,7 +100,7 @@ function sendMessage() {
     input.value = '';
 
     // FIXME: Don't use hard-coded URL
-    fetch('http://10.201.8.54:5000/chat', {
+    fetch('http://10.201.8.54:5001/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -58,7 +128,7 @@ function sendMessage() {
             answer_div.className = 'answer_div';
             const imgElement = document.createElement('div');
             imgElement.className = 'img_head';
-            imgElement.innerHTML = svgContent;
+            imgElement.innerHTML = '<img src="res/DKU_LOGO.png" id="dku_logo" width="30px" alt="edge_lab_logo"></img>';
             const messageElement = document.createElement('div');
             messageElement.className = 'message_from_llm';
             const messageContent = document.createElement('span');
@@ -107,14 +177,3 @@ function addMessage(className, message) {
     chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-// 动态更改发送按钮的颜色
-document.getElementById('message-input').addEventListener('input', function() {
-    const input = this.value.trim();
-    const sendButton = document.getElementById('send-button');
-
-    if (input.length > 0) {
-        sendButton.classList.add('active');
-    } else {
-        sendButton.classList.remove('active');
-    }
-});

@@ -187,3 +187,4 @@ RAG/chroma_db
 RAG/pipeline_storage
 # RAG document store
 RAG/docstore
+.venv
