@@ -18,5 +18,5 @@ class Config:
         )
         # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
         self.docstore_path = (
-            f"/opt/docstores/bge_m3_chroma_db"
+            f"/opt/docstores/bge_m3_docstore"
         )
