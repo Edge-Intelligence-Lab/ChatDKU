@@ -10,6 +10,7 @@ class Config:
         # about load_and_index
         self.data_dir = "/opt/RAG_data"
         self.documents_path = "/opt/RAG_data/new_parser_documents.pkl"
+        self.pipeline_cache = "./pipeline_cache"
         self.update = False
 
         # about query
