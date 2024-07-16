@@ -220,7 +220,9 @@ def change_update(
         doc_path=json.loads(docs["metadatas"][i]['_node_content'])["metadata"]["file_path"]
         if doc_path in timed_files:
             chroma_collection.delete(ids=[docs["ids"][i]])
-            deleted_nodes.append(docs["metadadas"][i]["doc_id"])
+            deleted_doc_id=docs["metadadas"][i]["doc_id"]
+            if deleted_doc_id not in deleted_nodes:
+                deleted_nodes.append(deleted_doc_id)
 
     #Vector_store Update
     new_nodes = pipeline.run(
