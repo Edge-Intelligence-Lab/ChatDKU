@@ -2,6 +2,7 @@ import os
 import pickle
 import json
 import chromadb
+import hashlib
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
