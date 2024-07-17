@@ -603,5 +603,3 @@ def decide_table_extraction(
         return pdf_infer_table_structure or doc_type not in skip_infer_table_types
 
     return doc_type not in skip_infer_table_types
-
-

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div id="head">
+        <span id="head_title">Chat-DKU</span>
+        <img src="res/edge_logo.svg" alt="edge_lab_logo"></img>
+    </div>
+    <div id="chat-container">
+        <div id="chat-log">
+            <div id="page-center-logo-div"> <img src="res/edge_logo.svg" width="60px" alt="edge_lab_logo"></img></div>
+            <div id="usecase-div">
+                <div class="block" id="study-block" data-content="Do we have courses to learn other foreign languages? How to take it?">
+                    <div class="logo">
+                        <img src="res/study_logo.png" alt="Logo 1" style="max-width: 80%; max-height: 80%;">
+                    </div>
+                    <div class="text">Course</div>
+                </div>
+                <div class="block" id="sg-work-block" data-content="Is it better to have one mentor or two for my signature work?">
+                    <div class="logo">
+                        <img src="res/sg_work_logo.png" alt="Logo 2" style="max-width: 80%; max-height: 80%;">
+                    </div>
+                    <div class="text">Campus Service</div>
+                </div>
+                <div class="block" id="admin-block" data-content="What is the email or contact information for the school’s IT department?">
+                    <div class="logo">
+                        <img src="res/administration_logo.png" alt="Logo 3" style="max-width: 80%; max-height: 80%;">
+                    </div>
+                    <div class="text">Career Service</div>
+                </div>
+                <div class="block" id="club-block" data-content="What preparations do I need to make if I want to organize a club at DKU?">
+                    <div class="logo">
+                        <img src="res/club_logo.png" alt="Logo 4" style="max-width: 80%; max-height: 80%;">
+                    </div>
+                    <div class="text">Student Life</div>
+                </div>
+            </div>
+        </div>
+        <div id="input-container">
+            <input type="text" id="message-input" placeholder="Type a message..." />
+            <button id="send-button">⬆</button>
+        </div>
+        <div id="declaration">
+            Developed by DKU Edge Intelligence Lab.
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -4,28 +4,17 @@
 
 ### Embedding Model and LLM
 
-The RAG scripts require an embedding model hosted on an Ollama server and an LLM
-server with OpenAI compatible API. You can skip this section if you already have them
-set up.
+The RAG scripts require an embedding model hosted on a
+[Text Embeddings Inference](https://github.com/huggingface/text-embeddings-inference)
+server and an LLM server with OpenAI compatible API. You can skip this section if you
+already have them set up.
 
-To host an embedding model, first install [Ollama](https://ollama.com/). Then, if
-your embedding model is already available on the
-[Ollama library](https://ollama.com/library), simply run
-```bash
-ollama pull [model_name]
-```
-However, it is more likely that you need to use an embedding model hosted on Hugging
-Face. To download a model from Hugging Face, you can use `huggingface-cli`,
-alternatively, use `git clone` with `git-lfs` installed. Then, you need to convert it
-to GGUF format:
-```bash
-git clone https://github.com/ggerganov/llama.cpp.git
-cd llama.cpp
-pip3.11 install -r requirements.txt  # Tip: "AttributeError: module 'pkgutil' has no attribute 'ImpImporter'" the error exists for python 3.12, so pip3.11 is required temporarily.
-python3 convert-hf-to-gguf.py [path_to_your_downloaded_model] --outfile [path_to_output_file.gguf]
-```
-Then follow the tutorial for
-[Import from GGUF](https://github.com/ollama/ollama?tab=readme-ov-file#import-from-gguf).
+To host an embedding model, first install
+[Text Embeddings Inference](https://github.com/huggingface/text-embeddings-inference).
+Then, you should run each embedding model as a separate TEI docker container, and
+[setup nginx routing for multiple model endpoints](https://github.com/huggingface/text-embeddings-inference/issues/256#issuecomment-2173645910).
+The endpoints should be of the format `[base_url]/[author]/[model_name]/embed`, e.g.
+`http://127.0.0.1:8080/BAAI/bge-m3/embed`.
 
 To host an LLM server with OpenAI compatible API, one option is vLLM. You can follow
 the tutorials below to set it up:
@@ -61,10 +50,10 @@ pip install -e .
 
 Pass in the `-h` to view all the available command line options.
 
-The scripts need to access the embedding model via the Ollama API, and the LLM via an
-OpenAI compatible API. Therefore, you may have to specify the following options if
-they differ from the default:
-- `--ollama-url`: Ollama API endpoint such as `http://localhost:11434`.
+The scripts need to access the embedding model via the Text Embedding Inference API,
+and the LLM via an OpenAI compatible API. Therefore, you may have to specify the
+following options if they differ from the default:
+- `--tei-url`: Text Embedding Inference base url such as `http://localhost:8080`.
 - `--llm-url`: OpenAI compatible API endpoint such as `http://localhost:8000/v1`.
 
 `./load_and_index.py` would load data into a vector store and a document store, while

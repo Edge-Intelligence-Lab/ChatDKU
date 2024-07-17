@@ -2,7 +2,7 @@
 # Count the number and total size of the files grouped by the extension in RAG_data
 # Adapted from: https://askubuntu.com/questions/454564/count-total-number-of-files-in-particular-directory-with-specific-extension
 
-cd "$(dirname "$0")/../RAG_data"
+cd "$1"
 
 find . -type f \
 	| egrep -o "\.[a-zA-Z0-9]+$" \

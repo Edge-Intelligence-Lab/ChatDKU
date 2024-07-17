@@ -1,9 +1,16 @@
 import os
 import nltk
+import nest_asyncio
+
+nest_asyncio.apply()
+
 import pickle
 import argparse
 from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
+from llama_parse import LlamaParse
+from config import Config
+from markdownify import markdownify as md
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -50,6 +57,12 @@ def update_data(data_dir):
     documents_path = os.path.join(data_dir, "documents.pkl")
 
     reader = UnstructuredReader()
+    llama_parse_api_key = ""
+    pdf_parser = LlamaParse(
+        api_key=llama_parse_api_key,
+        result_type="markdown",
+        verbose=True,
+    )
     documents = SimpleDirectoryReader(
         data_dir,
         recursive=True,
@@ -57,10 +70,19 @@ def update_data(data_dir):
         file_extractor={
             ".htm": reader,
             ".html": reader,
-            ".pdf": reader,
+            ".pdf": pdf_parser,
             ".csv": reader,
         },
     ).load_data()
+
+    for doc in documents:
+        if doc.metadata["file_type"] == "text/html":
+            with open(doc.metadata["file_path"], "r") as f:
+                html = f.read()
+            try:
+                doc.text = md(html)
+            except:
+                print(f"fail trans to md:{doc.metadata['file_path']}")
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
@@ -70,8 +92,9 @@ def update_data(data_dir):
 
 
 def main(data_dir=None):
+    config = Config()
     if data_dir is None:
-        data_dir = Setting.data_dir
+        data_dir = config.data_dir
 
     update_data(data_dir)
     hash = hash_directory(data_dir)

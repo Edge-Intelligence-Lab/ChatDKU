@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-from argparse import ArgumentParser
 from pathlib import Path
 import pickle
 import chromadb
@@ -10,7 +9,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from typing import Any
-from settings import Config, get_parser, setup
+from settings import setup
 from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -24,6 +23,10 @@ import unstructured.partition.auto
 from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
+
+from config import Config
+
+config = Config()
 
 
 def load_and_index(
@@ -39,7 +42,7 @@ def load_and_index(
     # please use only a single process for now.
     pipeline_workers: int = 1,
 ):
-    documents_path = os.path.join(data_dir, "documents.pkl")
+    documents_path = os.path.join(config.data_dir, config.documents_path)
     hash_path = os.path.join("./", "hash.pkl")
     now_hash = hash_directory(data_dir)
 
@@ -125,7 +128,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     db = chromadb.PersistentClient(
-        path=Config.vector_store_path, settings=chromadb.Settings(allow_reset=True)
+        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
@@ -148,22 +151,11 @@ def load_and_index(
 
     docstore = SimpleDocumentStore()
     docstore.add_documents(nodes)
-    docstore.persist(Config.docstore_path)
+    docstore.persist(config.docstore_path)
 
 
 def main():
-    parser = ArgumentParser(parents=[get_parser()])
-    parser.add_argument("-u", "--update", action="store_true")
-    parser.add_argument("-r", "--read-only", action="store_true")
-    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
-    parser.add_argument(
-        "-c",
-        "--pipeline-cache",
-        type=Path,
-        default=Path("./pipeline_storage"),
-    )
-    args = parser.parse_args()
-    setup(args)
+    setup()
 
     load_and_index(
         update=args.update,

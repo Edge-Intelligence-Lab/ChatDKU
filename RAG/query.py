@@ -1,25 +1,15 @@
 #!/usr/bin/env python3
 
 import json
-from argparse import ArgumentParser
-from typing import Any, Optional, Union
-from enum import Enum
+from typing import Any
 from llama_index.core import VectorStoreIndex, get_response_synthesizer
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.core.query_engine import RetrieverQueryEngine
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
-
-import os
-import phoenix as px
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk import trace as trace_sdk
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 import functools
 from dsp import LM
@@ -28,7 +18,10 @@ from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate import Evaluate
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
-from settings import Config, get_parser, setup
+from settings import setup, use_phoenix
+from config import Config
+
+config = Config()
 
 import llama_index
 
@@ -119,13 +112,13 @@ class Rag(dspy.Module):
         super().__init__()
         self.retriever_selector = dspy.ChainOfThought(RetrieverSelector)
 
-        db = chromadb.PersistentClient(path=Config.vector_store_path)
+        db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_or_create_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         index = VectorStoreIndex.from_vector_store(vector_store)
         self.vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
 
-        docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
+        docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         self.keyword_retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=keyword_top_k
         )
@@ -165,24 +158,13 @@ class Judge(dspy.Signature):
 
 
 def main():
-    parser = ArgumentParser(parents=[get_parser()])
-    args = parser.parse_args()
-    setup(args)
-
-    # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
-    # pass in port 0 to make it easier to avoid port collision.
-    os.environ["PHOENIX_GRPC_PORT"] = "0"
-    px.launch_app()
-    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
-    endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
-    tracer_provider = trace_sdk.TracerProvider()
-    tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
-    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+    setup()
+    use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    file_path = "../RAG_evaluate/data_for_rag/before_RAG_dataset.json"
+    file_path = "../datasets/before_RAG_dataset.json"
     with open(file_path, "r", encoding="utf-8") as file:
         json_data = json.load(file)
     dataset = [

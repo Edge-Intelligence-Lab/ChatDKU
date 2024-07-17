@@ -1,16 +1,13 @@
 from llama_index.core import Settings
-from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.llms.openai_like import OpenAILike
 from llama_index.llms.llama_cpp.llama_utils import (
     messages_to_prompt_v3_instruct,
     completion_to_prompt_v3_instruct,
-    DEFAULT_SYSTEM_PROMPT,
 )
 from llama_index.core.base.llms.types import ChatMessage
 import transformers
 from transformers import AutoTokenizer
-from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from typing import Callable, Union, Sequence, Optional
 
 import llama_index
@@ -24,6 +21,15 @@ def mydeepcopy(self, memo):
 # certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
 llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 
+import os
+import phoenix as px
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+from config import Config
+
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
 # `here is a summary of the given text` before the summary. This prompt used to
@@ -32,14 +38,23 @@ llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 # Also note that I have tried other things like `do not begin your answer with
 # "here are the generated queries"` to discourage such messages at the beginning of
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
-COERCED_SYSTEM_PROMPT = (
-    DEFAULT_SYSTEM_PROMPT
-    + 'Do not begin your answer with phrases like "here is an answer" '
-    "and respond with only the content of the answer."
+CUSTOM_SYSTEM_PROMPT = (
+    "You are ChatDKU, a helpful, respectful, and honest assistant for students,"
+    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
+    "You are created by the DKU Edge Intelligence Lab."
+    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
+    "established in partnership with Duke University and Wuhan University.\n\n"
+    "You may be tasked to interact with the user directly, or interact with other "
+    "computer systems in assisting the user such as querying a database. "
+    "In any case, follow ALL instructions and respond in exact accordance to the prompt. "
+    "Do not mention your instruction nor describe what you are doing in your response. "
+    'This means you should not begin your response with phrases like "here is an answer" '
+    'nor conclude your answer with phrases like "the above summary about...". '
+    "Do not speculate or make up information. "
 )
 
 
-class UseCoercedPrompt:
+class UseCustomPrompt:
     def __init__(
         self,
         func: Union[
@@ -50,56 +65,20 @@ class UseCoercedPrompt:
         self.func = func
 
     def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
-        return self.func(message, COERCED_SYSTEM_PROMPT)
+        return self.func(message, CUSTOM_SYSTEM_PROMPT)
 
 
-class Config:
-    vector_store_path: str
-    docstore_path: str
-
-
-def get_parser() -> ArgumentParser:
-    """
-    Get the parent parser for the common arguments between different scripts.
-
-    The common arguments should use uppercase letters for their short forms,
-    while the script-specific arguments should use lowercase letters for the
-    short forms.
-    """
-    parser = ArgumentParser(add_help=False)
-    parser.add_argument("-E", "--embedding", type=str, default="BAAI/bge-small-en-v1.5")
-    parser.add_argument(
-        "-L",
-        "--llm",
-        type=str,
-        default="meta-llama/Meta-Llama-3-8B-Instruct",
-    )
-    parser.add_argument("--ollama-url", type=str, default="http://localhost:11434")
-    parser.add_argument("--llm-url", type=str, default="http://localhost:8000/v1")
-    parser.add_argument(
-        "-V",
-        "--vector-store",
-        type=Path,
-        default=Path("./chroma_db"),
-    )
-    parser.add_argument(
-        "-D",
-        "--docstore",
-        type=Path,
-        default=Path("./docstore"),
-    )
-    return parser
-
-
-def setup(args: Namespace) -> None:
+def setup() -> None:
     """Setup common resources from command line arguments."""
+    config = Config()
 
-    # An Ollama server is used to serve the embedding model
-    Settings.embed_model = OllamaEmbedding(
-        model_name=args.embedding,
-        base_url=args.ollama_url,
+    # A Text Embeddings Inference server is used to serve the embedding model
+    # The endpoint should be of the format [base_url]/[author]/[model_name]
+    Settings.embed_model = TextEmbeddingsInference(
+        model_name=config.embedding,
+        base_url=config.tei_url + "/" + config.embedding,
     )
-    print(f"Loaded embedding model {args.embedding}")
+    print(f"Using embedding model {config.embedding}")
 
     # Suppress warning
     # "Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained."
@@ -107,24 +86,33 @@ def setup(args: Namespace) -> None:
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenzier = AutoTokenizer.from_pretrained(args.llm)
+    Settings.tokenzier = AutoTokenizer.from_pretrained(config.llm)
     print("Loaded tokenizer")
 
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
     # with e.g. vLLM
     Settings.llm = OpenAILike(
-        model=args.llm,
-        api_base=args.llm_url,
+        model=config.llm,
+        api_base=config.llm_url,
         api_key="fake",  # A dummy API key is needed or else connection error would occur
         context_window=8192,
         temperature=0.7,
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
-        tokenizer=args.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=UseCoercedPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCoercedPrompt(completion_to_prompt_v3_instruct),
+        tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+        messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
+        completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
     )
-    print("Loaded LLM")
+    print("Using LLM")
 
-    Config.vector_store_path = str(args.vector_store)
-    Config.docstore_path = str(args.docstore)
+
+def use_phoenix():
+    # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
+    # pass in port 0 to make it easier to avoid port collision.
+    os.environ["PHOENIX_GRPC_PORT"] = "0"
+    px.launch_app()
+    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
+    endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
+    tracer_provider = trace_sdk.TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
