@@ -119,14 +119,29 @@ class RetrieverSelector(dspy.Signature):
 
     question = dspy.InputField(desc="The question to be answered.")
     retriever_type = dspy.OutputField(
-        desc="The best type of retriever to use for the given question.\n"
-        '"vector": Retrieves texts that are semantically similar to the query.\n'
+        desc="The best type of retriever to use for the given question. "
+        '"vector": Retrieves texts that are semantically similar to the query. '
         '"keyword": Retrieves texts that contain the same keywords used in the query.'
     )
     query = dspy.OutputField(
-        desc="The query string to use for querying relevant texts.\n"
-        'If retriever is "vector", write a passage that might be semantically similar to the real answer to the question.\n'
+        desc="The query string to use for querying relevant texts. "
+        'If retriever is "vector", write a passage that might be semantically similar to the real answer to the question. '
         'If retriever is "keyword", generate some keywords that might appear in the answer to the question.'
+    )
+
+
+class DocumentSummarizer(dspy.Signature):
+    """Update the summary with information in the documents that are relevant to the query."""
+
+    previous_summary = dspy.InputField(
+        desc="The previously generated summary of relevant information. May be empty."
+    )
+    documents = dspy.InputField(
+        desc="The documents to extract relevant information from."
+    )
+    query = dspy.InputField(desc="The query that the summary should answer.")
+    current_summary = dspy.OutputField(
+        desc="The combined summary of relevant information in Previous Summary and Documents."
     )
 
 
@@ -146,7 +161,7 @@ class Rag(dspy.Module):
             docstore=docstore, similarity_top_k=keyword_top_k
         )
 
-        self.response_synthesizer = get_response_synthesizer()
+        self.summarizer = dspy.ChainOfThought(DocumentSummarizer)
 
     def forward(self, question):
         s = self.retriever_selector(question=question)
@@ -165,8 +180,13 @@ class Rag(dspy.Module):
             retriever = self.vector_retriever
 
         nodes = retriever.retrieve(s.query)
-        response = self.response_synthesizer.synthesize(question, nodes=nodes)
-        return dspy.Prediction(answer=str(response))
+
+        summary = ""
+        for node in nodes:
+            summary = self.summarizer(
+                previous_summary=summary, documents=node.get_content(), query=question
+            ).current_summary
+        return dspy.Prediction(answer=summary)
 
 
 class Judge(dspy.Signature):
@@ -197,7 +217,7 @@ def main():
         for d in json_data
     ]
 
-    trainset, devset = dataset[50:55], dataset[60:65]
+    trainset, devset = dataset[50:52], dataset[60:62]
 
     judge = dspy.TypedPredictor(Judge)
 
