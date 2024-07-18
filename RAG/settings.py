@@ -1,10 +1,6 @@
 from llama_index.core import Settings
 from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.llms.openai_like import OpenAILike
-from llama_index.llms.llama_cpp.llama_utils import (
-    messages_to_prompt_v3_instruct,
-    completion_to_prompt_v3_instruct,
-)
 from llama_index.core.base.llms.types import ChatMessage
 import transformers
 from transformers import AutoTokenizer
@@ -30,6 +26,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from config import Config
 
+# FIXME: Use this as a part of the user prompt, then delete this.
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
 # `here is a summary of the given text` before the summary. This prompt used to
@@ -54,18 +51,22 @@ CUSTOM_SYSTEM_PROMPT = (
 )
 
 
-class UseCustomPrompt:
-    def __init__(
-        self,
-        func: Union[
-            Callable[[Sequence[ChatMessage], Optional[str]], str],
-            Callable[[str, Optional[str]], str],
-        ],
-    ):
-        self.func = func
+def completion_to_prompt(completion: str, system_prompt: Optional[str] = None) -> str:
+    """
+    Convert completion instruction string to Llama 3 Instruct format with no system prompt.
 
-    def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
-        return self.func(message, CUSTOM_SYSTEM_PROMPT)
+    System prompt is not used because it is difficult to specify a different one
+    on each call, which makes it difficult to count the number of tokens.
+
+    Reference: https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+
+    Note: `<|begin_of_text|>` is not needed as Llama.cpp appears to add it already.
+    """
+    return (
+        f"<|start_header_id|>user<|end_header_id|>\n\n"
+        f"{completion.strip()}<|eot_id|>\n"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\n"
+    )
 
 
 def setup() -> None:
@@ -100,8 +101,7 @@ def setup() -> None:
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
         tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
+        completion_to_prompt=completion_to_prompt,
     )
     print("Using LLM")
 

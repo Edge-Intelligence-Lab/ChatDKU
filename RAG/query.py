@@ -21,6 +21,9 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 from dspy import Predict
 from dspy.signatures.signature import ensure_signature, signature_to_template
 
+# FIXME: Use Adapters as an alternative when available
+# See also: https://github.com/stanfordnlp/dspy/issues/409
+import dspy_patch
 
 from settings import setup, use_phoenix
 from config import Config
@@ -114,19 +117,25 @@ def get_template(predict_module: Predict) -> str:
     return template(x)
 
 
+custom_cot_rationale = dspy.OutputField(
+    prefix="Reasoning:",
+    desc="The step-by-step reasoning for you to derive the response.",
+)
+
+
 class RetrieverSelector(dspy.Signature):
     """Choose the best retriever type and generate a query for querying the database for texts that could answer the question."""
 
     question = dspy.InputField(desc="The question to be answered.")
     retriever_type = dspy.OutputField(
         desc="The best type of retriever to use for the given question. "
-        '"vector": Retrieves texts that are semantically similar to the query. '
-        '"keyword": Retrieves texts that contain the same keywords used in the query.'
+        '"Vector" retrieves texts that are semantically similar to the query. '
+        '"Keyword" retrieves texts that contain the same keywords used in the query. '
     )
     query = dspy.OutputField(
         desc="The query string to use for querying relevant texts. "
-        'If retriever is "vector", write a passage that might be semantically similar to the real answer to the question. '
-        'If retriever is "keyword", generate some keywords that might appear in the answer to the question.'
+        'If retriever is "Vector", write a passage that might be semantically similar to the real answer to the question. '
+        'If retriever is "Keyword", generate some keywords that might appear in the answer to the question.'
     )
 
 
@@ -148,7 +157,9 @@ class DocumentSummarizer(dspy.Signature):
 class Rag(dspy.Module):
     def __init__(self, vector_top_k, keyword_top_k):
         super().__init__()
-        self.retriever_selector = dspy.ChainOfThought(RetrieverSelector)
+        self.retriever_selector = dspy.ChainOfThought(
+            RetrieverSelector, rationale_type=custom_cot_rationale
+        )
 
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_or_create_collection("dku_html_pdf")
@@ -161,17 +172,19 @@ class Rag(dspy.Module):
             docstore=docstore, similarity_top_k=keyword_top_k
         )
 
-        self.summarizer = dspy.ChainOfThought(DocumentSummarizer)
+        self.summarizer = dspy.ChainOfThought(
+            DocumentSummarizer, rationale_type=custom_cot_rationale
+        )
 
     def forward(self, question):
         s = self.retriever_selector(question=question)
         dspy.Suggest(
-            s.retriever_type in ["vector", "keyword"],
-            'The retriever type should be either "vector" or "keyword".',
+            s.retriever_type in ["Vector", "Keyword"],
+            'Retriever Type should be either "Vector" or "Keyword" (without quotes and first letter of each word capitalized).',
         )
-        if s.retriever_type == "vector":
+        if s.retriever_type == "Vector":
             retriever = self.vector_retriever
-        elif s.retriever_type == "keyword":
+        elif s.retriever_type == "Keyword":
             retriever = self.keyword_retriever
         else:
             print(
@@ -189,15 +202,33 @@ class Rag(dspy.Module):
         return dspy.Prediction(answer=summary)
 
 
-class Judge(dspy.Signature):
+class JudgeSignature(dspy.Signature):
     """Judge if the current answer is equivalent to the ground truth answer to the question."""
 
-    question: str = dspy.InputField(desc="The question to be answered.")
-    ground_truth: str = dspy.InputField(desc="The ground truth answer to the question.")
-    answer: str = dspy.InputField(desc="The current answer to be judged.")
-    judgement: bool = dspy.OutputField(
-        desc="Whether the current answer is equivalent to the ground truth."
+    question = dspy.InputField(desc="The question to be answered.")
+    ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
+    answer = dspy.InputField(desc="The current answer to be judged.")
+    judgement = dspy.OutputField(
+        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
     )
+
+
+class Judge(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.judge = dspy.TypedChainOfThought(
+            JudgeSignature, reasoning=custom_cot_rationale
+        )
+
+    def forward(self, question, ground_truth, answer):
+        judgement_str = self.judge(
+            question=question, ground_truth=ground_truth, answer=answer
+        ).judgement
+        dspy.Suggest(
+            judgement_str in ["True", "False"],
+            'Judgement should be either "True" or "False" (without quotes and first letter of each word capitalized).',
+        )
+        return dspy.Prediction(judgement=(judgement_str == "True"))
 
 
 def main():
@@ -217,9 +248,12 @@ def main():
         for d in json_data
     ]
 
-    trainset, devset = dataset[50:52], dataset[60:62]
+    trainset, devset = dataset[50:51], dataset[60:61]
 
-    judge = dspy.TypedPredictor(Judge)
+    judge = assert_transform_module(
+        Judge(),
+        functools.partial(backtrack_handler, max_backtracks=3),
+    )
 
     def metric(example, pred, trace=None):
         prediction = judge(
@@ -227,16 +261,16 @@ def main():
         )
         return prediction.judgement
 
-    config = dict(max_bootstrapped_demos=3, max_labeled_demos=0, max_errors=1)
+    config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
     teleprompter = BootstrapFewShot(metric=metric, **config)
 
     # try:
 
-    rag_with_assertions = assert_transform_module(
+    rag = assert_transform_module(
         Rag(vector_top_k=5, keyword_top_k=5),
         functools.partial(backtrack_handler, max_backtracks=3),
     )
-    rag = teleprompter.compile(rag_with_assertions, trainset=trainset)
+    rag = teleprompter.compile(rag, trainset=trainset)
     # except:
     #     input()
 
