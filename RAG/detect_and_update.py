@@ -14,7 +14,8 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_parse import LlamaParse
 
-from settings import Config, setup, get_parser
+from settings import setup
+from config import Config
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -120,18 +121,25 @@ def change_update(
     with open(output_file, 'r') as f:
         changed_data=json.load(f)
     
+    new_files=changed_data["added"]+changed_data["modified"]
+    new_files=list(data_dir+'/'+new_file for new_file in new_files)
+    timed_files=changed_data["modified"]+changed_data["removed"]  
+    timed_files=list(data_dir+'/'+timed_file for timed_file in timed_files)   
+    
     #If no data_update
-    if os.path.getsize(output_file) == 0:
+    if len(new_files+timed_files) == 0:
+        print("Nothing has changed")
         return
     
+    print("Added",len(changed_data["added"]),"documents\n",
+          "Modified",len(changed_data["modified"]),"documents\n",
+          "Removed",len(changed_data["removed"]),"documents\n")
+    
     #Update documents
-    documents_path = os.path.join(data_dir, "documents.pkl")
+    documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
     with open(documents_path, "rb") as file:
         documents = pickle.load(file)
     print(f"Loaded documents from {documents_path}")
-
-    new_files=changed_data["added"]+changed_data["modified"]
-    timed_files=changed_data["modified"]+changed_data["removed"]    
 
     for document in documents:
         if document.metadata["file_path"] in timed_files:
@@ -150,10 +158,11 @@ def change_update(
         ).load_data()
 
     documents=documents+new_documents
-
+    
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
 
+    print("Document successfully update")
     
     #Prepare chromadb and ingestion pipeline
     db = chromadb.PersistentClient(
@@ -226,10 +235,13 @@ def change_update(
                 deleted_nodes.append(deleted_doc_id)
 
     #Vector_store Update
+    #还是跑全部documents吧，毕竟cache不会同步
     new_nodes = pipeline.run(
-        documents=new_documents, num_workers=pipeline_workers, show_progress=True
+        documents=documents, num_workers=pipeline_workers, show_progress=True
     )
     pipeline.persist(pipeline_cache_path)
+
+    print("ChromaDB successfully update")
 
     #Update docstore
     docstore = SimpleDocumentStore.from_persist_path(Config.docstore_path)
@@ -239,22 +251,21 @@ def change_update(
     docstore.add_documents(new_nodes)
     docstore.persist(Config.docstore_path)
 
+    print("Docstore successfully update")
+
+    print("--FINISH--")
+
 def main():
-    parser = ArgumentParser(parents=[get_parser()])
-    parser.add_argument("-d", "--data_dir", type=Path, default=Path("/opt/RAG_data"))
-    parser.add_argument(
-        "-c",
-        "--pipeline-cache",
-        type=Path,
-        default=Path("./pipeline_storage"),
-    )
-    args = parser.parse_args()
-    setup(args)
+    setup()
+    config=Config()
 
-    change_detect(data_dir=str(args.data_dir))
+    change_detect(data_dir=str(config.data_dir))
 
-    change_update(data_dir=str(args.data_dir),
-            pipeline_cache_path=str(args.pipeline_cache),
+    change_update(data_dir=str(config.data_dir),
+            pipeline_cache_path=str(config.pipeline_cache),
             pipeline_workers=1,
             text_spliter="sentence_splitter",
             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},)
+
+if __name__ == "__main__":
+    main()
