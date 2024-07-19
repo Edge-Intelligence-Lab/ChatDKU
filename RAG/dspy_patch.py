@@ -24,7 +24,7 @@ def custom_guidelines(self, show_guidelines: bool = True) -> str:
 
     result = "##########\n\n"
     result += "Given the input in the format below:\n\n"
-    result += self.query(input_example)
+    result += self.query(input_example, True)
     result += "\n\n##########\n\n"
     result += (
         "Output in the format given below. "
@@ -33,7 +33,7 @@ def custom_guidelines(self, show_guidelines: bool = True) -> str:
         "and do not stylize them such as **Field Name:**. "
         "Output format:\n\n"
     )
-    result += self.query(output_example)
+    result += self.query(output_example, True)
     result += "\n\n##########"
     return result
 
