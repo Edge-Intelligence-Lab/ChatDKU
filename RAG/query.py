@@ -2,7 +2,7 @@
 
 import json
 from typing import Any
-from llama_index.core import VectorStoreIndex, get_response_synthesizer
+from llama_index.core import VectorStoreIndex
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
@@ -118,12 +118,12 @@ def get_template(predict_module: Predict) -> str:
 
 
 custom_cot_rationale = dspy.OutputField(
-    prefix="Reasoning:",
-    desc="The step-by-step reasoning for you to derive the response.",
+    prefix="Rationale:",
+    desc="The step-by-step rationale of how you derive the response.",
 )
 
 
-class RetrieverSelector(dspy.Signature):
+class RetrieverSelectorSignature(dspy.Signature):
     """Choose the best retriever type and generate a query for querying the database for texts that could answer the question."""
 
     question = dspy.InputField(desc="The question to be answered.")
@@ -139,7 +139,7 @@ class RetrieverSelector(dspy.Signature):
     )
 
 
-class DocumentSummarizer(dspy.Signature):
+class DocumentSummarizerSignature(dspy.Signature):
     """Update the summary with information in the documents that are relevant to the query."""
 
     previous_summary = dspy.InputField(
@@ -154,11 +154,27 @@ class DocumentSummarizer(dspy.Signature):
     )
 
 
+class DocumentSummarizer(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.summarizer = dspy.ChainOfThought(
+            DocumentSummarizerSignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(self, documents, query):
+        summary = ""
+        for doc in documents:
+            summary = self.summarizer(
+                previous_summary=summary, documents=doc, query=query
+            ).current_summary
+        return dspy.Prediction(summary=summary)
+
+
 class Rag(dspy.Module):
     def __init__(self, vector_top_k, keyword_top_k):
         super().__init__()
         self.retriever_selector = dspy.ChainOfThought(
-            RetrieverSelector, rationale_type=custom_cot_rationale
+            RetrieverSelectorSignature, rationale_type=custom_cot_rationale
         )
 
         db = chromadb.PersistentClient(path=config.chroma_db)
@@ -173,7 +189,7 @@ class Rag(dspy.Module):
         )
 
         self.summarizer = dspy.ChainOfThought(
-            DocumentSummarizer, rationale_type=custom_cot_rationale
+            DocumentSummarizerSignature, rationale_type=custom_cot_rationale
         )
 
     def forward(self, question):
@@ -231,12 +247,147 @@ class Judge(dspy.Module):
         return dspy.Prediction(judgement=(judgement_str == "True"))
 
 
+class Tool(dspy.Module):
+    def __init__(self, name: str, desc: str, param_specs: dict[str, str]):
+        super().__init__()
+        self.name = name
+        self.desc = desc
+        self.param_specs = param_specs
+
+
+class VectorRetriever(Tool):
+    def __init__(self, top_k: int = 5):
+        super().__init__(
+            "Vector Retriever",
+            "Retrieve texts from the database that are semantically similar to the query.",
+            {
+                "Query": "Texts that might be semantically similar to the real answer to the question."
+            },
+        )
+        db = chromadb.PersistentClient(path=config.chroma_db)
+        chroma_collection = db.get_or_create_collection("dku_html_pdf")
+        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        index = VectorStoreIndex.from_vector_store(vector_store)
+        self.retriever = index.as_retriever(similarity_top_k=top_k)
+        self.summarizer = DocumentSummarizer()
+
+    def forward(self, params: dict[str, str]):
+        query = params["Query"]
+        nodes = self.retriever.retrieve(query)
+        texts = [node.get_content() for node in nodes]
+        return self.summarizer(documents=texts, query=query)
+
+
+class KeywordRetriever(Tool):
+    def __init__(self, top_k: int = 5):
+        super().__init__(
+            "Keyword Retriever",
+            "Retrieve texts from the database that contain the same keywords in the query.",
+            {"Query": "Keywords that might appear in the answer to the question."},
+        )
+        docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
+        self.retriever = BM25Retriever.from_defaults(
+            docstore=docstore, similarity_top_k=top_k
+        )
+        self.summarizer = DocumentSummarizer()
+
+    def forward(self, params: dict[str, str]):
+        query = params["Query"]
+        nodes = self.retriever.retrieve(query)
+        texts = [node.get_content() for node in nodes]
+        return self.summarizer(documents=texts, query=query)
+
+
+# When executing tasks like summarizing, the LLM is supposed to ONLY generate the
+# summaries themselves. However, the LLM sometimes says things like
+# `here is a summary of the given text` before the summary. This prompt used to
+# explicitly discourage this kind of output.
+#
+# Also note that I have tried other things like `do not begin your answer with
+# "here are the generated queries"` to discourage such messages at the beginning of
+# the generated queries. Nevertheless, this prompt seems to be the most effective.
+class PlanSignature(dspy.Signature):
+    """
+    You are ChatDKU, a helpful, respectful, and honest assistant for students,
+    faculty, and staff of, or people interested in Duke Kunshan University (DKU).
+    You are created by the DKU Edge Intelligence Lab.
+
+    Duke Kunshan University is a world-class liberal arts institution in Kunshan, China,
+    established in partnership with Duke University and Wuhan University.
+    You may be tasked to interact with the user directly, or interact with other
+    computer systems in assisting the user such as querying a database.
+    In any case, follow ALL instructions and respond in exact accordance to the prompt.
+    Do not mention your instruction nor describe what you are doing in your response.
+    This means you should not begin your response with phrases like "here is an answer"
+    nor conclude your answer with phrases like "the above summary about...".
+    Do not speculate or make up information.
+
+    Your current task is to answer the current user message using the tools given below.
+    Please generate a step-by-step plan of the tools you want to use and their respective parameters.
+    """
+
+    current_user_message = dspy.InputField(desc="The current user message to answer.")
+    available_tools = dspy.InputField(
+        desc=(
+            "A list of available tools and their respective parameters. "
+            "For each tool, its name, description, a list of its parameter(s) "
+            "(including the description of each parameter) is given."
+        ),
+        # Preserve linebreaks in the format.
+        # However, it won't work if you implement the actual formatting function here,
+        # as the input would be convert to string first.
+        format=lambda x: x,
+    )
+    tool_plan = dspy.OutputField(
+        desc=(
+            "Your step-by-step plan of the tools to use and their respective parameters. "
+            "Output a list of tool usages separated by an empty line. "
+            "For each tool usage, output the name of the tool on the first line. "
+            'On the subsequent lines, output the parameters in the format of "Parameter Name: Parameter Value" '
+            "(without quotes and you should substitute in the actual parameter names and values)."
+        ),
+    )
+
+
+class Plan(dspy.Module):
+    def __init__(self, tools: list[Tool]):
+        super().__init__()
+        self.tools = tools
+        self.plan = dspy.ChainOfThought(
+            PlanSignature, rationale_type=custom_cot_rationale
+        )
+        print(get_template(self.plan))
+        return
+
+    def forward(self, current_user_message):
+        at = ""
+        for i, tool in enumerate(self.tools):
+            at += f"- Tool {i}\n"
+            at += f"  - Name: {tool.name}\n"
+            at += f"  - Description: {tool.desc}\n"
+            if tool.param_specs:
+                at += "  - Parameters:\n"
+                for j, (pn, pd) in enumerate(tool.param_specs.items()):
+                    at += f"    - Parameter {j}\n"
+                    at += f"      - Name: {pn}\n"
+                    at += f"      - Description: {pd}\n"
+            at += "\n"
+
+        return self.plan(current_user_message=current_user_message, available_tools=at)
+
+
 def main():
     setup()
     use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
+
+    plan = Plan(tools=[VectorRetriever(), KeywordRetriever()])
+    print(plan.forward(current_user_message="How to get funding?"))
+
+    input()
+    return
 
     file_path = "../datasets/before_RAG_dataset.json"
     with open(file_path, "r", encoding="utf-8") as file:

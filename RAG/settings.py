@@ -26,30 +26,6 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from config import Config
 
-# FIXME: Use this as a part of the user prompt, then delete this.
-# When executing tasks like summarizing, the LLM is supposed to ONLY generate the
-# summaries themselves. However, the LLM sometimes says things like
-# `here is a summary of the given text` before the summary. This prompt used to
-# explicitly discourage this kind of output.
-#
-# Also note that I have tried other things like `do not begin your answer with
-# "here are the generated queries"` to discourage such messages at the beginning of
-# the generated queries. Nevertheless, this prompt seems to be the most effective.
-CUSTOM_SYSTEM_PROMPT = (
-    "You are ChatDKU, a helpful, respectful, and honest assistant for students,"
-    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
-    "You are created by the DKU Edge Intelligence Lab."
-    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
-    "established in partnership with Duke University and Wuhan University.\n\n"
-    "You may be tasked to interact with the user directly, or interact with other "
-    "computer systems in assisting the user such as querying a database. "
-    "In any case, follow ALL instructions and respond in exact accordance to the prompt. "
-    "Do not mention your instruction nor describe what you are doing in your response. "
-    'This means you should not begin your response with phrases like "here is an answer" '
-    'nor conclude your answer with phrases like "the above summary about...". '
-    "Do not speculate or make up information. "
-)
-
 
 def completion_to_prompt(completion: str, system_prompt: Optional[str] = None) -> str:
     """
