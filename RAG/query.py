@@ -21,8 +21,7 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 from dspy import Predict
 from dspy.signatures.signature import ensure_signature, signature_to_template
 
-# FIXME: Use Adapters as an alternative when available
-# See also: https://github.com/stanfordnlp/dspy/issues/409
+# FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import dspy_patch
 
 from settings import setup, use_phoenix
@@ -123,22 +122,6 @@ custom_cot_rationale = dspy.OutputField(
 )
 
 
-class RetrieverSelectorSignature(dspy.Signature):
-    """Choose the best retriever type and generate a query for querying the database for texts that could answer the question."""
-
-    question = dspy.InputField(desc="The question to be answered.")
-    retriever_type = dspy.OutputField(
-        desc="The best type of retriever to use for the given question. "
-        '"Vector" retrieves texts that are semantically similar to the query. '
-        '"Keyword" retrieves texts that contain the same keywords used in the query. '
-    )
-    query = dspy.OutputField(
-        desc="The query string to use for querying relevant texts. "
-        'If retriever is "Vector", write a passage that might be semantically similar to the real answer to the question. '
-        'If retriever is "Keyword", generate some keywords that might appear in the answer to the question.'
-    )
-
-
 class DocumentSummarizerSignature(dspy.Signature):
     """Update the summary with information in the documents that are relevant to the query."""
 
@@ -168,83 +151,6 @@ class DocumentSummarizer(dspy.Module):
                 previous_summary=summary, documents=doc, query=query
             ).current_summary
         return dspy.Prediction(summary=summary)
-
-
-class Rag(dspy.Module):
-    def __init__(self, vector_top_k, keyword_top_k):
-        super().__init__()
-        self.retriever_selector = dspy.ChainOfThought(
-            RetrieverSelectorSignature, rationale_type=custom_cot_rationale
-        )
-
-        db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_or_create_collection("dku_html_pdf")
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        index = VectorStoreIndex.from_vector_store(vector_store)
-        self.vector_retriever = index.as_retriever(similarity_top_k=vector_top_k)
-
-        docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
-        self.keyword_retriever = BM25Retriever.from_defaults(
-            docstore=docstore, similarity_top_k=keyword_top_k
-        )
-
-        self.summarizer = dspy.ChainOfThought(
-            DocumentSummarizerSignature, rationale_type=custom_cot_rationale
-        )
-
-    def forward(self, question):
-        s = self.retriever_selector(question=question)
-        dspy.Suggest(
-            s.retriever_type in ["Vector", "Keyword"],
-            'Retriever Type should be either "Vector" or "Keyword" (without quotes and first letter of each word capitalized).',
-        )
-        if s.retriever_type == "Vector":
-            retriever = self.vector_retriever
-        elif s.retriever_type == "Keyword":
-            retriever = self.keyword_retriever
-        else:
-            print(
-                f"Unsupported retriever_type: {s.retriever_type}, fall back to vector retriever"
-            )
-            retriever = self.vector_retriever
-
-        nodes = retriever.retrieve(s.query)
-
-        summary = ""
-        for node in nodes:
-            summary = self.summarizer(
-                previous_summary=summary, documents=node.get_content(), query=question
-            ).current_summary
-        return dspy.Prediction(answer=summary)
-
-
-class JudgeSignature(dspy.Signature):
-    """Judge if the current answer is equivalent to the ground truth answer to the question."""
-
-    question = dspy.InputField(desc="The question to be answered.")
-    ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
-    answer = dspy.InputField(desc="The current answer to be judged.")
-    judgement = dspy.OutputField(
-        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
-    )
-
-
-class Judge(dspy.Module):
-    def __init__(self):
-        super().__init__()
-        self.judge = dspy.TypedChainOfThought(
-            JudgeSignature, reasoning=custom_cot_rationale
-        )
-
-    def forward(self, question, ground_truth, answer):
-        judgement_str = self.judge(
-            question=question, ground_truth=ground_truth, answer=answer
-        ).judgement
-        dspy.Suggest(
-            judgement_str in ["True", "False"],
-            'Judgement should be either "True" or "False" (without quotes and first letter of each word capitalized).',
-        )
-        return dspy.Prediction(judgement=(judgement_str == "True"))
 
 
 class Tool(dspy.Module):
@@ -306,6 +212,8 @@ class KeywordRetriever(Tool):
 # Also note that I have tried other things like `do not begin your answer with
 # "here are the generated queries"` to discourage such messages at the beginning of
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
+#
+# FIXME: Use a more suitable system prompt
 class PlanSignature(dspy.Signature):
     """
     You are ChatDKU, a helpful, respectful, and honest assistant for students,
@@ -324,6 +232,10 @@ class PlanSignature(dspy.Signature):
 
     Your current task is to answer the current user message using the tools given below.
     Please generate a step-by-step plan of the tools you want to use and their respective parameters.
+    All tool parameters are required.
+    Note that a special tool named "Synthesizer" (without quotes) must be used
+    at the end to synthesize a final response to the user.
+    It has no parameters and would not be explicitly given below.
     """
 
     current_user_message = dspy.InputField(desc="The current user message to answer.")
@@ -342,6 +254,7 @@ class PlanSignature(dspy.Signature):
         desc=(
             "Your step-by-step plan of the tools to use and their respective parameters. "
             "Output a list of tool usages separated by an empty line. "
+            'The last tool used must be "Synthesizer" (without quotes). '
             "For each tool usage, output the name of the tool on the first line. "
             'On the subsequent lines, output the parameters in the format of "Parameter Name: Parameter Value" '
             "(without quotes and you should substitute in the actual parameter names and values)."
@@ -356,10 +269,15 @@ class Plan(dspy.Module):
         self.plan = dspy.ChainOfThought(
             PlanSignature, rationale_type=custom_cot_rationale
         )
-        print(get_template(self.plan))
-        return
 
     def forward(self, current_user_message):
+        """
+        Generate a plan of tool calls and return the first tool and respective parameters.
+
+        Values `tool=None, params=None` would be returned to indicate using synthesizer.
+        """
+
+        # Format the list of available tools
         at = ""
         for i, tool in enumerate(self.tools):
             at += f"- Tool {i}\n"
@@ -373,7 +291,135 @@ class Plan(dspy.Module):
                     at += f"      - Description: {pd}\n"
             at += "\n"
 
-        return self.plan(current_user_message=current_user_message, available_tools=at)
+        plan_str_all = self.plan(
+            current_user_message=current_user_message, available_tools=at
+        ).tool_plan
+
+        # Parse tool plan response
+
+        # FIXME: These should be put into class attributes if possible.
+        # However, a DSPy bug made this impossible for now.
+        # The bug causes dspy.Module.named_parameters() to enter infinite recursion
+        # when duplicate references to a Module B occur in a Module A.
+        name_tools = {tool.name: tool for tool in self.tools}
+        name_params = {tool.name: tool.param_specs.keys() for tool in self.tools}
+        available_tools_str = ", ".join(
+            [f'"{tool.name}"' for tool in self.tools] + ['"Synthesizer"']
+        )
+        available_params_str = {
+            name: ", ".join([f'"{p}"' for p in params])
+            for name, params in name_params.items()
+        }
+
+        plan_strs = plan_str_all.strip().split("\n\n")
+        dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
+
+        plan_strs = [s.strip() for s in plan_strs]
+        dspy.Assert(
+            plan_strs[-1] == "Synthesizer",
+            '"Synthesizer" (without quotes) must be the last tool in the plan.',
+        )
+        if len(plan_strs) == 1:
+            # The current tool is "Synthesizer".
+            return dspy.Prediction(tool_plan=plan_str_all, tool=None, params=None)
+
+        first_tool = True
+        for s in plan_strs[:-1]:
+            lines = s.split("\n")
+            lines = [line.strip() for line in lines]
+
+            name = lines[0]
+            dspy.Assert(
+                len(name) >= 1,
+                (
+                    "Empty tool usage specification. "
+                    "There should be no more than one consective empty line in the plan."
+                ),
+            )
+            dspy.Assert(
+                name != "Synthesizer",
+                '"Synthesizer" (without quotes) must be the last tool in the plan.',
+            )
+            dspy.Assert(
+                name in name_params.keys(),
+                (
+                    f'"{name}" is not a valid tool. '
+                    f"Available tools are: {available_tools_str} (without quotes and case-sensitive)."
+                ),
+            )
+
+            params = {}
+            for line in lines[1:]:
+                parts = line.split(":", 1)
+                dspy.Assert(
+                    len(parts) == 2,
+                    "There must at least one colon on each line specifying"
+                    'a "Parameter Name: Parameter Value" (without quotes) pair.',
+                )
+
+                parts = [part.strip() for part in parts]
+                p_name, p_value = parts[0], parts[1]
+                dspy.Assert(
+                    p_name in name_params[name],
+                    (
+                        f'"{p_name}" is not a valid parameter name. '
+                        f"Available parameter names are: {available_params_str[name]} (without quotes and case-sensitive)."
+                    ),
+                )
+                params[p_name] = p_value
+
+            for p_name in name_params[name]:
+                dspy.Assert(
+                    p_name in params,
+                    (
+                        f'"{p_name}" is missing from the tool usage specification. '
+                        f"Note that all parameters of the tools are required."
+                    ),
+                )
+
+            if first_tool:
+                first_tool = False
+                first_name = name
+                first_params = params
+
+        print(plan_str_all)
+        print(first_name)
+        print(first_params)
+
+        return dspy.Prediction(
+            tool_plan=plan_str_all,
+            tool=name_tools[first_name],
+            params=first_params,
+        )
+
+
+class JudgeSignature(dspy.Signature):
+    """Judge if the current answer is equivalent to the ground truth answer to the question."""
+
+    question = dspy.InputField(desc="The question to be answered.")
+    ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
+    answer = dspy.InputField(desc="The current answer to be judged.")
+    judgement = dspy.OutputField(
+        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
+    )
+
+
+class Judge(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.judge = dspy.TypedChainOfThought(
+            JudgeSignature, reasoning=custom_cot_rationale
+        )
+
+    def forward(self, question, ground_truth, answer):
+        judgement_str = self.judge(
+            question=question, ground_truth=ground_truth, answer=answer
+        ).judgement
+        dspy.Suggest(
+            judgement_str in ["True", "False"],
+            'Judgement should be either "True" or "False" (without quotes and first letter of each word capitalized).',
+        )
+        return dspy.Prediction(judgement=(judgement_str == "True"))
 
 
 def main():
@@ -383,65 +429,71 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    plan = Plan(tools=[VectorRetriever(), KeywordRetriever()])
-    print(plan.forward(current_user_message="How to get funding?"))
+    plan = assert_transform_module(
+        Plan(tools=[VectorRetriever(), KeywordRetriever()]),
+        functools.partial(backtrack_handler, max_backtracks=5),
+    )
+
+    try:
+        print(plan.forward(current_user_message="How to get funding?"))
+    except Exception as e:
+        print(e)
 
     input()
-    return
 
-    file_path = "../datasets/before_RAG_dataset.json"
-    with open(file_path, "r", encoding="utf-8") as file:
-        json_data = json.load(file)
-    dataset = [
-        dspy.Example(question=d["question"], answer=d["ground_truth"]).with_inputs(
-            "question"
-        )
-        for d in json_data
-    ]
+    # file_path = "../datasets/before_RAG_dataset.json"
+    # with open(file_path, "r", encoding="utf-8") as file:
+    #     json_data = json.load(file)
+    # dataset = [
+    #     dspy.Example(question=d["question"], answer=d["ground_truth"]).with_inputs(
+    #         "question"
+    #     )
+    #     for d in json_data
+    # ]
 
-    trainset, devset = dataset[50:51], dataset[60:61]
+    # trainset, devset = dataset[50:51], dataset[60:61]
 
-    judge = assert_transform_module(
-        Judge(),
-        functools.partial(backtrack_handler, max_backtracks=3),
-    )
+    # judge = assert_transform_module(
+    #     Judge(),
+    #     functools.partial(backtrack_handler, max_backtracks=3),
+    # )
 
-    def metric(example, pred, trace=None):
-        prediction = judge(
-            question=example.question, ground_truth=example.answer, answer=pred.answer
-        )
-        return prediction.judgement
+    # def metric(example, pred, trace=None):
+    #     prediction = judge(
+    #         question=example.question, ground_truth=example.answer, answer=pred.answer
+    #     )
+    #     return prediction.judgement
 
-    config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
-    teleprompter = BootstrapFewShot(metric=metric, **config)
+    # config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
+    # teleprompter = BootstrapFewShot(metric=metric, **config)
 
-    # try:
+    # # try:
 
-    rag = assert_transform_module(
-        Rag(vector_top_k=5, keyword_top_k=5),
-        functools.partial(backtrack_handler, max_backtracks=3),
-    )
-    rag = teleprompter.compile(rag, trainset=trainset)
-    # except:
-    #     input()
+    # rag = assert_transform_module(
+    #     Rag(vector_top_k=5, keyword_top_k=5),
+    #     functools.partial(backtrack_handler, max_backtracks=3),
+    # )
+    # rag = teleprompter.compile(rag, trainset=trainset)
+    # # except:
+    # #     input()
 
-    rag.save("compiled_rag.json")
+    # rag.save("compiled_rag.json")
 
-    # Set up the evaluator, which can be used multiple times.
-    evaluate = Evaluate(
-        devset=devset,
-        metric=metric,
-        num_threads=1,  # Multi-threading won't work for our local model
-        display_progress=True,
-        display_table=True,
-    )
+    # # Set up the evaluator, which can be used multiple times.
+    # evaluate = Evaluate(
+    #     devset=devset,
+    #     metric=metric,
+    #     num_threads=1,  # Multi-threading won't work for our local model
+    #     display_progress=True,
+    #     display_table=True,
+    # )
 
-    # Evaluate our `optimized_cot` program.
-    evaluate(rag)
+    # # Evaluate our `optimized_cot` program.
+    # evaluate(rag)
 
-    print(llama_client.inspect_history(n=1))
+    # print(llama_client.inspect_history(n=1))
 
-    input()
+    # input()
 
     # while True:
     #     try:

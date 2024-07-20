@@ -36,6 +36,7 @@ dependencies = [
     "opentelemetry-exporter-otlp~=1.25.0",
     "opentelemetry-sdk~=1.25.0",
     "dspy-ai~=2.4.10",
+	"magicattr~=0.1.6", # FIXME: For patching DSPy's set_attribute_by_name()
 ]
 
 [tool.setuptools]

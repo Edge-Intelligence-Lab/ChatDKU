@@ -1,7 +1,16 @@
+"""
+Custom patches to DSPy internals.
+FIXME: Stop using these patches whenever the issues were addressed by DSPy.
+
+Use Adapters as an alternative when available
+See also: https://github.com/stanfordnlp/dspy/issues/409
+"""
+
 import dsp
 import dspy
 from dsp import passages2text, format_answers
 from collections import namedtuple
+import magicattr
 
 
 def custom_guidelines(self, show_guidelines: bool = True) -> str:
@@ -86,3 +95,10 @@ def custom_init(self, instructions: str, **kwargs):
 
 
 dsp.adapters.BaseTemplate.__init__ = custom_init
+
+
+def custom_set_attribute_by_name(obj, name, value):
+    magicattr.set(obj, name, value)
+
+
+dspy.primitives.program.set_attribute_by_name = custom_set_attribute_by_name
