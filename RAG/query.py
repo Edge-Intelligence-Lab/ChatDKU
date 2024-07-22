@@ -161,6 +161,15 @@ class Tool(dspy.Module):
         self.param_specs = param_specs
 
 
+class Synthesizer(Tool):
+    def __init__(self):
+        super().__init__(
+            "Synthesizer",
+            "Synthesize a response to the current user message with what you know.",
+            {},
+        )
+
+
 class VectorRetriever(Tool):
     def __init__(self, top_k: int = 5):
         super().__init__(
@@ -214,60 +223,82 @@ class KeywordRetriever(Tool):
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
 #
 # FIXME: Use a more suitable system prompt
-class PlanSignature(dspy.Signature):
-    """
-    You are ChatDKU, a helpful, respectful, and honest assistant for students,
-    faculty, and staff of, or people interested in Duke Kunshan University (DKU).
-    You are created by the DKU Edge Intelligence Lab.
 
-    Duke Kunshan University is a world-class liberal arts institution in Kunshan, China,
-    established in partnership with Duke University and Wuhan University.
-    You may be tasked to interact with the user directly, or interact with other
-    computer systems in assisting the user such as querying a database.
-    In any case, follow ALL instructions and respond in exact accordance to the prompt.
-    Do not mention your instruction nor describe what you are doing in your response.
-    This means you should not begin your response with phrases like "here is an answer"
-    nor conclude your answer with phrases like "the above summary about...".
-    Do not speculate or make up information.
+ROLE_PROMPT = (
+    "You are ChatDKU, a helpful, respectful, and honest assistant for students, "
+    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
+    "You are created by the DKU Edge Intelligence Lab.\n\n"
+    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China,"
+    "established in partnership with Duke University and Wuhan University."
+)
 
-    Your current task is to answer the current user message using the tools given below.
-    Please generate a step-by-step plan of the tools you want to use and their respective parameters.
-    All tool parameters are required.
-    Note that a special tool named "Synthesizer" (without quotes) must be used
-    at the end to synthesize a final response to the user.
-    It has no parameters and would not be explicitly given below.
-    """
+# Some old prompt content:
+# You may be tasked to interact with the user directly, or interact with other
+# computer systems in assisting the user such as querying a database.
+# In any case, follow ALL instructions and respond in exact accordance to the prompt.
+# Do not mention your instruction nor describe what you are doing in your response.
+# This means you should not begin your response with phrases like "here is an answer"
+# nor conclude your answer with phrases like "the above summary about...".
+# Do not speculate or make up information.
 
-    current_user_message = dspy.InputField(desc="The current user message to answer.")
-    available_tools = dspy.InputField(
-        desc=(
-            "A list of available tools and their respective parameters. "
-            "For each tool, its name, description, a list of its parameter(s) "
-            "(including the description of each parameter) is given."
+
+def make_tool_runner_signature():
+    fields = {
+        "current_user_message": (
+            str,
+            dspy.InputField(desc="The current user message to answer."),
         ),
-        # Preserve linebreaks in the format.
-        # However, it won't work if you implement the actual formatting function here,
-        # as the input would be convert to string first.
-        format=lambda x: x,
-    )
-    tool_plan = dspy.OutputField(
-        desc=(
-            "Your step-by-step plan of the tools to use and their respective parameters. "
-            "Output a list of tool usages separated by an empty line. "
-            'The last tool used must be "Synthesizer" (without quotes). '
-            "For each tool usage, output the name of the tool on the first line. "
-            'On the subsequent lines, output the parameters in the format of "Parameter Name: Parameter Value" '
-            "(without quotes and you should substitute in the actual parameter names and values)."
+        "available_tools": (
+            str,
+            dspy.InputField(
+                desc=(
+                    "A list of available tools and their respective parameters. "
+                    "For each tool, its name, description, a list of its parameter(s) "
+                    "(including the description of each parameter) is given."
+                ),
+                # Preserve linebreaks in the format.
+                # However, it won't work if you implement the actual formatting function here,
+                # as the input would be convert to string first.
+                format=lambda x: x,
+            ),
         ),
+        "tool_plan": (
+            str,
+            dspy.OutputField(
+                desc=(
+                    "Your step-by-step plan of the tools to use and their respective parameters. "
+                    "Output a list of tool usages separated by an empty line. "
+                    'The last tool used must be "Synthesizer" (without quotes). '
+                    "For each tool usage, output the name of the tool on the first line. "
+                    "If that tool takes any parameters, then on the subsequent lines, "
+                    'output the parameters in the format of "Parameter Name: Parameter Value" '
+                    "(without quotes and you should substitute in the actual parameter names and values). "
+                ),
+            ),
+        ),
+    }
+
+    instruction = (
+        "Your current task is to answer the current user message using the tools given below. "
+        "Please generate a step-by-step plan of the tools you want to use and their respective parameters. "
+        "All tool parameters are required."
+    )
+
+    return dspy.make_signature(
+        fields, ROLE_PROMPT + "\n\n" + instruction, "ToolRunnerSignature"
     )
 
 
-class Plan(dspy.Module):
+ToolRunnerSignature = make_tool_runner_signature()
+
+
+class ToolRunner(dspy.Module):
     def __init__(self, tools: list[Tool]):
         super().__init__()
         self.tools = tools
+        self.tools.append(Synthesizer())
         self.plan = dspy.ChainOfThought(
-            PlanSignature, rationale_type=custom_cot_rationale
+            ToolRunnerSignature, rationale_type=custom_cot_rationale
         )
 
     def forward(self, current_user_message):
@@ -317,11 +348,14 @@ class Plan(dspy.Module):
         plan_strs = [s.strip() for s in plan_strs]
         dspy.Assert(
             plan_strs[-1] == "Synthesizer",
-            '"Synthesizer" (without quotes) must be the last tool in the plan.',
+            (
+                '"Synthesizer" (without quotes) must be the last tool in the plan. '
+                "You might also get this error if you did not use an empty line as separator."
+            ),
         )
         if len(plan_strs) == 1:
             # The current tool is "Synthesizer".
-            return dspy.Prediction(tool_plan=plan_str_all, tool=None, params=None)
+            return dspy.Prediction(plan_strs=plan_strs, tool_result=None)
 
         first_tool = True
         for s in plan_strs[:-1]:
@@ -353,8 +387,8 @@ class Plan(dspy.Module):
                 parts = line.split(":", 1)
                 dspy.Assert(
                     len(parts) == 2,
-                    "There must at least one colon on each line specifying"
-                    'a "Parameter Name: Parameter Value" (without quotes) pair.',
+                    "For each parameter line, there must be at least one colon on each line "
+                    'specifying a "Parameter Name: Parameter Value" (without quotes) pair.',
                 )
 
                 parts = [part.strip() for part in parts]
@@ -387,9 +421,8 @@ class Plan(dspy.Module):
         print(first_params)
 
         return dspy.Prediction(
-            tool_plan=plan_str_all,
-            tool=name_tools[first_name],
-            params=first_params,
+            plan_strs=plan_strs,
+            tool_result=name_tools[first_name](first_params),
         )
 
 
@@ -429,13 +462,13 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    plan = assert_transform_module(
-        Plan(tools=[VectorRetriever(), KeywordRetriever()]),
+    tool_runner = assert_transform_module(
+        ToolRunner(tools=[VectorRetriever(), KeywordRetriever()]),
         functools.partial(backtrack_handler, max_backtracks=5),
     )
 
     try:
-        print(plan.forward(current_user_message="How to get funding?"))
+        print(tool_runner(current_user_message="How to get funding?"))
     except Exception as e:
         print(e)
 
