@@ -160,12 +160,24 @@ class Tool(dspy.Module):
         self.desc = desc
         self.param_specs = param_specs
 
+    def to_string(self, indent: str = ""):
+        s = ""
+        s += indent + f"- Name: {self.name}\n"
+        s += indent + f"- Description: {self.desc}\n"
+        if self.param_specs:
+            s += indent + "- Parameters:\n"
+            for j, (pn, pd) in enumerate(self.param_specs.items()):
+                s += indent + f"  - Parameter {j}\n"
+                s += indent + f"  - Name: {pn}\n"
+                s += indent + f"  - Description: {pd}\n"
+        return s
+
 
 class Synthesizer(Tool):
     def __init__(self):
         super().__init__(
             "Synthesizer",
-            "Synthesize a response to the current user message with what you know.",
+            "Synthesize a response to the Current User Message with what you know.",
             {},
         )
 
@@ -245,19 +257,18 @@ ROLE_PROMPT = (
 # nor conclude your answer with phrases like "the above summary about...".
 # Do not speculate or make up information.
 
+CURRENT_USER_MESSAGE_DESC = dspy.InputField(desc="The Current User Message to answer.")
+
 
 def make_planner_signature():
     fields = {
-        "current_user_message": (
-            str,
-            dspy.InputField(desc="The current user message to answer."),
-        ),
+        "current_user_message": (str, CURRENT_USER_MESSAGE_DESC),
         "available_tools": (
             str,
             dspy.InputField(
                 desc=(
                     "A list of available tools and their respective parameters. "
-                    "For each tool, its name, description, a list of its parameter(s) "
+                    "For each tool, its name, description, and a list of its parameter(s) "
                     "(including the description of each parameter) is given."
                 ),
                 # Preserve linebreaks in the format.
@@ -293,7 +304,7 @@ def make_planner_signature():
     }
 
     instruction = (
-        "Your current task is to answer the current user message using the tools given below. "
+        "Your current task is to answer the Current User Message using the tools given below. "
         "Please generate a step-by-step plan of the tools you want to use and their respective parameters. "
         "All tool parameters are required."
     )
@@ -306,7 +317,7 @@ def make_planner_signature():
 PlannerSignature = make_planner_signature()
 
 
-class ToolRunner(dspy.Module):
+class Planner(dspy.Module):
     def __init__(self, tools: list[Tool], max_usages: int = 5):
         super().__init__()
         self.tools = tools
@@ -327,14 +338,7 @@ class ToolRunner(dspy.Module):
         at = ""
         for i, tool in enumerate(self.tools):
             at += f"- Tool {i}\n"
-            at += f"  - Name: {tool.name}\n"
-            at += f"  - Description: {tool.desc}\n"
-            if tool.param_specs:
-                at += "  - Parameters:\n"
-                for j, (pn, pd) in enumerate(tool.param_specs.items()):
-                    at += f"    - Parameter {j}\n"
-                    at += f"      - Name: {pn}\n"
-                    at += f"      - Description: {pd}\n"
+            at += tool.to_string("  ")
             at += "\n"
 
         plan_str_all = self.planner(
@@ -379,7 +383,7 @@ class ToolRunner(dspy.Module):
         )
         if len(plan_strs) == 1:
             # The current tool is "Synthesizer".
-            return dspy.Prediction(plan_strs=plan_strs, result=None)
+            return dspy.Prediction(plan_strs=plan_strs, tool=None, params=None)
 
         first_tool = True
         for s in plan_strs[:-1]:
@@ -402,7 +406,7 @@ class ToolRunner(dspy.Module):
                 name in name_params.keys(),
                 (
                     f'"{name}" is not a valid tool. '
-                    f"Available tools are: {available_tools_str} (without quotes and case-sensitive)."
+                    f"Available tool(s) are: {available_tools_str} (without quotes and case-sensitive)."
                 ),
             )
 
@@ -421,7 +425,7 @@ class ToolRunner(dspy.Module):
                     p_name in name_params[name],
                     (
                         f'"{p_name}" is not a valid parameter name. '
-                        f"Available parameter names are: {available_params_str[name]} (without quotes and case-sensitive)."
+                        f"Available parameter name(s) are: {available_params_str[name]} (without quotes and case-sensitive)."
                     ),
                 )
                 params[p_name] = p_value
@@ -440,14 +444,100 @@ class ToolRunner(dspy.Module):
                 first_name = name
                 first_params = params
 
-        print(plan_str_all)
-        print(first_name)
-        print(first_params)
-
         return dspy.Prediction(
-            plan_strs=plan_strs,
-            result=name_tools[first_name](first_params).result,
+            plan_strs=plan_strs, tool=name_tools[first_name], params=first_params
         )
+
+
+def make_update_tool_memory_signature():
+    fields = {
+        "current_user_message": (str, CURRENT_USER_MESSAGE_DESC),
+        "tool_specification": (
+            str,
+            dspy.InputField(
+                desc=(
+                    "The specification of the tool you just used."
+                    "Its name, description, and a list of its parameter(s) "
+                    "(including the description of each parameter) is given."
+                ),
+                format=lambda x: x,
+            ),
+        ),
+        "tool_usage": (
+            str,
+            dspy.InputField(
+                desc=(
+                    "The name of the tool and the parameters you gave to the tool you just used."
+                    "The first line is the name of the tool."
+                    "If that tool takes any parameters, then on the subsequent lines, "
+                    'the parameters are given in the format of "Parameter Name: Parameter Value".'
+                )
+            ),
+        ),
+        "result": (
+            str,
+            dspy.InputField(desc=("The result returned from the tool you just used.")),
+        ),
+        "previous_tool_memory": (
+            str,
+            dspy.InputField(
+                desc=(
+                    "Memory of what you have learned previously from the tools. "
+                    "It would be empty if you have not used any tools previously."
+                )
+            ),
+        ),
+        "current_tool_memory": (
+            str,
+            dspy.OutputField(
+                desc=(
+                    "Considering your previous Tool Memory and the result from the tool you just used, "
+                    "store all the information that would be useful for answering the Current User Message here."
+                )
+            ),
+        ),
+    }
+
+    instruction = (
+        "You have a Tool Memory storing all the information you learned from using "
+        "multple tools that would be useful for answering the Current User Message. "
+        "You just used a tool and the result it returned would be provided. "
+        "Your current task is to update your Tool Memory with what you "
+        "learned from the tool you just used. "
+        "In the future, you would be asked to respond to the Current User Message "
+        "with only your Tool Memory. "
+        "Therefore, you should make it comprehensive enough so that it could "
+        "be understood by you on its own."
+    )
+
+    return dspy.make_signature(
+        fields, ROLE_PROMPT + "\n\n" + instruction, "UpdateToolMemorySignature"
+    )
+
+
+UpdateToolMemorySignature = make_update_tool_memory_signature()
+
+
+class ToolMemory(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.tools_used = []
+        self.tool_memory = ""
+        self.update_tool_memory = dspy.ChainOfThought(
+            UpdateToolMemorySignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(
+        self, current_user_message: str, tool: Tool, tool_usage: str, result: str
+    ):
+        self.tools_used.append(tool_usage)
+        self.tool_memory = self.update_tool_memory(
+            current_user_message=current_user_message,
+            tool_specification=tool.to_string(),
+            tool_usage=tool_usage,
+            result=result,
+            previous_tool_memory=self.tool_memory,
+        ).current_tool_memory
 
 
 class JudgeSignature(dspy.Signature):
@@ -486,13 +576,26 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    tool_runner = assert_transform_module(
-        ToolRunner(tools=[VectorRetriever(), KeywordRetriever()], max_usages=5),
+    planner = assert_transform_module(
+        Planner(tools=[VectorRetriever(), KeywordRetriever()], max_usages=5),
         functools.partial(backtrack_handler, max_backtracks=5),
     )
+    tool_memory = ToolMemory()
 
     try:
-        print(tool_runner(current_user_message="How to get funding?"))
+        current_user_message = "How to get funding?"
+        p = planner(current_user_message=current_user_message)
+        print(f"plan_strs: {p.plan_strs}")
+        result = p.tool(p.params).result
+        print(f"result: {result}")
+        tool_memory(
+            current_user_message=current_user_message,
+            tool=p.tool,
+            tool_usage=p.plan_strs[0],
+            result=result,
+        )
+        print(f"tool_memory: {tool_memory.tool_memory}")
+
     except Exception as e:
         print(e)
 
