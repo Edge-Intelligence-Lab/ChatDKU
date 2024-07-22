@@ -190,7 +190,9 @@ class VectorRetriever(Tool):
         query = params["Query"]
         nodes = self.retriever.retrieve(query)
         texts = [node.get_content() for node in nodes]
-        return self.summarizer(documents=texts, query=query)
+        return dspy.Prediction(
+            result=self.summarizer(documents=texts, query=query).summary
+        )
 
 
 class KeywordRetriever(Tool):
@@ -210,7 +212,9 @@ class KeywordRetriever(Tool):
         query = params["Query"]
         nodes = self.retriever.retrieve(query)
         texts = [node.get_content() for node in nodes]
-        return self.summarizer(documents=texts, query=query)
+        return dspy.Prediction(
+            result=self.summarizer(documents=texts, query=query).summary
+        )
 
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
@@ -242,7 +246,7 @@ ROLE_PROMPT = (
 # Do not speculate or make up information.
 
 
-def make_tool_runner_signature():
+def make_planner_signature():
     fields = {
         "current_user_message": (
             str,
@@ -262,6 +266,15 @@ def make_tool_runner_signature():
                 format=lambda x: x,
             ),
         ),
+        "max_usages": (
+            str,
+            dspy.InputField(
+                desc=(
+                    "The maximum number of tool usages you can include in your plan. "
+                    'Note that using "Synthesizer" once also counts as one tool use.'
+                )
+            ),
+        ),
         "tool_plan": (
             str,
             dspy.OutputField(
@@ -273,6 +286,7 @@ def make_tool_runner_signature():
                     "If that tool takes any parameters, then on the subsequent lines, "
                     'output the parameters in the format of "Parameter Name: Parameter Value" '
                     "(without quotes and you should substitute in the actual parameter names and values). "
+                    "If that tool takes no parameters, do not include any parameter lines in the tool usage."
                 ),
             ),
         ),
@@ -285,20 +299,21 @@ def make_tool_runner_signature():
     )
 
     return dspy.make_signature(
-        fields, ROLE_PROMPT + "\n\n" + instruction, "ToolRunnerSignature"
+        fields, ROLE_PROMPT + "\n\n" + instruction, "PlannerSignature"
     )
 
 
-ToolRunnerSignature = make_tool_runner_signature()
+PlannerSignature = make_planner_signature()
 
 
 class ToolRunner(dspy.Module):
-    def __init__(self, tools: list[Tool]):
+    def __init__(self, tools: list[Tool], max_usages: int = 5):
         super().__init__()
         self.tools = tools
         self.tools.append(Synthesizer())
-        self.plan = dspy.ChainOfThought(
-            ToolRunnerSignature, rationale_type=custom_cot_rationale
+        self.max_usages = max_usages
+        self.planner = dspy.ChainOfThought(
+            PlannerSignature, rationale_type=custom_cot_rationale
         )
 
     def forward(self, current_user_message):
@@ -322,8 +337,10 @@ class ToolRunner(dspy.Module):
                     at += f"      - Description: {pd}\n"
             at += "\n"
 
-        plan_str_all = self.plan(
-            current_user_message=current_user_message, available_tools=at
+        plan_str_all = self.planner(
+            current_user_message=current_user_message,
+            available_tools=at,
+            max_usages=str(self.max_usages),
         ).tool_plan
 
         # Parse tool plan response
@@ -349,13 +366,20 @@ class ToolRunner(dspy.Module):
         dspy.Assert(
             plan_strs[-1] == "Synthesizer",
             (
-                '"Synthesizer" (without quotes) must be the last tool in the plan. '
+                '"Synthesizer" (without quotes) must be the last tool in the plan and it takes no parameters. '
                 "You might also get this error if you did not use an empty line as separator."
+            ),
+        )
+        dspy.Assert(
+            len(plan_strs) <= self.max_usages,
+            (
+                f"The number of tool usages in your plan must be no more than {self.max_usages}. "
+                'Note that using "Synthesizer" once also counts as one tool use.'
             ),
         )
         if len(plan_strs) == 1:
             # The current tool is "Synthesizer".
-            return dspy.Prediction(plan_strs=plan_strs, tool_result=None)
+            return dspy.Prediction(plan_strs=plan_strs, result=None)
 
         first_tool = True
         for s in plan_strs[:-1]:
@@ -422,7 +446,7 @@ class ToolRunner(dspy.Module):
 
         return dspy.Prediction(
             plan_strs=plan_strs,
-            tool_result=name_tools[first_name](first_params),
+            result=name_tools[first_name](first_params).result,
         )
 
 
@@ -463,7 +487,7 @@ def main():
     dspy.settings.configure(lm=llama_client)
 
     tool_runner = assert_transform_module(
-        ToolRunner(tools=[VectorRetriever(), KeywordRetriever()]),
+        ToolRunner(tools=[VectorRetriever(), KeywordRetriever()], max_usages=5),
         functools.partial(backtrack_handler, max_backtracks=5),
     )
 
