@@ -27,6 +27,7 @@ import dspy_patch
 import os
 import sys
 
+# FIXME: Store the config and setup code in a single location
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )

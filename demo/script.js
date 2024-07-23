@@ -29,26 +29,55 @@ document.addEventListener('DOMContentLoaded', function() {
             // const content = block.getAttribute('data-content');
             // input.value = content;
             // sendMessage();
-            replaceBlocks()
+            replaceBlocks(block.id)
         });
     });
 });
 
-function replaceBlocks() {
+function replaceBlocks(block_id) {
     const useCaseDiv = document.getElementById('usecase-div');
     useCaseDiv.style.flexDirection = 'column';  // 设置为垂直排列
     useCaseDiv.style.gap = '10px';  // 设置子元素之间的间距
     // 删除现有的四个block
     useCaseDiv.innerHTML = '';
 
+    let newBlocks = [];
     
-    // 添加五个新的block
-    const newBlocks = [
-        { id: 'block1', text: 'Do we have courses to learn other foreign languages? How to take it?' },
-        { id: 'block2', text: 'Considering their workloads, would you recommend taking CS205 and CS310 in the same session?' },
-        { id: 'block3', text: 'What’s the difference between CS101 and stats102?' },
-        { id: 'block4', text: 'Is it better to have one mentor or two for my signature work?' },
-        { id: 'block5', text: 'How do I go about changing my mentor for signature work, and whom should I contact?' } ]
+    if (block_id === 'academic') {
+        console.log(1111)
+        newBlocks = [
+            { id: 'block1', text: 'Do we have courses to learn other foreign languages? How to take it?' },
+            { id: 'block2', text: 'Considering their workloads, would you recommend taking CS205 and CS310 in the same session?' },
+            { id: 'block3', text: 'What’s the difference between CS101 and stats102?' },
+            { id: 'block4', text: 'Is it better to have one mentor or two for my signature work?' },
+            { id: 'block5', text: 'How do I go about changing my mentor for signature work, and whom should I contact?' }
+        ];
+    } else if (block_id === 'campus') {
+        console.log(2222)
+        newBlocks = [
+            { id: 'block6', text: 'How do I go about withdrawing from the school?' },
+            { id: 'block7', text: 'When can I enter the dormitory?' },
+            { id: 'block8', text: 'How to organize a big conference with students or teachers?' },
+            { id: 'block9', text: 'What preparations do I need to make if I want to organize a club at DKU?' },
+            { id: 'block10', text: 'What procedure must be followed if a parent wants to enter the school compound?' }
+        ];
+    } else if (block_id === 'service') {
+        newBlocks = [
+            { id: 'block11', text: 'How can I find an internship with the help of career services?' },
+            { id: 'block12', text: 'What should I do if I have a headache in DKU? Is there any clinic?' },
+            { id: 'block13', text: 'What should I do if I want to change my dorm room?' },
+            { id: 'block14', text: 'What should I do if I have mental problems?' },
+            { id: 'block15', text: 'What is the email or contact information for the school’s IT department?' }
+        ];
+    } else if (block_id === 'tools') {
+        newBlocks = [
+            { id: 'block16', text: 'Please reserve a big meeting zoom in IB building.' },
+            { id: 'block17', text: 'Could you please briefly generate an email to invite professor Bing Luo to have a lunch meeting with me?' },
+            { id: 'block18', text: 'I am a rising Senior student. Please design a plan with timeline for my signature work to me.' },
+            { id: 'block19', text: 'Show me the menu in DKU this week.' },
+            { id: 'block20', text: 'How to organize my 7-week study plan for CS101 course.' }
+        ];
+    }
 
     newBlocks.forEach(blockInfo => {
         const block = document.createElement('div');

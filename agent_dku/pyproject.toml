@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dku_llm_rag"
+name = "agent_dku"
 version = "1.0.0"
 authors = [
     { name="Mingxi Li" },
@@ -35,6 +35,8 @@ dependencies = [
     "opentelemetry-proto~=1.25.0",
     "opentelemetry-exporter-otlp~=1.25.0",
     "opentelemetry-sdk~=1.25.0",
+    "dspy-ai~=2.4.10",
+    "magicattr~=0.1.6", # FIXME: For patching DSPy's set_attribute_by_name()
 ]
 
 [tool.setuptools]

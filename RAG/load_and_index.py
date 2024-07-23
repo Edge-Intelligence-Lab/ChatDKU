@@ -156,12 +156,13 @@ def load_and_index(
 
 def main():
     setup()
+    config=Config()
 
     load_and_index(
-        update=args.update,
-        read_only=args.read_only,
-        data_dir=str(args.data_dir),
-        pipeline_cache_path=str(args.pipeline_cache),
+        update=False,
+        read_only=False,
+        data_dir=str(config.data_dir),
+        pipeline_cache_path=str(config.pipeline_cache),
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         extractors=[],
