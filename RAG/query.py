@@ -173,7 +173,7 @@ class Tool(dspy.Module):
         return s
 
 
-class Synthesizer(Tool):
+class SynthesizerPlaceholder(Tool):
     def __init__(self):
         super().__init__(
             "Synthesizer",
@@ -244,7 +244,7 @@ ROLE_PROMPT = (
     "You are ChatDKU, a helpful, respectful, and honest assistant for students, "
     "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
     "You are created by the DKU Edge Intelligence Lab.\n\n"
-    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China,"
+    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
     "established in partnership with Duke University and Wuhan University."
 )
 
@@ -257,12 +257,12 @@ ROLE_PROMPT = (
 # nor conclude your answer with phrases like "the above summary about...".
 # Do not speculate or make up information.
 
-CURRENT_USER_MESSAGE_DESC = dspy.InputField(desc="The Current User Message to answer.")
+CURRENT_USER_MESSAGE_FIELD = dspy.InputField(desc="The Current User Message to answer.")
 
 
 def make_update_tool_memory_signature():
     fields = {
-        "current_user_message": (str, CURRENT_USER_MESSAGE_DESC),
+        "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
         "tool_specification": (
             str,
             dspy.InputField(
@@ -296,7 +296,8 @@ def make_update_tool_memory_signature():
                 desc=(
                     "Memory of what you have learned previously from the tools. "
                     "It would be empty if you have not used any tools previously."
-                )
+                ),
+                format=lambda x: x,
             ),
         ),
         "current_tool_memory": (
@@ -305,7 +306,8 @@ def make_update_tool_memory_signature():
                 desc=(
                     "Considering your previous Tool Memory and the result from the tool you just used, "
                     "store all the information that would be useful for answering the Current User Message here."
-                )
+                ),
+                format=lambda x: x,
             ),
         ),
     }
@@ -331,11 +333,14 @@ UpdateToolMemorySignature = make_update_tool_memory_signature()
 
 
 class ToolMemory(dspy.Module):
-    def __init__(self):
-        super().__init__()
+    def reset(self):
         self.tools_used = []
         self.tool_plan = []
         self.memory = ""
+
+    def __init__(self):
+        super().__init__()
+        self.reset()
         self.update_tool_memory = dspy.ChainOfThought(
             UpdateToolMemorySignature, rationale_type=custom_cot_rationale
         )
@@ -356,7 +361,7 @@ class ToolMemory(dspy.Module):
 
 def make_planner_signature():
     fields = {
-        "current_user_message": (str, CURRENT_USER_MESSAGE_DESC),
+        "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
         "available_tools": (
             str,
             dspy.InputField(
@@ -386,8 +391,8 @@ def make_planner_signature():
             str,
             dspy.InputField(
                 desc=(
-                    "A list of previous tool usages separated by an empty line."
-                    "For each tool usage, the first line is the name of the tool."
+                    "A list of your previous tool usages separated by an empty line. "
+                    "For each tool usage, the first line is the name of the tool. "
                     "If that tool takes any parameters, then on the subsequent lines, "
                     'the parameters are given in the format of "Parameter Name: Parameter Value". '
                     "It would be empty if you have not used any tools previously."
@@ -401,7 +406,8 @@ def make_planner_signature():
                 desc=(
                     "Memory of what you have learned previously from the tools. "
                     "It would be empty if you have not used any tools previously."
-                )
+                ),
+                format=lambda x: x,
             ),
         ),
         "previous_tool_plan": (
@@ -409,6 +415,7 @@ def make_planner_signature():
             dspy.InputField(
                 desc=(
                     "Your previous plan about what tools to use next. "
+                    "Note that you have not used these tools yet. "
                     "It would be empty if you have not used any tools previously."
                 ),
                 format=lambda x: x,
@@ -446,16 +453,17 @@ PlannerSignature = make_planner_signature()
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools: list[Tool], max_usages: int = 5):
+    def __init__(self, tools: list[Tool]):
         super().__init__()
         self.tools = tools
-        self.tools.append(Synthesizer())
-        self.max_usages = max_usages
+        self.tools.append(SynthesizerPlaceholder())
         self.planner = dspy.ChainOfThought(
             PlannerSignature, rationale_type=custom_cot_rationale
         )
 
-    def forward(self, current_user_message: str, tool_memory: ToolMemory):
+    def forward(
+        self, current_user_message: str, tool_memory: ToolMemory, max_usages: int = 5
+    ):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
 
@@ -472,7 +480,7 @@ class Planner(dspy.Module):
         plan_str_all = self.planner(
             current_user_message=current_user_message,
             available_tools=at,
-            max_usages=str(self.max_usages),
+            max_usages=str(max_usages),
             tools_used="\n\n".join(tool_memory.tools_used),
             tool_memory=tool_memory.memory,
             previous_tool_plan="\n\n".join(tool_memory.tool_plan),
@@ -486,9 +494,7 @@ class Planner(dspy.Module):
         # when duplicate references to a Module B occur in a Module A.
         name_tools = {tool.name: tool for tool in self.tools}
         name_params = {tool.name: tool.param_specs.keys() for tool in self.tools}
-        available_tools_str = ", ".join(
-            [f'"{tool.name}"' for tool in self.tools] + ['"Synthesizer"']
-        )
+        available_tools_str = ", ".join([f'"{tool.name}"' for tool in self.tools])
         available_params_str = {
             name: ", ".join([f'"{p}"' for p in params])
             for name, params in name_params.items()
@@ -507,9 +513,9 @@ class Planner(dspy.Module):
             ),
         )
         dspy.Assert(
-            len(plan_strs) <= self.max_usages,
+            len(plan_strs) <= max_usages,
             (
-                f"The number of tool usages in your plan must be no more than {self.max_usages}. "
+                f"The number of tool usages in your plan must be no more than {max_usages}. "
                 'Note that using "Synthesizer" once also counts as one tool use.'
             ),
         )
@@ -538,7 +544,7 @@ class Planner(dspy.Module):
                 name in name_params.keys(),
                 (
                     f'"{name}" is not a valid tool. '
-                    f"Available tool(s) are: {available_tools_str} (without quotes and case-sensitive)."
+                    f'Available tool(s) for "{name}" are: {available_tools_str} (without quotes and case-sensitive).'
                 ),
             )
 
@@ -581,6 +587,84 @@ class Planner(dspy.Module):
         )
 
 
+def make_synthesizer_signature():
+    fields = {
+        "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
+        "tool_memory": (
+            str,
+            dspy.InputField(
+                desc="Memory of what you have learned from using one or more tools.",
+                format=lambda x: x,
+            ),
+        ),
+        "response": (
+            str,
+            dspy.OutputField(desc="You response to the Current User Message."),
+        ),
+    }
+
+    instruction = "Your current task is to answer the Current User Message according to your Tool Memory."
+
+    return dspy.make_signature(
+        fields, ROLE_PROMPT + "\n\n" + instruction, "SynthesizerSignature"
+    )
+
+
+SynthesizerSignature = make_synthesizer_signature()
+
+
+class Agent(dspy.Module):
+    def __init__(self, max_iterations=5):
+        super().__init__()
+        self.max_iterations = max_iterations
+        self.planner = assert_transform_module(
+            Planner(tools=[VectorRetriever(), KeywordRetriever()]),
+            functools.partial(backtrack_handler, max_backtracks=5),
+        )
+        self.tool_memory = ToolMemory()
+        self.synthesizer = dspy.ChainOfThought(
+            SynthesizerSignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(self, current_user_message):
+        # Need to make this an attribute so that DSPy can optimize it
+        self.tool_memory.reset()
+
+        for i in range(self.max_iterations - 1):
+            print(f"iteration: {i}")
+
+            try:
+                p = self.planner(
+                    current_user_message=current_user_message,
+                    tool_memory=self.tool_memory,
+                    max_usages=self.max_iterations - i,
+                )
+            except dspy.DSPyAssertionError:
+                print("max assertion retries hit")
+                break
+
+            print(f"plan_strs: {p.plan_strs}")
+            if p.plan_strs[0] == "Synthesizer":
+                break
+
+            result = p.tool(p.params).result
+            print(f"result: {result}")
+            self.tool_memory(
+                current_user_message=current_user_message,
+                tool=p.tool,
+                plan_strs=p.plan_strs,
+                result=result,
+            )
+            print(f"tool_memory.memory: {self.tool_memory.memory}")
+
+        return dspy.Prediction(
+            response=self.synthesizer(
+                current_user_message=current_user_message,
+                tool_memory=self.tool_memory.memory,
+            ).response
+        )
+
+
 class JudgeSignature(dspy.Signature):
     """Judge if the current answer is equivalent to the ground truth answer to the question."""
 
@@ -617,30 +701,11 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    tool_memory = ToolMemory()
-    planner = assert_transform_module(
-        Planner(tools=[VectorRetriever(), KeywordRetriever()], max_usages=5),
-        functools.partial(backtrack_handler, max_backtracks=5),
-    )
-
     try:
         current_user_message = "How to get funding?"
-
-        for i in range(2):
-            print(f"iteration: {i}")
-            p = planner(
-                current_user_message=current_user_message, tool_memory=tool_memory
-            )
-            print(f"plan_strs: {p.plan_strs}")
-            result = p.tool(p.params).result
-            print(f"result: {result}")
-            tool_memory(
-                current_user_message=current_user_message,
-                tool=p.tool,
-                plan_strs=p.plan_strs,
-                result=result,
-            )
-            print(f"tool_memory.memory: {tool_memory.memory}")
+        agent = Agent(max_iterations=5)
+        response = agent(current_user_message=current_user_message).response
+        print(f"response: {response}")
 
     except Exception as e:
         print(e)
