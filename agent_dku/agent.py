@@ -24,6 +24,13 @@ from dspy.signatures.signature import ensure_signature, signature_to_template
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import dspy_patch
 
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
+)
+
 from settings import setup, use_phoenix
 from config import Config
 
