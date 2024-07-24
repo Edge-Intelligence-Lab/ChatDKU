@@ -4,6 +4,7 @@ class Config:
         # about settings.py
         self.embedding = f"BAAI/bge-m3"
         self.llm = "meta-llama/Meta-Llama-3-8B-Instruct"
+        self.tokenizer = "/opt/tokenizer/Meta-Llama-3-8B-Instruct"
         self.tei_url = "http://localhost:18080"
         self.llm_url = "http://localhost:8000/v1"
 
@@ -13,10 +14,6 @@ class Config:
         self.update = False
 
         # about query
-        self.chroma_db = (
-            f"/opt/chroma_dbs/bge_m3_chroma_db"
-        )
+        self.chroma_db = f"/opt/chroma_dbs/bge_m3_chroma_db"
         # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
-        self.docstore_path = (
-            f"/opt/docstores/bge_m3_docstore"
-        )
+        self.docstore_path = f"/opt/docstores/bge_m3_docstore"
