@@ -2,11 +2,6 @@
 
 import json
 from typing import Any
-from llama_index.core import VectorStoreIndex
-import chromadb
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.retrievers.bm25 import BM25Retriever
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
@@ -24,6 +19,10 @@ from dspy.signatures.signature import ensure_signature, signature_to_template
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import dspy_patch
 
+from dspy_common import custom_cot_rationale
+from tool import Tool
+from llamaindex_tools import VectorRetriever, KeywordRetriever
+
 import os
 import sys
 
@@ -33,17 +32,6 @@ sys.path.append(
 from settings import Config, setup, use_phoenix
 
 config = Config()
-
-import llama_index
-
-
-def mydeepcopy(self, memo):
-    return self
-
-
-# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
-# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
-llama_index.vector_stores.chroma.ChromaVectorStore.__deepcopy__ = mydeepcopy
 
 
 class CustomClient(LM):
@@ -119,119 +107,6 @@ def get_template(predict_module: Predict) -> str:
     # we place them inside the input - x - together with the demos.
     x = dsp.Example(demos=demos)
     return template(x)
-
-
-custom_cot_rationale = dspy.OutputField(
-    prefix="Rationale:",
-    desc="The step-by-step rationale of how you derive the response.",
-)
-
-
-class DocumentSummarizerSignature(dspy.Signature):
-    """Update the summary with information in the documents that are relevant to the query."""
-
-    previous_summary = dspy.InputField(
-        desc="The previously generated summary of relevant information. May be empty."
-    )
-    documents = dspy.InputField(
-        desc="The documents to extract relevant information from."
-    )
-    query = dspy.InputField(desc="The query that the summary should answer.")
-    current_summary = dspy.OutputField(
-        desc="The combined summary of relevant information in Previous Summary and Documents."
-    )
-
-
-class DocumentSummarizer(dspy.Module):
-    def __init__(self):
-        super().__init__()
-        self.summarizer = dspy.ChainOfThought(
-            DocumentSummarizerSignature, rationale_type=custom_cot_rationale
-        )
-
-    def forward(self, documents, query):
-        summary = ""
-        for doc in documents:
-            summary = self.summarizer(
-                previous_summary=summary, documents=doc, query=query
-            ).current_summary
-        return dspy.Prediction(summary=summary)
-
-
-class Tool(dspy.Module):
-    def __init__(self, name: str, desc: str, param_specs: dict[str, str]):
-        super().__init__()
-        self.name = name
-        self.desc = desc
-        self.param_specs = param_specs
-
-    def to_string(self, indent: str = ""):
-        s = ""
-        s += indent + f"- Name: {self.name}\n"
-        s += indent + f"- Description: {self.desc}\n"
-        if self.param_specs:
-            s += indent + "- Parameters:\n"
-            for j, (pn, pd) in enumerate(self.param_specs.items()):
-                s += indent + f"  - Parameter {j}\n"
-                s += indent + f"  - Name: {pn}\n"
-                s += indent + f"  - Description: {pd}\n"
-        return s
-
-
-class SynthesizerPlaceholder(Tool):
-    def __init__(self):
-        super().__init__(
-            "Synthesizer",
-            "Synthesize a response to the Current User Message with what you know.",
-            {},
-        )
-
-
-class VectorRetriever(Tool):
-    def __init__(self, top_k: int = 5):
-        super().__init__(
-            "Vector Retriever",
-            "Retrieve texts from the database that are semantically similar to the query.",
-            {
-                "Query": "Texts that might be semantically similar to the real answer to the question."
-            },
-        )
-        db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_or_create_collection("dku_html_pdf")
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        index = VectorStoreIndex.from_vector_store(vector_store)
-        self.retriever = index.as_retriever(similarity_top_k=top_k)
-        self.summarizer = DocumentSummarizer()
-
-    def forward(self, params: dict[str, str]):
-        query = params["Query"]
-        nodes = self.retriever.retrieve(query)
-        texts = [node.get_content() for node in nodes]
-        return dspy.Prediction(
-            result=self.summarizer(documents=texts, query=query).summary
-        )
-
-
-class KeywordRetriever(Tool):
-    def __init__(self, top_k: int = 5):
-        super().__init__(
-            "Keyword Retriever",
-            "Retrieve texts from the database that contain the same keywords in the query.",
-            {"Query": "Keywords that might appear in the answer to the question."},
-        )
-        docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
-        self.retriever = BM25Retriever.from_defaults(
-            docstore=docstore, similarity_top_k=top_k
-        )
-        self.summarizer = DocumentSummarizer()
-
-    def forward(self, params: dict[str, str]):
-        query = params["Query"]
-        nodes = self.retriever.retrieve(query)
-        texts = [node.get_content() for node in nodes]
-        return dspy.Prediction(
-            result=self.summarizer(documents=texts, query=query).summary
-        )
 
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
@@ -362,6 +237,15 @@ class ToolMemory(dspy.Module):
             result=result,
             previous_tool_memory=self.memory,
         ).current_tool_memory
+
+
+class SynthesizerPlaceholder(Tool):
+    def __init__(self):
+        super().__init__(
+            "Synthesizer",
+            "Synthesize a response to the Current User Message with what you know.",
+            {},
+        )
 
 
 def make_planner_signature():
