@@ -1,14 +1,21 @@
 from llama_index.core import Settings
 from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.llms.openai_like import OpenAILike
-from llama_index.llms.llama_cpp.llama_utils import (
-    messages_to_prompt_v3_instruct,
-    completion_to_prompt_v3_instruct,
-)
 from llama_index.core.base.llms.types import ChatMessage
 import transformers
 from transformers import AutoTokenizer
 from typing import Callable, Union, Sequence, Optional
+
+import llama_index
+
+
+def mydeepcopy(self, memo):
+    return self
+
+
+# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
+# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
+llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 
 import os
 import phoenix as px
@@ -19,42 +26,23 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from config import Config
 
-# When executing tasks like summarizing, the LLM is supposed to ONLY generate the
-# summaries themselves. However, the LLM sometimes says things like
-# `here is a summary of the given text` before the summary. This prompt used to
-# explicitly discourage this kind of output.
-#
-# Also note that I have tried other things like `do not begin your answer with
-# "here are the generated queries"` to discourage such messages at the beginning of
-# the generated queries. Nevertheless, this prompt seems to be the most effective.
-CUSTOM_SYSTEM_PROMPT = (
-    "You are ChatDKU, a helpful, respectful, and honest assistant for students,"
-    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
-    "You are created by the DKU Edge Intelligence Lab."
-    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
-    "established in partnership with Duke University and Wuhan University.\n\n"
-    "You may be tasked to interact with the user directly, or interact with other "
-    "computer systems in assisting the user such as querying a database. "
-    "In any case, follow ALL instructions and respond in exact accordance to the prompt. "
-    "Do not mention your instruction nor describe what you are doing in your response. "
-    'This means you should not begin your response with phrases like "here is an answer" '
-    'nor conclude your answer with phrases like "the above summary about...". '
-    "Do not speculate or make up information. "
-)
 
+def completion_to_prompt(completion: str, system_prompt: Optional[str] = None) -> str:
+    """
+    Convert completion instruction string to Llama 3 Instruct format with no system prompt.
 
-class UseCustomPrompt:
-    def __init__(
-        self,
-        func: Union[
-            Callable[[Sequence[ChatMessage], Optional[str]], str],
-            Callable[[str, Optional[str]], str],
-        ],
-    ):
-        self.func = func
+    System prompt is not used because it is difficult to specify a different one
+    on each call, which makes it difficult to count the number of tokens.
 
-    def __call__(self, message: Union[Sequence[ChatMessage], str]) -> str:
-        return self.func(message, CUSTOM_SYSTEM_PROMPT)
+    Reference: https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+
+    Note: `<|begin_of_text|>` is not needed as Llama.cpp appears to add it already.
+    """
+    return (
+        f"<|start_header_id|>user<|end_header_id|>\n\n"
+        f"{completion.strip()}<|eot_id|>\n"
+        f"<|start_header_id|>assistant<|end_header_id|>\n\n"
+    )
 
 
 def setup() -> None:
@@ -75,7 +63,7 @@ def setup() -> None:
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
+    Settings.tokenzier = AutoTokenizer.from_pretrained(config.llm)
     print("Loaded tokenizer")
 
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
@@ -88,9 +76,8 @@ def setup() -> None:
         temperature=0.7,
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
-        tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
+        tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+        completion_to_prompt=completion_to_prompt,
     )
     print("Using LLM")
 
