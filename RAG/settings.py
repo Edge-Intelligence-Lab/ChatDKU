@@ -75,7 +75,7 @@ def setup() -> None:
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenzier = AutoTokenizer.from_pretrained(config.llm)
+    Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
     print("Loaded tokenizer")
 
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
@@ -88,7 +88,7 @@ def setup() -> None:
         temperature=0.7,
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
-        tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+        tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
         messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
         completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
     )
