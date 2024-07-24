@@ -188,3 +188,5 @@ RAG/pipeline_storage
 # RAG document store
 RAG/docstore
 .venv
+demo/app_log.txt
+demo/http_log.txt
