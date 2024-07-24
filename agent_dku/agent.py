@@ -27,13 +27,10 @@ import dspy_patch
 import os
 import sys
 
-# FIXME: Store the config and setup code in a single location
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
-
-from settings import setup, use_phoenix
-from config import Config
+from settings import Config, setup, use_phoenix
 
 config = Config()
 

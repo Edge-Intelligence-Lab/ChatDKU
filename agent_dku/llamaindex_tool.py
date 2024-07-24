@@ -13,7 +13,14 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 
-from RAG.config import Config
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
+)
+from settings import Config
+
 config = Config()
 
 topk_from_retriever = 50
@@ -23,7 +30,7 @@ fusion_top_k = 50
 bm25_top_k = 50
 
 
-class LlamaindexTool():
+class LlamaindexTool:
     def __init__(self) -> None:
         Settings.embed_model = TextEmbeddingsInference(
             model_name=config.embedding,
@@ -34,14 +41,12 @@ class LlamaindexTool():
         self.chroma_collection = self.db.get_or_create_collection("dku_html_pdf")
         self.vector_store = ChromaVectorStore(chroma_collection=self.chroma_collection)
         self.index = VectorStoreIndex.from_vector_store(self.vector_store)
-        
-        
-        
+
         self.vector_retriever = VectorIndexRetriever(
             index=self.index,
             similarity_top_k=topk_from_retriever,
         )
-        
+
         self.docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         self.bm25_retriever = BM25Retriever.from_defaults(
             docstore=self.docstore, similarity_top_k=bm25_top_k
@@ -59,17 +64,15 @@ class LlamaindexTool():
             use_async=True,
             verbose=True,
         )
-        
-        
-        self.colbert_reranker = ColbertRerank(
-                                                top_n=topn_from_rerank,
-                                                model="colbert-ir/colbertv2.0",
-                                                tokenizer="colbert-ir/colbertv2.0",
-                                                keep_retrieval_score=True,
-                                            )
-    
-        print("-"*10+"llamaindex_tool loaded"+"-"*10)
 
+        self.colbert_reranker = ColbertRerank(
+            top_n=topn_from_rerank,
+            model="colbert-ir/colbertv2.0",
+            tokenizer="colbert-ir/colbertv2.0",
+            keep_retrieval_score=True,
+        )
+
+        print("-" * 10 + "llamaindex_tool loaded" + "-" * 10)
 
     def query(self, query, retriever):
         ### get query bundle
@@ -80,16 +83,21 @@ class LlamaindexTool():
         elif retriever == "vector":
             retrieved_nodes = self.vector_retriever._retrieve(query_bundle=query_bundle)
         ### colbert rerank
-        reranked_nodes = self.colbert_reranker._postprocess_nodes(nodes=retrieved_nodes,query_bundle=query_bundle)
+        reranked_nodes = self.colbert_reranker._postprocess_nodes(
+            nodes=retrieved_nodes, query_bundle=query_bundle
+        )
         ### to compress the full contexts
         contexts = [node.text for node in reranked_nodes]
         ### return List[Node]
         return contexts, reranked_nodes
-    
+
+
 def main():
     query = "what do you know about DKU?"
     llamaindextool = LlamaindexTool()
-    contexts, reranked_nodes = llamaindextool.query(query,"fusion")
-    
+    contexts, reranked_nodes = llamaindextool.query(query, "fusion")
+
+
 if __name__ == "__main__":
     main()
+

@@ -24,7 +24,7 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
-from config import Config
+from settings import Config
 
 config = Config()
 
@@ -156,7 +156,7 @@ def load_and_index(
 
 def main():
     setup()
-    config=Config()
+    config = Config()
 
     load_and_index(
         update=False,
