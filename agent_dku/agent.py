@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 import json
-from typing import Any
+from typing import Any, Callable, Literal
+from pydantic import BaseModel, ConfigDict, Field, create_model, ValidationError
+from pydantic.fields import FieldInfo
+from inspect import signature, Signature
+import re
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
@@ -20,7 +24,6 @@ from dspy.signatures.signature import ensure_signature, signature_to_template
 import dspy_patch
 
 from dspy_common import custom_cot_rationale
-from tool import Tool
 from llamaindex_tools import VectorRetriever, KeywordRetriever
 
 import os
@@ -147,35 +150,35 @@ def make_update_tool_memory_signature():
             str,
             dspy.InputField(
                 desc=(
-                    "The specification of the tool you just used."
-                    "Its name, description, and a list of its parameter(s) "
-                    "(including the description of each parameter) is given."
+                    "The specification of the tool you just called in JSON. "
+                    "It includes the tool's name, description, and a list of "
+                    "its parameters with descriptions for each parameter."
                 ),
                 format=lambda x: x,
             ),
         ),
-        "tool_usage": (
+        "tool_called": (
             str,
             dspy.InputField(
                 desc=(
-                    "The name of the tool and the parameters you gave to the tool you just used."
-                    "The first line is the name of the tool."
-                    "If that tool takes any parameters, then on the subsequent lines, "
-                    'the parameters are given in the format of "Parameter Name: Parameter Value".'
+                    "The name of the tool and the parameters you gave to the tool "
+                    "you just called in JSON."
                 ),
                 format=lambda x: x,
             ),
         ),
         "result": (
             str,
-            dspy.InputField(desc=("The result returned from the tool you just used.")),
+            dspy.InputField(
+                desc=("The result returned from the tool you just called.")
+            ),
         ),
         "previous_tool_memory": (
             str,
             dspy.InputField(
                 desc=(
                     "Memory of what you have learned previously from the tools. "
-                    "It would be empty if you have not used any tools previously."
+                    "It would be empty if you have not called any tools previously."
                 ),
                 format=lambda x: x,
             ),
@@ -184,7 +187,7 @@ def make_update_tool_memory_signature():
             str,
             dspy.OutputField(
                 desc=(
-                    "Considering your previous Tool Memory and the result from the tool you just used, "
+                    "Considering your previous Tool Memory and the result from the tool you just called, "
                     "store all the information that would be useful for answering the Current User Message here."
                 ),
                 format=lambda x: x,
@@ -195,9 +198,9 @@ def make_update_tool_memory_signature():
     instruction = (
         "You have a Tool Memory storing all the information you learned from using "
         "multple tools that would be useful for answering the Current User Message. "
-        "You just used a tool and the result it returned would be provided. "
+        "You just called a tool and the result it returned would be provided. "
         "Your current task is to update your Tool Memory with what you "
-        "learned from the tool you just used. "
+        "learned from the tool you just called. "
         "In the future, you would be asked to respond to the Current User Message "
         "with only your Tool Memory. "
         "Therefore, you should make it comprehensive enough so that it could "
@@ -214,7 +217,7 @@ UpdateToolMemorySignature = make_update_tool_memory_signature()
 
 class ToolMemory(dspy.Module):
     def reset(self):
-        self.tools_used = []
+        self.tools_called = []
         self.tool_plan = []
         self.memory = ""
 
@@ -226,26 +229,28 @@ class ToolMemory(dspy.Module):
         )
 
     def forward(
-        self, current_user_message: str, tool: Tool, plan_strs: list[str], result: str
+        self,
+        current_user_message: str,
+        schema: dict[str, Any],
+        calls: list[BaseModel],
+        result: str,
     ):
-        self.tools_used.append(plan_strs[0])
-        self.tool_plan = plan_strs[1:].copy()
+        self.tools_called.append(calls[0])
+        self.tool_plan = calls[1:].copy()
         self.memory = self.update_tool_memory(
             current_user_message=current_user_message,
-            tool_specification=tool.to_string(),
-            tool_usage=plan_strs[0],
+            tool_specification=str(schema),
+            tool_called=calls[0].model_dump_json(),
             result=result,
             previous_tool_memory=self.memory,
         ).current_tool_memory
 
 
-class SynthesizerPlaceholder(Tool):
-    def __init__(self):
-        super().__init__(
-            "Synthesizer",
-            "Synthesize a response to the Current User Message with what you know.",
-            {},
-        )
+class Synthesizer(dspy.Module):
+    "Synthesize a response to the Current User Message with what you know."
+
+    def forward(self):
+        pass
 
 
 def make_planner_signature():
@@ -256,10 +261,9 @@ def make_planner_signature():
             dspy.InputField(
                 desc=(
                     "A list of available tools and their respective parameters. "
-                    "For each tool, its name, description, and a list of its parameter(s) "
-                    "(including the description of each parameter) is given. "
-                    "Note that you should not use the labels of the tools or parameters such as "
-                    '"Tool 0" or "Parameter 0" in your response.'
+                    "The JSON schema for each tool is presented on a single line, "
+                    "including the tool's name, description, and a list of "
+                    "its parameters with descriptions for each parameter."
                 ),
                 # Preserve linebreaks in the format.
                 # However, it won't work if you implement the actual formatting function here,
@@ -267,24 +271,21 @@ def make_planner_signature():
                 format=lambda x: x,
             ),
         ),
-        "max_usages": (
+        "max_calls": (
             str,
             dspy.InputField(
                 desc=(
-                    "The maximum number of tool usages you can include in your plan. "
-                    'Note that using "Synthesizer" once also counts as one tool use.'
+                    "The maximum number of tool calls you can include in your plan. "
+                    'Note that using "synthesizer" once also counts as one tool call.'
                 )
             ),
         ),
-        "tools_used": (
+        "tools_called": (
             str,
             dspy.InputField(
                 desc=(
-                    "A list of your previous tool usages separated by an empty line. "
-                    "For each tool usage, the first line is the name of the tool. "
-                    "If that tool takes any parameters, then on the subsequent lines, "
-                    'the parameters are given in the format of "Parameter Name: Parameter Value". '
-                    "It would be empty if you have not used any tools previously."
+                    "A list of your previous tool calls, each line specifying a tool call. "
+                    "It would be empty if you have not called any tools previously."
                 ),
                 format=lambda x: x,
             ),
@@ -294,7 +295,7 @@ def make_planner_signature():
             dspy.InputField(
                 desc=(
                     "Memory of what you have learned previously from the tools. "
-                    "It would be empty if you have not used any tools previously."
+                    "It would be empty if you have not called any tools previously."
                 ),
                 format=lambda x: x,
             ),
@@ -303,9 +304,9 @@ def make_planner_signature():
             str,
             dspy.InputField(
                 desc=(
-                    "Your previous plan about what tools to use next. "
-                    "Note that you have not used these tools yet. "
-                    "It would be empty if you have not used any tools previously."
+                    "Your previous plan about what tools to call next. "
+                    "Note that you have not called these tools yet. "
+                    "It would be empty if you have not called any tools previously."
                 ),
                 format=lambda x: x,
             ),
@@ -314,14 +315,11 @@ def make_planner_signature():
             str,
             dspy.OutputField(
                 desc=(
-                    "Your step-by-step plan of the tools to use and their respective parameters. "
-                    "Output a list of tool usages separated by an empty line. "
-                    'The last tool used must be "Synthesizer" (without quotes). '
-                    "For each tool usage, output the name of the tool on the first line. "
-                    "If that tool takes any parameters, then on the subsequent lines, "
-                    'output the parameters in the format of "Parameter Name: Parameter Value" '
-                    "(without quotes and you should substitute in the actual parameter names and values). "
-                    "If that tool takes no parameters, do not include any parameter lines in the tool usage."
+                    "Your step-by-step plan of the tools to call and their respective "
+                    "parameters in JSON Lines format. "
+                    "Each tool call should be a JSON object printed on a singled line. "
+                    "Each tool call should be delimited by a newline. "
+                    'The last tool used must be "synthesizer". '
                 ),
             ),
         ),
@@ -341,17 +339,73 @@ def make_planner_signature():
 PlannerSignature = make_planner_signature()
 
 
+def func_to_model(
+    name: str, func: Callable[..., Any], exclude: list[str] = []
+) -> type[BaseModel]:
+    fields = {}
+    params = signature(func).parameters
+
+    for param_name in params:
+        if param_name in exclude:
+            continue
+
+        param_type = params[param_name].annotation
+        if param_type is Signature.empty:
+            param_type = Any
+
+        param_default = params[param_name].default
+        if param_default is Signature.empty:
+            fields[param_name] = (param_type, Field(...))
+        elif isinstance(param_default, FieldInfo):
+            fields[param_name] = (param_type, param_default)
+        else:
+            fields[param_name] = (param_type, Field(default=param_default))
+
+    return create_model(name, **fields)
+
+
+def camel_to_snake_case(s: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+
+
+class NameParamsModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    params: dict[str, Any]
+
+
 class Planner(dspy.Module):
-    def __init__(self, tools: list[Tool]):
+    def __init__(self, tools: list[dspy.Module]):
         super().__init__()
+
         self.tools = tools
-        self.tools.append(SynthesizerPlaceholder())
+        self.tools.append(Synthesizer())
+
+        self.name_to_model = {}
+        for tool in tools:
+            tool_name_camel = type(tool).__name__
+            tool_description = type(tool).__doc__ or ""
+
+            tool_name_snake = camel_to_snake_case(tool_name_camel)
+
+            Params = func_to_model(tool_name_camel + "Params", tool.forward)
+            NameParams = create_model(
+                tool_name_camel,
+                model_config=ConfigDict(extra="forbid"),
+                name=(
+                    Literal[tool_name_snake],
+                    Field(..., description=tool_description),
+                ),
+                params=(Params, FieldInfo()),
+            )
+            self.name_to_model[tool_name_snake] = NameParams
+
         self.planner = dspy.ChainOfThought(
             PlannerSignature, rationale_type=custom_cot_rationale
         )
 
     def forward(
-        self, current_user_message: str, tool_memory: ToolMemory, max_usages: int = 5
+        self, current_user_message: str, tool_memory: ToolMemory, max_calls: int = 5
     ):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
@@ -359,121 +413,85 @@ class Planner(dspy.Module):
         Values `tool=None, params=None` would be returned to indicate using synthesizer.
         """
 
-        # Format the list of available tools
-        at = ""
-        for i, tool in enumerate(self.tools):
-            at += f"- Tool {i}\n"
-            at += tool.to_string("  ")
-            at += "\n"
-
         plan_str_all = self.planner(
             current_user_message=current_user_message,
-            available_tools=at,
-            max_usages=str(max_usages),
-            tools_used="\n\n".join(tool_memory.tools_used),
+            available_tools="\n".join(
+                [str(m.model_json_schema()) for m in self.name_to_model.values()]
+            ),
+            max_calls=str(max_calls),
+            tools_called="\n".join([str(tool) for tool in tool_memory.tools_called]),
             tool_memory=tool_memory.memory,
-            previous_tool_plan="\n\n".join(tool_memory.tool_plan),
+            previous_tool_plan="\n".join(
+                [tool.model_dump_json() for tool in tool_memory.tool_plan]
+            ),
         ).current_tool_plan
 
         # Parse tool plan response
 
-        # FIXME: These should be put into class attributes if possible.
-        # However, a DSPy bug made this impossible for now.
-        # The bug causes dspy.Module.named_parameters() to enter infinite recursion
-        # when duplicate references to a Module B occur in a Module A.
-        name_tools = {tool.name: tool for tool in self.tools}
-        name_params = {tool.name: tool.param_specs.keys() for tool in self.tools}
-        available_tools_str = ", ".join([f'"{tool.name}"' for tool in self.tools])
-        available_params_str = {
-            name: ", ".join([f'"{p}"' for p in params])
-            for name, params in name_params.items()
-        }
-
-        plan_strs = plan_str_all.strip().split("\n\n")
-        dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
-
+        plan_strs = plan_str_all.strip().split("\n")
         plan_strs = [s.strip() for s in plan_strs]
+        dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
         dspy.Assert(
-            plan_strs[-1] == "Synthesizer",
+            len(plan_strs) <= max_calls,
             (
-                f'"{plan_strs[-1]}" should not be the last tool in the plan. '
-                'Instead, "Synthesizer" (without quotes) must be the last tool in the plan and it takes no parameters. '
+                f"The number of tool calls in your plan must be no more than {max_calls}. "
+                'Note that calling "synthesizer" once also counts as one tool call.'
+            ),
+        )
+
+        calls_unvalidated = []
+        for i, s in enumerate(plan_strs, 1):
+            try:
+                calls_unvalidated.append(NameParamsModel.model_validate_json(s))
+            except ValidationError as e:
+                dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+
+        calls = []
+        for i, c in enumerate(calls_unvalidated, 1):
+            dspy.Assert(
+                c.name in self.name_to_model,
+                (
+                    f'"{c.name}" is not a valid tool. '
+                    f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+                ),
+            )
+            try:
+                calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
+            except ValidationError as e:
+                dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+
+        dspy.Assert(
+            all([c.name != "synthesizer" for c in calls[:-1]]),
+            '"synthesizer" must be the last tool in the plan.',
+        )
+        dspy.Assert(
+            calls[-1].name == "synthesizer",
+            (
+                f'"{calls[-1].name}" should not be the last tool in the plan. '
+                'Instead, "synthesizer" must be the last tool in the plan. '
                 "You might also get this error if you did not use an empty line as separator."
             ),
         )
-        dspy.Assert(
-            len(plan_strs) <= max_usages,
-            (
-                f"The number of tool usages in your plan must be no more than {max_usages}. "
-                'Note that using "Synthesizer" once also counts as one tool use.'
-            ),
-        )
-        if len(plan_strs) == 1:
+
+        if len(calls) == 1:
             # The current tool is "Synthesizer".
-            return dspy.Prediction(plan_strs=plan_strs, tool=None, params=None)
+            return dspy.Prediction(calls=calls, tool=None, schema=None)
+        else:
+            # FIXME: These should be put into class attributes if possible.
+            # However, a DSPy bug made this impossible for now.
+            # The bug causes dspy.Module.named_parameters() to enter infinite recursion
+            # when duplicate references to a Module B occur in a Module A.
+            name_to_tool = {}
+            for tool in self.tools:
+                tool_name_camel = type(tool).__name__
+                tool_name_snake = camel_to_snake_case(tool_name_camel)
+                name_to_tool[tool_name_snake] = tool
 
-        first_tool = True
-        for s in plan_strs[:-1]:
-            lines = s.split("\n")
-            lines = [line.strip() for line in lines]
-
-            name = lines[0]
-            dspy.Assert(
-                len(name) >= 1,
-                (
-                    "Empty tool usage specification. "
-                    "There should be no more than one consective empty line in the plan."
-                ),
+            return dspy.Prediction(
+                calls=calls,
+                tool=name_to_tool[calls[0].name],
+                schema=self.name_to_model[calls[0].name].model_json_schema(),
             )
-            dspy.Assert(
-                name != "Synthesizer",
-                '"Synthesizer" (without quotes) must be the last tool in the plan.',
-            )
-            dspy.Assert(
-                name in name_params.keys(),
-                (
-                    f'"{name}" is not a valid tool. '
-                    f'Available tool(s) for "{name}" are: {available_tools_str} (without quotes and case-sensitive).'
-                ),
-            )
-
-            params = {}
-            for line in lines[1:]:
-                parts = line.split(":", 1)
-                dspy.Assert(
-                    len(parts) == 2,
-                    "For each parameter line, there must be at least one colon on each line "
-                    'specifying a "Parameter Name: Parameter Value" (without quotes) pair.',
-                )
-
-                parts = [part.strip() for part in parts]
-                p_name, p_value = parts[0], parts[1]
-                dspy.Assert(
-                    p_name in name_params[name],
-                    (
-                        f'"{p_name}" is not a valid parameter name. '
-                        f"Available parameter name(s) are: {available_params_str[name]} (without quotes and case-sensitive)."
-                    ),
-                )
-                params[p_name] = p_value
-
-            for p_name in name_params[name]:
-                dspy.Assert(
-                    p_name in params,
-                    (
-                        f'"{p_name}" is missing from the tool usage specification. '
-                        f"Note that all parameters of the tools are required."
-                    ),
-                )
-
-            if first_tool:
-                first_tool = False
-                first_name = name
-                first_params = params
-
-        return dspy.Prediction(
-            plan_strs=plan_strs, tool=name_tools[first_name], params=first_params
-        )
 
 
 def make_synthesizer_signature():
@@ -526,22 +544,22 @@ class Agent(dspy.Module):
                 p = self.planner(
                     current_user_message=current_user_message,
                     tool_memory=self.tool_memory,
-                    max_usages=self.max_iterations - i,
+                    max_calls=self.max_iterations - i,
                 )
             except dspy.DSPyAssertionError:
                 print("max assertion retries hit")
                 break
 
-            print(f"plan_strs: {p.plan_strs}")
-            if p.plan_strs[0] == "Synthesizer":
+            print(f"calls: {p.calls}")
+            if p.calls[0].name == "synthesizer":
                 break
 
-            result = p.tool(p.params).result
+            result = p.tool(**p.calls[0].params.model_dump()).result
             print(f"result: {result}")
             self.tool_memory(
                 current_user_message=current_user_message,
-                tool=p.tool,
-                plan_strs=p.plan_strs,
+                schema=p.schema,
+                calls=p.calls,
                 result=result,
             )
             print(f"tool_memory.memory: {self.tool_memory.memory}")

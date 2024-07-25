@@ -1,3 +1,10 @@
+from typing import Annotated
+from pydantic import Field
+
+import dspy
+
+from dspy_common import custom_cot_rationale
+
 import chromadb
 import llama_index
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -5,11 +12,6 @@ from llama_index.core import VectorStoreIndex
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
-
-import dspy
-
-from dspy_common import custom_cot_rationale
-from tool import Tool
 
 import os
 import sys
@@ -71,16 +73,10 @@ def get_reranker(top_n: int):
     )
 
 
-class VectorRetriever(Tool):
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
-        super().__init__(
-            "Vector Retriever",
-            "Retrieve texts from the database that are semantically similar to the query.",
-            {
-                "Query": "Texts that might be semantically similar to the real answer to the question."
-            },
-        )
+class VectorRetriever(dspy.Module):
+    """Retrieve texts from the database that are semantically similar to the query."""
 
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_or_create_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -91,8 +87,15 @@ class VectorRetriever(Tool):
 
         self.summarizer = DocumentSummarizer()
 
-    def forward(self, params: dict[str, str]):
-        query = params["Query"]
+    def forward(
+        self,
+        query: Annotated[
+            str,
+            Field(
+                description="Texts that might be semantically similar to the real answer to the question."
+            ),
+        ],
+    ):
         retrieved_nodes = self.retriever.retrieve(query)
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
@@ -103,14 +106,10 @@ class VectorRetriever(Tool):
         )
 
 
-class KeywordRetriever(Tool):
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
-        super().__init__(
-            "Keyword Retriever",
-            "Retrieve texts from the database that contain the same keywords in the query.",
-            {"Query": "Keywords that might appear in the answer to the question."},
-        )
+class KeywordRetriever(dspy.Module):
+    """Retrieve texts from the database that contain the same keywords in the query."""
 
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
         docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         self.retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=retriever_top_k
@@ -120,8 +119,15 @@ class KeywordRetriever(Tool):
 
         self.summarizer = DocumentSummarizer()
 
-    def forward(self, params: dict[str, str]):
-        query = params["Query"]
+    def forward(
+        self,
+        query: Annotated[
+            str,
+            Field(
+                description="Keywords that might appear in the answer to the question."
+            ),
+        ],
+    ):
         retrieved_nodes = self.retriever.retrieve(query)
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
