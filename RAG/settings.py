@@ -47,24 +47,6 @@ class Config:
         self.docstore_path = f"/opt/docstores/bge_m3_docstore"
 
 
-def completion_to_prompt(completion: str, system_prompt: Optional[str] = None) -> str:
-    """
-    Convert completion instruction string to Llama 3 Instruct format with no system prompt.
-
-    System prompt is not used because it is difficult to specify a different one
-    on each call, which makes it difficult to count the number of tokens.
-
-    Reference: https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
-
-    Note: `<|begin_of_text|>` is not needed as Llama.cpp appears to add it already.
-    """
-    return (
-        f"<|start_header_id|>user<|end_header_id|>\n\n"
-        f"{completion.strip()}<|eot_id|>\n"
-        f"<|start_header_id|>assistant<|end_header_id|>\n\n"
-    )
-
-
 def setup() -> None:
     """Setup common resources from command line arguments."""
     config = Config()
@@ -97,7 +79,6 @@ def setup() -> None:
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
         tokenizer=config.llm,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        completion_to_prompt=completion_to_prompt,
     )
     print("Using LLM")
 

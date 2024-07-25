@@ -31,10 +31,9 @@ def custom_guidelines(self, show_guidelines: bool = True) -> str:
         else:
             output_example[field.input_variable] = field.description
 
-    result = "##########\n\n"
-    result += "Given the input in the format below:\n\n"
+    result = "Given the input in the format below:\n\n"
     result += self.query(input_example, True)
-    result += "\n\n##########\n\n"
+    result += "\n\n---\n\n"
     result += (
         "Output in the format given below. "
         "Do not output anything else that does not fit into the format. "
@@ -43,7 +42,6 @@ def custom_guidelines(self, show_guidelines: bool = True) -> str:
         "Output format:\n\n"
     )
     result += self.query(output_example, True)
-    result += "\n\n##########"
     return result
 
 
@@ -95,6 +93,99 @@ def custom_init(self, instructions: str, **kwargs):
 
 
 dsp.adapters.BaseTemplate.__init__ = custom_init
+
+
+def custom_call(self, example, show_guidelines=True) -> str:
+    example = dsp.Example(example)
+
+    if hasattr(dsp.settings, "query_only") and dsp.settings.query_only:
+        return self.query(example)
+
+    # The training data should not contain the output variable
+    if self.fields[-1].input_variable in example:
+        del example[self.fields[-1].input_variable]
+
+    rdemos = [
+        self.query(demo, is_demo=True)
+        for demo in example.demos
+        if (
+            (not demo.get("augmented", False))
+            and (  # validate that the training example has the same primitive input var as the template
+                self.fields[-1].input_variable in demo
+                and demo[self.fields[-1].input_variable] is not None
+            )
+        )
+    ]
+
+    ademos = [
+        self.query(demo, is_demo=True)
+        for demo in example.demos
+        if demo.get("augmented", False)
+    ]
+
+    # Move the rdemos to ademos if rdemo has all the fields filled in
+    rdemos_ = []
+    new_ademos = []
+    for rdemo in rdemos:
+        if all(
+            (field.name in rdemo)
+            for field in self.fields
+            if field.input_variable in example
+        ):
+            import dspy
+
+            if dspy.settings.release >= 20230928:
+                new_ademos.append(rdemo)
+            else:
+                ademos.append(rdemo)
+        else:
+            rdemos_.append(rdemo)
+
+    ademos = new_ademos + ademos
+    rdemos = rdemos_
+
+    long_query = self._has_augmented_guidelines()
+
+    if long_query:
+        example["augmented"] = True
+
+    query = self.query(example)
+
+    # Always do `long_query`
+    if not example.get("augmented", False):
+        example["augmented"] = True
+        query = self.query(example)
+
+    rdemos = "\n\n".join(rdemos)
+
+    if len(rdemos) == 0:
+        parts = [
+            self.instructions,
+            self.guidelines(show_guidelines),
+            *ademos,
+            query,
+        ]
+    else:
+        parts = [
+            self.instructions,
+            rdemos,
+            self.guidelines(show_guidelines),
+            *ademos,
+            query,
+        ]
+
+    prompt = "<|start_header_id|>system<|end_header_id|>\n\n"
+    prompt += "\n\n---\n\n".join([p.strip() for p in parts[:-1] if p])
+    prompt += "<|eot_id|>\n"
+    prompt += "<|start_header_id|>user<|end_header_id|>\n\n"
+    prompt += parts[-1].strip()
+    prompt += "<|eot_id|>\n"
+    prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n"
+
+    return prompt.strip()
+
+
+dsp.adapters.Template.__call__ = custom_call
 
 
 def custom_set_attribute_by_name(obj, name, value):
