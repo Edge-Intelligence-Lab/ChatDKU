@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
-from llama_index.core import VectorStoreIndex, get_response_synthesizer, Settings, PromptTemplate
+from llama_index.core import (
+    VectorStoreIndex,
+    get_response_synthesizer,
+    Settings,
+    PromptTemplate,
+)
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
@@ -43,7 +48,7 @@ from llama_index.core.callbacks import CallbackManager
 from typing import Dict, Any, Optional, Tuple, List, cast, Set, Optional
 import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
-from settings import parse_args_and_setup
+from settings import setup
 
 # Override the fucking Llamaindex code
 import llama_index.core.base.query_pipeline.query
@@ -175,10 +180,9 @@ def get_pipeline(
         reasoning_step = ObservationReasoningStep(observation=task.input)
         state["current_reasoning"].append(reasoning_step)
         convo_history_str = "\n".join(state["convo_history"]) or "None"
-        return {"input": task.input,  "convo_history": convo_history_str}
+        return {"input": task.input, "convo_history": convo_history_str}
 
     agent_input_component = AgentInputComponent(fn=agent_input_fn)
-
 
     retry_prompt_str = """\
     You are trying to generate a proper natural language query given a user input.
@@ -232,7 +236,7 @@ def get_pipeline(
                 "sql_response": str(output),
             }
         )
-        qp =QueryPipeline(chain=[validate_prompt_partial, Settings.llm])
+        qp = QueryPipeline(chain=[validate_prompt_partial, Settings.llm])
         validate_output = qp.run(input=task.input)
 
         state["count"] += 1
@@ -243,7 +247,6 @@ def get_pipeline(
             is_done = True
 
         return AgentChatResponse(response=str(output)), is_done
-
 
     agent_output_component = AgentFnComponent(fn=agent_output_fn)
 
@@ -268,7 +271,7 @@ def get_pipeline(
 
 
 def main():
-    parse_args_and_setup()
+    setup(add_system_prompt=True)
 
     px.launch_app()
     set_global_handler("arize_phoenix")

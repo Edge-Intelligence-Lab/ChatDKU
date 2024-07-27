@@ -8,7 +8,7 @@ def main():
 
     if "setup_done" not in st.session_state:
         print("0000" * 50)
-        setup()
+        setup(add_system_prompt=True)
         st.session_state.setup_done = True
 
     if "pipeline" not in st.session_state:

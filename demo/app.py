@@ -44,7 +44,7 @@ def chat():
 
 
 if __name__ == "__main__":
-    setup()
+    setup(add_system_prompt=True)
     use_phoenix()
     pipeline = get_pipeline()
     # NOTE: Might want to make it easier to change the port

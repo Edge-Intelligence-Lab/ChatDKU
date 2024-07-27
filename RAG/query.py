@@ -20,8 +20,7 @@ from llama_index.core.bridge.pydantic import Field
 from typing import Dict, Any
 import asyncio
 
-from settings import setup, use_phoenix
-from config import Config
+from settings import Config, setup, use_phoenix
 
 config = Config()
 
@@ -288,7 +287,7 @@ def get_pipeline(
 
 
 def main():
-    setup()
+    setup(add_system_prompt=True)
     use_phoenix()
     pipeline = get_pipeline()
     chat_history = []

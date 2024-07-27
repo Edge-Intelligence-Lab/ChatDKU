@@ -10,14 +10,23 @@ import transformers
 from transformers import AutoTokenizer
 from typing import Callable, Union, Sequence, Optional
 
+import llama_index
+
+
+def mydeepcopy(self, memo):
+    return self
+
+
+# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
+# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
+llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
+
 import os
 import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
-from config import Config
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -57,7 +66,29 @@ class UseCustomPrompt:
         return self.func(message, CUSTOM_SYSTEM_PROMPT)
 
 
-def setup() -> None:
+class Config:
+    def __init__(self, embedding_model_type="small"):
+
+        # about settings.py
+        self.embedding = f"BAAI/bge-m3"
+        self.llm = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+        self.tokenizer = "/opt/tokenizer/Meta-Llama-3-8B-Instruct"
+        self.tei_url = "http://localhost:18080"
+        self.llm_url = "http://localhost:8001/v1"
+
+        # about load_and_index
+        self.data_dir = "/opt/RAG_data"
+        self.documents_path = "/opt/RAG_data/new_parser_documents.pkl"
+        self.pipeline_cache = "./pipeline_cache"
+        self.update = False
+
+        # about query
+        self.chroma_db = f"/opt/chroma_dbs/bge_m3_chroma_db"
+        # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
+        self.docstore_path = f"/opt/docstores/bge_m3_docstore"
+
+
+def setup(add_system_prompt: bool = False) -> None:
     """Setup common resources from command line arguments."""
     config = Config()
 
@@ -78,6 +109,13 @@ def setup() -> None:
     Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
     print("Loaded tokenizer")
 
+    messages_to_prompt = (
+        UseCustomPrompt(messages_to_prompt_v3_instruct) if add_system_prompt else None
+    )
+    completion_to_prompt = (
+        UseCustomPrompt(completion_to_prompt_v3_instruct) if add_system_prompt else None
+    )
+
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
     # with e.g. vLLM
     Settings.llm = OpenAILike(
@@ -89,8 +127,8 @@ def setup() -> None:
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,
         tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=UseCustomPrompt(messages_to_prompt_v3_instruct),
-        completion_to_prompt=UseCustomPrompt(completion_to_prompt_v3_instruct),
+        messages_to_prompt=messages_to_prompt,
+        completion_to_prompt=completion_to_prompt,
     )
     print("Using LLM")
 

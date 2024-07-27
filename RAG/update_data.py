@@ -9,7 +9,7 @@ import argparse
 from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
-from config import Config
+from settings import Config
 from markdownify import markdownify as md
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
