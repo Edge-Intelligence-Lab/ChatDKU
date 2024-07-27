@@ -219,6 +219,11 @@ class ToolMemory(dspy.Module):
     def reset(self):
         self.tools_called = []
         self.tool_plan = []
+        # Observation: In a lot of times (but not always), Llama 3/3.1 would use
+        # JSON to organize its own memory. However, it appears to actually
+        # perform better when NOT using JSON. As the LLM tend to drop some of
+        # previous memory when updating a memory in JSON format.
+        # TODO: Offer a better memory structure.
         self.memory = ""
 
     def __init__(self):
@@ -318,7 +323,7 @@ def make_planner_signature():
                     "Your step-by-step plan of the tools to call and their respective "
                     "parameters in JSON Lines format. "
                     "Each tool call should be a JSON object printed on a singled line. "
-                    "Each tool call should be delimited by a newline. "
+                    "Each tool call should be on its own line. "
                     'The last tool used must be "synthesizer". '
                 ),
             ),
@@ -419,7 +424,9 @@ class Planner(dspy.Module):
                 [str(m.model_json_schema()) for m in self.name_to_model.values()]
             ),
             max_calls=str(max_calls),
-            tools_called="\n".join([str(tool) for tool in tool_memory.tools_called]),
+            tools_called="\n".join(
+                [tool.model_dump_json() for tool in tool_memory.tools_called]
+            ),
             tool_memory=tool_memory.memory,
             previous_tool_plan="\n".join(
                 [tool.model_dump_json() for tool in tool_memory.tool_plan]

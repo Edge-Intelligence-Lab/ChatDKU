@@ -30,10 +30,10 @@ class Config:
 
         # about settings.py
         self.embedding = f"BAAI/bge-m3"
-        self.llm = "meta-llama/Meta-Llama-3-8B-Instruct"
+        self.llm = "meta-llama/Meta-Llama-3.1-8B-Instruct"
         self.tokenizer = "/opt/tokenizer/Meta-Llama-3-8B-Instruct"
         self.tei_url = "http://localhost:18080"
-        self.llm_url = "http://localhost:8000/v1"
+        self.llm_url = "http://localhost:8001/v1"
 
         # about load_and_index
         self.data_dir = "/opt/RAG_data"
