@@ -1,27 +1,38 @@
-from graphrag.query.cli import _read_config_parameters
-import pandas as pd
-from pathlib import Path
-from graphrag.query.indexer_adapters import (
-    read_indexer_covariates,
-    read_indexer_entities,
-    read_indexer_relationships,
-    read_indexer_reports,
-    read_indexer_text_units,
-)
+import asyncio
+import dspy
 import json
-from graphrag.query.factories import get_global_search_engine,get_llm
+import os
+import pandas as pd
 import re
-from graphrag.query.structured_search.global_search.search import GlobalSearch
+import sys
+import tiktoken
+import time
+
+
+from dspy_common import custom_cot_rationale
+from graphrag.query.cli import _read_config_parameters
 from graphrag.query.context_builder.conversation_history import (
     ConversationHistory,
 )
-from typing import Any
+from graphrag.query.factories import get_llm
+from graphrag.query.indexer_adapters import (
+    read_indexer_entities,
+    read_indexer_reports,
+)
 from graphrag.query.structured_search.global_search.community_context import (
     GlobalCommunityContext,
 )
-import time
-import asyncio
-import tiktoken
+from graphrag.query.structured_search.global_search.search import GlobalSearch
+from llamaindex_tools import DocumentSummarizer
+from pathlib import Path
+from tool import Tool
+from typing import Any
+
+sys.path.append(
+    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
+)
+from settings import Config
+config = Config()
 
 def json_clean(response:str):
     match = re.search(r'\{.*\}', response, re.DOTALL)
@@ -103,17 +114,22 @@ class AgentGlobalSearch(GlobalSearch):
             for element in parsed_elements
         ]
 
-
-
-
-class GraphragTool():
+class GraphragTool(Tool):
     def __init__(self):
+        super().__init__(
+            "Graph Global Retriever",
+            "Retrieve texts from the summary of the reports that are related to the query, suitable for complex queries, such as summary and comparison tasks.",
+            {
+                "Query": "texts that might be complexed, such as summary and comparison tasks."
+            },
+        )
+        
         ### init data,config
-        self.data_dir = Path("/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts")
-        self.root_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU"
+        self.data_dir = Path(config.graph_data_dir)
+        self.root_dir = config.graph_root_dir
         self.config = _read_config_parameters(self.root_dir)
         self.community_level = 2
-        self.response_type = "Multiple Paragraphs"
+        self.response_type = config.response_type
         
         self.final_nodes: pd.DataFrame = pd.read_parquet(
             self.data_dir / "create_final_nodes.parquet"
@@ -130,41 +146,9 @@ class GraphragTool():
         )
         self.entities = read_indexer_entities(self.final_nodes, self.final_entities, self.community_level)
         
-        token_encoder = tiktoken.get_encoding(self.config.encoding_model)
-        gs_config = self.config.global_search
-
-        self.search_engine =  AgentGlobalSearch(
-                                            llm=get_llm(self.config),
-                                            context_builder=GlobalCommunityContext(
-                                                community_reports=self.reports, entities=self.entities, token_encoder=token_encoder
-                                            ),
-                                            token_encoder=token_encoder,
-                                            max_data_tokens=gs_config.data_max_tokens,
-                                            map_llm_params={
-                                                "max_tokens": gs_config.map_max_tokens,
-                                                "temperature": 0.0,
-                                            },
-                                            reduce_llm_params={
-                                                "max_tokens": gs_config.reduce_max_tokens,
-                                                "temperature": 0.0,
-                                            },
-                                            allow_general_knowledge=False,
-                                            json_mode=False,
-                                            context_builder_params={
-                                                "use_community_summary": False,
-                                                "shuffle_data": True,
-                                                "include_community_rank": True,
-                                                "min_community_rank": 0,
-                                                "community_rank_name": "rank",
-                                                "include_community_weight": True,
-                                                "community_weight_name": "occurrence weight",
-                                                "normalize_community_weight": True,
-                                                "max_tokens": gs_config.max_tokens,
-                                                "context_name": "Reports",
-                                            },
-                                            concurrent_coroutines=gs_config.concurrency,
-                                            response_type=self.response_type,
-                                        )
+        self.search_engine =  self.get_search_engine()
+        
+        self.summarizer = DocumentSummarizer()
             
         print("-"*10+"graphrag_tool loaded"+"-"*10)
         
@@ -204,6 +188,43 @@ class GraphragTool():
             
         # retrieved_entities = [list(self.final_entities['description'])[index] for index in entities_id_list]
         return retrieved_reports, retrieved_entities
+    
+    
+    def get_search_engine(self):
+        token_encoder = tiktoken.get_encoding(self.config.encoding_model)
+        gs_config = self.config.global_search
+        return AgentGlobalSearch(
+            llm=get_llm(self.config),
+            context_builder=GlobalCommunityContext(
+                community_reports=self.reports, entities=self.entities, token_encoder=token_encoder
+            ),
+            token_encoder=token_encoder,
+            max_data_tokens=gs_config.data_max_tokens,
+            map_llm_params={
+                "max_tokens": gs_config.map_max_tokens,
+                "temperature": 0.0,
+            },
+            reduce_llm_params={
+                "max_tokens": gs_config.reduce_max_tokens,
+                "temperature": 0.0,
+            },
+            allow_general_knowledge=False,
+            json_mode=False,
+            context_builder_params={
+                "use_community_summary": False,
+                "shuffle_data": True,
+                "include_community_rank": True,
+                "min_community_rank": 0,
+                "community_rank_name": "rank",
+                "include_community_weight": True,
+                "community_weight_name": "occurrence weight",
+                "normalize_community_weight": True,
+                "max_tokens": gs_config.max_tokens,
+                "context_name": "Reports",
+            },
+            concurrent_coroutines=gs_config.concurrency,
+            response_type=self.response_type,
+        )
         
         
     def global_query(self,query):
@@ -218,6 +239,14 @@ class GraphragTool():
 
         retrieved_reports, retrieved_entities = self.get_reports_and_entities(contexts_list)
         return contexts_list, retrieved_reports, retrieved_entities
+    
+    def forward(self, params: dict[str, str]):
+        query = params["Query"]
+        contexts_list, retrieved_reports, retrieved_entities = self.global_query(query)
+    
+        return dspy.Prediction(
+            result=self.summarizer(documents=contexts_list, query=query).summary
+        )
         
 def main():
     graphragtool = GraphragTool()
