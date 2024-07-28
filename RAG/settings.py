@@ -87,6 +87,11 @@ class Config:
         # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
         self.docstore_path = f"/opt/docstores/bge_m3_docstore"
 
+        # about graphrag
+        self.graph_data_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts"
+        self.graph_root_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU"
+        self.response_type = "Multiple Paragraphs"
+
 
 def setup(add_system_prompt: bool = False) -> None:
     """Setup common resources from command line arguments."""
