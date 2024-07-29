@@ -1,6 +1,6 @@
 from enum import StrEnum
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Optional
 
 
 class Status(StrEnum):
@@ -14,6 +14,12 @@ class DownloadInfo:
     url: str
     depth: int
     status: Status
+    # The target URL after following the redirects, or the original URL if there are no redirects.
+    # `None` if download has not succeeded.
+    canonical_url: Optional[str] = None
+    # Path to the downloaded file.
+    # `None` if download has not succeeded.
+    file_path: Optional[str] = None
 
 
 def print_summary(info: Iterable[DownloadInfo]) -> None:

@@ -5,6 +5,7 @@ import asyncio
 import aiohttp
 import time
 import datetime
+import csv
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -22,7 +23,7 @@ delay_lock = asyncio.Lock()
 
 async def get(
     session: aiohttp.ClientSession, url: str
-) -> tuple[str, str] | tuple[str, bytes] | tuple[None, None]:
+) -> tuple[str, list[str], str] | tuple[str, list[str], bytes] | None:
 
     # Prevent accidentally DOSing the server
     async with delay_lock:
@@ -31,18 +32,18 @@ async def get(
     try:
         # XXX: Disable verification of SSL is a security risk,
         # but some sites don't work for me if I don't do this
-        async with session.get(url, verify_ssl=False) as response:
+        async with session.get(url, verify_ssl=False, allow_redirects=True) as response:
             if response.status != 200:
                 if args.verbose >= 1:
                     print(f"Failed {response.status}: {url}")
-                return None, None
+                return None
 
             content_type = response.content_type.split("/")
             ty = content_type
             if ty[0] == "text":
-                return ty, await response.text()
+                return str(response.url), ty, await response.text()
             else:
-                return ty, await response.read()
+                return str(response.url), ty, await response.read()
     except aiohttp.ClientError as e:
         if args.verbose >= 1:
             print(f'Client error "{e}": {url}')
@@ -62,7 +63,7 @@ async def get(
                 f'Value error (likely to be a url with too many redirects) "{e}": {url}'
             )
 
-    return None, None
+    return None
 
 
 def cut(path: str) -> str:
@@ -101,11 +102,11 @@ async def scrape_site(
             if args.verbose >= 2:
                 print(f"Already downloaded: {url}")
             return
-        tried[url] = DownloadInfo(url, depth, Status.DOWNLOADING)
+        tried[url] = DownloadInfo(url, depth, Status.DOWNLOADING, None, None)
 
     # Fetch the URL
-    ty, content = await get(session, url)
-    if ty is None:
+    result = await get(session, url)
+    if result is None:
         # Add a retry scraping task after some delay with exponential backoff
         if retry < args.max_retry:
             await asyncio.sleep(args.base_retry_time * (2**retry))
@@ -115,28 +116,33 @@ async def scrape_site(
         else:
             tried[url].status = Status.FAILED
         return
+    canonical_url, ty, content = result
 
-    filepath = os.path.normpath(
+    file_path = os.path.normpath(
         os.path.join(args.output_root, url_parts.netloc, url_parts.path.lstrip("/"))
     )
     # Files with extremely long names were encountered, so they need to be shortened
-    filepath = cut(filepath)
+    file_path = cut(file_path)
     # Some HTML pages were not give an explicit file name
     if ty[1] == "html" and not (
-        filepath.endswith(".html") or filepath.endswith(".htm")
+        file_path.endswith(".html") or file_path.endswith(".htm")
     ):
-        filepath = os.path.join(filepath, "index.html")
+        file_path = os.path.join(file_path, "index.html")
 
     try:
         # Save the content
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
         if ty[0] == "text":
-            with open(filepath, "w") as file:
+            with open(file_path, "w") as file:
                 file.write(content)
         else:
-            with open(filepath, "wb") as file:
+            with open(file_path, "wb") as file:
                 file.write(content)
+
         tried[url].status = Status.SUCCESS
+        tried[url].canonical_url = canonical_url
+        tried[url].file_path = file_path
         if args.verbose >= 1:
             print(f"Success: {url}")
 
@@ -197,7 +203,7 @@ async def peroidic_report() -> None:
 
         ts = datetime.datetime.now().replace(microsecond=0).isoformat()
         print(f"----------------PROGRESS {ts}----------------")
-        print_summary(tried)
+        print_summary(tried.values())
 
 
 async def main() -> None:
@@ -302,5 +308,15 @@ if __name__ == "__main__":
     print_summary(tried.values())
 
     with open(args.download_info_file, "w") as f:
-        w = DataclassWriter(f, list(tried.values()), DownloadInfo)
+        # FIXME: I think dataclass_csv should take all iterables instead of just lists as input,
+        # as I think the conversion via `list()` is unnecessary.
+        #
+        # FIXME: dataclass_csv's `DataclassReader` considers both nothing `field,,field`
+        # and empty quotes `field,"",field` as `None`, which is inconsistent with the
+        # implementation of the csv module.
+        # Also see: https://stackoverflow.com/questions/11379300/csv-reader-behavior-with-none-and-empty-string
+
+        w = DataclassWriter(
+            f, list(tried.values()), DownloadInfo, quoting=csv.QUOTE_NONNUMERIC
+        )
         w.write()
