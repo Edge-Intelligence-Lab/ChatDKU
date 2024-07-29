@@ -10,15 +10,16 @@ authors = [
 ]
 description = ""
 readme = ""
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 
 dependencies = [
-	"aiohttp>=3.9.5",
-	"beautifulsoup4>=4.12.3",
+    "aiohttp>=3.9.5",
+    "beautifulsoup4>=4.12.3",
+    "dataclass-csv>=1.4.0",
 ]
 
 [tool.setuptools]

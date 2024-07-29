@@ -1,25 +1,24 @@
-from enum import Enum
+from enum import StrEnum
 from dataclasses import dataclass
+from typing import Iterable
 
 
-class Status(Enum):
-    DOWNLOADING = 0
-    SUCCESS = 1
-    FAILED = 2
-
-    def __str__(self):
-        return self.name
+class Status(StrEnum):
+    DOWNLOADING = "downloading"
+    SUCCESS = "success"
+    FAILED = "failed"
 
 
 @dataclass
 class DownloadInfo:
+    url: str
     depth: int
     status: Status
 
 
-def print_summary(info: dict[str, DownloadInfo]) -> None:
+def print_summary(info: Iterable[DownloadInfo]) -> None:
     cnt = {}
-    for v in info.values():
+    for v in info:
         cnt[v.status] = cnt.get(v.status, 0) + 1
     for k, v in cnt.items():
         print(f"{str(k) + ':': <20}{v}")

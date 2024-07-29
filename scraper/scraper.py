@@ -3,18 +3,19 @@
 import os
 import asyncio
 import aiohttp
-import pickle
 import time
 import datetime
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from utils import Status, DownloadInfo, print_summary
+from pathlib import Path
+from dataclass_csv import DataclassWriter
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
 # infinite loop and make it possible to restore download progress
 # TODO: Add download restore
-tried = dict()
+tried: dict[str, DownloadInfo] = {}
 
 delay_lock = asyncio.Lock()
 
@@ -83,8 +84,8 @@ async def scrape_site(
 ) -> None:
     # Verify the URL
     try:
-        a = urlparse(url)
-        valid = a.scheme and a.netloc
+        url_parts = urlparse(url)
+        valid = url_parts.scheme and url_parts.netloc
     except AttributeError:
         valid = False
     if not valid:
@@ -100,7 +101,7 @@ async def scrape_site(
             if args.verbose >= 2:
                 print(f"Already downloaded: {url}")
             return
-        tried[url] = DownloadInfo(depth, Status.DOWNLOADING)
+        tried[url] = DownloadInfo(url, depth, Status.DOWNLOADING)
 
     # Fetch the URL
     ty, content = await get(session, url)
@@ -116,7 +117,7 @@ async def scrape_site(
         return
 
     filepath = os.path.normpath(
-        os.path.join(args.output_root, a.netloc, a.path.lstrip("/"))
+        os.path.join(args.output_root, url_parts.netloc, url_parts.path.lstrip("/"))
     )
     # Files with extremely long names were encountered, so they need to be shortened
     filepath = cut(filepath)
@@ -151,7 +152,7 @@ async def scrape_site(
     if (
         depth < args.max_depth
         and ty[1] == "html"
-        and a.netloc.endswith("dukekunshan.edu.cn")
+        and url_parts.netloc.endswith("dukekunshan.edu.cn")
     ):
         soup = BeautifulSoup(content, "html.parser")
         links = soup.find_all("a", href=True)
@@ -283,6 +284,13 @@ if __name__ == "__main__":
         default=30,
         help="Time (seconds) before printing the latest progress report.",
     )
+    parser.add_argument(
+        "-i",
+        "--download-info-file",
+        type=Path,
+        default=Path("./download_info.csv"),
+        help="Location to store the download infomation file (in CSV format).",
+    )
     args = parser.parse_args()
 
     try:
@@ -291,8 +299,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("----------------DOWNLOAD INTERRUPTED----------------")
 
-    print_summary(tried)
+    print_summary(tried.values())
 
-    progress_file = "./progress.pkl"
-    with open(progress_file, "wb") as file:
-        pickle.dump(tried, file)
+    with open(args.download_info_file, "w") as f:
+        w = DataclassWriter(f, list(tried.values()), DownloadInfo)
+        w.write()
