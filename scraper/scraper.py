@@ -208,7 +208,9 @@ async def peroidic_report() -> None:
 
 async def main() -> None:
     timeout = aiohttp.ClientTimeout(connect=args.connection_timeout)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    # Enable `trust_env` so that environmental variables like `HTTP_PROXY`
+    # would be used for proxy settings.
+    async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
         async with asyncio.TaskGroup() as task_group:
             task_group.create_task(scrape_site(task_group, session, args.url))
             task_group.create_task(peroidic_report())
