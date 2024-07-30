@@ -539,6 +539,7 @@ class Agent(dspy.Module):
         self.synthesizer = dspy.ChainOfThought(
             SynthesizerSignature, rationale_type=custom_cot_rationale
         )
+        self.judge = Judge()
 
     def forward(self, current_user_message):
         # Need to make this an attribute so that DSPy can optimize it
@@ -546,6 +547,14 @@ class Agent(dspy.Module):
 
         for i in range(self.max_iterations - 1):
             print(f"iteration: {i}")
+            if i > 0:
+                judge = self.judge(
+                    question=current_user_message,
+                    known_information=self.tool_memory.memory
+                )
+                print(f"judge:{judge}")
+                if judge == True:
+                    break
 
             try:
                 p = self.planner(
@@ -554,10 +563,10 @@ class Agent(dspy.Module):
                     max_calls=self.max_iterations - i,
                 )
             except dspy.DSPyAssertionError:
-                print("max assertion retries hit")
+                print("max assertion retries hit") 
                 break
 
-            print(f"calls: {p.calls}")
+            print(f"calls: {p.calls}") 
             if p.calls[0].name == "synthesizer":
                 break
 
@@ -583,10 +592,9 @@ class JudgeSignature(dspy.Signature):
     """Judge if the current answer is equivalent to the ground truth answer to the question."""
 
     question = dspy.InputField(desc="The question to be answered.")
-    ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
-    answer = dspy.InputField(desc="The current answer to be judged.")
+    known_information = dspy.InputField(desc="Known information for replying to the question")
     judgement = dspy.OutputField(
-        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
+        desc="Judging based solely on the current known information and without allowing for inference, are you able to completely and accurately respond to the question?If you can, please reply with ’Yes’ directly; if you cannot and need more information,please reply with ’No’ directly"
     )
 
 
@@ -597,15 +605,16 @@ class Judge(dspy.Module):
             JudgeSignature, reasoning=custom_cot_rationale
         )
 
-    def forward(self, question, ground_truth, answer):
+    def forward(self, question, known_information):
         judgement_str = self.judge(
-            question=question, ground_truth=ground_truth, answer=answer
+            question=question, known_information=known_information
         ).judgement
+        print(judgement_str)
         dspy.Suggest(
-            judgement_str in ["True", "False"],
-            'Judgement should be either "True" or "False" (without quotes and first letter of each word capitalized).',
+            judgement_str in ["Yes", "No"],
+            'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
         )
-        return dspy.Prediction(judgement=(judgement_str == "True"))
+        return dspy.Prediction(judgement=(judgement_str == "Yes"))
 
 
 def main():
@@ -616,7 +625,7 @@ def main():
     dspy.settings.configure(lm=llama_client)
 
     try:
-        current_user_message = "How to get funding?"
+        current_user_message = "What do you know about DKU?"
         agent = Agent(max_iterations=5)
         response = agent(current_user_message=current_user_message).response
         print(f"response: {response}")
@@ -625,70 +634,6 @@ def main():
         print(e)
 
     input()
-
-    # file_path = "../datasets/before_RAG_dataset.json"
-    # with open(file_path, "r", encoding="utf-8") as file:
-    #     json_data = json.load(file)
-    # dataset = [
-    #     dspy.Example(question=d["question"], answer=d["ground_truth"]).with_inputs(
-    #         "question"
-    #     )
-    #     for d in json_data
-    # ]
-
-    # trainset, devset = dataset[50:51], dataset[60:61]
-
-    # judge = assert_transform_module(
-    #     Judge(),
-    #     functools.partial(backtrack_handler, max_backtracks=3),
-    # )
-
-    # def metric(example, pred, trace=None):
-    #     prediction = judge(
-    #         question=example.question, ground_truth=example.answer, answer=pred.answer
-    #     )
-    #     return prediction.judgement
-
-    # config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
-    # teleprompter = BootstrapFewShot(metric=metric, **config)
-
-    # # try:
-
-    # rag = assert_transform_module(
-    #     Rag(vector_top_k=5, keyword_top_k=5),
-    #     functools.partial(backtrack_handler, max_backtracks=3),
-    # )
-    # rag = teleprompter.compile(rag, trainset=trainset)
-    # # except:
-    # #     input()
-
-    # rag.save("compiled_rag.json")
-
-    # # Set up the evaluator, which can be used multiple times.
-    # evaluate = Evaluate(
-    #     devset=devset,
-    #     metric=metric,
-    #     num_threads=1,  # Multi-threading won't work for our local model
-    #     display_progress=True,
-    #     display_table=True,
-    # )
-
-    # # Evaluate our `optimized_cot` program.
-    # evaluate(rag)
-
-    # print(llama_client.inspect_history(n=1))
-
-    # input()
-
-    # while True:
-    #     try:
-    #         print("*" * 32)
-    #         query = input("> ")
-    #         output = pipeline.run(input=query)
-    #         print("+" * 32)
-    #         print(output)
-    #     except EOFError:
-    #         break
 
 
 if __name__ == "__main__":
