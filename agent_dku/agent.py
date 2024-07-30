@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 from typing import Any, Callable, Literal
 from pydantic import BaseModel, ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
@@ -15,8 +14,6 @@ import functools
 from dsp import LM
 import dspy
 import dsp
-from dspy.teleprompt import BootstrapFewShot
-from dspy.evaluate import Evaluate
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 from dspy import Predict
 from dspy.signatures.signature import ensure_signature, signature_to_template
@@ -112,6 +109,8 @@ def get_template(predict_module: Predict) -> str:
     x = dsp.Example(demos=demos)
     return template(x)
 
+
+VERBOSE = False
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -561,9 +560,10 @@ class Judge(dspy.Module):
             'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
         )
         if judgement_str not in ["Yes", "No"]:
-            print(
-                'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
-            )
+            if VERBOSE:
+                print(
+                    'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
+                )
         return dspy.Prediction(judgement=(judgement_str == "Yes"))
 
 
@@ -588,13 +588,15 @@ class Agent(dspy.Module):
         self.tool_memory.reset()
 
         for i in range(self.max_iterations - 1):
-            print(f"iteration: {i}")
+            if VERBOSE:
+                print(f"iteration: {i}")
             if i > 0:
                 judgement = self.judge(
                     question=current_user_message,
                     known_information=self.tool_memory.memory,
                 )
-                print(f"Judge: {judgement}")
+                if VERBOSE:
+                    print(f"Judge: {judgement}")
                 if judgement:
                     break
 
@@ -605,22 +607,26 @@ class Agent(dspy.Module):
                     max_calls=self.max_iterations - i,
                 )
             except dspy.DSPyAssertionError:
-                print("max assertion retries hit")
+                if VERBOSE:
+                    print("max assertion retries hit")
                 break
 
-            print(f"calls: {p.calls}")
+            if VERBOSE:
+                print(f"calls: {p.calls}")
             if p.calls[0].name == "synthesizer":
                 break
 
             result = p.tool(**p.calls[0].params.model_dump()).result
-            print(f"result: {result}")
+            if VERBOSE:
+                print(f"result: {result}")
             self.tool_memory(
                 current_user_message=current_user_message,
                 schema=p.schema,
                 calls=p.calls,
                 result=result,
             )
-            print(f"tool_memory.memory: {self.tool_memory.memory}")
+            if VERBOSE:
+                print(f"tool_memory.memory: {self.tool_memory.memory}")
 
         return dspy.Prediction(
             response=self.synthesizer(
@@ -637,17 +643,16 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    try:
-        current_user_message = "What do you know about DKU?"
-        agent = Agent(max_iterations=5)
-        response = agent(current_user_message=current_user_message).response
-        print(f"response: {response}")
+    current_user_message = "What do you know about DKU?"
+    agent = Agent(max_iterations=5)
+    response = agent(current_user_message=current_user_message).response
+    print(f"response: {response}")
 
+
+if __name__ == "__main__":
+    try:
+        main()
     except Exception:
         print(traceback.format_exc())
 
     input()
-
-
-if __name__ == "__main__":
-    main()

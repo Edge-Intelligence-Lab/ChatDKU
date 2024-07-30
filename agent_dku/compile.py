@@ -5,26 +5,15 @@ It does not work yet, only serving as template for future work.
 """
 
 import json
-from typing import Any, Callable, Literal
-from pydantic import BaseModel, ConfigDict, Field, create_model, ValidationError
-from pydantic.fields import FieldInfo
-from inspect import signature, Signature
-import re
-
-from llama_index.core import Settings
-from llama_index.core.base.llms.types import CompletionResponse
-
 import functools
-from dsp import LM
+import traceback
 import dspy
-import dsp
 from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate import Evaluate
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy import Predict
-from dspy.signatures.signature import ensure_signature, signature_to_template
 
-from agent import CustomClient, Agent, Judge
+from dspy_common import custom_cot_rationale
+from agent import CustomClient, Agent
 
 import os
 import sys
@@ -35,6 +24,35 @@ sys.path.append(
 from settings import Config, setup, use_phoenix
 
 config = Config()
+
+
+class SemanticEquivalenceSignature(dspy.Signature):
+    """Judge if the current answer is equivalent to the ground truth answer to the question."""
+
+    question = dspy.InputField(desc="The question to be answered.")
+    ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
+    answer = dspy.InputField(desc="The current answer to be judged.")
+    judgement = dspy.OutputField(
+        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
+    )
+
+
+class SemanticEquivalence(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.judge = dspy.ChainOfThought(
+            SemanticEquivalenceSignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(self, question, ground_truth, answer):
+        judgement_str = self.judge(
+            question=question, ground_truth=ground_truth, answer=answer
+        ).judgement
+        dspy.Suggest(
+            judgement_str in ["True", "False"],
+            'Judgement should be either "True" or "False" (without quotes and first letter of each word capitalized).',
+        )
+        return dspy.Prediction(judgement=(judgement_str == "True"))
 
 
 def main():
@@ -48,56 +66,54 @@ def main():
     with open(file_path, "r", encoding="utf-8") as file:
         json_data = json.load(file)
     dataset = [
-        dspy.Example(question=d["question"], answer=d["ground_truth"]).with_inputs(
-            "question"
-        )
+        dspy.Example(
+            current_user_message=d["question"], answer=d["ground_truth"]
+        ).with_inputs("current_user_message")
         for d in json_data
     ]
 
-    trainset, devset = dataset[50:51], dataset[60:61]
+    trainset, devset = dataset[50:52], dataset[60:61]
 
-    judge = assert_transform_module(
-        Judge(),
+    semantic_equivalence = assert_transform_module(
+        SemanticEquivalence(),
         functools.partial(backtrack_handler, max_backtracks=3),
     )
 
     def metric(example, pred, trace=None):
-        prediction = judge(
-            question=example.question, ground_truth=example.answer, answer=pred.answer
+        # return True
+        prediction = semantic_equivalence(
+            question=example.current_user_message,
+            ground_truth=example.answer,
+            answer=pred.response,
         )
         return prediction.judgement
 
     config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
     teleprompter = BootstrapFewShot(metric=metric, **config)
 
-    # try:
+    agent = Agent(max_iterations=5)
+    agent.save("agent_not_compiled.json")
+    agent_compiled = teleprompter.compile(agent, trainset=trainset)
 
-    rag = assert_transform_module(
-        Rag(vector_top_k=5, keyword_top_k=5),
-        functools.partial(backtrack_handler, max_backtracks=3),
-    )
-    rag = teleprompter.compile(rag, trainset=trainset)
-    # except:
-    #     input()
+    agent_compiled.save("agent_compiled.json")
 
-    rag.save("compiled_rag.json")
-
-    # Set up the evaluator, which can be used multiple times.
     evaluate = Evaluate(
         devset=devset,
         metric=metric,
-        num_threads=1,  # Multi-threading won't work for our local model
+        num_threads=1,  # I think we can use multiple threads now
         display_progress=True,
         display_table=True,
     )
 
-    # Evaluate our `optimized_cot` program.
-    evaluate(rag)
+    evaluate(agent_compiled)
 
     print(llama_client.inspect_history(n=1))
 
-    input()
-
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print(traceback.format_exc())
+
+    input()
