@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
 from inspect import signature, Signature
 import re
+import traceback
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
@@ -527,6 +528,45 @@ def make_synthesizer_signature():
 SynthesizerSignature = make_synthesizer_signature()
 
 
+class JudgeSignature(dspy.Signature):
+    """Judging based solely on the current known information and without allowing for inference, \
+    are you able to completely and accurately respond to the question?
+    """
+
+    question = dspy.InputField(desc="The question to be answered.")
+    known_information = dspy.InputField(
+        desc="Known information for replying to the question."
+    )
+    judgement = dspy.OutputField(
+        desc=(
+            'If you can answer the question, please reply with "Yes" directly; '
+            'if you cannot and need more information, please reply with "No" directly.'
+        )
+    )
+
+
+class Judge(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.judge = dspy.ChainOfThought(
+            JudgeSignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(self, question, known_information):
+        judgement_str = self.judge(
+            question=question, known_information=known_information
+        ).judgement
+        dspy.Suggest(
+            judgement_str in ["Yes", "No"],
+            'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
+        )
+        if judgement_str not in ["Yes", "No"]:
+            print(
+                'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
+            )
+        return dspy.Prediction(judgement=(judgement_str == "Yes"))
+
+
 class Agent(dspy.Module):
     def __init__(self, max_iterations=5):
         super().__init__()
@@ -539,7 +579,9 @@ class Agent(dspy.Module):
         self.synthesizer = dspy.ChainOfThought(
             SynthesizerSignature, rationale_type=custom_cot_rationale
         )
-        self.judge = Judge()
+        self.judge = assert_transform_module(
+            Judge(), functools.partial(backtrack_handler, max_backtracks=5)
+        )
 
     def forward(self, current_user_message):
         # Need to make this an attribute so that DSPy can optimize it
@@ -548,12 +590,12 @@ class Agent(dspy.Module):
         for i in range(self.max_iterations - 1):
             print(f"iteration: {i}")
             if i > 0:
-                judge = self.judge(
+                judgement = self.judge(
                     question=current_user_message,
-                    known_information=self.tool_memory.memory
+                    known_information=self.tool_memory.memory,
                 )
-                print(f"judge:{judge}")
-                if judge == True:
+                print(f"Judge: {judgement}")
+                if judgement:
                     break
 
             try:
@@ -563,10 +605,10 @@ class Agent(dspy.Module):
                     max_calls=self.max_iterations - i,
                 )
             except dspy.DSPyAssertionError:
-                print("max assertion retries hit") 
+                print("max assertion retries hit")
                 break
 
-            print(f"calls: {p.calls}") 
+            print(f"calls: {p.calls}")
             if p.calls[0].name == "synthesizer":
                 break
 
@@ -588,35 +630,6 @@ class Agent(dspy.Module):
         )
 
 
-class JudgeSignature(dspy.Signature):
-    """Judge if the current answer is equivalent to the ground truth answer to the question."""
-
-    question = dspy.InputField(desc="The question to be answered.")
-    known_information = dspy.InputField(desc="Known information for replying to the question")
-    judgement = dspy.OutputField(
-        desc="Judging based solely on the current known information and without allowing for inference, are you able to completely and accurately respond to the question?If you can, please reply with ’Yes’ directly; if you cannot and need more information,please reply with ’No’ directly"
-    )
-
-
-class Judge(dspy.Module):
-    def __init__(self):
-        super().__init__()
-        self.judge = dspy.TypedChainOfThought(
-            JudgeSignature, reasoning=custom_cot_rationale
-        )
-
-    def forward(self, question, known_information):
-        judgement_str = self.judge(
-            question=question, known_information=known_information
-        ).judgement
-        print(judgement_str)
-        dspy.Suggest(
-            judgement_str in ["Yes", "No"],
-            'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
-        )
-        return dspy.Prediction(judgement=(judgement_str == "Yes"))
-
-
 def main():
     setup()
     use_phoenix()
@@ -630,8 +643,8 @@ def main():
         response = agent(current_user_message=current_user_message).response
         print(f"response: {response}")
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        print(traceback.format_exc())
 
     input()
 
