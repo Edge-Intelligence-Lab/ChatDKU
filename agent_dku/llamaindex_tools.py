@@ -78,7 +78,7 @@ class VectorRetriever(dspy.Module):
 
     def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
         db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_or_create_collection("dku_html_pdf")
+        chroma_collection = db.get_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         index = VectorStoreIndex.from_vector_store(vector_store)
         self.retriever = index.as_retriever(similarity_top_k=retriever_top_k)
