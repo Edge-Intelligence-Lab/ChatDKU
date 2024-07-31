@@ -259,13 +259,6 @@ class ToolMemory(dspy.Module):
         )
 
 
-class Synthesizer(dspy.Module):
-    "Synthesize a response to the Current User Message with what you know."
-
-    def forward(self):
-        pass
-
-
 def make_planner_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
@@ -287,10 +280,7 @@ def make_planner_signature():
         "max_calls": (
             str,
             dspy.InputField(
-                desc=(
-                    "The maximum number of tool calls you can include in your plan. "
-                    'Note that using "synthesizer" once also counts as one tool call.'
-                )
+                desc="The maximum number of tool calls you can include in your plan."
             ),
         ),
         "tools_called": (
@@ -332,7 +322,6 @@ def make_planner_signature():
                     "parameters in JSON Lines format. "
                     "Each tool call should be a JSON object printed on a singled line. "
                     "Each tool call should be on its own line. "
-                    'The last tool used must be "synthesizer". '
                 ),
             ),
         ),
@@ -392,7 +381,6 @@ class Planner(dspy.Module):
         super().__init__()
 
         self.tools = tools
-        self.tools.append(Synthesizer())
 
         self.name_to_model = {}
         for tool in tools:
@@ -422,8 +410,6 @@ class Planner(dspy.Module):
     ):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
-
-        Values `tool=None, params=None` would be returned to indicate using synthesizer.
         """
 
         plan_str_all = self.planner(
@@ -448,10 +434,7 @@ class Planner(dspy.Module):
         dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
         dspy.Assert(
             len(plan_strs) <= max_calls,
-            (
-                f"The number of tool calls in your plan must be no more than {max_calls}. "
-                'Note that calling "synthesizer" once also counts as one tool call.'
-            ),
+            f"The number of tool calls in your plan must be no more than {max_calls}.",
         )
 
         calls_unvalidated = []
@@ -475,38 +458,21 @@ class Planner(dspy.Module):
             except ValidationError as e:
                 dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
 
-        dspy.Assert(
-            all([c.name != "synthesizer" for c in calls[:-1]]),
-            '"synthesizer" must be the last tool in the plan.',
-        )
-        dspy.Assert(
-            calls[-1].name == "synthesizer",
-            (
-                f'"{calls[-1].name}" should not be the last tool in the plan. '
-                'Instead, "synthesizer" must be the last tool in the plan. '
-                "You might also get this error if you did not use an empty line as separator."
-            ),
-        )
+        # FIXME: These should be put into class attributes if possible.
+        # However, a DSPy bug made this impossible for now.
+        # The bug causes dspy.Module.named_parameters() to enter infinite recursion
+        # when duplicate references to a Module B occur in a Module A.
+        name_to_tool = {}
+        for tool in self.tools:
+            tool_name_camel = type(tool).__name__
+            tool_name_snake = camel_to_snake_case(tool_name_camel)
+            name_to_tool[tool_name_snake] = tool
 
-        if len(calls) == 1:
-            # The current tool is "Synthesizer".
-            return dspy.Prediction(calls=calls, tool=None, schema=None)
-        else:
-            # FIXME: These should be put into class attributes if possible.
-            # However, a DSPy bug made this impossible for now.
-            # The bug causes dspy.Module.named_parameters() to enter infinite recursion
-            # when duplicate references to a Module B occur in a Module A.
-            name_to_tool = {}
-            for tool in self.tools:
-                tool_name_camel = type(tool).__name__
-                tool_name_snake = camel_to_snake_case(tool_name_camel)
-                name_to_tool[tool_name_snake] = tool
-
-            return dspy.Prediction(
-                calls=calls,
-                tool=name_to_tool[calls[0].name],
-                schema=self.name_to_model[calls[0].name].model_json_schema(),
-            )
+        return dspy.Prediction(
+            calls=calls,
+            tool=name_to_tool[calls[0].name],
+            schema=self.name_to_model[calls[0].name].model_json_schema(),
+        )
 
 
 def make_synthesizer_signature():
@@ -579,6 +545,10 @@ class Agent(dspy.Module):
     def __init__(self, max_iterations=5):
         super().__init__()
         self.max_iterations = max_iterations
+
+        # FIXME: This duplication is currently required.
+        # See notes below regarding pre-calling tools for more.
+        self.tools = [VectorRetriever(), KeywordRetriever()]
         self.planner = assert_transform_module(
             Planner(tools=[VectorRetriever(), KeywordRetriever()]),
             functools.partial(backtrack_handler, max_backtracks=5),
@@ -591,22 +561,48 @@ class Agent(dspy.Module):
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
 
-    def forward(self, current_user_message):
+    def forward(self, current_user_message: str):
         # Need to make this an attribute so that DSPy can optimize it
         self.tool_memory.reset()
+
+        # FIXME: Pre-calling tools.
+        # Currently, it calls ALL tools as the first iteration.
+        # However, it has two issues:
+        # 1. The API of the tools might differ in the future
+        #    (having something other than `query` in parameters).
+        # 2. It cannot directly call the tools in `self.planner` as they were
+        #    transformed by DSPy assertions, which would cause issues when
+        #    calling them before calling planner. Therefore, a duplicate set
+        #    of tools is required.
+        # 3. The zipping of the `name_to_model` and `tools` might be problematic.
+        if VERBOSE:
+            print("pre-calling tools")
+        for (name, model), tool in zip(self.planner.name_to_model.items(), self.tools):
+            result = tool(query=current_user_message).result
+            if VERBOSE:
+                print(f"result: {result}")
+            self.tool_memory(
+                current_user_message=current_user_message,
+                schema=model.model_json_schema(),
+                calls=[model(name=name, params={"query": current_user_message})],
+                result=result,
+            )
+            if VERBOSE:
+                print(f"tool_memory.memory: {self.tool_memory.memory}")
 
         for i in range(self.max_iterations - 1):
             if VERBOSE:
                 print(f"iteration: {i}")
-            if i > 0:
-                judgement = self.judge(
-                    question=current_user_message,
-                    known_information=self.tool_memory.memory,
-                )
-                if VERBOSE:
-                    print(f"Judge: {judgement}")
-                if judgement:
-                    break
+            # NOTE: Should judge only when there were tool calls before.
+            # Currently, the first iteration is actually calling all the tools.
+            judgement = self.judge(
+                question=current_user_message,
+                known_information=self.tool_memory.memory,
+            )
+            if VERBOSE:
+                print(f"Judge: {judgement}")
+            if judgement:
+                break
 
             try:
                 p = self.planner(
@@ -621,9 +617,6 @@ class Agent(dspy.Module):
 
             if VERBOSE:
                 print(f"calls: {p.calls}")
-            if p.calls[0].name == "synthesizer":
-                break
-
             result = p.tool(**p.calls[0].params.model_dump()).result
             if VERBOSE:
                 print(f"result: {result}")
