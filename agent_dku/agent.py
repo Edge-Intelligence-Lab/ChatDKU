@@ -183,13 +183,10 @@ def make_update_tool_memory_signature():
                 format=lambda x: x,
             ),
         ),
-        "current_tool_memory": (
+        "tool_memory_to_append": (
             str,
             dspy.OutputField(
-                desc=(
-                    "Considering your previous Tool Memory and the result from the tool you just called, "
-                    "store all the information that would be useful for answering the Current User Message here."
-                ),
+                desc="What you want to append to your Tool Memory.",
                 format=lambda x: x,
             ),
         ),
@@ -197,10 +194,12 @@ def make_update_tool_memory_signature():
 
     instruction = (
         "You have a Tool Memory storing all the information you learned from using "
-        "multple tools that would be useful for answering the Current User Message. "
+        "multiple tools that would be useful for answering the Current User Message. "
         "You just called a tool and the result it returned would be provided. "
-        "Your current task is to update your Tool Memory with what you "
-        "learned from the tool you just called. "
+        "Your current task is to append to your Tool Memory with what you "
+        "learned from the tool you just called and what you want to emphasize"
+        "in the Previous Tool Memory. "
+        "Note that older Tool Memory would be forgotten if they become too long. "
         "In the future, you would be asked to respond to the Current User Message "
         "with only your Tool Memory. "
         "Therefore, you should make it comprehensive enough so that it could "
@@ -224,6 +223,12 @@ class ToolMemory(dspy.Module):
         # perform better when NOT using JSON. As the LLM tend to drop some of
         # previous memory when updating a memory in JSON format.
         # TODO: Offer a better memory structure.
+        #
+        # TODO: It might be better to only store what the LLM has learned from the
+        # current tool call instead of also having to emphasize what it thought
+        # to be important in the past memory. Then, when the tool memory begins
+        # to exceed the context window. Those overflowing memory would be summarized
+        # again.
         self.memory = ""
 
     def __init__(self):
@@ -242,13 +247,16 @@ class ToolMemory(dspy.Module):
     ):
         self.tools_called.append(calls[0])
         self.tool_plan = calls[1:].copy()
-        self.memory = self.update_tool_memory(
-            current_user_message=current_user_message,
-            tool_specification=str(schema),
-            tool_called=calls[0].model_dump_json(),
-            result=result,
-            previous_tool_memory=self.memory,
-        ).current_tool_memory
+        self.memory += (
+            "##########\n"
+            + self.update_tool_memory(
+                current_user_message=current_user_message,
+                tool_specification=str(schema),
+                tool_called=calls[0].model_dump_json(),
+                result=result,
+                previous_tool_memory=self.memory,
+            ).tool_memory_to_append
+        )
 
 
 class Synthesizer(dspy.Module):
