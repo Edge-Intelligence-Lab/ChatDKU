@@ -1,3 +1,4 @@
+from contextvars import Token
 from typing import Annotated
 from pydantic import Field
 
@@ -12,6 +13,8 @@ from llama_index.core import VectorStoreIndex
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
+from llama_index.core.schema import BaseNode, MetadataMode
+from llama_index.core.node_parser.text.token import TokenTextSplitter
 
 import os
 import sys
@@ -40,26 +43,45 @@ class DocumentSummarizerSignature(dspy.Signature):
         desc="The previously generated summary of relevant information. May be empty."
     )
     documents = dspy.InputField(
-        desc="The documents to extract relevant information from."
+        desc="The documents to extract relevant information from.",
+        format=lambda x: "##########\n" + x + "\n##########",
     )
     query = dspy.InputField(desc="The query that the summary should answer.")
     current_summary = dspy.OutputField(
-        desc="The combined summary of relevant information in Previous Summary and Documents."
+        desc="The combined summary of relevant information in Previous Summary and Documents.",
     )
 
 
 class DocumentSummarizer(dspy.Module):
+    # FIXME: We should not use fixed chunk sizes, but adjust them according to
+    # the context window of the LLM and the size of the prompt.
+    CHUNK_SIZE = 4096
+    CHUNK_OVERLAP = 256
+
     def __init__(self):
         super().__init__()
         self.summarizer = dspy.ChainOfThought(
             DocumentSummarizerSignature, rationale_type=custom_cot_rationale
         )
+        self.text_splitter = TokenTextSplitter(
+            chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP
+        )
 
-    def forward(self, documents, query):
+    def forward(self, documents: list[BaseNode], query: str):
+        # FIXME: This has the problem that the metadata of a document would
+        # lie in only the first chunk suppose that document is split across
+        # multiple chunks. However, this is how LlamaIndex's synthesizers
+        # currently work (via `PromptHelper`).
+        # Reference: https://github.com/run-llama/llama_index/blob/d3abf789800f4366fec7f607be15804a4a72ee52/llama-index-core/llama_index/core/indices/prompt_helper.py#L263-L280
+        #
+        # I recommend using `MetadataAwareTextSplitter.split_text_metadata_aware()`
+        # in the future.
+        texts = [node.get_content(MetadataMode.LLM) for node in documents]
+        repacked = self.text_splitter.split_text("\n\n".join(texts))
         summary = ""
-        for doc in documents:
+        for chunk in repacked:
             summary = self.summarizer(
-                previous_summary=summary, documents=doc, query=query
+                previous_summary=summary, documents=chunk, query=query
             ).current_summary
         return dspy.Prediction(summary=summary)
 
@@ -100,9 +122,8 @@ class VectorRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        texts = [node.get_content() for node in reranked_nodes]
         return dspy.Prediction(
-            result=self.summarizer(documents=texts, query=query).summary
+            result=self.summarizer(documents=reranked_nodes, query=query).summary
         )
 
 
@@ -132,7 +153,6 @@ class KeywordRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        texts = [node.get_content() for node in reranked_nodes]
         return dspy.Prediction(
-            result=self.summarizer(documents=texts, query=query).summary
+            result=self.summarizer(documents=reranked_nodes, query=query).summary
         )
