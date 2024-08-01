@@ -98,7 +98,7 @@ def get_reranker(top_n: int):
 class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -122,15 +122,16 @@ class VectorRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        return dspy.Prediction(
-            result=self.summarizer(documents=reranked_nodes, query=query).summary
-        )
+        return reranked_nodes
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+        # )
 
 
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
         docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         self.retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=retriever_top_k
@@ -153,6 +154,7 @@ class KeywordRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        return dspy.Prediction(
-            result=self.summarizer(documents=reranked_nodes, query=query).summary
-        )
+        return reranked_nodes
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+        # )

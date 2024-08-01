@@ -25,7 +25,8 @@ from graphrag.query.structured_search.global_search.community_context import (
 from graphrag.query.structured_search.global_search.search import GlobalSearch
 from llamaindex_tools import DocumentSummarizer
 from pathlib import Path
-from tool import Tool
+from pydantic import Field
+from typing import Annotated
 from typing import Any
 
 sys.path.append(
@@ -114,15 +115,8 @@ class AgentGlobalSearch(GlobalSearch):
             for element in parsed_elements
         ]
 
-class GraphragTool(Tool):
+class GraphragTool(dspy.Module):
     def __init__(self):
-        super().__init__(
-            "Graph Global Retriever",
-            "Retrieve texts from the summary of the reports that are related to the query, suitable for complex queries, such as summary and comparison tasks.",
-            {
-                "Query": "texts that might be complexed, such as summary and comparison tasks."
-            },
-        )
         
         ### init data,config
         self.data_dir = Path(config.graph_data_dir)
@@ -240,13 +234,19 @@ class GraphragTool(Tool):
         retrieved_reports, retrieved_entities = self.get_reports_and_entities(contexts_list)
         return contexts_list, retrieved_reports, retrieved_entities
     
-    def forward(self, params: dict[str, str]):
-        query = params["Query"]
+    def forward(
+        self, 
+        query: Annotated[
+            str,
+            Field(
+                description="Texts that might be semantically similar to the real answer to the question."
+            ),
+        ],):
         contexts_list, retrieved_reports, retrieved_entities = self.global_query(query)
-    
-        return dspy.Prediction(
-            result=self.summarizer(documents=contexts_list, query=query).summary
-        )
+        return contexts_list
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=contexts_list, query=query).summary
+        # )
         
 def main():
     graphragtool = GraphragTool()
@@ -254,7 +254,7 @@ def main():
     query="what do you know about DKU club?"
     # graph_contexts, graph_full_conexts = ragtools.graph_global_tool(query)
     contexts_list, retrieved_reports, retrieved_entities = graphragtool.global_query(query)
-    print(contexts_list)
+    # print(contexts_list)
     print('-'*20+'retrieved_reports'+'-'*20+'\n')
     print(retrieved_reports)
     print('-'*20+'retrieved_entities'+'-'*20+'\n')

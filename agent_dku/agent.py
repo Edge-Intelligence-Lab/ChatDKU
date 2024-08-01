@@ -213,6 +213,37 @@ def make_update_tool_memory_signature():
 
 UpdateToolMemorySignature = make_update_tool_memory_signature()
 
+class QueryRewriteSignature(dspy.Signature):
+
+    question = dspy.InputField(desc="The question to be answered.")
+    known_information = dspy.InputField(
+        desc="Known information for replying to the question."
+    )
+    rewrited_query = dspy.OutputField(
+        desc=(
+            # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
+            'Please understand the information gap between the currently known information and the target problem.'
+            'Your task is to generate one thought in the form of question for next retrieval step directly.'
+            'DON\’T generate the whole thoughts at once!\n DON\’T generate thought which has been retrieved.'
+            'Answer the thought you generate directly, without additional description.'
+        )
+    )
+
+
+class QueryRewrite(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.rewrited_query = dspy.ChainOfThought(
+            QueryRewriteSignature, rationale_type=custom_cot_rationale
+        )
+
+    def forward(self, question, known_information):
+        rewrited_str = self.rewrited_query(
+            question=question, known_information=known_information
+        ).rewrited_query
+        print(rewrited_str)
+        return rewrited_str
+
 
 class ToolMemory(dspy.Module):
     def reset(self):
@@ -560,6 +591,7 @@ class Agent(dspy.Module):
         self.judge = assert_transform_module(
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
+        self.queryrewriter = QueryRewrite()
 
     def forward(self, current_user_message: str):
         # Need to make this an attribute so that DSPy can optimize it
@@ -577,10 +609,23 @@ class Agent(dspy.Module):
         # 3. The zipping of the `name_to_model` and `tools` might be problematic.
         if VERBOSE:
             print("pre-calling tools")
+
+        import time
+
+
+
         for (name, model), tool in zip(self.planner.name_to_model.items(), self.tools):
-            result = tool(query=current_user_message).result
+            start_time = time.time()
+            result = str(tool(query=current_user_message))
             if VERBOSE:
                 print(f"result: {result}")
+
+                    # 要计时的代码块
+            end_time = time.time()
+
+            elapsed_time = end_time - start_time
+            print("---"*100)
+            print(f"Elapsed time: {elapsed_time} seconds")
             self.tool_memory(
                 current_user_message=current_user_message,
                 schema=model.model_json_schema(),
@@ -589,6 +634,8 @@ class Agent(dspy.Module):
             )
             if VERBOSE:
                 print(f"tool_memory.memory: {self.tool_memory.memory}")
+
+
 
         for i in range(self.max_iterations - 1):
             if VERBOSE:
@@ -604,9 +651,14 @@ class Agent(dspy.Module):
             if judgement:
                 break
 
+            rewrited_query = self.queryrewriter(
+                    question=current_user_message,
+                    known_information=self.tool_memory.memory,
+            )       
+
             try:
                 p = self.planner(
-                    current_user_message=current_user_message,
+                    current_user_message=rewrited_query,
                     tool_memory=self.tool_memory,
                     max_calls=self.max_iterations - i,
                 )
@@ -621,13 +673,16 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"result: {result}")
             self.tool_memory(
-                current_user_message=current_user_message,
+                current_user_message=rewrited_query,
                 schema=p.schema,
                 calls=p.calls,
                 result=result,
             )
             if VERBOSE:
                 print(f"tool_memory.memory: {self.tool_memory.memory}")
+
+        ### summarize result here
+       
 
         return dspy.Prediction(
             response=self.synthesizer(
@@ -639,12 +694,12 @@ class Agent(dspy.Module):
 
 def main():
     setup()
-    use_phoenix()
+    # use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
-    current_user_message = "What do you know about DKU?"
+    current_user_message = "What do you know about DKU, Please answer in more detail"
     agent = Agent(max_iterations=5)
     response = agent(current_user_message=current_user_message).response
     print(f"response: {response}")
