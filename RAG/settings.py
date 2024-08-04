@@ -80,6 +80,7 @@ class Config:
         self.data_dir = "/opt/RAG_data"
         self.documents_path = "/opt/RAG_data/new_parser_documents.pkl"
         self.pipeline_cache = "./pipeline_cache"
+        self.csv_path='/opt/RAG_data_new_website/download_info.csv'#Store URL info of dku websites
         self.update = False
 
         # about query
