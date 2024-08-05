@@ -1,6 +1,6 @@
 import pandas as pd
 
-class CampusServiceTool:
+class CampusService_tool:
 
     def __init__(self, file_path) -> None:
         self.file_path=file_path
