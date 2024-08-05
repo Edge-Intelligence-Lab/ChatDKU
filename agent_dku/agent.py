@@ -6,6 +6,7 @@ from pydantic.fields import FieldInfo
 from inspect import signature, Signature
 import re
 import traceback
+from itertools import takewhile
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
@@ -13,15 +14,12 @@ from llama_index.core.base.llms.types import CompletionResponse
 import functools
 from dsp import LM
 import dspy
-import dsp
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy import Predict
-from dspy.signatures.signature import ensure_signature, signature_to_template
 
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import dspy_patch
 
-from dspy_common import custom_cot_rationale
+from dspy_common import get_template, custom_cot_rationale
 from llamaindex_tools import VectorRetriever, KeywordRetriever
 
 from dspy_classes.plan import Planner
@@ -41,8 +39,6 @@ sys.path.append(
 from settings import Config, setup, use_phoenix
 
 config = Config()
-
-
 
 
 class CustomClient(LM):
@@ -100,24 +96,6 @@ class CustomClient(LM):
     ) -> list[str]:
         return [self.request(prompt, **kwargs).text]
 
-def get_template(predict_module: Predict) -> str:
-    """Get formatted template from predict module."""
-    """Adapted from https://github.com/stanfordnlp/dspy/blob/55510eec1b83fa77f368e191a363c150df8c5b02/dspy/predict/llamaindex.py#L22-L36"""
-    # Extract the three privileged keyword arguments.
-    signature = ensure_signature(predict_module.signature)
-    # Switch to legacy format for dsp.generate
-    template = signature_to_template(signature)
-
-    if hasattr(predict_module, "demos"):
-        demos = predict_module.demos
-    else:
-        demos = []
-    # All of the other kwargs are presumed to fit a prefix of the signature.
-    # That is, they are input variables for the bottom most generation, so
-    # we place them inside the input - x - together with the demos.
-    x = dsp.Example(demos=demos)
-    return template(x)
-
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -129,7 +107,6 @@ def get_template(predict_module: Predict) -> str:
 # the generated queries. Nevertheless, this prompt seems to be the most effective.
 #
 # FIXME: Use a more suitable system prompt
-
 
 
 class Agent(dspy.Module):
@@ -154,7 +131,7 @@ class Agent(dspy.Module):
         self.queryrewriter = QueryRewrite()
         self.contexts = Contexts()
 
-    def forward(self, current_user_message: str):
+    def forward(self, current_user_message: str, streaming: bool = False):
         # Need to make this an attribute so that DSPy can optimize it
         # self.tool_memory.reset()
         self.contexts.reset()
@@ -180,11 +157,11 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"result: {first_ite_result}")
 
-                    # 要计时的代码块
+                # 要计时的代码块
             end_time = time.time()
 
             elapsed_time = end_time - start_time
-            print("---"*100)
+            print("---" * 100)
             print(f"Elapsed time: {elapsed_time} seconds")
             # self.contexts(
             #     current_user_message=current_user_message,
@@ -196,8 +173,6 @@ class Agent(dspy.Module):
             )
             if VERBOSE:
                 print(f"contexts memory: {self.contexts.memory}")
-
-
 
         for i in range(self.max_iterations - 1):
             if VERBOSE:
@@ -214,9 +189,9 @@ class Agent(dspy.Module):
                 break
 
             rewrited_query = self.queryrewriter(
-                    question=current_user_message,
-                    known_information=self.tool_memory.memory,
-            )       
+                question=current_user_message,
+                known_information=self.tool_memory.memory,
+            )
             if VERBOSE:
                 print(f"rewrited query:{rewrited_query}")
 
@@ -246,14 +221,60 @@ class Agent(dspy.Module):
                 print(f"tool_memory.memory: {self.tool_memory.memory}")
 
         ### summarize result here
-       
 
-        return dspy.Prediction(
-            response=self.synthesizer(
+        if streaming:
+            # A hacky way to stream the final response synthesis LLM call.
+            # The synthesizer module is first converted to a prompt string.
+            # Then the LLM is called manually, and the generator returned is wrapped
+            # to extract only the "Response" field.
+            #
+            # TODO: Contribute streaming support to DSPy
+            # Also see: https://github.com/stanfordnlp/dspy/issues/338
+
+            synthesizer_template = get_template(
+                self.synthesizer._predict,
                 current_user_message=current_user_message,
                 tool_memory=self.contexts.memory,
-            ).response
-        )
+            )
+
+            # input("Response is almost ready, press ENTER to begin streaming")
+
+            def parse_gen():
+                """
+                A generator that returns the part after "Response:" and strips whitespace.
+                """
+
+                def rstripped(s):
+                    """Extract the trailing whitespace itself."""
+                    return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
+
+                field = "Response:"
+                gen = Settings.llm.stream_complete(synthesizer_template)
+                before_response = ""
+                for r in gen:
+                    before_response += r.delta
+                    offset = before_response.find(field)
+                    if offset != -1:
+                        s = before_response[offset + len(field) :]
+                        if s.strip():
+                            yield s.strip()
+                            prev_whitespace = rstripped(s)
+                            break
+
+                for r in gen:
+                    s = r.delta
+                    yield prev_whitespace + s.rstrip()
+                    prev_whitespace = rstripped(s)
+
+            return dspy.Prediction(response=parse_gen())
+
+        else:
+            return dspy.Prediction(
+                response=self.synthesizer(
+                    current_user_message=current_user_message,
+                    tool_memory=self.contexts.memory,
+                ).response
+            )
 
 
 def main():
@@ -265,8 +286,12 @@ def main():
 
     current_user_message = "What do you know about DKU, Please answer in more detail"
     agent = Agent(max_iterations=5)
-    response = agent(current_user_message=current_user_message).response
-    print(f"response: {response}")
+    stream = agent(current_user_message=current_user_message, streaming=True).response
+
+    print("response:")
+    for r in stream:
+        print(r, end="")
+    print()
 
 
 if __name__ == "__main__":
