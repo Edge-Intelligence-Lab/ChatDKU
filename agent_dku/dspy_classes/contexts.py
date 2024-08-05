@@ -1,6 +1,7 @@
 import dspy
 from dspy_common import custom_cot_rationale
 
+
 class ContextsMemorySignature(dspy.Signature):
 
     question = dspy.InputField(desc="The question to be answered.")
@@ -15,13 +16,12 @@ class ContextsMemorySignature(dspy.Signature):
             # 'Save information about the question.'
             # 'Save the sources of all contexts referenced, include links in Markdown if availble.'
             # 'Be organized and use bullet points if needed.'
-            'Your task is to remove the information that is not relevant to the question in the retrieved information.'
-            'Please keep the information related to the question as much as possible.'
-            'keep the source stored in markdown.'
-
+            "Your task is to remove the information that is not relevant to the question in the retrieved information."
+            "Please keep the information related to the question as much as possible."
+            "keep the source stored in markdown."
         )
     )
-    
+
 
 class Contexts(dspy.Module):
     def reset(self):
@@ -42,7 +42,6 @@ class Contexts(dspy.Module):
         self.memory += (
             "##########\n"
             + self.update_context_memory(
-                question=current_user_message,
-                retrieved_information=result
+                question=current_user_message, retrieved_information=result
             ).summarized_information
         )

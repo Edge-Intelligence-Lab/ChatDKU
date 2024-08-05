@@ -1,6 +1,7 @@
 import dspy
 from dspy_common import custom_cot_rationale
 
+
 class QueryRewriteSignature(dspy.Signature):
 
     question = dspy.InputField(desc="The question to be answered.")
@@ -10,10 +11,10 @@ class QueryRewriteSignature(dspy.Signature):
     rewrited_query = dspy.OutputField(
         desc=(
             # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
-            'Please understand the information gap between the currently known information and the target problem.'
-            'Your task is to generate one thought in the form of question for next retrieval step directly.'
-            'DON\’T generate the whole thoughts at once!\n DON\’T generate thought which has been retrieved.'
-            'Answer the thought you generate directly, without additional description.'
+            "Please understand the information gap between the currently known information and the target problem."
+            "Your task is to generate one thought in the form of question for next retrieval step directly."
+            "DON\’T generate the whole thoughts at once!\n DON\’T generate thought which has been retrieved."
+            "Answer the thought you generate directly, without additional description."
         )
     )
 

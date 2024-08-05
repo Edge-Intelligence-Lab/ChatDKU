@@ -2,18 +2,15 @@
 import re
 
 from typing import Any, Callable, Literal
-from pydantic import  ConfigDict, BaseModel, Field, create_model, ValidationError
+from pydantic import ConfigDict, BaseModel, Field, create_model, ValidationError
 from inspect import signature, Signature
 from pydantic.fields import FieldInfo
 
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy.signatures.signature import ensure_signature, signature_to_template
-
-
 from dspy_common import custom_cot_rationale
 from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
 from dspy_classes.tool_memory import ToolMemory
+
 
 class NameParamsModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -48,6 +45,7 @@ def func_to_model(
 
 def camel_to_snake_case(s: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+
 
 def make_planner_signature():
     fields = {
@@ -129,6 +127,7 @@ def make_planner_signature():
 
 
 PlannerSignature = make_planner_signature()
+
 
 class Planner(dspy.Module):
     def __init__(self, tools: list[dspy.Module]):

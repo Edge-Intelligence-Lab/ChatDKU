@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Any, Callable, Literal
-from pydantic import BaseModel, ConfigDict, Field, create_model, ValidationError
-from pydantic.fields import FieldInfo
-from inspect import signature, Signature
-import re
+from typing import Any
 import traceback
 from itertools import takewhile
 
@@ -97,18 +93,6 @@ class CustomClient(LM):
         return [self.request(prompt, **kwargs).text]
 
 
-# When executing tasks like summarizing, the LLM is supposed to ONLY generate the
-# summaries themselves. However, the LLM sometimes says things like
-# `here is a summary of the given text` before the summary. This prompt used to
-# explicitly discourage this kind of output.
-#
-# Also note that I have tried other things like `do not begin your answer with
-# "here are the generated queries"` to discourage such messages at the beginning of
-# the generated queries. Nevertheless, this prompt seems to be the most effective.
-#
-# FIXME: Use a more suitable system prompt
-
-
 class Agent(dspy.Module):
     def __init__(self, max_iterations=5):
         super().__init__()
@@ -118,7 +102,7 @@ class Agent(dspy.Module):
         # See notes below regarding pre-calling tools for more.
         self.tools = [VectorRetriever(), KeywordRetriever()]
         self.planner = assert_transform_module(
-            Planner(tools=[VectorRetriever(), KeywordRetriever()]),
+            Planner(tools=self.tools.copy()),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
         self.tool_memory = ToolMemory()
@@ -157,16 +141,14 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"result: {first_ite_result}")
 
-                # 要计时的代码块
+            # 要计时的代码块
             end_time = time.time()
 
             elapsed_time = end_time - start_time
             print("---" * 100)
             print(f"Elapsed time: {elapsed_time} seconds")
-            # self.contexts(
-            #     current_user_message=current_user_message,
-            #     result=first_ite_result,
-            # )
+            # FIXME: Currently contexts is only written to in the first iteration.
+            # Actually, tool memory and contexts should be merged together.
             self.contexts(
                 current_user_message=current_user_message,
                 result=first_ite_result,
@@ -183,6 +165,15 @@ class Agent(dspy.Module):
                 question=current_user_message,
                 known_information=self.contexts.memory,
             )
+            # FIXME: Should actually write
+            #
+            # judgement = self.judge(
+            #     question=current_user_message,
+            #     known_information=self.contexts.memory,
+            # ).judgement
+            #
+            # However, this might lead to infinite (bounded by max_iterations though)
+            # loop. Should also fix memory at the same time.
             if VERBOSE:
                 print(f"Judge: {judgement}")
             if judgement:
@@ -279,7 +270,7 @@ class Agent(dspy.Module):
 
 def main():
     setup()
-    # use_phoenix()
+    use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)

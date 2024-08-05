@@ -7,6 +7,7 @@ import dspy
 from dspy_common import custom_cot_rationale
 from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
 
+
 def make_update_tool_memory_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),

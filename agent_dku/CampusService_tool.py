@@ -1,9 +1,10 @@
 import pandas as pd
 
+
 class CampusService_tool:
 
     def __init__(self, file_path) -> None:
-        self.file_path=file_path
+        self.file_path = file_path
 
     def query(self, search_string):
 
@@ -18,7 +19,7 @@ class CampusService_tool:
         if not match.empty:
             values = match.iloc[0, [0, 4, 5, 6, 7]].tolist()
             return {key: value for key, value in zip(keys, values) if value}
-        
+
         match = df_lower[df_lower[2] == search_string_lower]
         if not match.empty:
             values = match.iloc[0, [0, 4, 5, 6, 7]].tolist()
@@ -35,4 +36,3 @@ class CampusService_tool:
             return {key: value for key, value in zip(keys, values) if value}
 
         return "No Info Found"
-

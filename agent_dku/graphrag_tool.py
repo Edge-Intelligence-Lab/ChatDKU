@@ -33,19 +33,22 @@ sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
 from settings import Config
+
 config = Config()
 
-def json_clean(response:str):
-    match = re.search(r'\{.*\}', response, re.DOTALL)
+
+def json_clean(response: str):
+    match = re.search(r"\{.*\}", response, re.DOTALL)
     if match:
         return match.group(0)
     else:
         return "Error Json"
 
+
 class AgentGlobalSearch(GlobalSearch):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
+
     def search_for_agent(
         self,
         query: str,
@@ -54,7 +57,7 @@ class AgentGlobalSearch(GlobalSearch):
     ):
         """Perform a global search synchronously."""
         return asyncio.run(self.asearch_for_agent(query, conversation_history))
-    
+
     async def asearch_for_agent(
         self,
         query: str,
@@ -78,16 +81,17 @@ class AgentGlobalSearch(GlobalSearch):
         if self.callbacks:
             for callback in self.callbacks:
                 callback.on_map_response_start(context_chunks)  # type: ignore
-        map_responses = await asyncio.gather(*[
-            self._map_response_single_batch(
-                context_data=data, query=query, **self.map_llm_params
-            )
-            for data in context_chunks
-        ])
-        
+        map_responses = await asyncio.gather(
+            *[
+                self._map_response_single_batch(
+                    context_data=data, query=query, **self.map_llm_params
+                )
+                for data in context_chunks
+            ]
+        )
+
         return map_responses
-    
-    
+
     def parse_search_response(self, search_response: str) -> list[dict[str, Any]]:
         """Parse the search response json and return a list of key points.
 
@@ -105,7 +109,7 @@ class AgentGlobalSearch(GlobalSearch):
         search_response = json_clean(search_response)
         # print("clean"*20)
         # print(search_response)
-        
+
         parsed_elements = json.loads(search_response)["points"]
         return [
             {
@@ -115,16 +119,17 @@ class AgentGlobalSearch(GlobalSearch):
             for element in parsed_elements
         ]
 
+
 class GraphragTool(dspy.Module):
     def __init__(self):
-        
+
         ### init data,config
         self.data_dir = Path(config.graph_data_dir)
         self.root_dir = config.graph_root_dir
         self.config = _read_config_parameters(self.root_dir)
         self.community_level = 2
         self.response_type = config.response_type
-        
+
         self.final_nodes: pd.DataFrame = pd.read_parquet(
             self.data_dir / "create_final_nodes.parquet"
         )
@@ -138,59 +143,66 @@ class GraphragTool(dspy.Module):
         self.reports = read_indexer_reports(
             self.final_community_reports, self.final_nodes, self.community_level
         )
-        self.entities = read_indexer_entities(self.final_nodes, self.final_entities, self.community_level)
-        
-        self.search_engine =  self.get_search_engine()
-        
+        self.entities = read_indexer_entities(
+            self.final_nodes, self.final_entities, self.community_level
+        )
+
+        self.search_engine = self.get_search_engine()
+
         self.summarizer = DocumentSummarizer()
-            
-        print("-"*10+"graphrag_tool loaded"+"-"*10)
-        
+
+        print("-" * 10 + "graphrag_tool loaded" + "-" * 10)
+
     def get_reports_and_entities(self, contexts_list):
         full_context = ""
         for context in contexts_list:
             full_context += context
 
-        numbers = re.findall(r'Data: Reports \((\d+.*?)\)', full_context)
+        numbers = re.findall(r"Data: Reports \((\d+.*?)\)", full_context)
 
         retrieved_report_id_list = []
         for number_set in numbers:
-            retrieved_report_id_list.extend([int(num) for num in number_set.split(', ')])
-            
+            retrieved_report_id_list.extend(
+                [int(num) for num in number_set.split(", ")]
+            )
+
         retrieved_reports = []
         entities_id_list = []
         for report in self.reports:
             if int(report.id) in retrieved_report_id_list:
-                numbers = re.findall(r'Data: Entities \((\d+.*?)\)', report.full_content)
+                numbers = re.findall(
+                    r"Data: Entities \((\d+.*?)\)", report.full_content
+                )
                 for number_set in numbers:
-                    for num in number_set.split(', '):
+                    for num in number_set.split(", "):
                         if int(num) not in entities_id_list:
                             entities_id_list.append(int(num))
                 retrieved_reports.append(report)
         # find entities from context
-        numbers = re.findall(r'Data: Entities \((\d+.*?)\)', full_context)
+        numbers = re.findall(r"Data: Entities \((\d+.*?)\)", full_context)
         for number_set in numbers:
-            entities_id_list.extend([int(num) for num in number_set.split(', ')])
+            entities_id_list.extend([int(num) for num in number_set.split(", ")])
         # print(entities_id_list)
         retrieved_entities = []
-        for index in range(0,len(list(self.final_entities['description']))):
+        for index in range(0, len(list(self.final_entities["description"]))):
             if index in entities_id_list:
                 tmp_dic = {}
                 tmp_dic["entity_id"] = index
-                tmp_dic["content"] = list(self.final_entities['description'])[index]
+                tmp_dic["content"] = list(self.final_entities["description"])[index]
                 retrieved_entities.append(tmp_dic)
-            
+
         # retrieved_entities = [list(self.final_entities['description'])[index] for index in entities_id_list]
         return retrieved_reports, retrieved_entities
-    
-    
+
     def get_search_engine(self):
         token_encoder = tiktoken.get_encoding(self.config.encoding_model)
         gs_config = self.config.global_search
         return AgentGlobalSearch(
             llm=get_llm(self.config),
             context_builder=GlobalCommunityContext(
-                community_reports=self.reports, entities=self.entities, token_encoder=token_encoder
+                community_reports=self.reports,
+                entities=self.entities,
+                token_encoder=token_encoder,
             ),
             token_encoder=token_encoder,
             max_data_tokens=gs_config.data_max_tokens,
@@ -219,47 +231,52 @@ class GraphragTool(dspy.Module):
             concurrent_coroutines=gs_config.concurrency,
             response_type=self.response_type,
         )
-        
-        
-    def global_query(self,query):
+
+    def global_query(self, query):
         search_result_list = self.search_engine.search_for_agent(query=query)
         high_score_responce_list = []
         contexts_list = []
         for response in search_result_list:
-            if response.response[0]['score']>0: # type: ignore
+            if response.response[0]["score"] > 0:  # type: ignore
                 high_score_responce_list.append(response)
                 for dict in response.response:
-                    contexts_list.append(dict['answer']) # type: ignore
+                    contexts_list.append(dict["answer"])  # type: ignore
 
-        retrieved_reports, retrieved_entities = self.get_reports_and_entities(contexts_list)
+        retrieved_reports, retrieved_entities = self.get_reports_and_entities(
+            contexts_list
+        )
         return contexts_list, retrieved_reports, retrieved_entities
-    
+
     def forward(
-        self, 
+        self,
         query: Annotated[
             str,
             Field(
                 description="Texts that might be semantically similar to the real answer to the question."
             ),
-        ],):
+        ],
+    ):
         contexts_list, retrieved_reports, retrieved_entities = self.global_query(query)
         return contexts_list
         # return dspy.Prediction(
         #     result=self.summarizer(documents=contexts_list, query=query).summary
         # )
-        
+
+
 def main():
     graphragtool = GraphragTool()
 
-    query="what do you know about DKU club?"
+    query = "what do you know about DKU club?"
     # graph_contexts, graph_full_conexts = ragtools.graph_global_tool(query)
-    contexts_list, retrieved_reports, retrieved_entities = graphragtool.global_query(query)
+    contexts_list, retrieved_reports, retrieved_entities = graphragtool.global_query(
+        query
+    )
     # print(contexts_list)
-    print('-'*20+'retrieved_reports'+'-'*20+'\n')
+    print("-" * 20 + "retrieved_reports" + "-" * 20 + "\n")
     print(retrieved_reports)
-    print('-'*20+'retrieved_entities'+'-'*20+'\n')
+    print("-" * 20 + "retrieved_entities" + "-" * 20 + "\n")
     print(retrieved_entities)
-    
-    
+
+
 if __name__ == "__main__":
     main()

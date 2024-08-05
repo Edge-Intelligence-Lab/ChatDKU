@@ -2,6 +2,7 @@ import dspy
 from dspy_common import custom_cot_rationale
 from dspy_classes.prompt_settings import VERBOSE
 
+
 class JudgeSignature(dspy.Signature):
     """Judging based solely on the current known information and without allowing for inference, \
     are you able to completely and accurately respond to the question?
@@ -40,4 +41,3 @@ class Judge(dspy.Module):
                     'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
                 )
         return dspy.Prediction(judgement=(judgement_str == "Yes"))
-
