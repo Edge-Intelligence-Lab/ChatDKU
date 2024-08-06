@@ -94,11 +94,35 @@ def get_reranker(top_n: int):
         keep_retrieval_score=True,
     )
 
+def get_url(path):
+    # 检查路径中是否包含 'dku_website'
+    if 'dku_website' in path:
+        # 提取 'dku_website/' 之后的内容
+        start_index = path.find('dku_website/')
+        sub_path = path[start_index + len('dku_website/'):]
+        
+        # 检查路径的结尾是否是 '.html' 并去掉 '/index.html'
+        if sub_path.endswith('/index.html'):
+            sub_path = sub_path[:-len('/index.html')]
+        
+        # 如果路径的结尾是 '.pdf'，不进行处理
+        # 直接返回处理后的路径
+        return sub_path
+    return "no url"
+
+def simplify_nodes(reranked_nodes):
+    simple_dict = {}
+    simple_dict["metadata"] = {}
+    simple_dict["metadata"]["url"] = get_url(reranked_nodes.metadata["file_path"])
+    simple_dict["metadata"]["last_modified_date"] = reranked_nodes.metadata["last_modified_date"]
+    simple_dict["related_context"] = reranked_nodes.text
+    return simple_dict
+
 
 class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 2):
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -122,7 +146,11 @@ class VectorRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        return reranked_nodes
+        contexts_dict = []
+        for node in reranked_nodes:
+            contexts_dict.append(simplify_nodes(node))
+
+        return contexts_dict
         # return dspy.Prediction(
         #     result=self.summarizer(documents=reranked_nodes, query=query).summary
         # )
@@ -131,7 +159,7 @@ class VectorRetriever(dspy.Module):
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 2):
         docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         self.retriever = BM25Retriever.from_defaults(
             docstore=docstore, similarity_top_k=retriever_top_k
@@ -154,7 +182,11 @@ class KeywordRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        return reranked_nodes
+        contexts_dict = []
+        for node in reranked_nodes:
+            contexts_dict.append(simplify_nodes(node))
+
+        return contexts_dict
         # return dspy.Prediction(
         #     result=self.summarizer(documents=reranked_nodes, query=query).summary
         # )

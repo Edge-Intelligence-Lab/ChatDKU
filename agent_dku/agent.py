@@ -7,6 +7,7 @@ from itertools import takewhile
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
 
+import time
 import functools
 from dsp import LM
 import dspy
@@ -113,12 +114,12 @@ class Agent(dspy.Module):
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
         self.queryrewriter = QueryRewrite()
-        self.contexts = Contexts()
+        self.contexts = ""
 
     def forward(self, current_user_message: str, streaming: bool = False):
         # Need to make this an attribute so that DSPy can optimize it
         # self.tool_memory.reset()
-        self.contexts.reset()
+        # self.contexts.reset()
 
         # FIXME: Pre-calling tools.
         # Currently, it calls ALL tools as the first iteration.xw
@@ -132,84 +133,79 @@ class Agent(dspy.Module):
         # 3. The zipping of the `name_to_model` and `tools` might be problematic.
         if VERBOSE:
             print("pre-calling tools")
+        self.contexts = ""
 
         import time
 
         for (name, model), tool in zip(self.planner.name_to_model.items(), self.tools):
-            start_time = time.time()
             first_ite_result = str(tool(query=current_user_message))
             if VERBOSE:
                 print(f"result: {first_ite_result}")
 
-            # 要计时的代码块
-            end_time = time.time()
-
-            elapsed_time = end_time - start_time
-            print("---" * 100)
-            print(f"Elapsed time: {elapsed_time} seconds")
             # FIXME: Currently contexts is only written to in the first iteration.
             # Actually, tool memory and contexts should be merged together.
-            self.contexts(
-                current_user_message=current_user_message,
-                result=first_ite_result,
-            )
-            if VERBOSE:
-                print(f"contexts memory: {self.contexts.memory}")
+            # self.contexts(
+            #     current_user_message=current_user_message,
+            #     result=first_ite_result,
+            # )
+            # if VERBOSE:
+            #     print(f"contexts memory: {self.contexts.memory}")
+            self.contexts += first_ite_result
 
-        for i in range(self.max_iterations - 1):
-            if VERBOSE:
-                print(f"iteration: {i}")
-            # NOTE: Should judge only when there were tool calls before.
-            # Currently, the first iteration is actually calling all the tools.
-            judgement = self.judge(
-                question=current_user_message,
-                known_information=self.contexts.memory,
-            )
-            # FIXME: Should actually write
-            #
-            # judgement = self.judge(
-            #     question=current_user_message,
-            #     known_information=self.contexts.memory,
-            # ).judgement
-            #
-            # However, this might lead to infinite (bounded by max_iterations though)
-            # loop. Should also fix memory at the same time.
-            if VERBOSE:
-                print(f"Judge: {judgement}")
-            if judgement:
-                break
+        # for i in range(self.max_iterations - 1):
+        #     if VERBOSE:
+        #         print(f"iteration: {i}")
+        #     # NOTE: Should judge only when there were tool calls before.
+        #     # Currently, the first iteration is actually calling all the tools.
+        #     judgement = self.judge(
+        #         question=current_user_message,
+        #         known_information=self.contexts.memory,
+        #     )
+        #     # FIXME: Should actually write
+        #     #
+        #     # judgement = self.judge(
+        #     #     question=current_user_message,
+        #     #     known_information=self.contexts.memory,
+        #     # ).judgement
+        #     #
+        #     # However, this might lead to infinite (bounded by max_iterations though)
+        #     # loop. Should also fix memory at the same time.
+        #     if VERBOSE:
+        #         print(f"Judge: {judgement}")
+        #     if judgement:
+        #         break
 
-            rewrited_query = self.queryrewriter(
-                question=current_user_message,
-                known_information=self.tool_memory.memory,
-            )
-            if VERBOSE:
-                print(f"rewrited query:{rewrited_query}")
+        #     rewrited_query = self.queryrewriter(
+        #         question=current_user_message,
+        #         known_information=self.tool_memory.memory,
+        #     )
+        #     if VERBOSE:
+        #         print(f"rewrited query:{rewrited_query}")
 
-            try:
-                p = self.planner(
-                    current_user_message=rewrited_query,
-                    tool_memory=self.tool_memory,
-                    max_calls=self.max_iterations - i,
-                )
-            except dspy.DSPyAssertionError:
-                if VERBOSE:
-                    print("max assertion retries hit")
-                break
+        #     try:
+        #         p = self.planner(
+        #             current_user_message=rewrited_query,
+        #             tool_memory=self.tool_memory,
+        #             max_calls=self.max_iterations - i,
+        #         )
+        #     except dspy.DSPyAssertionError:
+        #         if VERBOSE:
+        #             print("max assertion retries hit")
+        #         break
 
-            if VERBOSE:
-                print(f"calls: {p.calls}")
-            result = p.tool(**p.calls[0].params.model_dump()).result
-            if VERBOSE:
-                print(f"result: {result}")
-            self.tool_memory(
-                current_user_message=rewrited_query,
-                schema=p.schema,
-                calls=p.calls,
-                result=result,
-            )
-            if VERBOSE:
-                print(f"tool_memory.memory: {self.tool_memory.memory}")
+        #     if VERBOSE:
+        #         print(f"calls: {p.calls}")
+        #     result = p.tool(**p.calls[0].params.model_dump()).result
+        #     if VERBOSE:
+        #         print(f"result: {result}")
+        #     self.tool_memory(
+        #         current_user_message=rewrited_query,
+        #         schema=p.schema,
+        #         calls=p.calls,
+        #         result=result,
+        #     )
+        #     if VERBOSE:
+        #         print(f"tool_memory.memory: {self.tool_memory.memory}")
 
         ### summarize result here
 
@@ -225,7 +221,7 @@ class Agent(dspy.Module):
             synthesizer_template = get_template(
                 self.synthesizer._predict,
                 current_user_message=current_user_message,
-                tool_memory=self.contexts.memory,
+                tool_memory=self.contexts,
             )
 
             # input("Response is almost ready, press ENTER to begin streaming")
@@ -263,26 +259,32 @@ class Agent(dspy.Module):
             return dspy.Prediction(
                 response=self.synthesizer(
                     current_user_message=current_user_message,
-                    tool_memory=self.contexts.memory,
+                    tool_memory=self.contexts,
                 ).response
             )
 
 
 def main():
     setup()
-    use_phoenix()
+    # use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-
-    current_user_message = "What do you know about DKU, Please answer in more detail"
     agent = Agent(max_iterations=5)
-    stream = agent(current_user_message=current_user_message, streaming=True).response
 
-    print("response:")
-    for r in stream:
-        print(r, end="")
-    print()
+
+    while True:
+        try:
+            print("*" * 32)
+            current_user_message = input("Enter your query about DKU: ")
+            stream = agent(current_user_message=current_user_message, streaming=True).response
+            print("+" * 32)
+            print("response:")
+            for r in stream:
+                print(r, end="")
+            print()
+        except EOFError:
+            break
 
 
 if __name__ == "__main__":
