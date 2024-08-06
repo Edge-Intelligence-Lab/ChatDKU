@@ -2,12 +2,10 @@
 
 from typing import Any
 import traceback
-from itertools import takewhile
 
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
 
-import time
 import functools
 from dsp import LM
 import dspy
@@ -16,15 +14,13 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import dspy_patch
 
-from dspy_common import get_template, custom_cot_rationale
 from llamaindex_tools import VectorRetriever, KeywordRetriever
 
 from dspy_classes.plan import Planner
+from dspy_classes.tool_memory import ToolMemory
 from dspy_classes.query_rewrite import QueryRewrite
 from dspy_classes.prompt_settings import VERBOSE
-from dspy_classes.contexts import Contexts
-from dspy_classes.synthesizer import SynthesizerSignature
-from dspy_classes.tool_memory import ToolMemory
+from dspy_classes.synthesizer import Synthesizer
 from dspy_classes.judge import Judge
 
 import os
@@ -101,183 +97,137 @@ class Agent(dspy.Module):
 
         # FIXME: This duplication is currently required.
         # See notes below regarding pre-calling tools for more.
-        self.tools = [VectorRetriever(), KeywordRetriever()]
         self.planner = assert_transform_module(
-            Planner(tools=self.tools.copy()),
+            Planner([VectorRetriever(), KeywordRetriever()]),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
         self.tool_memory = ToolMemory()
-        self.synthesizer = dspy.ChainOfThought(
-            SynthesizerSignature, rationale_type=custom_cot_rationale
-        )
+        self.synthesizer = Synthesizer()
         self.judge = assert_transform_module(
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
         self.queryrewriter = QueryRewrite()
-        self.contexts = ""
 
     def forward(self, current_user_message: str, streaming: bool = False):
         # Need to make this an attribute so that DSPy can optimize it
         # self.tool_memory.reset()
-        # self.contexts.reset()
+        self.tool_memory.reset()
 
         # FIXME: Pre-calling tools.
-        # Currently, it calls ALL tools as the first iteration.xw
+        # Currently, it calls ALL tools as the first iteration.
         # However, it has two issues:
         # 1. The API of the tools might differ in the future
         #    (having something other than `query` in parameters).
-        # 2. It cannot directly call the tools in `self.planner` as they were
-        #    transformed by DSPy assertions, which would cause issues when
-        #    calling them before calling planner. Therefore, a duplicate set
-        #    of tools is required.
+        # 2. It has issues with DSPy assertions.
         # 3. The zipping of the `name_to_model` and `tools` might be problematic.
         if VERBOSE:
             print("pre-calling tools")
-        self.contexts = ""
+
+        # Deal with DSPy assertions
+        # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
+        with dspy.settings.lock:
+            dspy.settings.backtrack_to = None
 
         import time
 
-        for (name, model), tool in zip(self.planner.name_to_model.items(), self.tools):
-            first_ite_result = str(tool(query=current_user_message))
+        for (name, model), tool in zip(
+            self.planner.name_to_model.items(), self.planner.tools
+        ):
+            start_time = time.time()
+            first_ite_result = tool(query=current_user_message).result
             if VERBOSE:
                 print(f"result: {first_ite_result}")
 
-            # FIXME: Currently contexts is only written to in the first iteration.
-            # Actually, tool memory and contexts should be merged together.
-            # self.contexts(
-            #     current_user_message=current_user_message,
-            #     result=first_ite_result,
-            # )
-            # if VERBOSE:
-            #     print(f"contexts memory: {self.contexts.memory}")
-            self.contexts += first_ite_result
+            # 要计时的代码块
+            end_time = time.time()
 
-        # for i in range(self.max_iterations - 1):
-        #     if VERBOSE:
-        #         print(f"iteration: {i}")
-        #     # NOTE: Should judge only when there were tool calls before.
-        #     # Currently, the first iteration is actually calling all the tools.
-        #     judgement = self.judge(
-        #         question=current_user_message,
-        #         known_information=self.contexts.memory,
-        #     )
-        #     # FIXME: Should actually write
-        #     #
-        #     # judgement = self.judge(
-        #     #     question=current_user_message,
-        #     #     known_information=self.contexts.memory,
-        #     # ).judgement
-        #     #
-        #     # However, this might lead to infinite (bounded by max_iterations though)
-        #     # loop. Should also fix memory at the same time.
-        #     if VERBOSE:
-        #         print(f"Judge: {judgement}")
-        #     if judgement:
-        #         break
-
-        #     rewrited_query = self.queryrewriter(
-        #         question=current_user_message,
-        #         known_information=self.tool_memory.memory,
-        #     )
-        #     if VERBOSE:
-        #         print(f"rewrited query:{rewrited_query}")
-
-        #     try:
-        #         p = self.planner(
-        #             current_user_message=rewrited_query,
-        #             tool_memory=self.tool_memory,
-        #             max_calls=self.max_iterations - i,
-        #         )
-        #     except dspy.DSPyAssertionError:
-        #         if VERBOSE:
-        #             print("max assertion retries hit")
-        #         break
-
-        #     if VERBOSE:
-        #         print(f"calls: {p.calls}")
-        #     result = p.tool(**p.calls[0].params.model_dump()).result
-        #     if VERBOSE:
-        #         print(f"result: {result}")
-        #     self.tool_memory(
-        #         current_user_message=rewrited_query,
-        #         schema=p.schema,
-        #         calls=p.calls,
-        #         result=result,
-        #     )
-        #     if VERBOSE:
-        #         print(f"tool_memory.memory: {self.tool_memory.memory}")
-
-        ### summarize result here
-
-        if streaming:
-            # A hacky way to stream the final response synthesis LLM call.
-            # The synthesizer module is first converted to a prompt string.
-            # Then the LLM is called manually, and the generator returned is wrapped
-            # to extract only the "Response" field.
-            #
-            # TODO: Contribute streaming support to DSPy
-            # Also see: https://github.com/stanfordnlp/dspy/issues/338
-
-            synthesizer_template = get_template(
-                self.synthesizer._predict,
+            elapsed_time = end_time - start_time
+            print("---" * 100)
+            print(f"Elapsed time: {elapsed_time} seconds")
+            self.tool_memory(
                 current_user_message=current_user_message,
-                tool_memory=self.contexts,
+                calls=[model(name=name, params={"query": current_user_message})],
+                result=first_ite_result,
             )
+            if VERBOSE:
+                print(f"tool memory: {self.tool_memory.history}")
 
-            # input("Response is almost ready, press ENTER to begin streaming")
+        for i in range(self.max_iterations - 1):
+            if VERBOSE:
+                print(f"iteration: {i}")
+            # NOTE: Should judge only when there were tool calls before.
+            # Currently, the first iteration is actually calling all the tools.
+            judgement = self.judge(
+                question=current_user_message,
+                known_information="\n".join(
+                    [i.model_dump_json() for i in self.tool_memory.history]
+                ),
+            ).judgement
+            if VERBOSE:
+                print(f"Judge: {judgement}")
+            if judgement:
+                break
 
-            def parse_gen():
-                """
-                A generator that returns the part after "Response:" and strips whitespace.
-                """
-
-                def rstripped(s):
-                    """Extract the trailing whitespace itself."""
-                    return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
-
-                field = "Response:"
-                gen = Settings.llm.stream_complete(synthesizer_template)
-                before_response = ""
-                for r in gen:
-                    before_response += r.delta
-                    offset = before_response.find(field)
-                    if offset != -1:
-                        s = before_response[offset + len(field) :]
-                        if s.strip():
-                            yield s.strip()
-                            prev_whitespace = rstripped(s)
-                            break
-
-                for r in gen:
-                    s = r.delta
-                    yield prev_whitespace + s.rstrip()
-                    prev_whitespace = rstripped(s)
-
-            return dspy.Prediction(response=parse_gen())
-
-        else:
-            return dspy.Prediction(
-                response=self.synthesizer(
-                    current_user_message=current_user_message,
-                    tool_memory=self.contexts,
-                ).response
+            rewrited_query = self.queryrewriter(
+                question=current_user_message,
+                known_information="\n".join(
+                    [i.model_dump_json() for i in self.tool_memory.history]
+                ),
             )
+            if VERBOSE:
+                print(f"rewrited query:{rewrited_query}")
+
+            try:
+                p = self.planner(
+                    # Only using the rewritten query here but not for updating memory
+                    # as the memory is not always updated for every iteration.
+                    # Also, the memory should concern answering the overarching
+                    # user question, while the planner can focus more on the current iteration.
+                    current_user_message=rewrited_query,
+                    tool_memory=self.tool_memory,
+                    max_calls=self.max_iterations - i,
+                )
+            except dspy.DSPyAssertionError:
+                if VERBOSE:
+                    print("max assertion retries hit")
+                break
+
+            if VERBOSE:
+                print(f"calls: {p.calls}")
+            result = p.tool(**p.calls[0].params.model_dump()).result
+            if VERBOSE:
+                print(f"result: {result}")
+            self.tool_memory(
+                current_user_message=current_user_message,
+                calls=p.calls,
+                result=result,
+            )
+            if VERBOSE:
+                print(f"tool_memory.history: {self.tool_memory.history}")
+
+        # summarize result here
+        return self.synthesizer(
+            current_user_message=current_user_message,
+            tool_memory=self.tool_memory,
+            streaming=streaming,
+        )
 
 
 def main():
     setup()
-    # use_phoenix()
+    use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
     agent = Agent(max_iterations=5)
 
-
     while True:
         try:
             print("*" * 32)
             current_user_message = input("Enter your query about DKU: ")
-            stream = agent(current_user_message=current_user_message, streaming=True).response
+            stream = agent(
+                current_user_message=current_user_message, streaming=True
+            ).response
             print("+" * 32)
             print("response:")
             for r in stream:

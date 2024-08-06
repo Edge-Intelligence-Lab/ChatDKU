@@ -1,50 +1,18 @@
 #!/usr/bin/env python3
-import re
-
-from typing import Any, Callable, Literal
-from pydantic import ConfigDict, BaseModel, Field, create_model, ValidationError
-from inspect import signature, Signature
+from typing import Literal
+from pydantic import ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
 
 import dspy
 from dspy_common import custom_cot_rationale
-from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
+from serialization import NameParams, func_to_model, camel_to_snake_case
 from dspy_classes.tool_memory import ToolMemory
-
-
-class NameParamsModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    name: str
-    params: dict[str, Any]
-
-
-def func_to_model(
-    name: str, func: Callable[..., Any], exclude: list[str] = []
-) -> type[BaseModel]:
-    fields = {}
-    params = signature(func).parameters
-
-    for param_name in params:
-        if param_name in exclude:
-            continue
-
-        param_type = params[param_name].annotation
-        if param_type is Signature.empty:
-            param_type = Any
-
-        param_default = params[param_name].default
-        if param_default is Signature.empty:
-            fields[param_name] = (param_type, Field(...))
-        elif isinstance(param_default, FieldInfo):
-            fields[param_name] = (param_type, param_default)
-        else:
-            fields[param_name] = (param_type, Field(default=param_default))
-
-    return create_model(name, **fields)
-
-
-def camel_to_snake_case(s: str) -> str:
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
+from dspy_classes.prompt_settings import (
+    CURRENT_USER_MESSAGE_FIELD,
+    TOOL_HISTORY_FIELD,
+    TOOL_SUMMARY_FIELD,
+    ROLE_PROMPT,
+)
 
 
 def make_planner_signature():
@@ -71,32 +39,14 @@ def make_planner_signature():
                 desc="The maximum number of tool calls you can include in your plan."
             ),
         ),
-        "tools_called": (
-            str,
-            dspy.InputField(
-                desc=(
-                    "A list of your previous tool calls, each line specifying a tool call. "
-                    "It would be empty if you have not called any tools previously."
-                ),
-                format=lambda x: x,
-            ),
-        ),
-        "tool_memory": (
-            str,
-            dspy.InputField(
-                desc=(
-                    "Memory of what you have learned previously from the tools. "
-                    "It would be empty if you have not called any tools previously."
-                ),
-                format=lambda x: x,
-            ),
-        ),
+        "tool_history": (str, TOOL_HISTORY_FIELD),
+        "tool_summary": (str, TOOL_SUMMARY_FIELD),
         "previous_tool_plan": (
             str,
             dspy.InputField(
                 desc=(
-                    "Your previous plan about what tools to call next. "
-                    "Note that you have not called these tools yet. "
+                    "Your previous plan about what tools to call next in JSON Lines format. "
+                    "Each line specifies the name and parameters of the tools to be called next. "
                     "It would be empty if you have not called any tools previously."
                 ),
                 format=lambda x: x,
@@ -143,7 +93,7 @@ class Planner(dspy.Module):
             tool_name_snake = camel_to_snake_case(tool_name_camel)
 
             Params = func_to_model(tool_name_camel + "Params", tool.forward)
-            NameParams = create_model(
+            ToolModel = create_model(
                 tool_name_camel,
                 model_config=ConfigDict(extra="forbid"),
                 name=(
@@ -151,8 +101,9 @@ class Planner(dspy.Module):
                     Field(..., description=tool_description),
                 ),
                 params=(Params, FieldInfo()),
+                __base__=NameParams,
             )
-            self.name_to_model[tool_name_snake] = NameParams
+            self.name_to_model[tool_name_snake] = ToolModel
 
         self.planner = dspy.ChainOfThought(
             PlannerSignature, rationale_type=custom_cot_rationale
@@ -171,12 +122,10 @@ class Planner(dspy.Module):
                 [str(m.model_json_schema()) for m in self.name_to_model.values()]
             ),
             max_calls=str(max_calls),
-            tools_called="\n".join(
-                [tool.model_dump_json() for tool in tool_memory.tools_called]
-            ),
-            tool_memory=tool_memory.memory,
+            tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
+            tool_summary=tool_memory.summary,
             previous_tool_plan="\n".join(
-                [tool.model_dump_json() for tool in tool_memory.tool_plan]
+                [i.model_dump_json() for i in tool_memory.plan]
             ),
         ).current_tool_plan
 
@@ -193,7 +142,7 @@ class Planner(dspy.Module):
         calls_unvalidated = []
         for i, s in enumerate(plan_strs, 1):
             try:
-                calls_unvalidated.append(NameParamsModel.model_validate_json(s))
+                calls_unvalidated.append(NameParams.model_validate_json(s))
             except ValidationError as e:
                 dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
 
@@ -224,5 +173,4 @@ class Planner(dspy.Module):
         return dspy.Prediction(
             calls=calls,
             tool=name_to_tool[calls[0].name],
-            schema=self.name_to_model[calls[0].name].model_json_schema(),
         )

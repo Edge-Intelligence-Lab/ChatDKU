@@ -1,124 +1,109 @@
 #!/usr/bin/env python3
-from pydantic import BaseModel
-from typing import Any
+from pydantic import BaseModel, ConfigDict
+from llama_index.core import Settings
 
 import dspy
-
 from dspy_common import custom_cot_rationale
+from serialization import NameParams
 from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
 
 
-def make_update_tool_memory_signature():
+class ToolMemoryEntry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name_params: NameParams
+    result: str
+
+
+def make_compress_tool_memory_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
-        "tool_specification": (
+        "history_to_discard": (
             str,
             dspy.InputField(
                 desc=(
-                    "The specification of the tool you just called in JSON. "
-                    "It includes the tool's name, description, and a list of "
-                    "its parameters with descriptions for each parameter."
-                ),
+                    "The tool calls that would be removed from your Tool History in JSON Lines format. "
+                    "Each line specifies the name and parameters of the tool and its result. "
+                    "You should extract relevant information from these tool calls."
+                )
+            ),
+        ),
+        "previous_summary": (
+            str,
+            dspy.InputField(
+                desc="Previous summary of the discarded Tool History. Might be empty.",
                 format=lambda x: x,
             ),
         ),
-        "tool_called": (
-            str,
-            dspy.InputField(
-                desc=(
-                    "The name of the tool and the parameters you gave to the tool "
-                    "you just called in JSON."
-                ),
-                format=lambda x: x,
-            ),
-        ),
-        "result": (
-            str,
-            dspy.InputField(
-                desc=("The result returned from the tool you just called.")
-            ),
-        ),
-        "previous_tool_memory": (
-            str,
-            dspy.InputField(
-                desc=(
-                    "Memory of what you have learned previously from the tools. "
-                    "It would be empty if you have not called any tools previously."
-                ),
-                format=lambda x: x,
-            ),
-        ),
-        "tool_memory_to_append": (
+        "current_summary": (
             str,
             dspy.OutputField(
-                desc="What you want to append to your Tool Memory.",
-                format=lambda x: x,
+                desc="Your updated summary.",
             ),
         ),
     }
 
     instruction = (
-        "You have a Tool Memory storing all the information you learned from using "
-        "multiple tools that would be useful for answering the Current User Message. "
-        "You just called a tool and the result it returned would be provided. "
-        "Your current task is to append to your Tool Memory with what you "
-        "learned from the tool you just called and what you want to emphasize"
-        "in the Previous Tool Memory. "
-        "Note that older Tool Memory would be forgotten if they become too long. "
-        "In the future, you would be asked to respond to the Current User Message "
-        "with only your Tool Memory. "
-        "Therefore, you should make it comprehensive enough so that it could "
-        "be understood by you on its own."
+        "You have a Tool History storing all the tool calls you made for answering "
+        "the Current User Message. "
+        "Your Tool History has become too long, so the oldest entries have to be discarded. "
+        "You keep a Summary of the discarded tool history. "
+        "Given the History To Discard and Previous Summary, update the Summary. "
+        "Remove the information not relevant to answer the Current User Message "
+        "and keep all the relevant information if possible. "
+        "Use Markdown in Summary. "
+        "Store the sources that you retrieved these information from."
     )
 
     return dspy.make_signature(
-        fields, ROLE_PROMPT + "\n\n" + instruction, "UpdateToolMemorySignature"
+        fields, ROLE_PROMPT + "\n\n" + instruction, "CompressToolMemorySignature"
     )
 
 
-UpdateToolMemorySignature = make_update_tool_memory_signature()
+CompressToolMemorySignature = make_compress_tool_memory_signature()
 
 
 class ToolMemory(dspy.Module):
+    # FIXME: Should not use fixed history size
+    MAX_HISTORY_SIZE = 4000
+
     def reset(self):
-        self.tools_called = []
-        self.tool_plan = []
-        # Observation: In a lot of times (but not always), Llama 3/3.1 would use
-        # JSON to organize its own memory. However, it appears to actually
-        # perform better when NOT using JSON. As the LLM tend to drop some of
-        # previous memory when updating a memory in JSON format.
-        # TODO: Offer a better memory structure.
-        #
-        # TODO: It might be better to only store what the LLM has learned from the
-        # current tool call instead of also having to emphasize what it thought
-        # to be important in the past memory. Then, when the tool memory begins
-        # to exceed the context window. Those overflowing memory would be summarized
-        # again.
-        self.memory = ""
+        # Tools already called, with names, parameters, and results
+        self.history: list[ToolMemoryEntry] = []
+        # Tools planned to be called, with names and parameters
+        self.plan: list[NameParams] = []
+        # Summary of old history that exceeds `MAX_HISTORY_SIZE`
+        self.summary: str = ""
 
     def __init__(self):
         super().__init__()
-        self.reset()
-        self.update_tool_memory = dspy.ChainOfThought(
-            UpdateToolMemorySignature, rationale_type=custom_cot_rationale
+        self.compressor = dspy.ChainOfThought(
+            CompressToolMemorySignature, rationale_type=custom_cot_rationale
         )
+        self.reset()
 
     def forward(
         self,
         current_user_message: str,
-        schema: dict[str, Any],
-        calls: list[BaseModel],
+        calls: list[NameParams],
         result: str,
     ):
-        self.tools_called.append(calls[0])
-        self.tool_plan = calls[1:].copy()
-        self.memory += (
-            "##########\n"
-            + self.update_tool_memory(
+        self.history.append(ToolMemoryEntry(name_params=calls[0], result=result))
+        self.plan = calls[1:].copy()
+
+        history_strs = [i.model_dump_json() for i in self.history]
+        history_lens = [len(Settings.tokenizer(i)) for i in history_strs]
+        min_index = len(history_lens)
+        cum_sum = 0
+        for i in reversed(range(len(history_lens))):
+            cum_sum += history_lens[i]
+            if cum_sum > self.MAX_HISTORY_SIZE:
+                break
+            min_index = i
+
+        if min_index > 0:
+            self.summary = self.compressor(
                 current_user_message=current_user_message,
-                tool_specification=str(schema),
-                tool_called=calls[0].model_dump_json(),
-                result=result,
-                previous_tool_memory=self.memory,
-            ).tool_memory_to_append
-        )
+                history_to_discard="\n".join(history_strs[:min_index]),
+                previous_summary=self.summary,
+            ).current_summary
+            self.history = self.history[min_index:]

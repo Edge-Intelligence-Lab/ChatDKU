@@ -1,4 +1,3 @@
-from contextvars import Token
 from typing import Annotated
 from pydantic import Field
 
@@ -94,27 +93,31 @@ def get_reranker(top_n: int):
         keep_retrieval_score=True,
     )
 
+
 def get_url(path):
     # 检查路径中是否包含 'dku_website'
-    if 'dku_website' in path:
+    if "dku_website" in path:
         # 提取 'dku_website/' 之后的内容
-        start_index = path.find('dku_website/')
-        sub_path = path[start_index + len('dku_website/'):]
-        
+        start_index = path.find("dku_website/")
+        sub_path = path[start_index + len("dku_website/") :]
+
         # 检查路径的结尾是否是 '.html' 并去掉 '/index.html'
-        if sub_path.endswith('/index.html'):
-            sub_path = sub_path[:-len('/index.html')]
-        
+        if sub_path.endswith("/index.html"):
+            sub_path = sub_path[: -len("/index.html")]
+
         # 如果路径的结尾是 '.pdf'，不进行处理
         # 直接返回处理后的路径
         return sub_path
     return "no url"
 
+
 def simplify_nodes(reranked_nodes):
     simple_dict = {}
     simple_dict["metadata"] = {}
     simple_dict["metadata"]["url"] = get_url(reranked_nodes.metadata["file_path"])
-    simple_dict["metadata"]["last_modified_date"] = reranked_nodes.metadata["last_modified_date"]
+    simple_dict["metadata"]["last_modified_date"] = reranked_nodes.metadata[
+        "last_modified_date"
+    ]
     simple_dict["related_context"] = reranked_nodes.text
     return simple_dict
 
@@ -146,14 +149,18 @@ class VectorRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        contexts_dict = []
-        for node in reranked_nodes:
-            contexts_dict.append(simplify_nodes(node))
 
-        return contexts_dict
-        # return dspy.Prediction(
-        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-        # )
+        # TODO: We can try simplifying the nodes first, then summarize them.
+        # Right now, only simplifying them still exceeds the context window.
+        #
+        # contexts_dict = []
+        # for node in reranked_nodes:
+        #     contexts_dict.append(simplify_nodes(node))
+        # return dspy.Prediction(result=str(contexts_dict))
+
+        return dspy.Prediction(
+            result=self.summarizer(documents=reranked_nodes, query=query).summary
+        )
 
 
 class KeywordRetriever(dspy.Module):
@@ -182,11 +189,14 @@ class KeywordRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
-        contexts_dict = []
-        for node in reranked_nodes:
-            contexts_dict.append(simplify_nodes(node))
 
-        return contexts_dict
-        # return dspy.Prediction(
-        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-        # )
+        # See notes above
+        #
+        # contexts_dict = []
+        # for node in reranked_nodes:
+        #     contexts_dict.append(simplify_nodes(node))
+        # return dspy.Prediction(result=str(contexts_dict))
+
+        return dspy.Prediction(
+            result=self.summarizer(documents=reranked_nodes, query=query).summary
+        )
