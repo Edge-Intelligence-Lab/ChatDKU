@@ -1,47 +1,83 @@
-"""Google Search tool spec."""
+import json
+from typing import Any, Optional, List, Dict
 
-import urllib.parse
-from typing import Optional
+try:
+    from googlesearch import search
+except ImportError:
+    raise ImportError("`googlesearch-python` not installed. Please install using `pip install googlesearch-python`")
 
-import requests
-from llama_index.core.schema import Document
-from llama_index.core.tools.tool_spec.base import BaseToolSpec
-
-QUERY_URL_TMPL = (
-    "https://www.googleapis.com/customsearch/v1?key={key}&cx={engine}&q={query}"
-)
+try:
+    from pycountry import pycountry
+except ImportError:
+    raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`")
 
 
-class GoogleSearchToolSpec(BaseToolSpec):
-    """Google Search tool spec."""
+class GoogleSearch:
+    """
+    GoogleSearch is a Python library for searching Google easily.
+    It uses requests and BeautifulSoup4 to scrape Google.
 
-    spec_functions = ["google_search"]
+    Args:
+        fixed_max_results (Optional[int]): A fixed number of maximum results.
+        fixed_language (Optional[str]): Language of the search results.
+        headers (Optional[Any]): Custom headers for the request.
+        proxy (Optional[str]): Proxy settings for the request.
+        timeout (Optional[int]): Timeout for the request, default is 10 seconds.
+    """
 
-    def __init__(self, key: str, engine: str, num: Optional[int] = None) -> None:
-        """Initialize with parameters."""
-        self.key = key
-        self.engine = engine
-        self.num = num
+    def __init__(
+        self,
+        fixed_max_results: Optional[int] = None,
+        fixed_language: Optional[str] = None,
+        headers: Optional[Any] = None,
+        proxy: Optional[str] = None,
+        timeout: Optional[int] = 10,
+    ):
+        super().__init__(name="googlesearch")
 
-    def google_search(self, query: str):
+        self.fixed_max_results: Optional[int] = fixed_max_results
+        self.fixed_language: Optional[str] = fixed_language
+        self.headers: Optional[Any] = headers
+        self.proxy: Optional[str] = proxy
+        self.timeout: Optional[int] = timeout
+
+        self.register(self.google_search)
+
+    def google_search(self, query: str, max_results: int = 5, language: str = "en") -> str:
         """
-        Make a query to the Google search engine to receive a list of results.
+        Use this function to search Google for a specified query.
 
         Args:
-            query (str): The query to be passed to Google search.
-            num (int, optional): The number of search results to return. Defaults to None.
+            query (str): The query to search for.
+            max_results (int, optional): The maximum number of results to return. Default is 5.
+            language (str, optional): The language of the search results. Default is "en".
 
-        Raises:
-            ValueError: If the 'num' is not an integer between 1 and 10.
+        Returns:
+            str: A JSON formatted string containing the search results.
         """
-        url = QUERY_URL_TMPL.format(
-            key=self.key, engine=self.engine, query=urllib.parse.quote_plus(query)
-        )
+        max_results = self.fixed_max_results or max_results
+        language = self.fixed_language or language
 
-        if self.num is not None:
-            if not 1 <= self.num <= 10:
-                raise ValueError("num should be an integer between 1 and 10, inclusive")
-            url += f"&num={self.num}"
+        # Resolve language to ISO 639-1 code if needed
+        if len(language) != 2:
+            _language = pycountry.languages.lookup(language)
+            if _language:
+                language = _language.alpha_2
+            else:
+                language = "en"
 
-        response = requests.get(url)
-        return [Document(text=response.text)]
+        # Perform Google search using the googlesearch-python package
+        results = list(search(query, num_results=max_results, lang=language, advanced=True))
+
+        # Collect the search results
+        res: List[Dict[str, str]] = []
+        for result in results:
+            res.append(
+                {
+                    "title": result.title,
+                    "url": result.url,
+                    "description": result.description,
+                }
+            )
+
+        return json.dumps(res, indent=2)
