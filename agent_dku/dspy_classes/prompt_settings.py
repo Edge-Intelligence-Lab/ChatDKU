@@ -2,7 +2,20 @@ import dspy
 
 VERBOSE = True
 
-CURRENT_USER_MESSAGE_FIELD = dspy.InputField(desc="The Current User Message to answer.")
+CURRENT_USER_MESSAGE_FIELD = dspy.InputField(desc="The current user message to answer.")
+CONVERSATION_HISTORY_FIELD = dspy.InputField(
+    desc=(
+        "Previous conversation between user and you, the assistant, in JSON Lines format. "
+        "Each line specifies the role and content of the message. "
+        "The Current User Message is a continuation of this conversation. "
+        "It would be empty if there were no previous conversation."
+    ),
+    format=lambda x: x,
+)
+CONVERSATION_SUMMARY_FIELD = dspy.InputField(
+    desc="Summary of old and discarded Conversation History. Might be empty.",
+    format=lambda x: x,
+)
 TOOL_HISTORY_FIELD = dspy.InputField(
     desc=(
         "Your previous tool calls in JSON Lines format. "

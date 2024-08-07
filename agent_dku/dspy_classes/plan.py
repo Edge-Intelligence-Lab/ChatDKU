@@ -1,14 +1,16 @@
-#!/usr/bin/env python3
 from typing import Literal
 from pydantic import ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
 
 import dspy
 from dspy_common import custom_cot_rationale
-from serialization import NameParams, func_to_model, camel_to_snake_case
+from utils import NameParams, func_to_model, camel_to_snake_case
+from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.tool_memory import ToolMemory
 from dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
+    CONVERSATION_HISTORY_FIELD,
+    CONVERSATION_SUMMARY_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
@@ -18,6 +20,8 @@ from dspy_classes.prompt_settings import (
 def make_planner_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
+        "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
+        "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
         "available_tools": (
             str,
             dspy.InputField(
@@ -110,7 +114,11 @@ class Planner(dspy.Module):
         )
 
     def forward(
-        self, current_user_message: str, tool_memory: ToolMemory, max_calls: int = 5
+        self,
+        current_user_message: str,
+        conversation_memory: ConversationMemory,
+        tool_memory: ToolMemory,
+        max_calls: int = 5,
     ):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
@@ -118,6 +126,10 @@ class Planner(dspy.Module):
 
         plan_str_all = self.planner(
             current_user_message=current_user_message,
+            conversation_history="\n".join(
+                [i.model_dump_json() for i in conversation_memory.history]
+            ),
+            conversation_summary=conversation_memory.summary,
             available_tools="\n".join(
                 [str(m.model_json_schema()) for m in self.name_to_model.values()]
             ),

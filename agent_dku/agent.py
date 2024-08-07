@@ -17,6 +17,7 @@ import dspy_patch
 from llamaindex_tools import VectorRetriever, KeywordRetriever
 
 from dspy_classes.plan import Planner
+from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.tool_memory import ToolMemory
 from dspy_classes.query_rewrite import QueryRewrite
 from dspy_classes.prompt_settings import VERBOSE
@@ -91,16 +92,16 @@ class CustomClient(LM):
 
 
 class Agent(dspy.Module):
-    def __init__(self, max_iterations=5):
+    def __init__(self, max_iterations=5, streaming=False):
         super().__init__()
         self.max_iterations = max_iterations
+        self.streaming = streaming
 
-        # FIXME: This duplication is currently required.
-        # See notes below regarding pre-calling tools for more.
         self.planner = assert_transform_module(
             Planner([VectorRetriever(), KeywordRetriever()]),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
+        self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
         self.synthesizer = Synthesizer()
         self.judge = assert_transform_module(
@@ -108,10 +109,21 @@ class Agent(dspy.Module):
         )
         self.queryrewriter = QueryRewrite()
 
-    def forward(self, current_user_message: str, streaming: bool = False):
+        self.prev_response = None
+
+    def forward(self, current_user_message: str):
         # Need to make this an attribute so that DSPy can optimize it
         # self.tool_memory.reset()
         self.tool_memory.reset()
+
+        if self.prev_response is not None:
+            if self.streaming:
+                # Note that this would essentially "invalidate" the previous response generator
+                # as calling `get_full_response()` would exhaust the iterations.
+                r = self.prev_response.get_full_response()
+            else:
+                r = self.prev_response
+            self.conversation_memory(role="assistant", content=r)
 
         # FIXME: Pre-calling tools.
         # Currently, it calls ALL tools as the first iteration.
@@ -146,6 +158,7 @@ class Agent(dspy.Module):
             print(f"Elapsed time: {elapsed_time} seconds")
             self.tool_memory(
                 current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
                 calls=[model(name=name, params={"query": current_user_message})],
                 result=first_ite_result,
             )
@@ -158,24 +171,22 @@ class Agent(dspy.Module):
             # NOTE: Should judge only when there were tool calls before.
             # Currently, the first iteration is actually calling all the tools.
             judgement = self.judge(
-                question=current_user_message,
-                known_information="\n".join(
-                    [i.model_dump_json() for i in self.tool_memory.history]
-                ),
+                current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
+                tool_memory=self.tool_memory,
             ).judgement
             if VERBOSE:
                 print(f"Judge: {judgement}")
             if judgement:
                 break
 
-            rewrited_query = self.queryrewriter(
-                question=current_user_message,
-                known_information="\n".join(
-                    [i.model_dump_json() for i in self.tool_memory.history]
-                ),
-            )
+            rewritten_query = self.queryrewriter(
+                current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
+                tool_memory=self.tool_memory,
+            ).rewritten_query
             if VERBOSE:
-                print(f"rewrited query:{rewrited_query}")
+                print(f"rewritten query:{rewritten_query}")
 
             try:
                 p = self.planner(
@@ -183,7 +194,8 @@ class Agent(dspy.Module):
                     # as the memory is not always updated for every iteration.
                     # Also, the memory should concern answering the overarching
                     # user question, while the planner can focus more on the current iteration.
-                    current_user_message=rewrited_query,
+                    current_user_message=rewritten_query,
+                    conversation_memory=self.conversation_memory,
                     tool_memory=self.tool_memory,
                     max_calls=self.max_iterations - i,
                 )
@@ -199,18 +211,21 @@ class Agent(dspy.Module):
                 print(f"result: {result}")
             self.tool_memory(
                 current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
                 calls=p.calls,
                 result=result,
             )
             if VERBOSE:
                 print(f"tool_memory.history: {self.tool_memory.history}")
 
-        # summarize result here
-        return self.synthesizer(
+        self.prev_response = self.synthesizer(
             current_user_message=current_user_message,
+            conversation_memory=self.conversation_memory,
             tool_memory=self.tool_memory,
-            streaming=streaming,
-        )
+            streaming=self.streaming,
+        ).response
+        self.conversation_memory(role="user", content=current_user_message)
+        return dspy.Prediction(response=self.prev_response)
 
 
 def main():
@@ -219,15 +234,13 @@ def main():
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=5)
+    agent = Agent(max_iterations=5, streaming=True)
 
     while True:
         try:
             print("*" * 32)
             current_user_message = input("Enter your query about DKU: ")
-            stream = agent(
-                current_user_message=current_user_message, streaming=True
-            ).response
+            stream = agent(current_user_message=current_user_message).response
             print("+" * 32)
             print("response:")
             for r in stream:

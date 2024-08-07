@@ -1,11 +1,15 @@
-#!/usr/bin/env python3
 from pydantic import BaseModel, ConfigDict
-from llama_index.core import Settings
 
 import dspy
 from dspy_common import custom_cot_rationale
-from serialization import NameParams
-from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
+from utils import NameParams, strs_fit_max_tokens_reverse
+from dspy_classes.prompt_settings import (
+    CURRENT_USER_MESSAGE_FIELD,
+    CONVERSATION_HISTORY_FIELD,
+    CONVERSATION_SUMMARY_FIELD,
+    ROLE_PROMPT,
+)
+from dspy_classes.conversation_memory import ConversationMemory
 
 
 class ToolMemoryEntry(BaseModel):
@@ -17,6 +21,8 @@ class ToolMemoryEntry(BaseModel):
 def make_compress_tool_memory_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
+        "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
+        "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
         "history_to_discard": (
             str,
             dspy.InputField(
@@ -24,7 +30,8 @@ def make_compress_tool_memory_signature():
                     "The tool calls that would be removed from your Tool History in JSON Lines format. "
                     "Each line specifies the name and parameters of the tool and its result. "
                     "You should extract relevant information from these tool calls."
-                )
+                ),
+                format=lambda x: x,
             ),
         ),
         "previous_summary": (
@@ -84,26 +91,28 @@ class ToolMemory(dspy.Module):
     def forward(
         self,
         current_user_message: str,
+        conversation_memory: ConversationMemory,
         calls: list[NameParams],
         result: str,
     ):
         self.history.append(ToolMemoryEntry(name_params=calls[0], result=result))
         self.plan = calls[1:].copy()
 
-        history_strs = [i.model_dump_json() for i in self.history]
-        history_lens = [len(Settings.tokenizer(i)) for i in history_strs]
-        min_index = len(history_lens)
-        cum_sum = 0
-        for i in reversed(range(len(history_lens))):
-            cum_sum += history_lens[i]
-            if cum_sum > self.MAX_HISTORY_SIZE:
-                break
-            min_index = i
-
+        min_index = strs_fit_max_tokens_reverse(
+            [i.model_dump_json() for i in self.history],
+            "\n",
+            self.MAX_HISTORY_SIZE,
+        )
         if min_index > 0:
             self.summary = self.compressor(
                 current_user_message=current_user_message,
-                history_to_discard="\n".join(history_strs[:min_index]),
+                conversation_history="\n".join(
+                    [i.model_dump_json() for i in conversation_memory.history]
+                ),
+                conversation_summary=conversation_memory.summary,
+                history_to_discard="\n".join(
+                    [i.model_dump_json() for i in self.history[:min_index]]
+                ),
                 previous_summary=self.summary,
             ).current_summary
             self.history = self.history[min_index:]
