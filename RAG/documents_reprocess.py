@@ -1,4 +1,3 @@
-
 import pandas as pd
 import pickle
 from settings import Config
@@ -11,6 +10,7 @@ def documents_reprocess():
     csv_path=config.csv_path
 
     urlinfo=pd.read_csv(csv_path)
+    keys_to_keep = {"url", "file_path","last_modified_date"}
 
     for document in documents:
 
@@ -21,6 +21,11 @@ def documents_reprocess():
             index = urlinfo[urlinfo.iloc[:, 4] == document_path].index[0]
             url = urlinfo.iloc[index, 3]
             document.metadata["url"]=url
+    
+        document.metadata={k: v for k, v in document.metadata.items() if k in keys_to_keep}
+
+    with open(config.documents_path, "wb") as file:
+        pickle.dump(documents,file) 
 
 def main():
     documents_reprocess()
