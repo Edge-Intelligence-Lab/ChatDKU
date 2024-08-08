@@ -92,10 +92,23 @@ class CustomClient(LM):
 
 
 class Agent(dspy.Module):
-    def __init__(self, max_iterations=5, streaming=False):
+    def __init__(self, max_iterations=5, streaming=False, get_intermediate=False):
+        """
+        Args:
+            max_iterations: The maximum rounds of tool call/evaluation the agent
+                could execute for a user message. This includes the first round
+                of tool calls with the initial user message.
+            streaming: If `True`, returns the LLM response as a streaming generator
+                for `reponse` returned by synthesizer, else simply return the
+                complete response as a string.
+            get_itermediate: If `True`, `forward()` would return the synthesized
+                result for each agent iteration as a generator.
+        """
+
         super().__init__()
         self.max_iterations = max_iterations
         self.streaming = streaming
+        self.get_intermediate = get_intermediate
 
         self.planner = assert_transform_module(
             Planner([VectorRetriever(), KeywordRetriever()]),
@@ -112,10 +125,11 @@ class Agent(dspy.Module):
         self.prev_response = None
 
     def forward(self, current_user_message: str):
+        # Reset tool memory for each user message
         # Need to make this an attribute so that DSPy can optimize it
-        # self.tool_memory.reset()
         self.tool_memory.reset()
 
+        # Add previous response to conversation memory
         if self.prev_response is not None:
             if self.streaming:
                 # Note that this would essentially "invalidate" the previous response generator
@@ -165,11 +179,25 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"tool memory: {self.tool_memory.history}")
 
+        synthesizer_args = dict(
+            current_user_message=current_user_message,
+            conversation_memory=self.conversation_memory,
+            tool_memory=self.tool_memory,
+            streaming=self.streaming,
+        )
+
+        # The subsequent rounds of tool calling
         for i in range(self.max_iterations - 1):
+            # TODO: Could feed the intermediate response to judge
+            # TODO: Could also try to make this async/threaded, so the output
+            # with the user would be done simultaneous with the execution of the
+            # next round. However, this would be contradictory to the previous
+            # todo.
+            if self.get_intermediate:
+                yield self.synthesizer(**synthesizer_args)
+
             if VERBOSE:
                 print(f"iteration: {i}")
-            # NOTE: Should judge only when there were tool calls before.
-            # Currently, the first iteration is actually calling all the tools.
             judgement = self.judge(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -180,6 +208,8 @@ class Agent(dspy.Module):
             if judgement:
                 break
 
+            # TODO: This could be merged with `Planner` depends on how well the
+            # LLM understood its task.
             rewritten_query = self.queryrewriter(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -218,34 +248,35 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"tool_memory.history: {self.tool_memory.history}")
 
-        self.prev_response = self.synthesizer(
-            current_user_message=current_user_message,
-            conversation_memory=self.conversation_memory,
-            tool_memory=self.tool_memory,
-            streaming=self.streaming,
-        ).response
+        self.prev_response = self.synthesizer(**synthesizer_args).response
         self.conversation_memory(role="user", content=current_user_message)
-        return dspy.Prediction(response=self.prev_response)
+        if self.get_intermediate:
+            yield dspy.Prediction(response=self.prev_response)
+        else:
+            return dspy.Prediction(response=self.prev_response)
 
 
 def main():
     setup()
+    # TODO: Might try integration with DSPy instead of LlamaIndex for better traces
+    # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=5, streaming=True)
+    agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
 
     while True:
         try:
-            print("*" * 32)
+            print("*" * 10)
             current_user_message = input("Enter your query about DKU: ")
-            stream = agent(current_user_message=current_user_message).response
-            print("+" * 32)
-            print("response:")
-            for r in stream:
-                print(r, end="")
-            print()
+            responses_gen = agent(current_user_message=current_user_message)
+            for i, r in enumerate(responses_gen):
+                print("-" * 10)
+                print(f"Round {i} response:")
+                for r in r.response:
+                    print(r, end="")
+                print("-" * 10)
         except EOFError:
             break
 
