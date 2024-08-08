@@ -12,7 +12,7 @@ from llama_index.core import VectorStoreIndex
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.core.schema import BaseNode, MetadataMode
+from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
 
 import os
@@ -32,7 +32,16 @@ def mydeepcopy(self, memo):
 
 # FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
 # certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
+# See: https://github.com/run-llama/llama_index/issues/14570
 llama_index.vector_stores.chroma.ChromaVectorStore.__deepcopy__ = mydeepcopy
+
+# --- Summarizer ---
+# TODO: Summarizer is currently not used as it is too slow when compared to just
+# simplify the metadata of the resulting nodes to fit them in the context window.
+# However, they could be used IN CONJUNCTION with the technique of simplifying the
+# nodes in the future and could be only called if the retrieved contexts exceeds
+# certain size. Also, they could be prompted better to preserve more information
+# then what they currently output.
 
 
 class DocumentSummarizerSignature(dspy.Signature):
@@ -66,7 +75,7 @@ class DocumentSummarizer(dspy.Module):
             chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP
         )
 
-    def forward(self, documents: list[BaseNode], query: str):
+    def forward(self, documents: list[NodeWithScore], query: str):
         # FIXME: This has the problem that the metadata of a document would
         # lie in only the first chunk suppose that document is split across
         # multiple chunks. However, this is how LlamaIndex's synthesizers
@@ -83,6 +92,13 @@ class DocumentSummarizer(dspy.Module):
                 previous_summary=summary, documents=chunk, query=query
             ).current_summary
         return dspy.Prediction(summary=summary)
+
+
+# ------------------
+
+
+# FIXME: It might be necessary/safer to set a token limit in case some really
+# ridiculously long nodes blow up the context window.
 
 
 def get_reranker(top_n: int):
@@ -111,15 +127,20 @@ def get_url(path):
     return "no url"
 
 
-def simplify_nodes(reranked_nodes):
-    simple_dict = {}
-    simple_dict["metadata"] = {}
-    simple_dict["metadata"]["url"] = get_url(reranked_nodes.metadata["file_path"])
-    simple_dict["metadata"]["last_modified_date"] = reranked_nodes.metadata[
-        "last_modified_date"
+def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
+    simplified_nodes = [
+        TextNode(
+            text=node.text,
+            metadata={
+                "url": get_url(node.metadata["file_path"]),
+                "last_modified_date": node.metadata["last_modified_date"],
+            },
+        )
+        for node in nodes
     ]
-    simple_dict["related_context"] = reranked_nodes.text
-    return simple_dict
+    return "\n\n".join(
+        [node.get_content(MetadataMode.LLM) for node in simplified_nodes]
+    )
 
 
 class VectorRetriever(dspy.Module):
@@ -134,7 +155,7 @@ class VectorRetriever(dspy.Module):
 
         self.reranker = get_reranker(reranker_top_n)
 
-        self.summarizer = DocumentSummarizer()
+        # self.summarizer = DocumentSummarizer()
 
     def forward(
         self,
@@ -149,18 +170,12 @@ class VectorRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
+        return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 
-        # TODO: We can try simplifying the nodes first, then summarize them.
-        # Right now, only simplifying them still exceeds the context window.
-        #
-        # contexts_dict = []
-        # for node in reranked_nodes:
-        #     contexts_dict.append(simplify_nodes(node))
-        # return dspy.Prediction(result=str(contexts_dict))
-
-        return dspy.Prediction(
-            result=self.summarizer(documents=reranked_nodes, query=query).summary
-        )
+        # See notes about summarizer above
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+        # )
 
 
 class KeywordRetriever(dspy.Module):
@@ -174,7 +189,7 @@ class KeywordRetriever(dspy.Module):
 
         self.reranker = get_reranker(reranker_top_n)
 
-        self.summarizer = DocumentSummarizer()
+        # self.summarizer = DocumentSummarizer()
 
     def forward(
         self,
@@ -189,14 +204,9 @@ class KeywordRetriever(dspy.Module):
         reranked_nodes = self.reranker.postprocess_nodes(
             retrieved_nodes, query_str=query
         )
+        return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 
-        # See notes above
-        #
-        # contexts_dict = []
-        # for node in reranked_nodes:
-        #     contexts_dict.append(simplify_nodes(node))
-        # return dspy.Prediction(result=str(contexts_dict))
-
-        return dspy.Prediction(
-            result=self.summarizer(documents=reranked_nodes, query=query).summary
-        )
+        # See notes about summarizer above
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+        # )
