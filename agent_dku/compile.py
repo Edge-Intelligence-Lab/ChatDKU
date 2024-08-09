@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""
-WIP: Script for DSPy to compile (auto-optimize) our Agent module.
-It does not work yet, only serving as template for future work.
+"""Script for DSPy to compile (auto-optimize) our Agent module, then save the
+optimized prompts in a JSON file.
 """
 
 import json
 import functools
 import traceback
 import dspy
-from dspy.teleprompt import BootstrapFewShot
+from dspy.teleprompt import BootstrapFewShot, MIPROv2
 from dspy.evaluate import Evaluate
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
@@ -26,22 +25,24 @@ from settings import Config, setup, use_phoenix
 config = Config()
 
 
-class SemanticEquivalenceSignature(dspy.Signature):
-    """Judge if the current answer is equivalent to the ground truth answer to the question."""
+class QualityJudgeSignature(dspy.Signature):
+    """Judge if the current answer is of the same quality or better when compared
+    to the ground truth answer to the question.
+    """
 
     question = dspy.InputField(desc="The question to be answered.")
     ground_truth = dspy.InputField(desc="The ground truth answer to the question.")
     answer = dspy.InputField(desc="The current answer to be judged.")
     judgement = dspy.OutputField(
-        desc='Whether the current answer is equivalent to the ground truth ("True" or "False").'
+        desc='Whether the current answer is of good quality compared to the ground truth ("True" or "False").'
     )
 
 
-class SemanticEquivalence(dspy.Module):
+class QualityJudge(dspy.Module):
     def __init__(self):
         super().__init__()
         self.judge = dspy.ChainOfThought(
-            SemanticEquivalenceSignature, rationale_type=custom_cot_rationale
+            QualityJudgeSignature, rationale_type=custom_cot_rationale
         )
 
     def forward(self, question, ground_truth, answer):
@@ -62,6 +63,8 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
 
+    # Load the dataset here
+
     file_path = "../datasets/before_RAG_dataset.json"
     with open(file_path, "r", encoding="utf-8") as file:
         json_data = json.load(file)
@@ -72,28 +75,48 @@ def main():
         for d in json_data
     ]
 
-    trainset, devset = dataset[50:52], dataset[60:61]
+    trainset, devset = dataset[50:51], dataset[60:61]
 
-    semantic_equivalence = assert_transform_module(
-        SemanticEquivalence(),
+    quality_judge = assert_transform_module(
+        QualityJudge(),
         functools.partial(backtrack_handler, max_backtracks=3),
     )
 
+    agent = Agent(max_iterations=5)
+    agent.save("agent_not_compiled.json")
+    # print(agent(current_user_message="Who is Scot MacEachern?"))
+    # return
+
     def metric(example, pred, trace=None):
-        # return True
-        prediction = semantic_equivalence(
+        return True
+        prediction = quality_judge(
             question=example.current_user_message,
             ground_truth=example.answer,
             answer=pred.response,
         )
         return prediction.judgement
 
-    config = dict(max_bootstrapped_demos=1, max_labeled_demos=0, max_errors=1)
-    teleprompter = BootstrapFewShot(metric=metric, **config)
-
-    agent = Agent(max_iterations=5)
-    agent.save("agent_not_compiled.json")
+    teleprompter = BootstrapFewShot(
+        metric=metric, max_bootstrapped_demos=2, max_labeled_demos=0
+    )
     agent_compiled = teleprompter.compile(agent, trainset=trainset)
+
+    # MIPROv2 doesn't appear to work now.
+    # It makes a lot of weird SQL requests?
+    # teleprompter = MIPROv2(
+    #     prompt_model=llama_client,
+    #     task_model=llama_client,
+    #     metric=metric,
+    #     num_candidates=5,
+    #     log_dir="compilation_logs",
+    # )
+    # agent_compiled = teleprompter.compile(
+    #     agent,
+    #     trainset=trainset,
+    #     max_bootstrapped_demos=2,
+    #     max_labeled_demos=0,
+    #     num_batches=3,
+    # )
 
     agent_compiled.save("agent_compiled.json")
 
