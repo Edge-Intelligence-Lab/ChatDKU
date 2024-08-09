@@ -3,10 +3,14 @@ import dspy
 from dspy.signatures.signature import ensure_signature, signature_to_template
 
 
-def get_template(predict_module: dspy.Predict, **kwargs) -> str:
+def get_template(predict_module: dspy.Module, **kwargs) -> str:
     """Get formatted template from predict module.
     Adapted from https://github.com/stanfordnlp/dspy/blob/55510eec1b83fa77f368e191a363c150df8c5b02/dspy/predict/llamaindex.py#L22-L36
     """
+    # FIXME: This might not be an elegant way to access the predict module.
+    # This is due to that `ChainOfThought` stores the predict module in `_predict` attribute.
+    if hasattr(predict_module, "_predict"):
+        predict_module = predict_module._predict
 
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)

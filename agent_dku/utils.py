@@ -1,9 +1,24 @@
 import re
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from pydantic import ConfigDict, BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
 from inspect import signature, Signature
+
 from llama_index.core import Settings
+from llama_index.core.node_parser import TokenTextSplitter
+
+from transformers import PreTrainedTokenizerBase
+from functools import partial
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
+)
+from settings import Config
+
+config = Config()
 
 
 class NameParams(BaseModel):
@@ -67,3 +82,41 @@ def strs_fit_max_tokens_reverse(
         min_index = i
 
     return min_index
+
+
+def truncate_tokens(
+    s: str, max_tokens: int, tokenizer: Optional[Callable] = None
+) -> str:
+    """Truncate string so that it does not exceed the given number of tokens."""
+
+    # NOTE: This is to maintain consistency with LlamaIndex.
+    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136
+    if isinstance(tokenizer, PreTrainedTokenizerBase):
+        tokenizer = partial(tokenizer.encode, add_special_tokens=False)
+
+    splitter = TokenTextSplitter(
+        chunk_size=max_tokens, chunk_overlap=0, tokenizer=tokenizer
+    )
+    return splitter.split_text(s)[0]
+
+
+def truncate_tokens_all(
+    s: dict[str, str], max_tokens: dict[str, int], tokenizer: Optional[Callable] = None
+) -> dict[str, str]:
+    return {k: truncate_tokens(v, max_tokens[k], tokenizer) for k, v in s.items()}
+
+
+def token_limit_ratio_to_count(
+    ratios: dict[str, float], template_length: int, reserved: int = 100
+) -> dict[str, int]:
+    """Convert token limit ratio of the fields to the max number of tokens.
+    Each field is limited to have a max length of
+    (context_window - prompt_length) * ratio
+
+    Args:
+        ratios: The proportion of tokens to give to each field.
+        template_length: Length of the prompt template.
+        reserved: The amount of token reserved in case there were some special tokens.
+    """
+    remain = config.context_window - template_length - reserved
+    return {k: int(v * remain) for k, v in ratios.items()}

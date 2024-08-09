@@ -1,8 +1,13 @@
 from pydantic import BaseModel, ConfigDict
 
 import dspy
-from dspy_common import custom_cot_rationale
-from utils import NameParams, strs_fit_max_tokens_reverse
+from dspy_common import get_template, custom_cot_rationale
+from utils import (
+    NameParams,
+    strs_fit_max_tokens_reverse,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
 from dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
@@ -70,9 +75,6 @@ CompressToolMemorySignature = make_compress_tool_memory_signature()
 
 
 class ToolMemory(dspy.Module):
-    # FIXME: Should not use fixed history size
-    MAX_HISTORY_SIZE = 4000
-
     def reset(self):
         # Tools already called, with names, parameters, and results
         self.history: list[ToolMemoryEntry] = []
@@ -86,7 +88,19 @@ class ToolMemory(dspy.Module):
         self.compressor = dspy.ChainOfThought(
             CompressToolMemorySignature, rationale_type=custom_cot_rationale
         )
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 14,
+            "conversation_history": 2 / 14,
+            "conversation_summary": 1 / 14,
+            "history_to_discard": 5 / 14,
+            "previous_summary": 1 / 14,
+        }
         self.reset()
+
+    def get_token_limits(self) -> dict[str, int]:
+        return token_limit_ratio_to_count(
+            self.token_ratios, len(get_template(self.compressor))
+        )
 
     def forward(
         self,
@@ -94,6 +108,7 @@ class ToolMemory(dspy.Module):
         conversation_memory: ConversationMemory,
         calls: list[NameParams],
         result: str,
+        max_history_size: int = 1000,
     ):
         self.history.append(ToolMemoryEntry(name_params=calls[0], result=result))
         self.plan = calls[1:].copy()
@@ -101,10 +116,10 @@ class ToolMemory(dspy.Module):
         min_index = strs_fit_max_tokens_reverse(
             [i.model_dump_json() for i in self.history],
             "\n",
-            self.MAX_HISTORY_SIZE,
+            max_history_size,
         )
         if min_index > 0:
-            self.summary = self.compressor(
+            compressor_inputs = dict(
                 current_user_message=current_user_message,
                 conversation_history="\n".join(
                     [i.model_dump_json() for i in conversation_memory.history]
@@ -114,5 +129,10 @@ class ToolMemory(dspy.Module):
                     [i.model_dump_json() for i in self.history[:min_index]]
                 ),
                 previous_summary=self.summary,
-            ).current_summary
+            )
+            compressor_inputs = truncate_tokens_all(
+                compressor_inputs, self.get_token_limits()
+            )
+
+            self.summary = self.compressor(**compressor_inputs).current_summary
             self.history = self.history[min_index:]

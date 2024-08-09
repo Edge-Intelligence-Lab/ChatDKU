@@ -3,6 +3,7 @@ from pydantic import Field
 
 import dspy
 
+from utils import truncate_tokens
 from dspy_common import custom_cot_rationale
 
 import chromadb
@@ -166,9 +167,17 @@ class VectorRetriever(dspy.Module):
             ),
         ],
     ):
-        retrieved_nodes = self.retriever.retrieve(query)
+        retrieved_nodes = self.retriever.retrieve(
+            # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
+            # what would happen if that is exceeded. Also, we should use it tokenizer
+            # to get the accurate token count. This is just a temporary safety
+            # measure for now.
+            truncate_tokens(query, 7000)
+        )
         reranked_nodes = self.reranker.postprocess_nodes(
-            retrieved_nodes, query_str=query
+            retrieved_nodes,
+            # BERT token limit is 512, however, we should leave some space for special tokens
+            query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
         )
         return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 
@@ -202,7 +211,9 @@ class KeywordRetriever(dspy.Module):
     ):
         retrieved_nodes = self.retriever.retrieve(query)
         reranked_nodes = self.reranker.postprocess_nodes(
-            retrieved_nodes, query_str=query
+            retrieved_nodes,
+            # BERT token limit is 512, however, we should leave some space for special tokens
+            query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
         )
         return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 

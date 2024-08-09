@@ -41,7 +41,7 @@ class CustomClient(LM):
         self.history = []
         self.kwargs = {
             "temperature": Settings.llm.temperature,
-            "max_tokens": Settings.llm.context_window,
+            "max_tokens": config.context_window,
         }
 
     def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
@@ -125,6 +125,15 @@ class Agent(dspy.Module):
         self.prev_response = None
 
     def _forward_gen(self, current_user_message: str):
+        # Putting this in `self.__init__()` might not work due to that you might
+        # want DSPy to change prompt dynamically.
+
+        # These limits are for compressing both tool and conversation memory.
+        # Technically this only ensures that these memories would fit sufficiently
+        # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
+        # TODO: We could notify user when their input is too long.
+        limits = self.planner.get_token_limits()
+
         # Reset tool memory for each user message
         # Need to make this an attribute so that DSPy can optimize it
         self.tool_memory.reset()
@@ -137,7 +146,11 @@ class Agent(dspy.Module):
                 r = self.prev_response.get_full_response()
             else:
                 r = self.prev_response
-            self.conversation_memory(role="assistant", content=r)
+            self.conversation_memory(
+                role="assistant",
+                content=r,
+                max_history_size=limits["conversation_history"],
+            )
 
         # FIXME: Pre-calling tools.
         # Currently, it calls ALL tools as the first iteration.
@@ -175,6 +188,7 @@ class Agent(dspy.Module):
                 conversation_memory=self.conversation_memory,
                 calls=[model(name=name, params={"query": current_user_message})],
                 result=first_ite_result,
+                max_history_size=limits["tool_history"],
             )
             if VERBOSE:
                 print(f"tool memory: {self.tool_memory.history}")
@@ -244,12 +258,17 @@ class Agent(dspy.Module):
                 conversation_memory=self.conversation_memory,
                 calls=p.calls,
                 result=result,
+                max_history_size=limits["tool_history"],
             )
             if VERBOSE:
                 print(f"tool_memory.history: {self.tool_memory.history}")
 
         self.prev_response = self.synthesizer(**synthesizer_args).response
-        self.conversation_memory(role="user", content=current_user_message)
+        self.conversation_memory(
+            role="user",
+            content=current_user_message,
+            max_history_size=limits["conversation_history"],
+        )
         yield dspy.Prediction(response=self.prev_response)
 
     def forward(self, current_user_message: str):

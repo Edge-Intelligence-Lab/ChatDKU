@@ -3,8 +3,14 @@ from pydantic import ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
 
 import dspy
-from dspy_common import custom_cot_rationale
-from utils import NameParams, func_to_model, camel_to_snake_case
+from dspy_common import get_template, custom_cot_rationale
+from utils import (
+    NameParams,
+    func_to_model,
+    camel_to_snake_case,
+    truncate_tokens_all,
+    token_limit_ratio_to_count,
+)
 from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.tool_memory import ToolMemory
 from dspy_classes.prompt_settings import (
@@ -113,6 +119,27 @@ class Planner(dspy.Module):
             PlannerSignature, rationale_type=custom_cot_rationale
         )
 
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 15,
+            "conversation_history": 2 / 15,
+            "conversation_summary": 1 / 15,
+            "tool_history": 5 / 15,
+            "tool_summary": 1 / 15,
+            "previous_tool_plan": 1 / 15,
+        }
+
+    def get_token_limits(self) -> dict[str, int]:
+        template_len = len(
+            get_template(
+                self.planner,
+                available_tools="\n".join(
+                    [str(m.model_json_schema()) for m in self.name_to_model.values()]
+                ),
+                max_calls=str(1),
+            )
+        )
+        return token_limit_ratio_to_count(self.token_ratios, template_len)
+
     def forward(
         self,
         current_user_message: str,
@@ -123,22 +150,26 @@ class Planner(dspy.Module):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
         """
-
-        plan_str_all = self.planner(
+        planner_inputs = dict(
             current_user_message=current_user_message,
             conversation_history="\n".join(
                 [i.model_dump_json() for i in conversation_memory.history]
             ),
             conversation_summary=conversation_memory.summary,
-            available_tools="\n".join(
-                [str(m.model_json_schema()) for m in self.name_to_model.values()]
-            ),
-            max_calls=str(max_calls),
             tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
             tool_summary=tool_memory.summary,
             previous_tool_plan="\n".join(
                 [i.model_dump_json() for i in tool_memory.plan]
             ),
+        )
+        planner_inputs = truncate_tokens_all(planner_inputs, self.get_token_limits())
+
+        plan_str_all = self.planner(
+            available_tools="\n".join(
+                [str(m.model_json_schema()) for m in self.name_to_model.values()]
+            ),
+            max_calls=str(max_calls),
+            **planner_inputs,
         ).current_tool_plan
 
         # Parse tool plan response

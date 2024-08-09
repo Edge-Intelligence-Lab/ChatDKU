@@ -75,12 +75,13 @@ class Config:
         self.tokenizer = "/opt/tokenizer/Meta-Llama-3-8B-Instruct"
         self.tei_url = "http://localhost:18080"
         self.llm_url = "http://localhost:8001/v1"
+        self.context_window = 8192
 
         # about load_and_index
         self.data_dir = "/opt/RAG_data"
         self.documents_path = "/opt/RAG_data/new_parser_documents.pkl"
         self.pipeline_cache = "./pipeline_cache"
-        self.csv_path='/opt/RAG_data_new_website/download_info.csv'#Store URL info of dku websites
+        self.csv_path = "/opt/RAG_data_new_website/download_info.csv"  # Store URL info of dku websites
         self.update = False
 
         # about query
@@ -128,7 +129,7 @@ def setup(add_system_prompt: bool = False) -> None:
         model=config.llm,
         api_base=config.llm_url,
         api_key="fake",  # A dummy API key is needed or else connection error would occur
-        context_window=8192,
+        context_window=config.context_window,
         temperature=0.7,
         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
         is_function_calling_model=False,

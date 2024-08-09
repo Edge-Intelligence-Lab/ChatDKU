@@ -5,6 +5,7 @@ from llama_index.core import Settings
 
 import dspy
 
+from utils import token_limit_ratio_to_count, truncate_tokens_all
 from dspy_common import custom_cot_rationale, get_template
 from dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
@@ -101,6 +102,18 @@ class Synthesizer(dspy.Module):
         self.synthesizer = dspy.ChainOfThought(
             SynthesizerSignature, rationale_type=custom_cot_rationale
         )
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 15,
+            "conversation_history": 2 / 15,
+            "conversation_summary": 1 / 15,
+            "tool_history": 5 / 15,
+            "tool_summary": 1 / 15,
+        }
+
+    def get_token_limits(self) -> dict[str, int]:
+        return token_limit_ratio_to_count(
+            self.token_ratios, len(get_template(self.synthesizer))
+        )
 
     def forward(
         self,
@@ -118,6 +131,9 @@ class Synthesizer(dspy.Module):
             tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
             tool_summary=tool_memory.summary,
         )
+        synthesizer_args = truncate_tokens_all(
+            synthesizer_args, self.get_token_limits()
+        )
 
         if streaming:
             # A hacky way to stream the final response synthesis LLM call.
@@ -127,9 +143,7 @@ class Synthesizer(dspy.Module):
             #
             # FIXME: Contribute streaming support to DSPy
             # Also see: https://github.com/stanfordnlp/dspy/issues/338
-            synthesizer_template = get_template(
-                self.synthesizer._predict, **synthesizer_args
-            )
+            synthesizer_template = get_template(self.synthesizer, **synthesizer_args)
             llm_completion_gen = Settings.llm.stream_complete(synthesizer_template)
             return dspy.Prediction(response=ResponseGen(llm_completion_gen))
 

@@ -1,5 +1,6 @@
 import dspy
-from dspy_common import custom_cot_rationale
+from utils import token_limit_ratio_to_count, truncate_tokens_all
+from dspy_common import get_template, custom_cot_rationale
 from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.tool_memory import ToolMemory
 from dspy_classes.prompt_settings import (
@@ -48,6 +49,18 @@ class QueryRewrite(dspy.Module):
         self.rewritten_query = dspy.ChainOfThought(
             QueryRewriteSignature, rationale_type=custom_cot_rationale
         )
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 15,
+            "conversation_history": 2 / 15,
+            "conversation_summary": 1 / 15,
+            "tool_history": 5 / 15,
+            "tool_summary": 1 / 15,
+        }
+
+    def get_token_limits(self) -> dict[str, int]:
+        return token_limit_ratio_to_count(
+            self.token_ratios, len(get_template(self.rewritten_query))
+        )
 
     def forward(
         self,
@@ -55,7 +68,7 @@ class QueryRewrite(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        rewritten_query = self.rewritten_query(
+        rewrite_inputs = dict(
             current_user_message=current_user_message,
             conversation_history="\n".join(
                 [i.model_dump_json() for i in conversation_memory.history]
@@ -63,6 +76,8 @@ class QueryRewrite(dspy.Module):
             conversation_summary=conversation_memory.summary,
             tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
             tool_summary=tool_memory.summary,
-        ).rewritten_query
+        )
+        rewrite_inputs = truncate_tokens_all(rewrite_inputs, self.get_token_limits())
+        rewritten_query = self.rewritten_query(**rewrite_inputs).rewritten_query
         print(rewritten_query)
         return dspy.Prediction(rewritten_query=rewritten_query)

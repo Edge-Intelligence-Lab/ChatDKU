@@ -1,7 +1,11 @@
 from pydantic import BaseModel, ConfigDict
-from utils import strs_fit_max_tokens_reverse
-from dspy_common import custom_cot_rationale
-from dspy_classes.prompt_settings import CURRENT_USER_MESSAGE_FIELD, ROLE_PROMPT
+from utils import (
+    strs_fit_max_tokens_reverse,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
+from dspy_common import get_template, custom_cot_rationale
+from dspy_classes.prompt_settings import ROLE_PROMPT
 import dspy
 
 
@@ -57,9 +61,6 @@ CompressConversationMemorySignature = make_compress_conversation_memory_signatur
 
 
 class ConversationMemory(dspy.Module):
-    # FIXME: Should not use fixed history size
-    MAX_HISTORY_SIZE = 4000
-
     def __init__(self):
         super().__init__()
         self.compressor = dspy.ChainOfThought(
@@ -67,20 +68,33 @@ class ConversationMemory(dspy.Module):
         )
         self.history: list[ConversationMemoryEntry] = []
         self.summary: str = ""
+        self.token_ratios: dict[str, float] = {
+            "history_to_discard": 2 / 4,
+            "previous_summary": 1 / 4,
+        }
 
-    def forward(self, role: str, content: str):
+    def get_token_limits(self) -> dict[str, int]:
+        return token_limit_ratio_to_count(
+            self.token_ratios, len(get_template(self.compressor))
+        )
+
+    def forward(self, role: str, content: str, max_history_size: int = 1000):
         self.history.append(ConversationMemoryEntry(role=role, content=content))
 
         min_index = strs_fit_max_tokens_reverse(
             [i.model_dump_json() for i in self.history],
             "\n",
-            self.MAX_HISTORY_SIZE,
+            max_history_size,
         )
         if min_index > 0:
-            self.summary = self.compressor(
+            compressor_inputs = dict(
                 history_to_discard="\n".join(
                     [i.model_dump_json() for i in self.history[:min_index]]
                 ),
                 previous_summary=self.summary,
-            ).current_summary
+            )
+            compressor_inputs = truncate_tokens_all(
+                compressor_inputs, self.get_token_limits()
+            )
+            self.summary = self.compressor(**compressor_inputs).current_summary
             self.history = self.history[min_index:]
