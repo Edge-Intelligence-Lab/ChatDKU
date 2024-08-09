@@ -124,7 +124,7 @@ class Agent(dspy.Module):
 
         self.prev_response = None
 
-    def forward(self, current_user_message: str):
+    def _forward_gen(self, current_user_message: str):
         # Reset tool memory for each user message
         # Need to make this an attribute so that DSPy can optimize it
         self.tool_memory.reset()
@@ -250,10 +250,15 @@ class Agent(dspy.Module):
 
         self.prev_response = self.synthesizer(**synthesizer_args).response
         self.conversation_memory(role="user", content=current_user_message)
+        yield dspy.Prediction(response=self.prev_response)
+
+    def forward(self, current_user_message: str):
+        gen = self._forward_gen(current_user_message)
         if self.get_intermediate:
-            yield dspy.Prediction(response=self.prev_response)
+            return gen
         else:
-            return dspy.Prediction(response=self.prev_response)
+            for i in gen:
+                return i
 
 
 def main():
@@ -276,6 +281,7 @@ def main():
                 print(f"Round {i} response:")
                 for r in r.response:
                     print(r, end="")
+                print()
                 print("-" * 10)
         except EOFError:
             break
