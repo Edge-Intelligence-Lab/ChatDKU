@@ -56,7 +56,7 @@ function replaceBlocks(block_id) {
         newBlocks = [
             { id: 'block5', text: 'How to make a medical withdrawal from a course?' },
             { id: 'block6', text: 'When will students declare a major?' },
-            { id: 'block7', text: 'Where can I ask for help if I have difficulties studying some course?' },
+            { id: 'block7', text: 'Where can I ask for help if I have difficulties studying some courses?' },
             { id: 'block8', text: 'Who to contact when I have an emergency at DKU?' }
         ];
     } else if (block_id === 'service') {
