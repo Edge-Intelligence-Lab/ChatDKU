@@ -73,19 +73,25 @@ async def get(
     return None
 
 
-def cut(filename: str) -> str:
-    """Cut up filename into args.filename_chunk_size chunks and concatenate them all together, excluding extension"""
-    if not filename:
+def cut(path: str) -> str:
+    """Cut up path parts into args.path_part_max_size chunks and concatenate them all together, excluding extension"""
+    if not path:
         return ""
 
-    name, ext = os.path.splitext(filename)
-    chunks = []
-    for i in range(0, len(name), args.filename_chunk_size):
-        chunks.insert(
-            0, name[max(0, len(name) - i - args.filename_chunk_size) : len(name) - i]
-        )
-    chunks[-1] += ext
-    return os.path.join(*chunks)
+    prefix, ext = os.path.splitext(path)
+    parts = os.path.normpath(prefix).split(os.path.sep)
+
+    def cut_part(part: str):
+        chunks = []
+        for i in range(0, len(part), args.path_part_max_size):
+            chunks.insert(
+                0, part[max(0, len(part) - i - args.path_part_max_size) : len(part) - i]
+            )
+        return os.path.join(*chunks)
+
+    pieces = [cut_part(p) for p in parts]
+    pieces[-1] += ext
+    return os.path.join(*pieces)
 
 
 async def scrape_site(
@@ -142,15 +148,17 @@ async def scrape_site(
             # different files downloaded.
             filename = canonical_url.query_string or ""
 
-    # Paths with extremely long parts were encountered, so they need to be shortened
     file_path = os.path.normpath(
         os.path.join(
             args.output_root,
             canonical_url.host,
-            cut(canonical_url.path.lstrip("/")),
-            cut(filename),
+            canonical_url.path.lstrip("/"),
+            filename,
         )
     )
+
+    # Paths with extremely long parts were encountered, so they need to be shortened
+    file_path = cut(file_path)
 
     # Save the content
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -280,11 +288,11 @@ if __name__ == "__main__":
         default="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     )
     parser.add_argument(
-        "--filename-chunk-size",
+        "--path-part-max-size",
         type=int,
         # Max filename for ext4 is 255 bytes, also accounting for mult-byte chars and extension
         default=50,
-        help="Maximum length of filename before it would be broken up.",
+        help="Maximum length of path part before it would be broken up.",
     )
     parser.add_argument(
         "-v",
