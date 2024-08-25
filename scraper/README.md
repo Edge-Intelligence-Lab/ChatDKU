@@ -8,7 +8,7 @@ Create and activate the virtual environment:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate # For Unix-like operating systems
-.venv\bin\activate.bat    # For Windows
+.venv\Scripts\activate.bat    # For Windows
 ```
 
 Do an editable install with pip to get the dependencies.

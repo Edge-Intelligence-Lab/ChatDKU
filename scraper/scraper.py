@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 import asyncio
@@ -134,7 +134,7 @@ async def scrape_site(
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         if ty[0] == "text":
-            with open(file_path, "w") as file:
+            with open(file_path, "w", encoding="utf-8") as file:
                 file.write(content)
         else:
             with open(file_path, "wb") as file:
