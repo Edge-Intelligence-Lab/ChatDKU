@@ -8,7 +8,7 @@ import datetime
 import csv
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from yarl import URL
 from utils import Status, DownloadInfo, print_summary
 from pathlib import Path
 from dataclass_csv import DataclassWriter
@@ -23,7 +23,7 @@ delay_lock = asyncio.Lock()
 
 async def get(
     session: aiohttp.ClientSession, url: str
-) -> tuple[str, list[str], str] | tuple[str, list[str], bytes] | None:
+) -> tuple[URL, list[str], str] | tuple[URL, list[str], bytes] | None:
 
     # Prevent accidentally DOSing the server
     async with delay_lock:
@@ -41,9 +41,9 @@ async def get(
             content_type = response.content_type.split("/")
             ty = content_type
             if ty[0] == "text":
-                return str(response.url), ty, await response.text()
+                return response.url, ty, await response.text()
             else:
-                return str(response.url), ty, await response.read()
+                return response.url, ty, await response.read()
     except aiohttp.ClientError as e:
         if args.verbose >= 1:
             print(f'Client error "{e}": {url}')
@@ -83,13 +83,9 @@ async def scrape_site(
     depth: int = 0,
     retry: int = 0,
 ) -> None:
+    url = URL(url)
     # Verify the URL
-    try:
-        url_parts = urlparse(url)
-        valid = url_parts.scheme and url_parts.netloc
-    except AttributeError:
-        valid = False
-    if not valid:
+    if not (url.scheme and url.host):
         if args.verbose >= 1:
             print(f"Invalid URL: {url}")
         return
@@ -119,7 +115,9 @@ async def scrape_site(
     canonical_url, ty, content = result
 
     file_path = os.path.normpath(
-        os.path.join(args.output_root, url_parts.netloc, url_parts.path.lstrip("/"))
+        os.path.join(
+            args.output_root, canonical_url.host, canonical_url.path.lstrip("/")
+        )
     )
     # Files with extremely long names were encountered, so they need to be shortened
     file_path = cut(file_path)
@@ -158,32 +156,22 @@ async def scrape_site(
     if (
         depth < args.max_depth
         and ty[1] == "html"
-        and url_parts.netloc.endswith("dukekunshan.edu.cn")
+        and canonical_url.host.endswith("dukekunshan.edu.cn")
     ):
         soup = BeautifulSoup(content, "html.parser")
         links = soup.find_all("a", href=True)
 
         for link in links:
-            href = link.get("href")
+            href = URL(link.get("href"))
             # Make sure it's an absolute URL
-            if href.startswith("/"):
-                absolute_url = urljoin(url, href)
-            else:
+            if href.is_absolute():
                 absolute_url = href
+            else:
+                absolute_url = url.join(href)
 
             task_group.create_task(
                 scrape_site(task_group, session, absolute_url, depth + 1)
             )
-            # I cannot find a way to make HTTP to HTTPS redirects work, so I'll just try both
-            if absolute_url.startswith("http://"):
-                task_group.create_task(
-                    scrape_site(
-                        task_group,
-                        session,
-                        "https://" + absolute_url[len("http://") :],
-                        depth + 1,
-                    )
-                )
 
 
 async def peroidic_report() -> None:
