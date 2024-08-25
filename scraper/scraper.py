@@ -9,9 +9,9 @@ import csv
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 from yarl import URL
-from utils import Status, DownloadInfo, print_summary
-from pathlib import Path
 from dataclass_csv import DataclassWriter
+from pathlib import Path
+from utils import Status, DownloadInfo, print_summary
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
 # infinite loop and make it possible to restore download progress
@@ -23,7 +23,7 @@ delay_lock = asyncio.Lock()
 
 async def get(
     session: aiohttp.ClientSession, url: str
-) -> tuple[URL, list[str], str] | tuple[URL, list[str], bytes] | None:
+) -> tuple[URL, list[str], str, str] | tuple[URL, list[str], str, bytes] | None:
 
     # Prevent accidentally DOSing the server
     async with delay_lock:
@@ -41,9 +41,16 @@ async def get(
             content_type = response.content_type.split("/")
             ty = content_type
             if ty[0] == "text":
-                return response.url, ty, await response.text()
+                content = await response.text()
             else:
-                return response.url, ty, await response.read()
+                content = await response.read()
+
+            filename = None
+            disposition = response.content_disposition
+            if disposition:
+                filename = disposition.filename
+
+            return response.url, ty, filename, content
     except aiohttp.ClientError as e:
         if args.verbose >= 1:
             print(f'Client error "{e}": {url}')
@@ -66,13 +73,18 @@ async def get(
     return None
 
 
-def cut(path: str) -> str:
-    """Cut up the final part of the path into args.filename_chunk_size chunks and concatenate them all together"""
+def cut(filename: str) -> str:
+    """Cut up filename into args.filename_chunk_size chunks and concatenate them all together, excluding extension"""
+    if not filename:
+        return ""
+
+    name, ext = os.path.splitext(filename)
     chunks = []
-    s = os.path.basename(path)
-    for i in range(0, len(s), args.filename_chunk_size):
-        chunks.insert(0, s[max(0, len(s) - i - args.filename_chunk_size) : len(s) - i])
-    chunks.insert(0, os.path.dirname(path))
+    for i in range(0, len(name), args.filename_chunk_size):
+        chunks.insert(
+            0, name[max(0, len(name) - i - args.filename_chunk_size) : len(name) - i]
+        )
+    chunks[-1] += ext
     return os.path.join(*chunks)
 
 
@@ -112,46 +124,49 @@ async def scrape_site(
         else:
             tried[url].status = Status.FAILED
         return
-    canonical_url, ty, content = result
+    canonical_url, ty, filename, content = result
 
+    if not filename:
+        if ty[1] == "html":
+            # Some HTML pages were not give an explicit file name
+            if not (
+                canonical_url.path.endswith(".html")
+                or canonical_url.path.endswith(".htm")
+            ):
+                filename = "index.html"
+            else:
+                filename = ""
+        else:
+            # If it is not a webpage, and no filename in `Content-Disposition` is
+            # specified, then the query string might be necessary to distinguish
+            # different files downloaded.
+            filename = canonical_url.query_string or ""
+
+    # Paths with extremely long parts were encountered, so they need to be shortened
     file_path = os.path.normpath(
         os.path.join(
-            args.output_root, canonical_url.host, canonical_url.path.lstrip("/")
+            args.output_root,
+            canonical_url.host,
+            cut(canonical_url.path.lstrip("/")),
+            cut(filename),
         )
     )
-    # Files with extremely long names were encountered, so they need to be shortened
-    file_path = cut(file_path)
-    # Some HTML pages were not give an explicit file name
-    if ty[1] == "html" and not (
-        file_path.endswith(".html") or file_path.endswith(".htm")
-    ):
-        file_path = os.path.join(file_path, "index.html")
 
-    try:
-        # Save the content
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    # Save the content
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-        if ty[0] == "text":
-            with open(file_path, "w", encoding="utf-8") as file:
-                file.write(content)
-        else:
-            with open(file_path, "wb") as file:
-                file.write(content)
+    if ty[0] == "text":
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(content)
+    else:
+        with open(file_path, "wb") as file:
+            file.write(content)
 
-        tried[url].status = Status.SUCCESS
-        tried[url].canonical_url = canonical_url
-        tried[url].file_path = file_path
-        if args.verbose >= 1:
-            print(f"Success: {url}")
-
-    except IsADirectoryError as e:
-        # FIXME: Using the actual name of the downloaded file should fix this.
-        # Example: "https://careerservices.dukekunshan.edu.cn/?jet_download=49a7db4410a67df67886e01b09f06fac1f42b3ff"
-        if args.verbose >= 1:
-            print(
-                f'IsADirectoryError error (giving up this URL, this would be fixed in the future) "{e}": {url}'
-            )
-        return
+    tried[url].status = Status.SUCCESS
+    tried[url].canonical_url = canonical_url
+    tried[url].file_path = file_path
+    if args.verbose >= 1:
+        print(f"Success: {url}")
 
     if (
         depth < args.max_depth
@@ -267,7 +282,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--filename-chunk-size",
         type=int,
-        default=64,
+        # Max filename for ext4 is 255 bytes, also accounting for mult-byte chars and extension
+        default=50,
         help="Maximum length of filename before it would be broken up.",
     )
     parser.add_argument(
