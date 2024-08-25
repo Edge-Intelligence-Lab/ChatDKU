@@ -207,10 +207,13 @@ async def peroidic_report() -> None:
 
 
 async def main() -> None:
+    headers = {"User-Agent": args.user_agent}
     timeout = aiohttp.ClientTimeout(connect=args.connection_timeout)
     # Enable `trust_env` so that environmental variables like `HTTP_PROXY`
     # would be used for proxy settings.
-    async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+    async with aiohttp.ClientSession(
+        headers=headers, timeout=timeout, trust_env=True
+    ) as session:
         async with asyncio.TaskGroup() as task_group:
             task_group.create_task(scrape_site(task_group, session, args.url))
             task_group.create_task(peroidic_report())
@@ -266,6 +269,12 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="Maximum number of times to retry a request before giving up.",
+    )
+    parser.add_argument(
+        "-a",
+        "--user-agent",
+        type=str,
+        default="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     )
     parser.add_argument(
         "--filename-chunk-size",
