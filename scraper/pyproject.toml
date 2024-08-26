@@ -21,6 +21,9 @@ dependencies = [
     "yarl>=1.9.4",
     "beautifulsoup4>=4.12.3",
     "dataclass-csv>=1.4.0",
+    # `dataclass-csv` depends on `distutils`, which is removed in Python 3.12,
+    # and can be fixed by installing `setuptools`.
+    "setuptools; python_version>='3.12'",
 ]
 
 [tool.setuptools]
