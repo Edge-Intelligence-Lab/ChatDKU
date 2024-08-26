@@ -97,13 +97,21 @@ def cut(path: str) -> str:
 async def scrape_site(
     task_group: asyncio.TaskGroup,
     session: aiohttp.ClientSession,
-    url: str,
+    url: str | URL,
     depth: int = 0,
     retry: int = 0,
 ) -> None:
-    url = URL(url)
     # Verify the URL
-    if not (url.scheme and url.host):
+    valid = False
+    try:
+        if isinstance(url, str):
+            url = URL(url)
+        if url.scheme and url.host:
+            valid = True
+    except ValueError:
+        pass
+
+    if not valid:
         if args.verbose >= 1:
             print(f"Invalid URL: {url}")
         return
@@ -185,7 +193,13 @@ async def scrape_site(
         links = soup.find_all("a", href=True)
 
         for link in links:
-            href = URL(link.get("href"))
+            try:
+                href = URL(link.get("href"))
+            except ValueError:
+                if args.verbose >= 1:
+                    print(f"Invalid URL: {href}")
+                continue
+
             # Make sure it's an absolute URL
             if href.is_absolute():
                 absolute_url = href
