@@ -7,6 +7,7 @@ class Status(StrEnum):
     DOWNLOADING = "downloading"
     SUCCESS = "success"
     FAILED = "failed"
+    EXCLUDED = "excluded"
 
 
 @dataclass

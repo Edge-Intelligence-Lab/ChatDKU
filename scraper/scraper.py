@@ -94,6 +94,18 @@ def cut(path: str) -> str:
     return os.path.join(*pieces)
 
 
+def is_included(url: URL) -> bool:
+    """Check if URL is included for scraping according to constraints such as domain rules."""
+
+    # Include all URLs if neither constraints were specified
+    if not (args.domains or args.subdomains_of):
+        return True
+
+    return (url.host in args.domains) or any(
+        [url.host.endswith("." + d) for d in args.subdomains_of]
+    )
+
+
 async def scrape_site(
     task_group: asyncio.TaskGroup,
     session: aiohttp.ClientSession,
@@ -140,6 +152,13 @@ async def scrape_site(
         return
     canonical_url, ty, filename, content = result
 
+    included = is_included(canonical_url)
+    if not (args.external or included):
+        tried[url].status = Status.EXCLUDED
+        if args.verbose >= 1:
+            print(f"URL not included: {canonical_url}")
+        return
+
     if not filename:
         if ty[1] == "html":
             # Some HTML pages were not give an explicit file name
@@ -184,11 +203,7 @@ async def scrape_site(
     if args.verbose >= 1:
         print(f"Success: {url}")
 
-    if (
-        depth < args.max_depth
-        and ty[1] == "html"
-        and canonical_url.host.endswith("dukekunshan.edu.cn")
-    ):
+    if depth < args.max_depth and ty[1] == "html" and included:
         soup = BeautifulSoup(content, "html.parser")
         links = soup.find_all("a", href=True)
 
@@ -294,6 +309,23 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="Maximum number of times to retry a request before giving up.",
+    )
+    parser.add_argument(
+        "-E",
+        "--external",
+        action="store_true",
+        help="Scrape one level of websites linked to even if they are not in e.g. the domains to scrape.",
+    )
+    parser.add_argument(
+        "-D", "--domains", nargs="*", type=str, default=[], help="Domains to scrape."
+    )
+    parser.add_argument(
+        "-S",
+        "--subdomains-of",
+        nargs="*",
+        type=str,
+        default=[],
+        help="Scrape the subdomains of the given domains.",
     )
     parser.add_argument(
         "-a",
