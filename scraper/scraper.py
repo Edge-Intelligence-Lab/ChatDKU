@@ -6,11 +6,15 @@ import aiohttp
 import time
 import datetime
 import csv
+import mechanicalsoup
+import requests
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
+from getpass import getpass
+from http.cookiejar import CookieJar
 from utils import Status, DownloadInfo, print_summary
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
@@ -21,10 +25,31 @@ tried: dict[str, DownloadInfo] = {}
 delay_lock = asyncio.Lock()
 
 
-async def get(
-    session: aiohttp.ClientSession, url: str
-) -> tuple[URL, list[str], str, str] | tuple[URL, list[str], str, bytes] | None:
+def saml_login(url: str | URL) -> CookieJar:
+    """Login with SAML 2.0/Shibboleth-based SSO and return a cookiejar.
+    More about Shibboleth: https://help.switch.ch/aai/demo/expert/
+    NOTE: This is specific for Duke SSO, changes might be necessary for a standalone tool
+    """
 
+    s = requests.Session()
+    browser = mechanicalsoup.StatefulBrowser(session=s)
+    browser.open(url)
+    browser.select_form('form[method="post"]')
+    browser["j_username"] = saml_username
+    browser["j_password"] = saml_password
+    browser.submit_selected()
+
+    # As MechanicalSoup does not use JavaScript, we have to post `SAMLResponse`
+    # back to service provider manually.
+    browser.select_form('form[method="post"]')
+    browser.submit_selected()
+
+    return browser.get_cookiejar()
+
+
+async def get(
+    session: aiohttp.ClientSession, url: URL
+) -> tuple[URL, list[str], str, str] | tuple[URL, list[str], str, bytes] | None:
     # Prevent accidentally DOSing the server
     async with delay_lock:
         await asyncio.sleep(args.delay)
@@ -37,6 +62,11 @@ async def get(
                 if args.verbose >= 1:
                     print(f"Failed {response.status}: {url}")
                 return None
+
+            if args.saml and response.url.host == "shib.oit.duke.edu":
+                cookiejar = saml_login(url)
+                session.cookie_jar.update_cookies(cookiejar)
+                return await get(session, url)
 
             content_type = response.content_type.split("/")
             ty = content_type
@@ -366,7 +396,17 @@ if __name__ == "__main__":
         default=Path("./download_info.csv"),
         help="Location to store the download infomation file (in CSV format).",
     )
+    parser.add_argument(
+        "-s",
+        "--saml",
+        action="store_true",
+        help="Login with SAML 2.0/Shibboleth-based SSO",
+    )
     args = parser.parse_args()
+
+    if args.saml:
+        saml_username = input("Username: ")
+        saml_password = getpass("Password:")
 
     try:
         asyncio.run(main())

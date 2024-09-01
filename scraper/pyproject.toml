@@ -24,6 +24,7 @@ dependencies = [
     # `dataclass-csv` depends on `distutils`, which is removed in Python 3.12,
     # and can be fixed by installing `setuptools`.
     "setuptools; python_version>='3.12'",
+    "MechanicalSoup>=1.3.0",
 ]
 
 [tool.setuptools]
