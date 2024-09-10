@@ -73,21 +73,23 @@ class Config:
         self.embedding = f"BAAI/bge-m3"
         self.llm = "meta-llama/Meta-Llama-3.1-8B-Instruct"
         self.tokenizer = "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct"
+        self.tokenizer = "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct"
         self.tei_url = "http://localhost:18080"
         self.llm_url = "http://localhost:8001/v1"
         self.context_window = 20000
+        self.context_window = 20000
 
         # about load_and_index
-        self.data_dir = "/datapool/menu"
-        self.documents_path = "/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl"
+        self.data_dir = "/datapool/RAG_data"
+        self.documents_path = "/datapool/RAG_data/new_parser_documents.pkl"
         self.pipeline_cache = "./pipeline_cache"
-        self.csv_path = "/opt/RAG_data_new_website/download_info.csv"  # Store URL info of dku websites
+        self.csv_path='/datapool/RAG_data_new_website/download_info.csv'#Store URL info of dku websites
         self.update = False
 
         # about query
-        self.chroma_db = f"/home/Glitterccc/chatdku_chromadb_2"
+        self.chroma_db = f"/datapool/chroma_dbs/bge_m3_chroma_db"
         # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
-        self.docstore_path = f"/home/Glitterccc/chatdku_docstore_2"
+        self.docstore_path = f"/datapool/docstores/bge_m3_docstore"
 
         # about graphrag
         self.graph_data_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts"
