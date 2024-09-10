@@ -183,7 +183,12 @@ async def scrape_site(
     canonical_url, ty, filename, content = result
 
     included = is_included(canonical_url)
-    if not (args.external or included):
+    if not (
+        args.external == "all"
+        or (args.external == "html" and ty[1] == "html")
+        or (args.external == "attachments" and ty[1] != "html")
+        or included
+    ):
         tried[url].status = Status.EXCLUDED
         if args.verbose >= 1:
             print(f"URL not included: {canonical_url}")
@@ -343,7 +348,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-E",
         "--external",
-        action="store_true",
+        choices=["html", "attachments", "all", "none"],
+        default="none",
         help="Scrape one level of websites linked to even if they are not in e.g. the domains to scrape.",
     )
     parser.add_argument(
