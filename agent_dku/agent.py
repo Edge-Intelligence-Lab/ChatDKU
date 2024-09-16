@@ -124,6 +124,11 @@ class Agent(dspy.Module):
 
         self.prev_response = None
 
+    def reset(self):
+        self.prev_response = None
+        self.conversation_memory = ConversationMemory()
+
+
     def _forward_gen(self, current_user_message: str):
         # Putting this in `self.__init__()` might not work due to that you might
         # want DSPy to change prompt dynamically.
@@ -167,22 +172,14 @@ class Agent(dspy.Module):
         with dspy.settings.lock:
             dspy.settings.backtrack_to = None
 
-        import time
 
         for (name, model), tool in zip(
             self.planner.name_to_model.items(), self.planner.tools
         ):
-            start_time = time.time()
             first_ite_result = tool(query=current_user_message).result
-            if VERBOSE:
-                print(f"result: {first_ite_result}")
+            # if VERBOSE:
+            #     print(f"result: {first_ite_result}")
 
-            # 要计时的代码块
-            end_time = time.time()
-
-            elapsed_time = end_time - start_time
-            print("---" * 100)
-            print(f"Elapsed time: {elapsed_time} seconds")
             self.tool_memory(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -190,8 +187,8 @@ class Agent(dspy.Module):
                 result=first_ite_result,
                 max_history_size=limits["tool_history"],
             )
-            if VERBOSE:
-                print(f"tool memory: {self.tool_memory.history}")
+            # if VERBOSE:
+            #     print(f"tool memory: {self.tool_memory.history}")
 
         synthesizer_args = dict(
             current_user_message=current_user_message,
@@ -220,7 +217,9 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"Judge: {judgement}")
             if judgement:
-                break
+                # FIXME: This might cause memory not updated during last iteration
+                yield self.synthesizer(**synthesizer_args)
+                return
 
             # TODO: This could be merged with `Planner` depends on how well the
             # LLM understood its task.
@@ -243,6 +242,8 @@ class Agent(dspy.Module):
                     tool_memory=self.tool_memory,
                     max_calls=self.max_iterations - i,
                 )
+                if VERBOSE:
+                    print(f"Planner:{p}")
             except dspy.DSPyAssertionError:
                 if VERBOSE:
                     print("max assertion retries hit")
@@ -260,8 +261,8 @@ class Agent(dspy.Module):
                 result=result,
                 max_history_size=limits["tool_history"],
             )
-            if VERBOSE:
-                print(f"tool_memory.history: {self.tool_memory.history}")
+            # if VERBOSE:
+            #     print(f"tool_memory.history: {self.tool_memory.history}")
 
         self.prev_response = self.synthesizer(**synthesizer_args).response
         self.conversation_memory(
@@ -288,17 +289,25 @@ def main():
 
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
+    import time
+    
     agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
 
     while True:
         try:
             print("*" * 10)
             current_user_message = input("Enter your query about DKU: ")
+            start_time = time.time()
             responses_gen = agent(current_user_message=current_user_message)
+            first_token = True
             for i, r in enumerate(responses_gen):
                 print("-" * 10)
                 print(f"Round {i} response:")
                 for r in r.response:
+                    if first_token:
+                        end_time = time.time()
+                        print(f"first token时间:{end_time-start_time}")
+                        first_token = False
                     print(r, end="")
                 print()
                 print("-" * 10)

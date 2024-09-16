@@ -5,19 +5,26 @@ import dspy
 
 from utils import truncate_tokens
 from dspy_common import custom_cot_rationale
-
+import nltk
+from nltk.tokenize import word_tokenize
 import chromadb
 import llama_index
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core import VectorStoreIndex
+from llama_index.core.retrievers import TransformRetriever
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
 
+from redis import Redis
+from redis.commands.search.query import Query
+
 import os
 import sys
+import re
 
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
@@ -110,22 +117,35 @@ def get_reranker(top_n: int):
         keep_retrieval_score=True,
     )
 
+import pandas as pd
+import re
 
-def get_url(path):
-    # 检查路径中是否包含 'dku_website'
-    if "dku_website" in path:
-        # 提取 'dku_website/' 之后的内容
-        start_index = path.find("dku_website/")
-        sub_path = path[start_index + len("dku_website/") :]
+url_csv_path = "/datapool/download_info/download_info.csv"
+df = pd.read_csv(url_csv_path)
 
-        # 检查路径的结尾是否是 '.html' 并去掉 '/index.html'
-        if sub_path.endswith("/index.html"):
-            sub_path = sub_path[: -len("/index.html")]
-
-        # 如果路径的结尾是 '.pdf'，不进行处理
-        # 直接返回处理后的路径
-        return sub_path
-    return "no url"
+def get_url(metadata):
+    try:
+        try:
+            path = metadata["file_path"]
+        except:
+            path = metadata["file_directory"] + '/' + metadata["filename"]
+        if "dku_website" in path:
+            match = re.search(r'dku_website/.*', path)
+            if match:
+                result = match.group(0)
+                matching_row = df[df['file_path'] == result]
+                if not matching_row.empty:
+                    return matching_row.iloc[0]['url']
+        elif "new_bulletin" in path:
+            match = re.search(r'new_bulletin/.*', path)
+            if match:
+                result = match.group(0)
+                matching_row = df[df['file_path'] == result]
+                if not matching_row.empty:
+                    return matching_row.iloc[0]['url']
+        return "no url"
+    except Exception as e:
+        return f"no url, error: {str(e)}"
 
 
 def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
@@ -133,12 +153,12 @@ def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
         TextNode(
             text=node.text,
             metadata={
-                "url": get_url(node.metadata["file_path"]),
-                "last_modified_date": node.metadata["last_modified_date"],
+                "url": get_url(node.metadata),
             },
         )
         for node in nodes
     ]
+
     return "\n\n".join(
         [node.get_content(MetadataMode.LLM) for node in simplified_nodes]
     )
@@ -147,11 +167,15 @@ def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
 class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 2):
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         index = VectorStoreIndex.from_vector_store(vector_store)
+        # self.retriever = TransformRetriever(
+        #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
+        #     query_transform=HyDEQueryTransform(include_original=True),
+        # )
         self.retriever = index.as_retriever(similarity_top_k=retriever_top_k)
 
         self.reranker = get_reranker(reranker_top_n)
@@ -187,16 +211,20 @@ class VectorRetriever(dspy.Module):
         # )
 
 
+
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 2):
-        docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
-        self.retriever = BM25Retriever.from_defaults(
-            docstore=docstore, similarity_top_k=retriever_top_k
-        )
+    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
+        self.client = Redis.from_url("redis://localhost:6379")
+        self.retriever_top_k = retriever_top_k
 
-        self.reranker = get_reranker(reranker_top_n)
+        # docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
+        # self.retriever = BM25Retriever.from_defaults(
+        #     docstore=docstore, similarity_top_k=retriever_top_k
+        # )
+
+        # self.reranker = get_reranker(reranker_top_n)
 
         # self.summarizer = DocumentSummarizer()
 
@@ -209,13 +237,37 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
     ):
-        retrieved_nodes = self.retriever.retrieve(query)
-        reranked_nodes = self.reranker.postprocess_nodes(
-            retrieved_nodes,
-            # BERT token limit is 512, however, we should leave some space for special tokens
-            query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
-        )
-        return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
+        
+        try:
+            nltk.data.find('tokenizers/punkt_tab')
+        except LookupError:
+            nltk.download('punkt_tab')
+        # Break down the query into tokens
+        keywords = word_tokenize(query)
+        
+        params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
+        # `|` means searching the union of the words/tokens
+        # `%` means fuzzy search with Levenshtein distance of 1
+        query_str = " ".join([f"%${param}%" for param in params])
+        query_str = "@text:(" + query_str + ")"
+        
+        retriever_top_k = 5
+        query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
+        results = self.client.ft("idx:test").search(query_cmd, params)
+        print(results)
+        try:
+            nodes = [TextNode(text=r.text, metadata={"file_path": r.file_path}) for r in results.docs]
+        except:
+            nodes = [TextNode(text=r.text) for r in results.docs]
+
+        # retrieved_nodes = self.retriever.retrieve(query)
+        # reranked_nodes = self.reranker.postprocess_nodes(
+        #     retrieved_nodes,
+        #     # BERT token limit is 512, however, we should leave some space for special tokens
+        #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
+        # )
+        # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
+        return dspy.Prediction(result=get_str_of_simplified_nodes(nodes))
 
         # See notes about summarizer above
         # return dspy.Prediction(

@@ -193,3 +193,16 @@ demo/http_log.txt
 agent_dku/tmp/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
 demo/app_logs.txt
 demo/server_log.txt
+documents
+RAG/logs
+RAG/pipeline_cache
+demo/agent_app_logs.txt
+demo/feedback.csv
+demo/test_logs.txt
+RAG/custom_schema.yaml
+RAG/processed_file.xlsx
+RAG/processed_week_menu.xlsx
+RAG/rediss/load_log.txt
+RAG/rediss/load_logx.txt
+rediss/test_redis/custom_schema.yaml
+RAG/rediss/custom_schema.yaml

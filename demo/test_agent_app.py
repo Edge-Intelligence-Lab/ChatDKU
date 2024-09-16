@@ -23,7 +23,7 @@ sys.path.append(
 from agent import Agent,CustomClient
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/chat": {"origins": "*"}})
 
 @app.route("/reset",methods=["POST"])
 def reset_agent():
@@ -61,11 +61,10 @@ def chat():
 
 if __name__ == "__main__":
     setup()
-    use_phoenix()
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
     agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
 
 
     # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=5002)
+    app.run(host="0.0.0.0", port=5020)

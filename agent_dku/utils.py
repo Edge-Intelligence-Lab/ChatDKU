@@ -71,7 +71,7 @@ def strs_fit_max_tokens_reverse(
 
     str_lens = [len(Settings.tokenizer(i)) for i in strs]
     concat_len = len(Settings.tokenizer(concat_str))
-    min_index = len(str_lens)
+    min_index = len(str_lens) - 1
     cum_sum = 0
     for i in reversed(range(len(str_lens))):
         cum_sum += str_lens[i]

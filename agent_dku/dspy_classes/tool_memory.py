@@ -108,11 +108,13 @@ class ToolMemory(dspy.Module):
         conversation_memory: ConversationMemory,
         calls: list[NameParams],
         result: str,
-        max_history_size: int = 1000,
+        max_history_size: int = 13000,
     ):
+        # FIXME: Investigate why, and this should not be a fixed number
+        # Must assignment here, or will have some bug
+        max_history_size = 13000
         self.history.append(ToolMemoryEntry(name_params=calls[0], result=result))
         self.plan = calls[1:].copy()
-
         min_index = strs_fit_max_tokens_reverse(
             [i.model_dump_json() for i in self.history],
             "\n",

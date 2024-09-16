@@ -88,7 +88,7 @@ class CondenseChatHistory(CustomQueryComponent):
 
 
 def get_pipeline(
-    retriever_type: str = "vector",
+    retriever_type: str = "fusion",
     hyde: bool = True,
     vector_top_k: int = 10,
     bm25_top_k: int = 10,
@@ -100,7 +100,7 @@ def get_pipeline(
     weight1: float = 0.6,
     weight2: float = 0.4,
     colbert_rerank: bool = True,
-    rerank_top_n=5,
+    rerank_top_n=10,
 ) -> QueryPipeline:
     """
     Constructs a RAG query pipeline.

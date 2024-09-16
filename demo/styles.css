@@ -59,6 +59,7 @@ body {
         background-color: #d6d6d1;
         padding: 10px;
         border-radius: 40px;
+        /* margin-bottom: 10%; */
     }
     #message-input {
         flex: 1;
@@ -114,8 +115,9 @@ body {
     margin-left: auto;
     margin-right: auto;
     margin-top: 5px;
-    margin-bottom: 5px;
+    /* margin-bottom: 5px; */
     color:grey;
+    margin-bottom: 2%;
 }
 
 #head{
@@ -199,4 +201,61 @@ body {
     overflow: hidden;
     cursor: pointer;
     margin-top: 2%;
+}
+
+.loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.feedback_div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-button {
+    margin: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.yes-button {
+    background-color: #4CAF50; /* 绿色 */
+    color: white;
+}
+
+.yes-button:hover {
+    background-color: #45a049; /* 深绿色 */
+    transform: scale(1.05); /* 放大效果 */
+}
+
+.no-button {
+    background-color: #f44336; /* 红色 */
+    color: white;
+}
+
+.no-button:hover {
+    background-color: #e53935; /* 深红色 */
+    transform: scale(1.05); /* 放大效果 */
 }

@@ -26,7 +26,19 @@ unstructured.partition.auto.partition = partition
 
 from settings import Config
 
+
 config = Config()
+
+def safe_parse_nodes(documents, **kwargs):
+    nodes = []
+    for doc in documents:
+        try:
+            node = some_processing_function(doc, **kwargs)  # 替换为实际的处理函数
+            nodes.append(node)
+        except ValueError as e:
+            print(f"Skipping node due to error: {e}")
+            continue
+    return nodes
 
 
 def load_and_index(
@@ -46,45 +58,49 @@ def load_and_index(
     hash_path = os.path.join("./", "hash.pkl")
     now_hash = hash_directory(data_dir)
 
-    if update:
-        print(f"Force updating {documents_path}")
-        documents = update_data(data_dir)
-        now_hash = hash_directory(data_dir)
-        with open(hash_path, "wb") as hf:
-            pickle.dump(now_hash, hf)
-        print(f"Hashes of data files written at {hash_path}")
+    # if update:
+    #     print(f"Force updating {documents_path}")
+    #     documents = update_data(data_dir)
+    #     now_hash = hash_directory(data_dir)
+    #     with open(hash_path, "wb") as hf:
+    #         pickle.dump(now_hash, hf)
+    #     print(f"Hashes of data files written at {hash_path}")
 
-    elif os.path.exists(documents_path) and os.path.exists(hash_path):
-        print(f"Both {documents_path} and {hash_path} exist")
-        with open(hash_path, "rb") as f:
-            origin_hash = pickle.load(f)
-            print(f"Loaded hashes from {origin_hash}")
-            if origin_hash == now_hash:
-                print(f"Hashes match, loading documents from {documents_path}")
-                with open(documents_path, "rb") as file:
-                    documents = pickle.load(file)
-                print(f"Loaded documents from from {documents_path}")
-            else:
-                print(f"Hashes disagree with data files, updating {documents_path}")
-                documents = update_data(data_dir)
-                now_hash = hash_directory(data_dir)
-                with open(hash_path, "wb") as hf:
-                    pickle.dump(now_hash, hf)
-                print(f"Hashes of data files written at {hash_path}")
+    # elif os.path.exists(documents_path) and os.path.exists(hash_path):
+    #     print(f"Both {documents_path} and {hash_path} exist")
+    #     with open(hash_path, "rb") as f:
+    #         origin_hash = pickle.load(f)
+    #         print(f"Loaded hashes from {origin_hash}")
+    #         if origin_hash == now_hash:
+    #             print(f"Hashes match, loading documents from {documents_path}")
+    #             with open(documents_path, "rb") as file:
+    #                 documents = pickle.load(file)
+    #             print(f"Loaded documents from from {documents_path}")
+    #         else:
+    #             print(f"Hashes disagree with data files, updating {documents_path}")
+    #             documents = update_data(data_dir)
+    #             now_hash = hash_directory(data_dir)
+    #             with open(hash_path, "wb") as hf:
+    #                 pickle.dump(now_hash, hf)
+    #             print(f"Hashes of data files written at {hash_path}")
 
-    else:
-        print(
-            f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
-        )
-        documents = update_data(data_dir)
-        now_hash = hash_directory(data_dir)
-        with open(hash_path, "wb") as hf:
-            pickle.dump(now_hash, hf)
-        print(f"Hashes of data files written at {hash_path}")
+    # # else:
+    # print(
+    #     f"Either {documents_path} or {hash_path} does not exist, updating {documents_path}"
+    # )
+    # documents = update_data(data_dir)
+    # now_hash = hash_directory(data_dir)
+    # with open(hash_path, "wb") as hf:
+    #     pickle.dump(now_hash, hf)
+    # print(f"Hashes of data files written at {hash_path}")
 
-    print("Data reading done")
-    if read_only:
-        return
+    # print("Data reading done")
+    # if read_only:
+    #     return
+
+
+    with open(config.documents_path, 'rb') as f:
+        documents = pickle.load(f)
 
     trans = []
 
@@ -148,10 +164,12 @@ def load_and_index(
         documents=documents, num_workers=pipeline_workers, show_progress=True
     )
     pipeline.persist(pipeline_cache_path)
+    print("nodes over")
 
     docstore = SimpleDocumentStore()
     docstore.add_documents(nodes)
     docstore.persist(config.docstore_path)
+    print("docstore over")
 
 
 def main():

@@ -140,6 +140,7 @@ def update_data(data_dir):
     reader = UnstructuredReader()
 
     documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
+    documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
 
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()

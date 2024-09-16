@@ -18,8 +18,11 @@ from dspy_classes.prompt_settings import (
 from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.plan import ToolMemory
 
+from datetime import date
+
 
 def make_synthesizer_signature():
+
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
         "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
@@ -31,6 +34,7 @@ def make_synthesizer_signature():
             dspy.OutputField(desc="You response to the Current User Message."),
         ),
     }
+    current_date = date.today()
 
     # instruction = "Your current task is to answer the Current User Message according to your Tool Memory."
     instruction = (
@@ -42,10 +46,16 @@ def make_synthesizer_signature():
         "You may include other resources (including even Duke resources) only as "
         "a second option unless directly asked, or that resource is clearly "
         "available to the DKU community via means such as a partnership with DKU. "
-        "The origin of contexts is contained in the url in metadata,"
-        "If you are using information from a context, include the url at the end of your answer so that the user can go back to the original file to verify the authenticity of the information."
-        "Your answer needs to be as detailed as possible. All the contexts related to the Current User Message should be included in your answer."
+
+        "The source of contexts is contained in the url in metadata,"
+        "Useful urls to the source document of the contexts used in your answer should be included at the end of your answer, like 'reference links:',"
+        "The link needs to be markdown so that it can be clicked, and the text shown is a summary of the link, make sure the text is accurate about the url, and please don't print duplicate links."
+
+        "Your internal operation should also not be transparent to the user, "
+        'so you should not mention phrases like "Based on the conversation history", "Based on the information retrieved from the Tool History and Conversation History", "According to the tool history".'
+        "When you're asked a general question, automatically change it to something DKU related, like 'what does CTL do?' to 'what does CTL do at DKU?'"
         ### time ...
+        f"Today's date is {current_date}. For timeliness issues, please consider more relevant context closer to the current date."
     )
 
     return dspy.make_signature(
