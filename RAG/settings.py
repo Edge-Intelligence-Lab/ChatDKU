@@ -24,9 +24,7 @@ llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 import os
 import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk import trace as trace_sdk
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from phoenix.otel import register
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
@@ -148,7 +146,8 @@ def use_phoenix():
     os.environ["PHOENIX_GRPC_PORT"] = "0"
     px.launch_app()
     phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
-    endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
-    tracer_provider = trace_sdk.TracerProvider()
-    tracer_provider.add_span_processor(SimpleSpanProcessor(OTLPSpanExporter(endpoint)))
+    tracer_provider = register(
+        project_name="ChatDKU",
+        endpoint=f"http://127.0.0.1:{phoenix_port}/v1/traces",
+    )
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
