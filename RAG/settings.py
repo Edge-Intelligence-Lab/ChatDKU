@@ -22,7 +22,6 @@ def mydeepcopy(self, memo):
 llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 
 import os
-import phoenix as px
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
@@ -141,13 +140,9 @@ def setup(add_system_prompt: bool = False) -> None:
 
 
 def use_phoenix():
-    # NOTE: I cannot find how to disable gRPC for Phoenix, so I would just
-    # pass in port 0 to make it easier to avoid port collision.
-    os.environ["PHOENIX_GRPC_PORT"] = "0"
-    px.launch_app()
-    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
+    phoenix_port = os.environ.get("PHOENIX_PORT", 6007)
     tracer_provider = register(
-        project_name="ChatDKU",
+        project_name="ChatDKU_main",
         endpoint=f"http://127.0.0.1:{phoenix_port}/v1/traces",
     )
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
