@@ -3,6 +3,16 @@ from pydantic import ConfigDict, Field, create_model, ValidationError
 from pydantic.fields import FieldInfo
 
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
+
 from dspy_common import get_template, custom_cot_rationale
 from utils import (
     NameParams,
@@ -21,6 +31,16 @@ from dspy_classes.prompt_settings import (
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
+    )
+)
+from config import config
 
 
 def make_planner_signature():
@@ -150,70 +170,99 @@ class Planner(dspy.Module):
         """
         Generate a plan of tool calls and return the first tool and respective parameters.
         """
-        planner_inputs = dict(
-            current_user_message=current_user_message,
-            conversation_history="\n".join(
-                [i.model_dump_json() for i in conversation_memory.history]
-            ),
-            conversation_summary=conversation_memory.summary,
-            tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
-            tool_summary=tool_memory.summary,
-            previous_tool_plan="\n".join(
-                [i.model_dump_json() for i in tool_memory.plan]
-            ),
-        )
-        planner_inputs = truncate_tokens_all(planner_inputs, self.get_token_limits())
+        with (
+            config.tracer.start_as_current_span("Planner")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.CHAIN.value,
+            )
 
-        plan_str_all = self.planner(
-            available_tools="\n".join(
-                [str(m.model_json_schema()) for m in self.name_to_model.values()]
-            ),
-            max_calls=str(max_calls),
-            **planner_inputs,
-        ).current_tool_plan
-
-        # Parse tool plan response
-
-        plan_strs = plan_str_all.strip().split("\n")
-        plan_strs = [s.strip() for s in plan_strs]
-        dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
-        dspy.Assert(
-            len(plan_strs) <= max_calls,
-            f"The number of tool calls in your plan must be no more than {max_calls}.",
-        )
-
-        calls_unvalidated = []
-        for i, s in enumerate(plan_strs, 1):
-            try:
-                calls_unvalidated.append(NameParams.model_validate_json(s))
-            except ValidationError as e:
-                dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
-
-        calls = []
-        for i, c in enumerate(calls_unvalidated, 1):
-            dspy.Assert(
-                c.name in self.name_to_model,
-                (
-                    f'"{c.name}" is not a valid tool. '
-                    f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+            planner_inputs = dict(
+                current_user_message=current_user_message,
+                conversation_history="\n".join(
+                    [i.model_dump_json() for i in conversation_memory.history]
+                ),
+                conversation_summary=conversation_memory.summary,
+                tool_history="\n".join(
+                    [i.model_dump_json() for i in tool_memory.history]
+                ),
+                tool_summary=tool_memory.summary,
+                previous_tool_plan="\n".join(
+                    [i.model_dump_json() for i in tool_memory.plan]
                 ),
             )
-            try:
-                calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
-            except ValidationError as e:
-                dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+            planner_inputs = truncate_tokens_all(
+                planner_inputs, self.get_token_limits()
+            )
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(planner_inputs),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
 
-        # FIXME: These should be put into class attributes if possible.
-        # However, a DSPy bug made this impossible for now.
-        # The bug causes dspy.Module.named_parameters() to enter infinite recursion
-        # when duplicate references to a Module B occur in a Module A.
-        name_to_tool = {}
-        for tool in self.tools:
-            tool_name_camel = type(tool).__name__
-            tool_name_snake = camel_to_snake_case(tool_name_camel)
-            name_to_tool[tool_name_snake] = tool
+            plan_str_all = self.planner(
+                available_tools="\n".join(
+                    [str(m.model_json_schema()) for m in self.name_to_model.values()]
+                ),
+                max_calls=str(max_calls),
+                **planner_inputs,
+            ).current_tool_plan
 
-        return dspy.Prediction(
-            calls=calls,
-            tool=name_to_tool[calls[0].name],
-        )
+            # Parse tool plan response
+
+            plan_strs = plan_str_all.strip().split("\n")
+            plan_strs = [s.strip() for s in plan_strs]
+            dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
+            dspy.Assert(
+                len(plan_strs) <= max_calls,
+                f"The number of tool calls in your plan must be no more than {max_calls}.",
+            )
+
+            calls_unvalidated = []
+            for i, s in enumerate(plan_strs, 1):
+                try:
+                    calls_unvalidated.append(NameParams.model_validate_json(s))
+                except ValidationError as e:
+                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+
+            calls = []
+            for i, c in enumerate(calls_unvalidated, 1):
+                dspy.Assert(
+                    c.name in self.name_to_model,
+                    (
+                        f'"{c.name}" is not a valid tool. '
+                        f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+                    ),
+                )
+                try:
+                    calls.append(
+                        self.name_to_model[c.name](name=c.name, params=c.params)
+                    )
+                except ValidationError as e:
+                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(calls),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+
+            # FIXME: These should be put into class attributes if possible.
+            # However, a DSPy bug made this impossible for now.
+            # The bug causes dspy.Module.named_parameters() to enter infinite recursion
+            # when duplicate references to a Module B occur in a Module A.
+            name_to_tool = {}
+            for tool in self.tools:
+                tool_name_camel = type(tool).__name__
+                tool_name_snake = camel_to_snake_case(tool_name_camel)
+                name_to_tool[tool_name_snake] = tool
+
+            span.set_status(Status(StatusCode.OK))
+            return dspy.Prediction(
+                calls=calls,
+                tool=name_to_tool[calls[0].name],
+            )

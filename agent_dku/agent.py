@@ -29,7 +29,7 @@ import sys
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import Status, StatusCode, use_span
 from openinference.semconv.trace import SpanAttributes, OpenInferenceSpanKindValues
 
 sys.path.append(
@@ -54,14 +54,13 @@ class CustomClient(LM):
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            span.set_attribute(
-                SpanAttributes.OPENINFERENCE_SPAN_KIND,
-                OpenInferenceSpanKindValues.LLM.value,
-            )
-            span.set_attribute(SpanAttributes.INPUT_VALUE, prompt)
-            span.set_attribute(SpanAttributes.LLM_MODEL_NAME, config.llm)
-            span.set_attribute(
-                SpanAttributes.LLM_INVOCATION_PARAMETERS, safe_json_dumps(kwargs)
+            span.set_attributes(
+                {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
+                    SpanAttributes.INPUT_VALUE: prompt,
+                    SpanAttributes.LLM_MODEL_NAME: config.llm,
+                    SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
+                }
             )
 
             response = Settings.llm.complete(prompt, **kwargs)
@@ -151,71 +150,85 @@ class Agent(dspy.Module):
         self.conversation_memory = ConversationMemory()
 
     def _forward_gen(self, current_user_message: str):
-        # Putting this in `self.__init__()` might not work due to that you might
-        # want DSPy to change prompt dynamically.
-
-        # These limits are for compressing both tool and conversation memory.
-        # Technically this only ensures that these memories would fit sufficiently
-        # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
-        # TODO: We could notify user when their input is too long.
-        limits = self.planner.get_token_limits()
-
-        # Reset tool memory for each user message
-        # Need to make this an attribute so that DSPy can optimize it
-        self.tool_memory.reset()
-
-        # Add previous response to conversation memory
-        if self.prev_response is not None:
-            if self.streaming:
-                # Note that this would essentially "invalidate" the previous response generator
-                # as calling `get_full_response()` would exhaust the iterations.
-                r = self.prev_response.get_full_response()
-            else:
-                r = self.prev_response
-            self.conversation_memory(
-                role="assistant",
-                content=r,
-                max_history_size=limits["conversation_history"],
+        # I cannot use the span as a context manager that wraps around the entire function
+        # due to that this is a generator.
+        # More about the issue regarding the use of `with` in generators:
+        # https://stackoverflow.com/questions/41881731/is-it-safe-to-combine-with-and-yield-in-python
+        if hasattr(config, "tracer"):
+            span = config.tracer.start_span("Agent")
+            span.set_attributes(
+                {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
+                    SpanAttributes.INPUT_VALUE: current_user_message,
+                }
             )
 
-        # FIXME: Pre-calling tools.
-        # Currently, it calls ALL tools as the first iteration.
-        # However, it has two issues:
-        # 1. The API of the tools might differ in the future
-        #    (having something other than `query` in parameters).
-        # 2. It has issues with DSPy assertions.
-        # 3. The zipping of the `name_to_model` and `tools` might be problematic.
-        if VERBOSE:
-            print("pre-calling tools")
+        with use_span(span) if hasattr(config, "tracer") else nullcontext():
+            # Putting this in `self.__init__()` might not work due to that you might
+            # want DSPy to change prompt dynamically.
 
-        # Deal with DSPy assertions
-        # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
-        with dspy.settings.lock:
-            dspy.settings.backtrack_to = None
+            # These limits are for compressing both tool and conversation memory.
+            # Technically this only ensures that these memories would fit sufficiently
+            # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
+            # TODO: We could notify user when their input is too long.
+            limits = self.planner.get_token_limits()
 
-        for (name, model), tool in zip(
-            self.planner.name_to_model.items(), self.planner.tools
-        ):
-            first_ite_result = tool(query=current_user_message).result
-            # if VERBOSE:
-            #     print(f"result: {first_ite_result}")
+            # Reset tool memory for each user message
+            # Need to make this an attribute so that DSPy can optimize it
+            self.tool_memory.reset()
 
-            self.tool_memory(
+            # Add previous response to conversation memory
+            if self.prev_response is not None:
+                if self.streaming:
+                    # Note that this would essentially "invalidate" the previous response generator
+                    # as calling `get_full_response()` would exhaust the iterations.
+                    r = self.prev_response.get_full_response()
+                else:
+                    r = self.prev_response
+                self.conversation_memory(
+                    role="assistant",
+                    content=r,
+                    max_history_size=limits["conversation_history"],
+                )
+
+            # FIXME: Pre-calling tools.
+            # Currently, it calls ALL tools as the first iteration.
+            # However, it has two issues:
+            # 1. The API of the tools might differ in the future
+            #    (having something other than `query` in parameters).
+            # 2. It has issues with DSPy assertions.
+            # 3. The zipping of the `name_to_model` and `tools` might be problematic.
+            if VERBOSE:
+                print("pre-calling tools")
+
+            # Deal with DSPy assertions
+            # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
+            with dspy.settings.lock:
+                dspy.settings.backtrack_to = None
+
+            for (name, model), tool in zip(
+                self.planner.name_to_model.items(), self.planner.tools
+            ):
+                first_ite_result = tool(query=current_user_message).result
+                # if VERBOSE:
+                #     print(f"result: {first_ite_result}")
+
+                self.tool_memory(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    calls=[model(name=name, params={"query": current_user_message})],
+                    result=first_ite_result,
+                    max_history_size=limits["tool_history"],
+                )
+                # if VERBOSE:
+                #     print(f"tool memory: {self.tool_memory.history}")
+
+            synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
-                calls=[model(name=name, params={"query": current_user_message})],
-                result=first_ite_result,
-                max_history_size=limits["tool_history"],
+                tool_memory=self.tool_memory,
+                streaming=self.streaming,
             )
-            # if VERBOSE:
-            #     print(f"tool memory: {self.tool_memory.history}")
-
-        synthesizer_args = dict(
-            current_user_message=current_user_message,
-            conversation_memory=self.conversation_memory,
-            tool_memory=self.tool_memory,
-            streaming=self.streaming,
-        )
 
         # The subsequent rounds of tool calling
         for i in range(self.max_iterations - 1):
@@ -225,69 +238,80 @@ class Agent(dspy.Module):
             # next round. However, this would be contradictory to the previous
             # todo.
             if self.get_intermediate:
-                yield self.synthesizer(**synthesizer_args)
+                with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                    result = self.synthesizer(**synthesizer_args)
+                yield result
 
-            if VERBOSE:
-                print(f"iteration: {i}")
-            judgement = self.judge(
-                current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
-                tool_memory=self.tool_memory,
-            ).judgement
-            if VERBOSE:
-                print(f"Judge: {judgement}")
-            if judgement:
-                break
-
-            # TODO: This could be merged with `Planner` depends on how well the
-            # LLM understood its task.
-            rewritten_query = self.queryrewriter(
-                current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
-                tool_memory=self.tool_memory,
-            ).rewritten_query
-            if VERBOSE:
-                print(f"rewritten query:{rewritten_query}")
-
-            try:
-                p = self.planner(
-                    # Only using the rewritten query here but not for updating memory
-                    # as the memory is not always updated for every iteration.
-                    # Also, the memory should concern answering the overarching
-                    # user question, while the planner can focus more on the current iteration.
-                    current_user_message=rewritten_query,
+            with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                if VERBOSE:
+                    print(f"iteration: {i}")
+                judgement = self.judge(
+                    current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
                     tool_memory=self.tool_memory,
-                    max_calls=self.max_iterations - i,
+                ).judgement
+                if VERBOSE:
+                    print(f"Judge: {judgement}")
+                if judgement:
+                    break
+
+                # TODO: This could be merged with `Planner` depends on how well the
+                # LLM understood its task.
+                rewritten_query = self.queryrewriter(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    tool_memory=self.tool_memory,
+                ).rewritten_query
+                if VERBOSE:
+                    print(f"rewritten query:{rewritten_query}")
+
+                try:
+                    p = self.planner(
+                        # Only using the rewritten query here but not for updating memory
+                        # as the memory is not always updated for every iteration.
+                        # Also, the memory should concern answering the overarching
+                        # user question, while the planner can focus more on the current iteration.
+                        current_user_message=rewritten_query,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                        max_calls=self.max_iterations - i,
+                    )
+                    if VERBOSE:
+                        print(f"Planner:{p}")
+                except dspy.DSPyAssertionError:
+                    if VERBOSE:
+                        print("max assertion retries hit")
+                    break
+
+                if VERBOSE:
+                    print(f"calls: {p.calls}")
+                result = p.tool(**p.calls[0].params.model_dump()).result
+                if VERBOSE:
+                    print(f"result: {result}")
+                self.tool_memory(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    calls=p.calls,
+                    result=result,
+                    max_history_size=limits["tool_history"],
                 )
-                if VERBOSE:
-                    print(f"Planner:{p}")
-            except dspy.DSPyAssertionError:
-                if VERBOSE:
-                    print("max assertion retries hit")
-                break
+                # if VERBOSE:
+                #     print(f"tool_memory.history: {self.tool_memory.history}")
 
-            if VERBOSE:
-                print(f"calls: {p.calls}")
-            result = p.tool(**p.calls[0].params.model_dump()).result
-            if VERBOSE:
-                print(f"result: {result}")
-            self.tool_memory(
-                current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
-                calls=p.calls,
-                result=result,
-                max_history_size=limits["tool_history"],
+        with use_span(span) if hasattr(config, "tracer") else nullcontext():
+            self.prev_response = self.synthesizer(
+                **synthesizer_args, final=True
+            ).response
+            self.conversation_memory(
+                role="user",
+                content=current_user_message,
+                max_history_size=limits["conversation_history"],
             )
-            # if VERBOSE:
-            #     print(f"tool_memory.history: {self.tool_memory.history}")
 
-        self.prev_response = self.synthesizer(**synthesizer_args).response
-        self.conversation_memory(
-            role="user",
-            content=current_user_message,
-            max_history_size=limits["conversation_history"],
-        )
+        if not self.streaming:
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.prev_response)
+            span.set_status(Status(StatusCode.OK))
+            span.end()
         yield dspy.Prediction(response=self.prev_response)
 
     def forward(self, current_user_message: str):

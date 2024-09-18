@@ -1,9 +1,25 @@
 from itertools import takewhile
-from typing import Generator
 
 from llama_index.core import Settings
 
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import (
+    Status,
+    StatusCode,
+    use_span,
+    get_current_span,
+    Span,
+    set_span_in_context,
+)
+from opentelemetry import context
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
 
 from utils import token_limit_ratio_to_count, truncate_tokens_all
 from dspy_common import custom_cot_rationale, get_template
@@ -17,6 +33,16 @@ from dspy_classes.prompt_settings import (
 )
 from dspy_classes.conversation_memory import ConversationMemory
 from dspy_classes.plan import ToolMemory
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
+    )
+)
+from config import config
 
 from datetime import date
 
@@ -46,11 +72,9 @@ def make_synthesizer_signature():
         "You may include other resources (including even Duke resources) only as "
         "a second option unless directly asked, or that resource is clearly "
         "available to the DKU community via means such as a partnership with DKU. "
-
         "The source of contexts is contained in the url in metadata,"
         "Useful urls to the source document of the contexts used in your answer should be included at the end of your answer, like 'reference links:',"
         "The link needs to be markdown so that it can be clicked, and the text shown is a summary of the link, make sure the text is accurate about the url, and please don't print duplicate links."
-
         "Your internal operation should also not be transparent to the user, "
         'so you should not mention phrases like "Based on the conversation history", "Based on the information retrieved from the Tool History and Conversation History", "According to the tool history".'
         "When you're asked a general question, automatically change it to something DKU related, like 'what does CTL do?' to 'what does CTL do at DKU?'"
@@ -71,11 +95,34 @@ class ResponseGen:
     given the generator for the entire LLM completion.
     """
 
-    def __init__(self, llm_completion_gen: Generator):
-        self.llm_completion_gen = llm_completion_gen
+    def __init__(
+        self, prompt: str, synthesizer_span: Span = None, agent_span: Span = None
+    ):
+        self.llm_completion_gen = Settings.llm.stream_complete(prompt)
+        if hasattr(config, "tracer"):
+            self.span = config.tracer.start_span(
+                "LLM", context=set_span_in_context(synthesizer_span)
+            )
+            self.span.set_attributes(
+                {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
+                    SpanAttributes.INPUT_VALUE: prompt,
+                    SpanAttributes.LLM_MODEL_NAME: config.llm,
+                }
+            )
+            self.synthesizer_span = synthesizer_span
+            self.agent_span = agent_span
         self.full_response = ""
 
     def __iter__(self):
+        # When streaming the response, it starts a new span inside `synthesizer_span`
+        # and ends `synthesizer_span` on completion.
+        # Additionally, as the "lifetime" of the agent actually ends when streaming is complete,
+        # so the span of `agent_span` is also ended by `ResponseGen` if it is the final response.
+        if hasattr(config, "tracer"):
+            ctx = set_span_in_context(self.span)
+            ctx_token = context.attach(ctx)
+
         def rstripped(s):
             """Extract the trailing whitespace itself."""
             return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
@@ -89,15 +136,44 @@ class ResponseGen:
                 s = before_response[offset + len(field) :]
                 if s.strip():
                     self.full_response += s.strip()
+
+                    if hasattr(config, "tracer"):
+                        context.detach(ctx_token)
                     yield s.strip()
+                    if hasattr(config, "tracer"):
+                        ctx_token = context.attach(ctx)
+
                     prev_whitespace = rstripped(s)
                     break
 
         for r in self.llm_completion_gen:
             s = r.delta
             self.full_response += prev_whitespace + s.rstrip()
+
+            if hasattr(config, "tracer"):
+                context.detach(ctx_token)
             yield prev_whitespace + s.rstrip()
+            if hasattr(config, "tracer"):
+                ctx_token = context.attach(ctx)
+
             prev_whitespace = rstripped(s)
+
+        if hasattr(config, "tracer"):
+            context.detach(ctx_token)
+            self.span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.full_response)
+            self.span.set_status(Status(StatusCode.OK))
+            self.span.end()
+            self.synthesizer_span.set_attribute(
+                SpanAttributes.OUTPUT_VALUE, self.full_response
+            )
+            self.synthesizer_span.set_status(Status(StatusCode.OK))
+            self.synthesizer_span.end()
+            if self.agent_span:
+                self.agent_span.set_attribute(
+                    SpanAttributes.OUTPUT_VALUE, self.full_response
+                )
+                self.agent_span.set_status(Status(StatusCode.OK))
+                self.agent_span.end()
 
     def get_full_response(self) -> str:
         # Make sure the entire response is read
@@ -131,31 +207,67 @@ class Synthesizer(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
         streaming: bool,
+        final: bool = False,  # If final call to synthesizer, then also end agent's span when tracing
     ):
-        synthesizer_args = dict(
-            current_user_message=current_user_message,
-            conversation_history="\n".join(
-                [i.model_dump_json() for i in conversation_memory.history]
-            ),
-            conversation_summary=conversation_memory.summary,
-            tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
-            tool_summary=tool_memory.summary,
-        )
-        synthesizer_args = truncate_tokens_all(
-            synthesizer_args, self.get_token_limits()
-        )
+        if hasattr(config, "tracer"):
+            span = config.tracer.start_span("Synthesizer")
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.CHAIN.value,
+            )
+
+        with use_span(span) if hasattr(config, "tracer") else nullcontext():
+            synthesizer_args = dict(
+                current_user_message=current_user_message,
+                conversation_history="\n".join(
+                    [i.model_dump_json() for i in conversation_memory.history]
+                ),
+                conversation_summary=conversation_memory.summary,
+                tool_history="\n".join(
+                    [i.model_dump_json() for i in tool_memory.history]
+                ),
+                tool_summary=tool_memory.summary,
+            )
+            synthesizer_args = truncate_tokens_all(
+                synthesizer_args, self.get_token_limits()
+            )
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(synthesizer_args),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
 
         if streaming:
-            # A hacky way to stream the final response synthesis LLM call.
-            # The synthesizer module is first converted to a prompt string.
-            # Then the LLM is called manually, and the generator returned is wrapped
-            # to extract only the `response` field.
-            #
-            # FIXME: Contribute streaming support to DSPy
-            # Also see: https://github.com/stanfordnlp/dspy/issues/338
-            synthesizer_template = get_template(self.synthesizer, **synthesizer_args)
-            llm_completion_gen = Settings.llm.stream_complete(synthesizer_template)
-            return dspy.Prediction(response=ResponseGen(llm_completion_gen))
+            if hasattr(config, "tracer"):
+                parent_span = get_current_span()
+
+            with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                # A hacky way to stream the final response synthesis LLM call.
+                # The synthesizer module is first converted to a prompt string.
+                # Then the LLM is called manually, and the generator returned is wrapped
+                # to extract only the `response` field.
+                #
+                # FIXME: Contribute streaming support to DSPy
+                # Also see: https://github.com/stanfordnlp/dspy/issues/338
+                synthesizer_template = get_template(
+                    self.synthesizer, **synthesizer_args
+                )
+                if hasattr(config, "tracer"):
+                    response_gen = ResponseGen(
+                        synthesizer_template, span, parent_span if final else None
+                    )
+                else:
+                    response_gen = ResponseGen(synthesizer_template)
+                return dspy.Prediction(response=response_gen)
 
         else:
-            return self.synthesizer(**synthesizer_args)
+            with (
+                use_span(span, end_on_exit=True)
+                if hasattr(config, "tracer")
+                else nullcontext()
+            ):
+                response = self.synthesizer(**synthesizer_args).response
+                span.set_attribute(SpanAttributes.OUTPUT_VALUE, response)
+                span.set_status(Status(StatusCode.OK))
+                return dspy.Prediction(response=response)

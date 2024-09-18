@@ -1,4 +1,14 @@
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
+
 from utils import token_limit_ratio_to_count, truncate_tokens_all
 from dspy_common import get_template, custom_cot_rationale
 from dspy_classes.conversation_memory import ConversationMemory
@@ -11,6 +21,16 @@ from dspy_classes.prompt_settings import (
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
+    )
+)
+from config import config
 
 
 def make_query_rewrite_signature():
@@ -68,16 +88,38 @@ class QueryRewrite(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        rewrite_inputs = dict(
-            current_user_message=current_user_message,
-            conversation_history="\n".join(
-                [i.model_dump_json() for i in conversation_memory.history]
-            ),
-            conversation_summary=conversation_memory.summary,
-            tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
-            tool_summary=tool_memory.summary,
-        )
-        rewrite_inputs = truncate_tokens_all(rewrite_inputs, self.get_token_limits())
-        rewritten_query = self.rewritten_query(**rewrite_inputs).rewritten_query
-        print(rewritten_query)
-        return dspy.Prediction(rewritten_query=rewritten_query)
+        with (
+            config.tracer.start_as_current_span("Query Rewrite")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.CHAIN.value,
+            )
+
+            rewrite_inputs = dict(
+                current_user_message=current_user_message,
+                conversation_history="\n".join(
+                    [i.model_dump_json() for i in conversation_memory.history]
+                ),
+                conversation_summary=conversation_memory.summary,
+                tool_history="\n".join(
+                    [i.model_dump_json() for i in tool_memory.history]
+                ),
+                tool_summary=tool_memory.summary,
+            )
+            rewrite_inputs = truncate_tokens_all(
+                rewrite_inputs, self.get_token_limits()
+            )
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(rewrite_inputs),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+
+            rewritten_query = self.rewritten_query(**rewrite_inputs).rewritten_query
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, rewritten_query)
+            span.set_status(Status(StatusCode.OK))
+            return dspy.Prediction(rewritten_query=rewritten_query)

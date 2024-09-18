@@ -1,4 +1,14 @@
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
+
 from utils import token_limit_ratio_to_count, truncate_tokens_all
 from dspy_common import get_template, custom_cot_rationale
 from dspy_classes.conversation_memory import ConversationMemory
@@ -12,6 +22,16 @@ from dspy_classes.prompt_settings import (
     ROLE_PROMPT,
     VERBOSE,
 )
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
+    )
+)
+from config import config
 
 
 def make_judge_signature():
@@ -71,25 +91,47 @@ class Judge(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        judge_inputs = dict(
-            current_user_message=current_user_message,
-            conversation_history="\n".join(
-                [i.model_dump_json() for i in conversation_memory.history]
-            ),
-            conversation_summary=conversation_memory.summary,
-            tool_history="\n".join([i.model_dump_json() for i in tool_memory.history]),
-            tool_summary=tool_memory.summary,
-        )
-        judge_inputs = truncate_tokens_all(judge_inputs, self.get_token_limits())
-        judgement_str = self.judge(**judge_inputs).judgement
+        with (
+            config.tracer.start_as_current_span("Judge")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.CHAIN.value,
+            )
 
-        dspy.Suggest(
-            judgement_str in ["Yes", "No"],
-            'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
-        )
-        if judgement_str not in ["Yes", "No"]:
-            if VERBOSE:
-                print(
-                    'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
-                )
-        return dspy.Prediction(judgement=(judgement_str == "Yes"))
+            judge_inputs = dict(
+                current_user_message=current_user_message,
+                conversation_history="\n".join(
+                    [i.model_dump_json() for i in conversation_memory.history]
+                ),
+                conversation_summary=conversation_memory.summary,
+                tool_history="\n".join(
+                    [i.model_dump_json() for i in tool_memory.history]
+                ),
+                tool_summary=tool_memory.summary,
+            )
+            judge_inputs = truncate_tokens_all(judge_inputs, self.get_token_limits())
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(judge_inputs),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+
+            judgement_str = self.judge(**judge_inputs).judgement
+
+            dspy.Suggest(
+                judgement_str in ["Yes", "No"],
+                'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
+            )
+            if judgement_str not in ["Yes", "No"]:
+                if VERBOSE:
+                    print(
+                        'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
+                    )
+            judgement = judgement_str == "Yes"
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, judgement)
+            span.set_status(Status(StatusCode.OK))
+            return dspy.Prediction(judgement=judgement)
