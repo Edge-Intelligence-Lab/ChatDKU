@@ -27,6 +27,11 @@ from dspy_classes.judge import Judge
 import os
 import sys
 
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import SpanAttributes, OpenInferenceSpanKindValues
+
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
@@ -44,15 +49,33 @@ class CustomClient(LM):
         }
 
     def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        response = Settings.llm.complete(prompt, **kwargs)
-        self.history.append(
-            {
-                "prompt": prompt,
-                "response": response,
-                "kwargs": kwargs,
-            }
-        )
-        return response
+        with (
+            config.tracer.start_as_current_span("LLM")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.LLM.value,
+            )
+            span.set_attribute(SpanAttributes.INPUT_VALUE, prompt)
+            span.set_attribute(SpanAttributes.LLM_MODEL_NAME, config.llm)
+            span.set_attribute(
+                SpanAttributes.LLM_INVOCATION_PARAMETERS, safe_json_dumps(kwargs)
+            )
+
+            response = Settings.llm.complete(prompt, **kwargs)
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
+            self.history.append(
+                {
+                    "prompt": prompt,
+                    "response": response,
+                    "kwargs": kwargs,
+                }
+            )
+
+            span.set_status(Status(StatusCode.OK))
+            return response
 
     def inspect_history(self, n: int = 1, skip: int = 0) -> str:
         last_prompt = None
@@ -127,7 +150,6 @@ class Agent(dspy.Module):
         self.prev_response = None
         self.conversation_memory = ConversationMemory()
 
-
     def _forward_gen(self, current_user_message: str):
         # Putting this in `self.__init__()` might not work due to that you might
         # want DSPy to change prompt dynamically.
@@ -170,7 +192,6 @@ class Agent(dspy.Module):
         # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
         with dspy.settings.lock:
             dspy.settings.backtrack_to = None
-
 
         for (name, model), tool in zip(
             self.planner.name_to_model.items(), self.planner.tools
@@ -289,7 +310,7 @@ def main():
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
     import time
-    
+
     agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
 
     while True:

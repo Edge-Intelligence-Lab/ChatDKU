@@ -22,8 +22,13 @@ def mydeepcopy(self, memo):
 llama_index.llms.openai_like.OpenAILike.__deepcopy__ = mydeepcopy
 
 import os
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-from phoenix.otel import register
+from openinference.semconv.resource import ResourceAttributes
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from phoenix.config import get_env_host, get_env_port
 
 from config import config
 
@@ -109,9 +114,12 @@ def setup(add_system_prompt: bool = False) -> None:
 
 
 def use_phoenix():
+    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_main"})
+    tracer_provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(tracer_provider)
+    config.tracer = trace.get_tracer(__name__)
     phoenix_port = os.environ.get("PHOENIX_PORT", 6007)
-    tracer_provider = register(
-        project_name="ChatDKU_main",
-        endpoint=f"http://127.0.0.1:{phoenix_port}/v1/traces",
-    )
-    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+    collector_endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
+    span_exporter = OTLPSpanExporter(endpoint=collector_endpoint)
+    simple_span_processor = SimpleSpanProcessor(span_exporter=span_exporter)
+    trace.get_tracer_provider().add_span_processor(simple_span_processor)
