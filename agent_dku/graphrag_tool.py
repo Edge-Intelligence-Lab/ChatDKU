@@ -32,9 +32,7 @@ from typing import Any
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
-from settings import Config
-
-config = Config()
+from config import config
 
 
 def json_clean(response: str):

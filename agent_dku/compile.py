@@ -20,9 +20,8 @@ import sys
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
-from settings import Config, setup, use_phoenix
-
-config = Config()
+from config import config
+from setup import setup, use_phoenix
 
 
 class QualityJudgeSignature(dspy.Signature):

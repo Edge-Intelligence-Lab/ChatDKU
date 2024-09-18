@@ -10,7 +10,7 @@ from llama_index.core import SimpleDirectoryReader
 from llama_index.core.readers.base import BaseReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
-from settings import Config
+from config import config
 from markdownify import markdownify as md
 from tqdm import tqdm
 from pathlib import Path
@@ -246,7 +246,6 @@ def update_data(data_dir):
 
 
 def main(data_dir=None):
-    config = Config()
     if data_dir is None:
         data_dir = config.data_dir
 

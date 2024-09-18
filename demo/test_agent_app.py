@@ -15,7 +15,7 @@ import sys
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
 )
-from settings import setup, use_phoenix
+from setup import setup, use_phoenix
 
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../agent_dku"))

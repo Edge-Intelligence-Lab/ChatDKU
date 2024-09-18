@@ -1,6 +1,6 @@
 import streamlit as st
 from query import get_pipeline
-from settings import setup
+from setup import setup
 
 
 # Define the main Streamlit interface function

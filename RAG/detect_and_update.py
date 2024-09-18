@@ -14,7 +14,8 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_parse import LlamaParse
 
-from settings import Config, setup
+from config import config
+from setup import setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -267,7 +268,6 @@ def change_update(
 
 def main():
     setup(add_system_prompt=True)
-    config = Config()
 
     change_detect(data_dir=str(config.data_dir))
 

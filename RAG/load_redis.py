@@ -19,7 +19,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from typing import Any
-from settings import setup
+from setup import setup
 from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -34,10 +34,7 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
-from settings import Config
-
-
-config = Config()
+from config import config
 
 setup(add_system_prompt=True)
 

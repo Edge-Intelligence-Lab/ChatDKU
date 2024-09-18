@@ -4,13 +4,11 @@ import os
 from pathlib import Path
 import pickle
 import chromadb
-from settings import setup
+from setup import setup
 from update_data import update_data, hash_directory, update_sub_data
 
 
-from settings import Config
-
-config = Config()
+from config import config
 
 
 def load_data(
@@ -25,7 +23,6 @@ def load_data(
 
 def main():
     setup(add_system_prompt=True)
-    config = Config()
 
     load_data(
         data_dir=str(config.data_dir),

@@ -1,7 +1,6 @@
 import pandas as pd
 import pickle
-from settings import Config
-config=Config()
+from config import Config
 
 def documents_reprocess():
     with open(config.documents_path, "rb") as file:

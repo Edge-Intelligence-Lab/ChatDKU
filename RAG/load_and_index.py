@@ -9,7 +9,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.ingestion import IngestionPipeline
 from typing import Any
-from settings import setup
+from setup import setup
 from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -24,10 +24,8 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
-from settings import Config
+from config import config
 
-
-config = Config()
 
 def safe_parse_nodes(documents, **kwargs):
     nodes = []
@@ -174,7 +172,6 @@ def load_and_index(
 
 def main():
     setup(add_system_prompt=True)
-    config = Config()
 
     load_and_index(
         update=False,

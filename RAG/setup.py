@@ -25,6 +25,8 @@ import os
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
+from config import config
+
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like
 # `here is a summary of the given text` before the summary. This prompt used to
@@ -63,41 +65,8 @@ class UseCustomPrompt:
         return self.func(message, CUSTOM_SYSTEM_PROMPT)
 
 
-class Config:
-    def __init__(self, embedding_model_type="small"):
-
-        # about settings.py
-        self.embedding = f"BAAI/bge-m3"
-        self.llm = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-        self.tokenizer = "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct"
-        self.tokenizer = "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct"
-        self.tei_url = "http://localhost:18080"
-        self.llm_url = "http://localhost:8001/v1"
-        self.context_window = 20000
-        self.context_window = 20000
-
-        # about load_and_index
-        self.data_dir = "/datapool/RAG_data"
-        self.documents_path = "/datapool/RAG_data/new_parser_documents.pkl"
-        self.pipeline_cache = "./pipeline_cache"
-        self.csv_path='/datapool/RAG_data_new_website/download_info.csv'#Store URL info of dku websites
-        self.update = False
-
-        # about query
-        self.chroma_db = f"/datapool/chroma_dbs/bge_m3_chroma_db"
-        # self.nodes_path = f"./nodes/nodes_{str(embedding_model_type)}_bge.pkl"
-        self.docstore_path = f"/datapool/docstores/bge_m3_docstore"
-
-        # about graphrag
-        self.graph_data_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts"
-        self.graph_root_dir = "/home/Glitterccc/projects/DKU_LLM/GraphDKU"
-        self.response_type = "Multiple Paragraphs"
-
-
 def setup(add_system_prompt: bool = False) -> None:
     """Setup common resources from command line arguments."""
-    config = Config()
-
     # A Text Embeddings Inference server is used to serve the embedding model
     # The endpoint should be of the format [base_url]/[author]/[model_name]
     Settings.embed_model = TextEmbeddingsInference(
