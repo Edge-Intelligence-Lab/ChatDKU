@@ -237,9 +237,7 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"Judge: {judgement}")
             if judgement:
-                # FIXME: This might cause memory not updated during last iteration
-                yield self.synthesizer(**synthesizer_args)
-                return
+                break
 
             # TODO: This could be merged with `Planner` depends on how well the
             # LLM understood its task.
