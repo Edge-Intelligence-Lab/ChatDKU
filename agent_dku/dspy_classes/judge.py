@@ -45,17 +45,29 @@ def make_judge_signature():
             str,
             dspy.OutputField(
                 desc=(
-                    'If you can answer the question, please reply with "Yes" directly; '
-                    'if you cannot and need more information, please reply with "No" directly.'
+                    'If you should respond to the user, please reply with "Yes" directly; '
+                    'if you think you should look for more information, please reply with "No" directly.'
                 )
             ),
         ),
     }
 
     instruction = (
-        "Judging based solely on the your system prompt and the information given below, "
-        "and without allowing for inference, are you able to completely and accurately "
-        "respond to the Current User Message?"
+        "You are capable of making tool calls to retrieve relevant information for answering "
+        "the Current User Message. "
+        "The information you already learned from the tool calls is given in the Tool History.\n\n"
+        "You current task is to judge, base solely on the system prompt and the information given below, "
+        "whether should respond to the Current User Message with these information, "
+        "or should you look for more information by making more tool calls. "
+        "You should respond to the user when either "
+        "(a) the given information is sufficient for answer the Current User Message or "
+        "(b) the Current User Message is ambiguous to the extent that further tool calls would not be "
+        "helpful for answering it. "
+        # This might seem a bit extraneous for now, but it appears that the LLM needs a stronger nudge
+        # on case (b) to say "Yes".
+        # It should be done by better prompt engineering/few-shot examples in the future.
+        "Note that you should respond to the user if (b) holds, where you should ask for clarifications "
+        "as opposed to answering the question itself."
     )
 
     return dspy.make_signature(
