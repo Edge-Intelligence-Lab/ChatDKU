@@ -7,6 +7,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
+import asyncio
 
 import dspy
 import os
@@ -31,7 +32,7 @@ def reset_agent():
     return {"good": "Agent has been reset."}, 200
 
 @app.route("/chat", methods=["POST"])
-def chat():
+async def chat(): # 将核心视图函数定义为 async
     """
     Return response stream from query pipeline given JSON formatted chat history as input.
 
@@ -49,10 +50,11 @@ def chat():
         messages = messages[-1]["content"]
         responses_gen = agent(current_user_message=messages)
     # 使用 Flask 的 Response 对象和 stream_with_context 进行流式输出
-        def generate():
+        async def generate():
             for i,r in enumerate(responses_gen):
                 for response in r.response:
                     yield f"{response}"  # 每个响应后加换行符
+                    await asyncio.sleep(0)#允许切换任务
 
         return Response(stream_with_context(generate()), content_type='text/plain')
     except Exception as e:
@@ -68,4 +70,4 @@ if __name__ == "__main__":
 
 
     # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=5002)
+    app.run(host="0.0.0.0", port=5002, threaded=True)
