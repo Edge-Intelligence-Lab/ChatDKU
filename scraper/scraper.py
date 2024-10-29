@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup
 from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
-from getpass import getpass
 from http.cookiejar import CookieJar
 from utils import Status, DownloadInfo, print_summary
 
@@ -410,14 +409,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         "--saml",
-        action="store_true",
-        help="Login with SAML 2.0/Shibboleth-based SSO",
+        nargs=2,
+        metavar=("saml_username", "saml_password"),
+        help="Login with SAML 2.0/Shibboleth-based SSO (provide username and password)",
     )
     args = parser.parse_args()
 
     if args.saml:
-        saml_username = input("Username: ")
-        saml_password = getpass("Password:")
+        saml_username, saml_password = args.saml
 
     try:
         asyncio.run(main())
