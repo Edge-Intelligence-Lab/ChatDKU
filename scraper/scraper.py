@@ -117,7 +117,12 @@ def cut(path: str) -> str:
             chunks.insert(
                 0, part[max(0, len(part) - i - args.path_part_max_size) : len(part) - i]
             )
-        return os.path.join(*chunks)
+
+        # Handle the leading "/" of absolute path
+        if not chunks:
+            return "/"
+        else:
+            return os.path.join(*chunks)
 
     pieces = [cut_part(p) for p in parts]
     pieces[-1] += ext
