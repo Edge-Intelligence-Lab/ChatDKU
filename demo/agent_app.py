@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-# FIXME: Purge API key from the history of this file
 
-### TODO: Create multiple app objects in advance, lock the app object for each user, and reset the app object when the user is not using it.
-
-from flask import Flask, request
+from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
-from llama_index.core.base.llms.types import ChatMessage, MessageRole
-from flask import Response, stream_with_context, jsonify
 import asyncio
-
 import dspy
 import os
 import sys
@@ -21,53 +15,52 @@ from setup import setup, use_phoenix
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../agent_dku"))
 )
-from agent import Agent,CustomClient
+from agent import Agent, CustomClient
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/reset",methods=["POST"])
+# 全局初始化，只需运行一次的部分
+setup()
+use_phoenix()
+llama_client = CustomClient()
+dspy.settings.configure(lm=llama_client)
+
+@app.route("/reset", methods=["POST"])
 def reset_agent():
+    agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
     agent.reset()
     return {"good": "Agent has been reset."}, 200
 
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
+
 @app.route("/chat", methods=["POST"])
-async def chat(): # 将核心视图函数定义为 async
-    """
-    Return response stream from query pipeline given JSON formatted chat history as input.
-
-    The response is a text stream on success, but a JSON object with error message on failure.
-    """
-    # example data :
-    # {'messages': [{'role': 'user', 'content': 'Hello'}, {'role': 'assistant', 'content': 'Hey there! How can I assist you today? 😊'}, {'role': 'user', 'content': 'What do you know about DKU?'}]}
-
-    messages = request.json["messages"]
+async def chat():
+    messages = request.json.get("messages", [])
     if not messages:
         return {"error": "No message provided"}, 400
 
     try:
-        print(messages[0]["content"])
-        messages = messages[-1]["content"]
-        responses_gen = agent(current_user_message=messages)
-    # 使用 Flask 的 Response 对象和 stream_with_context 进行流式输出
+        message_content = messages[-1]["content"]
+
+        # 在线程池中运行阻塞的 Agent 调用
+        loop = asyncio.get_event_loop()
+        agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
+        responses_gen = await loop.run_in_executor(
+            executor, agent, message_content
+        )
+
         async def generate():
-            for i,r in enumerate(responses_gen):
+            for r in responses_gen:
                 for response in r.response:
-                    yield f"{response}"  # 每个响应后加换行符
-                    await asyncio.sleep(0)#允许切换任务
+                    yield f"{response}"
+                    await asyncio.sleep(0)
 
         return Response(stream_with_context(generate()), content_type='text/plain')
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 if __name__ == "__main__":
-    setup()
-    use_phoenix()
-    llama_client = CustomClient()
-    dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
-
-
-    # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=5002, threaded=True)
+    app.run(host="0.0.0.0", port=5003, threaded=True)
