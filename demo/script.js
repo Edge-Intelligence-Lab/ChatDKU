@@ -55,38 +55,39 @@ function replaceBlocks(block_id) {
 
     let newBlocks = [];
     
-    if (block_id === 'academic') {
-        console.log(1111)
-        newBlocks = [
-            { id: 'block1', text: 'I am a freshman interested in majoring in computer science, please give me a course recommendation in the first session.' },
-            { id: 'block2', text: 'Introduce Credit/No Credit (CR/NC) grading system.' },
-            { id: 'block3', text: 'What are Common Core courses should I take?' },
-            { id: 'block4', text: 'What’s EAP course at DKU?' },
-            { id: 'block5', text: 'Do you know the Guidelines for Appointment of Adjunct Faculty?'}
-        ];
-    } else if (block_id === 'campus') {
-        newBlocks = [
-            { id: 'block6', text: 'How to make a medical withdrawal from a course?' },
-            { id: 'block7', text: 'When will students declare a major?' },
-            { id: 'block8', text: 'Where can I ask for help if I have difficulties studying some course?' },
-            { id: 'block9', text: 'Who to contact when I have an emergency at DKU?' }
-        ];
-    } else if (block_id === 'service') {
-        newBlocks = [
-            { id: 'block11', text: 'How can I get help from Residence Life?' },
-            { id: 'block12', text: 'What should I do if I have IT problem (in DKU)?' },
-            { id: 'block13', text: 'What should I do if I have some mental problem (in DKU)?' },
-            { id: 'block14', text: 'How can I find an internship with the help of career services in DKU?' }
-        ];
-    } else if (block_id === 'tools') {
-        newBlocks = [
-            { id: 'block16', text: 'Please reserve a big meeting room in IB building.' },
-            { id: 'block17', text: 'Could you please briefly generate an email to invite professor Bing Luo to have a lunch meeting with me?' },
-            { id: 'block18', text: 'I am a rising Senior student. Please design a plan with timeline for my signature work to me.' },
-            { id: 'block19', text: 'Show me the menu in DKU this week.' },
-            { id: 'block20', text: 'How to organize my 7-week study plan for CS101 course.' }
-        ];
-    }
+if (block_id === 'academic') {
+    console.log(1111)
+    newBlocks = [
+        { id: 'block1', text: 'I am a freshman interested in majoring in computer science. Could you recommend some courses for my first semester?' },
+        { id: 'block2', text: 'Introduce the Credit/No Credit (CR/NC) grading system.' },
+        { id: 'block3', text: 'What Common Core courses should I take?' },
+        { id: 'block4', text: 'What is an EAP course at DKU?' },
+        { id: 'block5', text: 'Do you know the guidelines for the appointment of adjunct faculty?' }
+    ];
+} else if (block_id === 'campus') {
+    newBlocks = [
+        { id: 'block6', text: 'How can I request a medical withdrawal from a course?' },
+        { id: 'block7', text: 'When should students declare their major?' },
+        { id: 'block8', text: 'Where can I get help if I am having difficulty in a course?' },
+        { id: 'block9', text: 'Who should I contact in case of an emergency at DKU?' }
+    ];
+} else if (block_id === 'service') {
+    newBlocks = [
+        { id: 'block11', text: 'How can I get assistance from Residence Life?' },
+        { id: 'block12', text: 'What should I do if I have an IT issue at DKU?' },
+        { id: 'block13', text: 'What resources are available for mental health support at DKU?' },
+        { id: 'block14', text: 'How can I find an internship with the help of DKU career services?' }
+    ];
+} else if (block_id === 'tools') {
+    newBlocks = [
+        { id: 'block16', text: 'Please reserve a large meeting room in the IB building.' },
+        { id: 'block17', text: 'Could you generate a brief email inviting Professor Bing Luo for a lunch meeting with me?' },
+        { id: 'block18', text: 'I am a rising senior. Please create a timeline for my signature work plan.' },
+        { id: 'block19', text: 'Show me the DKU menu for this week.' },
+        { id: 'block20', text: 'How can I organize my 7-week study plan for the CS101 course?' }
+    ];
+}
+
 
     newBlocks.forEach(blockInfo => {
         const block = document.createElement('div');
