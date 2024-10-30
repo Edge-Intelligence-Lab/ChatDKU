@@ -265,6 +265,22 @@ async def scrape_site(
             )
 
 
+def dump_info() -> None:
+    with open(args.download_info_file, "w") as f:
+        # FIXME: I think dataclass_csv should take all iterables instead of just lists as input,
+        # as I think the conversion via `list()` is unnecessary.
+        #
+        # FIXME: dataclass_csv's `DataclassReader` considers both nothing `field,,field`
+        # and empty quotes `field,"",field` as `None`, which is inconsistent with the
+        # implementation of the csv module.
+        # Also see: https://stackoverflow.com/questions/11379300/csv-reader-behavior-with-none-and-empty-string
+
+        w = DataclassWriter(
+            f, list(tried.values()), DownloadInfo, quoting=csv.QUOTE_NONNUMERIC
+        )
+        w.write()
+
+
 async def peroidic_report() -> None:
     async def done() -> bool:
         await asyncio.sleep(args.check_if_done_delay)
@@ -283,6 +299,8 @@ async def peroidic_report() -> None:
         ts = datetime.datetime.now().replace(microsecond=0).isoformat()
         print(f"----------------PROGRESS {ts}----------------")
         print_summary(tried.values())
+
+        dump_info()
 
 
 async def main() -> None:
@@ -406,7 +424,7 @@ if __name__ == "__main__":
         "--progress-report-delay",
         type=int,
         default=30,
-        help="Time (seconds) before printing the latest progress report.",
+        help="Time (seconds) before printing the latest progress report and dumping download information file.",
     )
     parser.add_argument(
         "-i",
@@ -435,16 +453,4 @@ if __name__ == "__main__":
 
     print_summary(tried.values())
 
-    with open(args.download_info_file, "w") as f:
-        # FIXME: I think dataclass_csv should take all iterables instead of just lists as input,
-        # as I think the conversion via `list()` is unnecessary.
-        #
-        # FIXME: dataclass_csv's `DataclassReader` considers both nothing `field,,field`
-        # and empty quotes `field,"",field` as `None`, which is inconsistent with the
-        # implementation of the csv module.
-        # Also see: https://stackoverflow.com/questions/11379300/csv-reader-behavior-with-none-and-empty-string
-
-        w = DataclassWriter(
-            f, list(tried.values()), DownloadInfo, quoting=csv.QUOTE_NONNUMERIC
-        )
-        w.write()
+    dump_info()
