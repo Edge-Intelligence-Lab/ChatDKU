@@ -287,7 +287,9 @@ async def peroidic_report() -> None:
 
 async def main() -> None:
     headers = {"User-Agent": args.user_agent}
-    timeout = aiohttp.ClientTimeout(connect=args.connection_timeout)
+    timeout = aiohttp.ClientTimeout(
+        total=args.total_timeout, connect=args.connection_timeout
+    )
     # Enable `trust_env` so that environmental variables like `HTTP_PROXY`
     # would be used for proxy settings.
     async with aiohttp.ClientSession(
@@ -320,6 +322,13 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="Maximum depth of recursive website download.",
+    )
+    parser.add_argument(
+        "-T",
+        "--total-timeout",
+        type=float,
+        default=300,
+        help="Timeout (seconds) of the entire request.",
     )
     parser.add_argument(
         "-t",
