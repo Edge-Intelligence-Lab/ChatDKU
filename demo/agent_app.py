@@ -45,7 +45,7 @@ async def chat():
     try:
         message_content = messages[-1]["content"]
 
-        # 在线程池中运行阻塞的 Agent 调用
+        # 在线程池中运行Agent
         loop = asyncio.get_event_loop()
         agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
         responses_gen = await loop.run_in_executor(
