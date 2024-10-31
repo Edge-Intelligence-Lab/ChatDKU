@@ -9,6 +9,7 @@ import csv
 import mechanicalsoup
 import requests
 from argparse import ArgumentParser
+from contextlib import AsyncExitStack
 from bs4 import BeautifulSoup
 from yarl import URL
 from dataclass_csv import DataclassWriter
@@ -54,9 +55,12 @@ async def get(
         await asyncio.sleep(args.delay)
 
     try:
-        # XXX: Disable verification of SSL is a security risk,
-        # but some sites don't work for me if I don't do this
-        async with session.get(url, verify_ssl=False, allow_redirects=True) as response:
+        async with AsyncExitStack() as stack:
+            # XXX: Disable verification of SSL is a security risk,
+            # but some sites don't work for me if I don't do this
+            response = await stack.enter_async_context(
+                session.get(url, verify_ssl=False, allow_redirects=True)
+            )
             if response.status != 200:
                 if args.verbose >= 1:
                     print(f"Failed {response.status}: {url}")
@@ -65,7 +69,14 @@ async def get(
             if args.saml and response.url.host == "shib.oit.duke.edu":
                 cookiejar = saml_login(url)
                 session.cookie_jar.update_cookies(cookiejar)
-                return await get(session, url)
+
+                response = await stack.enter_async_context(
+                    session.get(url, verify_ssl=False, allow_redirects=True)
+                )
+                if response.url.host == "shib.oit.duke.edu":
+                    if args.verbose >= 1:
+                        print(f"SAML login failed: {url}")
+                    return None
 
             content_type = response.content_type.split("/")
             ty = content_type
