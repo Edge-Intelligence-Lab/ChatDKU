@@ -25,6 +25,8 @@ from redis.commands.search.query import Query
 import os
 import sys
 import re
+import string
+from itertools import combinations
 
 sys.path.append(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
@@ -115,32 +117,34 @@ def get_reranker(top_n: int):
         keep_retrieval_score=True,
     )
 
+
 import pandas as pd
 import re
 
 url_csv_path = "/datapool/download_info/download_info.csv"
 df = pd.read_csv(url_csv_path)
 
+
 def get_url(metadata):
     try:
         try:
             path = metadata["file_path"]
         except:
-            path = metadata["file_directory"] + '/' + metadata["filename"]
+            path = metadata["file_directory"] + "/" + metadata["filename"]
         if "dku_website" in path:
-            match = re.search(r'dku_website/.*', path)
+            match = re.search(r"dku_website/.*", path)
             if match:
                 result = match.group(0)
-                matching_row = df[df['file_path'] == result]
+                matching_row = df[df["file_path"] == result]
                 if not matching_row.empty:
-                    return matching_row.iloc[0]['url']
+                    return matching_row.iloc[0]["url"]
         elif "new_bulletin" in path:
-            match = re.search(r'new_bulletin/.*', path)
+            match = re.search(r"new_bulletin/.*", path)
             if match:
                 result = match.group(0)
-                matching_row = df[df['file_path'] == result]
+                matching_row = df[df["file_path"] == result]
                 if not matching_row.empty:
-                    return matching_row.iloc[0]['url']
+                    return matching_row.iloc[0]["url"]
         return "no url"
     except Exception as e:
         return f"no url, error: {str(e)}"
@@ -209,7 +213,6 @@ class VectorRetriever(dspy.Module):
         # )
 
 
-
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
@@ -235,26 +238,76 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
     ):
-        
+
         try:
-            nltk.data.find('tokenizers/punkt_tab')
+            nltk.data.find("tokenizers/punkt_tab")
         except LookupError:
-            nltk.download('punkt_tab')
+            nltk.download("punkt_tab")
         # Break down the query into tokens
-        keywords = word_tokenize(query)
-        
-        params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
-        # `|` means searching the union of the words/tokens
-        # `%` means fuzzy search with Levenshtein distance of 1
-        query_str = " ".join([f"%${param}%" for param in params])
+        tokens = word_tokenize(query)
+        # Remove tokens that are PURELY punctuations
+        non_puncts = list(filter(lambda token: token not in string.punctuation, tokens))
+        # Escape all punctuations, e.g. "can't" -> "can\'t"
+        pattern = f"[{re.escape(string.punctuation)}]"
+        orig_keywords = [
+            re.sub(pattern, lambda match: f"\\{match.group(0)}", keyword)
+            for keyword in non_puncts
+        ]
+
+        # FIXME: Hack for improving performance with multiple keywords.
+        # There ought to be better ways than this.
+        # Combinations of the original keywords are generated to "boost" the result,
+        # e.g. searching for "a b" would become "a OR b OR (a AND b)".
+        # Without boosting, documents with a lot of either just "a" or "b" would be given
+        # a heavier preferences, even though we would prefer documents with both "a" and "b".
+        # Larger weights are given to combinations of larger size.
+        keywords = []
+        weights = []
+        TUPLE_LIMIT = 4
+        BOOST_FACTOR = 2
+        for i in range(1, TUPLE_LIMIT + 1):
+            for combo in combinations(orig_keywords, i):
+                keywords.append(" ".join(combo))
+                weights.append(BOOST_FACTOR ** (i - 1))
+
+        # `|` means searching the union of the words/tokens.
+        # `%` means fuzzy search with Levenshtein distance of 1.
+        # Query attributes are used here to set the weight of the keywords.
+        query_str = " | ".join(
+            [
+                f"({keyword}) => {{ $weight: {weight} }}"
+                for keyword, weight in zip(keywords, weights)
+            ]
+        )
         query_str = "@text:(" + query_str + ")"
-        
+
+        # NOTE: I think it will be better to use PARAMS for security reasons.
+        # However, it appears that RediSearch has an issue using both parameters and query attributes.
+        #
+        # You can confirm this issue with:
+        # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
+        #   DIALECT 2 LIMIT 0 1 WITHSCORES EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 alpha beta"
+        # And:
+        # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
+        #   DIALECT 2 LIMIT 0 1 EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 "alpha beta"
+        #
+        # Using parameters would be like this:
+        # params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
+        # query_str = " | ".join([f"(${param}) => {{ $weight: {weight} }}" for param, weight in zip(params, weights)])
+        # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
+        # results = self.client.ft("idx:test").search(query_cmd, params)
+
         retriever_top_k = 5
-        query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
-        results = self.client.ft("idx:test").search(query_cmd, params)
+        query_cmd = (
+            Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
+        )
+        results = self.client.ft("idx:test").search(query_cmd)
         print(results)
         try:
-            nodes = [TextNode(text=r.text, metadata={"file_path": r.file_path}) for r in results.docs]
+            nodes = [
+                TextNode(text=r.text, metadata={"file_path": r.file_path})
+                for r in results.docs
+            ]
         except:
             nodes = [TextNode(text=r.text) for r in results.docs]
 
