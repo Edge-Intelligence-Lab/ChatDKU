@@ -85,12 +85,18 @@ def make_planner_signature():
         "current_tool_plan": (
             str,
             dspy.OutputField(
+                # FIXME: Currently giving an example to reduce error. We might not need
+                # and example after using DSPy for automatic prompting.
                 desc=(
                     "Your step-by-step plan of the tools to call and their respective "
                     "parameters in JSON Lines format. "
                     "Each tool call should be a JSON object printed on a singled line. "
                     "Each tool call should be on its own line. "
+                    "For example, the following two lines are an example of two valid tool calls:\n"
+                    '{"name": "keyword_retriever", "params": {"query": "keyword another-keyword"}}\n'
+                    '{"name": "vector_retriever", "params": {"query": "a query"}}'
                 ),
+                format=lambda x: x,
             ),
         ),
     }
