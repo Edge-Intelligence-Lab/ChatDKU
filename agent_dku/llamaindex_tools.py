@@ -192,6 +192,7 @@ class VectorRetriever(dspy.Module):
                 description="Texts that might be semantically similar to the real answer to the question."
             ),
         ],
+        internal_memory: dict,
     ):
         retrieved_nodes = self.retriever.retrieve(
             # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
@@ -205,7 +206,9 @@ class VectorRetriever(dspy.Module):
             # BERT token limit is 512, however, we should leave some space for special tokens
             query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
         )
-        return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
+        return dspy.Prediction(
+            result=get_str_of_simplified_nodes(reranked_nodes), internal_result={}
+        )
 
         # See notes about summarizer above
         # return dspy.Prediction(
@@ -237,7 +240,14 @@ class KeywordRetriever(dspy.Module):
                 description="Keywords that might appear in the answer to the question."
             ),
         ],
+        internal_memory: dict,
     ):
+        # Escape all punctuations, e.g. "can't" -> "can\'t"
+        def escape_strs(strs: list[str]):
+            pattern = f"[{re.escape(string.punctuation)}]"
+            return [
+                re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
+            ]
 
         try:
             nltk.data.find("tokenizers/punkt_tab")
@@ -246,13 +256,10 @@ class KeywordRetriever(dspy.Module):
         # Break down the query into tokens
         tokens = word_tokenize(query)
         # Remove tokens that are PURELY punctuations
-        non_puncts = list(filter(lambda token: token not in string.punctuation, tokens))
-        # Escape all punctuations, e.g. "can't" -> "can\'t"
-        pattern = f"[{re.escape(string.punctuation)}]"
-        orig_keywords = [
-            re.sub(pattern, lambda match: f"\\{match.group(0)}", keyword)
-            for keyword in non_puncts
-        ]
+        orig_keywords = list(
+            filter(lambda token: token not in string.punctuation, tokens)
+        )
+        orig_keywords = escape_strs(orig_keywords)
 
         # FIXME: Hack for improving performance with multiple keywords.
         # There ought to be better ways than this.
@@ -273,13 +280,19 @@ class KeywordRetriever(dspy.Module):
         # `|` means searching the union of the words/tokens.
         # `%` means fuzzy search with Levenshtein distance of 1.
         # Query attributes are used here to set the weight of the keywords.
-        query_str = " | ".join(
+        text_str = " | ".join(
             [
                 f"({keyword}) => {{ $weight: {weight} }}"
                 for keyword, weight in zip(keywords, weights)
             ]
         )
-        query_str = "@text:(" + query_str + ")"
+        query_str = "@text:(" + text_str + ")"
+
+        exclude = list(internal_memory.get("ids", set()))
+        exclude = escape_strs(exclude)
+        exclude_str = " ".join([f"-@id:({e})" for e in exclude])
+        if exclude_str:
+            query_str += " " + exclude_str
 
         # NOTE: I think it will be better to use PARAMS for security reasons.
         # However, it appears that RediSearch has an issue using both parameters and query attributes.
@@ -311,6 +324,8 @@ class KeywordRetriever(dspy.Module):
         except:
             nodes = [TextNode(text=r.text) for r in results.docs]
 
+        ids = {r.id for r in results.docs}
+
         # retrieved_nodes = self.retriever.retrieve(query)
         # reranked_nodes = self.reranker.postprocess_nodes(
         #     retrieved_nodes,
@@ -318,7 +333,9 @@ class KeywordRetriever(dspy.Module):
         #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
         # )
         # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
-        return dspy.Prediction(result=get_str_of_simplified_nodes(nodes))
+        return dspy.Prediction(
+            result=get_str_of_simplified_nodes(nodes), internal_result={"ids": ids}
+        )
 
         # See notes about summarizer above
         # return dspy.Prediction(
