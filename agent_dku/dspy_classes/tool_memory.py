@@ -1,6 +1,16 @@
 from pydantic import BaseModel, ConfigDict
 
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
+
 from dspy_common import get_template, custom_cot_rationale
 from utils import (
     NameParams,
@@ -15,6 +25,16 @@ from dspy_classes.prompt_settings import (
     ROLE_PROMPT,
 )
 from dspy_classes.conversation_memory import ConversationMemory
+
+import os
+import sys
+
+sys.path.append(
+    os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
+    )
+)
+from config import config
 
 
 class ToolMemoryEntry(BaseModel):
@@ -110,31 +130,61 @@ class ToolMemory(dspy.Module):
         result: str,
         max_history_size: int = 13000,
     ):
-        # FIXME: Investigate why, and this should not be a fixed number
-        # Must assignment here, or will have some bug
-        max_history_size = 13000
-        self.history.append(ToolMemoryEntry(name_params=calls[0], result=result))
-        self.plan = calls[1:].copy()
-        min_index = strs_fit_max_tokens_reverse(
-            [i.model_dump_json() for i in self.history],
-            "\n",
-            max_history_size,
-        )
-        if min_index > 0:
-            compressor_inputs = dict(
-                current_user_message=current_user_message,
-                conversation_history="\n".join(
-                    [i.model_dump_json() for i in conversation_memory.history]
-                ),
-                conversation_summary=conversation_memory.summary,
-                history_to_discard="\n".join(
-                    [i.model_dump_json() for i in self.history[:min_index]]
-                ),
-                previous_summary=self.summary,
+        with (
+            config.tracer.start_as_current_span("Tool Memory")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attribute(
+                SpanAttributes.OPENINFERENCE_SPAN_KIND,
+                OpenInferenceSpanKindValues.CHAIN.value,
             )
-            compressor_inputs = truncate_tokens_all(
-                compressor_inputs, self.get_token_limits()
+            new_entry = ToolMemoryEntry(name_params=calls[0], result=result)
+            self.history.append(new_entry)
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(new_entry.model_dump()),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
             )
 
-            self.summary = self.compressor(**compressor_inputs).current_summary
-            self.history = self.history[min_index:]
+            # FIXME: Investigate why, and this should not be a fixed number
+            # Must assignment here, or will have some bug
+            max_history_size = 13000
+            self.plan = calls[1:].copy()
+            min_index = strs_fit_max_tokens_reverse(
+                [i.model_dump_json() for i in self.history],
+                "\n",
+                max_history_size,
+            )
+            if min_index > 0:
+                compressor_inputs = dict(
+                    current_user_message=current_user_message,
+                    conversation_history="\n".join(
+                        [i.model_dump_json() for i in conversation_memory.history]
+                    ),
+                    conversation_summary=conversation_memory.summary,
+                    history_to_discard="\n".join(
+                        [i.model_dump_json() for i in self.history[:min_index]]
+                    ),
+                    previous_summary=self.summary,
+                )
+                compressor_inputs = truncate_tokens_all(
+                    compressor_inputs, self.get_token_limits()
+                )
+
+                self.summary = self.compressor(**compressor_inputs).current_summary
+                self.history = self.history[min_index:]
+
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                        dict(
+                            history=[i.model_dump() for i in self.history],
+                            summary=self.summary,
+                        )
+                    ),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.OK))
