@@ -1,7 +1,20 @@
-from typing import Annotated
+from typing import Annotated, Any
+from enum import Enum
+from collections.abc import Iterable, Iterator, Mapping
 from pydantic import Field
 
 import dspy
+
+from contextlib import nullcontext
+from openinference.instrumentation import safe_json_dumps
+from opentelemetry.trace import Status, StatusCode
+from openinference.semconv.trace import (
+    SpanAttributes,
+    DocumentAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
+from opentelemetry.util.types import AttributeValue
 
 from utils import truncate_tokens
 from dspy_common import custom_cot_rationale
@@ -166,6 +179,52 @@ def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
     )
 
 
+# Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
+def _flatten(key_values: Mapping[str, Any]) -> Iterator[tuple[str, AttributeValue]]:
+    for key, value in key_values.items():
+        if value is None:
+            continue
+        if isinstance(value, Mapping):
+            for sub_key, sub_value in _flatten(value):
+                yield f"{key}.{sub_key}", sub_value
+        elif isinstance(value, list) and any(
+            isinstance(item, Mapping) for item in value
+        ):
+            for index, sub_mapping in enumerate(value):
+                for sub_key, sub_value in _flatten(sub_mapping):
+                    yield f"{key}.{index}.{sub_key}", sub_value
+        else:
+            if isinstance(value, Enum):
+                value = value.value
+            yield key, value
+
+
+def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
+    return dict(
+        _flatten(
+            {
+                SpanAttributes.RETRIEVAL_DOCUMENTS: [
+                    {
+                        DocumentAttributes.DOCUMENT_ID: node.node_id,
+                        DocumentAttributes.DOCUMENT_SCORE: node.score,
+                        DocumentAttributes.DOCUMENT_CONTENT: node.text,
+                        **(
+                            {
+                                DocumentAttributes.DOCUMENT_METADATA: safe_json_dumps(
+                                    metadata
+                                )
+                            }
+                            if (metadata := node.node.metadata)
+                            else {}
+                        ),
+                    }
+                    for node in nodes
+                ]
+            }
+        )
+    )
+
+
 class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
@@ -194,26 +253,50 @@ class VectorRetriever(dspy.Module):
         ],
         internal_memory: dict,
     ):
-        retrieved_nodes = self.retriever.retrieve(
-            # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
-            # what would happen if that is exceeded. Also, we should use it tokenizer
-            # to get the accurate token count. This is just a temporary safety
-            # measure for now.
-            truncate_tokens(query, 7000)
-        )
-        reranked_nodes = self.reranker.postprocess_nodes(
-            retrieved_nodes,
-            # BERT token limit is 512, however, we should leave some space for special tokens
-            query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
-        )
-        return dspy.Prediction(
-            result=get_str_of_simplified_nodes(reranked_nodes), internal_result={}
-        )
+        with (
+            config.tracer.start_as_current_span("Vector Retriever")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            span.set_attributes(
+                {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(query=query)),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
 
-        # See notes about summarizer above
-        # return dspy.Prediction(
-        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-        # )
+            # TODO: Might need to display `retrieved_nodes` in Phoenix
+            retrieved_nodes = self.retriever.retrieve(
+                # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
+                # what would happen if that is exceeded. Also, we should use it tokenizer
+                # to get the accurate token count. This is just a temporary safety
+                # measure for now.
+                truncate_tokens(query, 7000)
+            )
+            reranked_nodes = self.reranker.postprocess_nodes(
+                retrieved_nodes,
+                # BERT token limit is 512, however, we should leave some space for special tokens
+                query_str=truncate_tokens(
+                    query, 500, tokenizer=self.reranker._tokenizer
+                ),
+            )
+            result = get_str_of_simplified_nodes(reranked_nodes)
+
+            span.set_attributes(nodes_to_openinference(reranked_nodes))
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.OK))
+            return dspy.Prediction(result=result, internal_result={})
+
+            # See notes about summarizer above
+            # return dspy.Prediction(
+            #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+            # )
 
 
 class KeywordRetriever(dspy.Module):
@@ -249,95 +332,124 @@ class KeywordRetriever(dspy.Module):
                 re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
             ]
 
-        try:
-            nltk.data.find("tokenizers/punkt_tab")
-        except LookupError:
-            nltk.download("punkt_tab")
-        # Break down the query into tokens
-        tokens = word_tokenize(query)
-        # Remove tokens that are PURELY punctuations
-        orig_keywords = list(
-            filter(lambda token: token not in string.punctuation, tokens)
-        )
-        orig_keywords = escape_strs(orig_keywords)
+        with (
+            config.tracer.start_as_current_span("Keyword Retriever")
+            if hasattr(config, "tracer")
+            else nullcontext()
+        ) as span:
+            exclude = list(internal_memory.get("ids", set()))
+            span.set_attributes(
+                {
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(query=query, exclude=exclude)),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
 
-        # FIXME: Hack for improving performance with multiple keywords.
-        # There ought to be better ways than this.
-        # Combinations of the original keywords are generated to "boost" the result,
-        # e.g. searching for "a b" would become "a OR b OR (a AND b)".
-        # Without boosting, documents with a lot of either just "a" or "b" would be given
-        # a heavier preferences, even though we would prefer documents with both "a" and "b".
-        # Larger weights are given to combinations of larger size.
-        keywords = []
-        weights = []
-        TUPLE_LIMIT = 4
-        BOOST_FACTOR = 2
-        for i in range(1, TUPLE_LIMIT + 1):
-            for combo in combinations(orig_keywords, i):
-                keywords.append(" ".join(combo))
-                weights.append(BOOST_FACTOR ** (i - 1))
+            try:
+                nltk.data.find("tokenizers/punkt_tab")
+            except LookupError:
+                nltk.download("punkt_tab")
+            # Break down the query into tokens
+            tokens = word_tokenize(query)
+            # Remove tokens that are PURELY punctuations
+            orig_keywords = list(
+                filter(lambda token: token not in string.punctuation, tokens)
+            )
+            orig_keywords = escape_strs(orig_keywords)
 
-        # `|` means searching the union of the words/tokens.
-        # `%` means fuzzy search with Levenshtein distance of 1.
-        # Query attributes are used here to set the weight of the keywords.
-        text_str = " | ".join(
-            [
-                f"({keyword}) => {{ $weight: {weight} }}"
-                for keyword, weight in zip(keywords, weights)
-            ]
-        )
-        query_str = "@text:(" + text_str + ")"
+            # FIXME: Hack for improving performance with multiple keywords.
+            # There ought to be better ways than this.
+            # Combinations of the original keywords are generated to "boost" the result,
+            # e.g. searching for "a b" would become "a OR b OR (a AND b)".
+            # Without boosting, documents with a lot of either just "a" or "b" would be given
+            # a heavier preferences, even though we would prefer documents with both "a" and "b".
+            # Larger weights are given to combinations of larger size.
+            keywords = []
+            weights = []
+            TUPLE_LIMIT = 4
+            BOOST_FACTOR = 2
+            for i in range(1, TUPLE_LIMIT + 1):
+                for combo in combinations(orig_keywords, i):
+                    keywords.append(" ".join(combo))
+                    weights.append(BOOST_FACTOR ** (i - 1))
 
-        exclude = list(internal_memory.get("ids", set()))
-        exclude = escape_strs(exclude)
-        exclude_str = " ".join([f"-@id:({e})" for e in exclude])
-        if exclude_str:
-            query_str += " " + exclude_str
+            # `|` means searching the union of the words/tokens.
+            # `%` means fuzzy search with Levenshtein distance of 1.
+            # Query attributes are used here to set the weight of the keywords.
+            text_str = " | ".join(
+                [
+                    f"({keyword}) => {{ $weight: {weight} }}"
+                    for keyword, weight in zip(keywords, weights)
+                ]
+            )
+            query_str = "@text:(" + text_str + ")"
 
-        # NOTE: I think it will be better to use PARAMS for security reasons.
-        # However, it appears that RediSearch has an issue using both parameters and query attributes.
-        #
-        # You can confirm this issue with:
-        # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
-        #   DIALECT 2 LIMIT 0 1 WITHSCORES EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 alpha beta"
-        # And:
-        # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
-        #   DIALECT 2 LIMIT 0 1 EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 "alpha beta"
-        #
-        # Using parameters would be like this:
-        # params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
-        # query_str = " | ".join([f"(${param}) => {{ $weight: {weight} }}" for param, weight in zip(params, weights)])
-        # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
-        # results = self.client.ft("idx:test").search(query_cmd, params)
+            exclude = escape_strs(exclude)
+            exclude_str = " ".join([f"-@id:({e})" for e in exclude])
+            if exclude_str:
+                query_str += " " + exclude_str
 
-        retriever_top_k = 5
-        query_cmd = (
-            Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
-        )
-        results = self.client.ft("idx:test").search(query_cmd)
-        print(results)
-        try:
-            nodes = [
-                TextNode(text=r.text, metadata={"file_path": r.file_path})
-                for r in results.docs
-            ]
-        except:
-            nodes = [TextNode(text=r.text) for r in results.docs]
+            # NOTE: I think it will be better to use PARAMS for security reasons.
+            # However, it appears that RediSearch has an issue using both parameters and query attributes.
+            #
+            # You can confirm this issue with:
+            # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
+            #   DIALECT 2 LIMIT 0 1 WITHSCORES EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 alpha beta"
+            # And:
+            # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
+            #   DIALECT 2 LIMIT 0 1 EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 "alpha beta"
+            #
+            # Using parameters would be like this:
+            # params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
+            # query_str = " | ".join([f"(${param}) => {{ $weight: {weight} }}" for param, weight in zip(params, weights)])
+            # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
+            # results = self.client.ft("idx:test").search(query_cmd, params)
 
-        ids = {r.id for r in results.docs}
+            retriever_top_k = 5
+            query_cmd = (
+                Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
+            )
+            results = self.client.ft("idx:test").search(query_cmd)
+            print(results)
+            try:
+                nodes = [
+                    NodeWithScore(
+                        node=TextNode(
+                            id=r.id, text=r.text, metadata={"file_path": r.file_path}
+                        ),
+                        score=r.score,
+                    )
+                    for r in results.docs
+                ]
+            except:
+                nodes = [
+                    NodeWithScore(node=TextNode(id=r.id, text=r.text), score=r.score)
+                    for r in results.docs
+                ]
 
-        # retrieved_nodes = self.retriever.retrieve(query)
-        # reranked_nodes = self.reranker.postprocess_nodes(
-        #     retrieved_nodes,
-        #     # BERT token limit is 512, however, we should leave some space for special tokens
-        #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
-        # )
-        # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
-        return dspy.Prediction(
-            result=get_str_of_simplified_nodes(nodes), internal_result={"ids": ids}
-        )
+            ids = {r.id for r in results.docs}
 
-        # See notes about summarizer above
-        # return dspy.Prediction(
-        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-        # )
+            # retrieved_nodes = self.retriever.retrieve(query)
+            # reranked_nodes = self.reranker.postprocess_nodes(
+            #     retrieved_nodes,
+            #     # BERT token limit is 512, however, we should leave some space for special tokens
+            #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
+            # )
+            # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
+
+            result = get_str_of_simplified_nodes(nodes)
+            span.set_attributes(nodes_to_openinference(nodes))
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.OK))
+            return dspy.Prediction(result=result, internal_result={"ids": ids})
+
+            # See notes about summarizer above
+            # return dspy.Prediction(
+            #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+            # )
