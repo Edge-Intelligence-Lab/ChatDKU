@@ -137,6 +137,12 @@ class Agent(dspy.Module):
         )
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
+
+        # Store information not accessible to the LLM.
+        # Currently, only `ids` is stored, which tracks the documents already retrieved,
+        # so they can be excluded in the subsequent retrievals.
+        # NOTE: `VectorRetriever` and `KeywordRetriever` currently uses two different id formats,
+        # but mixing them appears to not cause any issues.
         self.internal_memory = {}
         self.synthesizer = Synthesizer()
         self.judge = assert_transform_module(

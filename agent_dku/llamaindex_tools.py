@@ -31,6 +31,11 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
+from llama_index.core.vector_stores import (
+    MetadataFilter,
+    MetadataFilters,
+    FilterOperator,
+)
 
 from redis import Redis
 from redis.commands.search.query import Query
@@ -229,18 +234,17 @@ class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
     def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
+        self.retriever_top_k = retriever_top_k
+        self.reranker_top_n = reranker_top_n
+
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_collection("dku_html_pdf")
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        index = VectorStoreIndex.from_vector_store(vector_store)
+        self.index = VectorStoreIndex.from_vector_store(vector_store)
         # self.retriever = TransformRetriever(
         #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
         #     query_transform=HyDEQueryTransform(include_original=True),
         # )
-        self.retriever = index.as_retriever(similarity_top_k=retriever_top_k)
-
-        self.reranker = get_reranker(reranker_top_n)
-
         # self.summarizer = DocumentSummarizer()
 
     def forward(
@@ -258,29 +262,42 @@ class VectorRetriever(dspy.Module):
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
+            exclude = list(internal_memory.get("ids", set()))
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(query=query)),
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                        dict(query=query, exclude=exclude)
+                    ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
+            filters = MetadataFilters(
+                filters=[
+                    MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+                    for i in exclude
+                ]
+            )
+            retriever = self.index.as_retriever(
+                similarity_top_k=self.retriever_top_k, filters=filters
+            )
             # TODO: Might need to display `retrieved_nodes` in Phoenix
-            retrieved_nodes = self.retriever.retrieve(
+            retrieved_nodes = retriever.retrieve(
                 # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
                 # what would happen if that is exceeded. Also, we should use it tokenizer
                 # to get the accurate token count. This is just a temporary safety
                 # measure for now.
                 truncate_tokens(query, 7000)
             )
-            reranked_nodes = self.reranker.postprocess_nodes(
+
+            reranker = get_reranker(self.reranker_top_n)
+            reranked_nodes = reranker.postprocess_nodes(
                 retrieved_nodes,
                 # BERT token limit is 512, however, we should leave some space for special tokens
-                query_str=truncate_tokens(
-                    query, 500, tokenizer=self.reranker._tokenizer
-                ),
+                query_str=truncate_tokens(query, 500, tokenizer=reranker._tokenizer),
             )
+
             result = get_str_of_simplified_nodes(reranked_nodes)
 
             span.set_attributes(nodes_to_openinference(reranked_nodes))
@@ -291,7 +308,10 @@ class VectorRetriever(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
-            return dspy.Prediction(result=result, internal_result={})
+            return dspy.Prediction(
+                result=result,
+                internal_result={"ids": {r.node_id for r in reranked_nodes}},
+            )
 
             # See notes about summarizer above
             # return dspy.Prediction(
@@ -341,7 +361,9 @@ class KeywordRetriever(dspy.Module):
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(query=query, exclude=exclude)),
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                        dict(query=query, exclude=exclude)
+                    ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
@@ -428,8 +450,6 @@ class KeywordRetriever(dspy.Module):
                     for r in results.docs
                 ]
 
-            ids = {r.id for r in results.docs}
-
             # retrieved_nodes = self.retriever.retrieve(query)
             # reranked_nodes = self.reranker.postprocess_nodes(
             #     retrieved_nodes,
@@ -447,7 +467,9 @@ class KeywordRetriever(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
-            return dspy.Prediction(result=result, internal_result={"ids": ids})
+            return dspy.Prediction(
+                result=result, internal_result={"ids": {r.id for r in results.docs}}
+            )
 
             # See notes about summarizer above
             # return dspy.Prediction(
