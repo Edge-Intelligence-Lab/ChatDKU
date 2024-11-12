@@ -92,6 +92,9 @@ def make_planner_signature():
                     "parameters in JSON Lines format. "
                     "Each tool call should be a JSON object printed on a singled line. "
                     "Each tool call should be on its own line. "
+                    "Strictly follow the output format specification. "
+                    "Do not output in a numbered list. "
+                    "Do not add explanations.\n"
                     "For example, the following two lines are an example of two valid tool calls:\n"
                     '{"name": "keyword_retriever", "params": {"query": "keyword another-keyword"}}\n'
                     '{"name": "vector_retriever", "params": {"query": "a query"}}'
