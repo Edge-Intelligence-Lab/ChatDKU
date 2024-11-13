@@ -12,17 +12,17 @@ import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
-import chatdku.agent_dku.dspy_patch
+import chatdku.core.dspy_patch
 
-from chatdku.agent_dku.llamaindex_tools import VectorRetriever, KeywordRetriever
+from chatdku.core.llamaindex_tools import VectorRetriever, KeywordRetriever
 
-from chatdku.agent_dku.dspy_classes.plan import Planner
-from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.agent_dku.dspy_classes.tool_memory import ToolMemory
-from chatdku.agent_dku.dspy_classes.query_rewrite import QueryRewrite
-from chatdku.agent_dku.dspy_classes.prompt_settings import VERBOSE
-from chatdku.agent_dku.dspy_classes.synthesizer import Synthesizer
-from chatdku.agent_dku.dspy_classes.judge import Judge
+from chatdku.core.dspy_classes.plan import Planner
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
+from chatdku.core.dspy_classes.prompt_settings import VERBOSE
+from chatdku.core.dspy_classes.synthesizer import Synthesizer
+from chatdku.core.dspy_classes.judge import Judge
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps

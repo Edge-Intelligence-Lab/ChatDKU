@@ -6,7 +6,7 @@ import asyncio
 import dspy
 
 from chatdku.setup import setup, use_phoenix
-from chatdku.agent_dku.agent import Agent, CustomClient
+from chatdku.core.agent import Agent, CustomClient
 
 app = Flask(__name__)
 CORS(app)

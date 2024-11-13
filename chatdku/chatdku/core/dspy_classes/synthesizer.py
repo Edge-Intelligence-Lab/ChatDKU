@@ -21,9 +21,9 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from chatdku.agent_dku.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.agent_dku.dspy_common import custom_cot_rationale, get_template
-from chatdku.agent_dku.dspy_classes.prompt_settings import (
+from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
+from chatdku.core.dspy_common import custom_cot_rationale, get_template
+from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
@@ -31,8 +31,8 @@ from chatdku.agent_dku.dspy_classes.prompt_settings import (
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
-from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.agent_dku.dspy_classes.plan import ToolMemory
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.plan import ToolMemory
 
 from chatdku.config import config
 

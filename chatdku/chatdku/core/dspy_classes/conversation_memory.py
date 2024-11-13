@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict
-from chatdku.agent_dku.utils import (
+from chatdku.core.utils import (
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-from chatdku.agent_dku.dspy_common import get_template, custom_cot_rationale
-from chatdku.agent_dku.dspy_classes.prompt_settings import ROLE_PROMPT
+from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_classes.prompt_settings import ROLE_PROMPT
 import dspy
 
 from contextlib import nullcontext

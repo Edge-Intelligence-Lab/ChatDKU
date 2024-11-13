@@ -16,8 +16,8 @@ from openinference.semconv.trace import (
 )
 from opentelemetry.util.types import AttributeValue
 
-from chatdku.agent_dku.utils import truncate_tokens
-from chatdku.agent_dku.dspy_common import custom_cot_rationale
+from chatdku.core.utils import truncate_tokens
+from chatdku.core.dspy_common import custom_cot_rationale
 import nltk
 from nltk.tokenize import word_tokenize
 import chromadb

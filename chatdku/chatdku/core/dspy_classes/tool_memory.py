@@ -11,20 +11,20 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from chatdku.agent_dku.dspy_common import get_template, custom_cot_rationale
-from chatdku.agent_dku.utils import (
+from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.utils import (
     NameParams,
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-from chatdku.agent_dku.dspy_classes.prompt_settings import (
+from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
-from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 
 from chatdku.config import config
 
