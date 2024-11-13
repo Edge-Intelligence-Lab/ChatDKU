@@ -48,7 +48,7 @@ from llama_index.core.callbacks import CallbackManager
 from typing import Dict, Any, Optional, Tuple, List, cast, Set, Optional
 import phoenix as px
 from llama_index.core.callbacks.global_handlers import set_global_handler
-from setup import setup
+from chatdku.setup import setup
 
 # Override the fucking Llamaindex code
 import llama_index.core.base.query_pipeline.query

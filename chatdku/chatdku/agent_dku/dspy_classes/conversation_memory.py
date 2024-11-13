@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict
-from utils import (
+from chatdku.agent_dku.utils import (
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-from dspy_common import get_template, custom_cot_rationale
-from dspy_classes.prompt_settings import ROLE_PROMPT
+from chatdku.agent_dku.dspy_common import get_template, custom_cot_rationale
+from chatdku.agent_dku.dspy_classes.prompt_settings import ROLE_PROMPT
 import dspy
 
 from contextlib import nullcontext
@@ -17,15 +17,7 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-import os
-import sys
-
-sys.path.append(
-    os.path.normpath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
-    )
-)
-from config import config
+from chatdku.config import config
 
 
 class ConversationMemoryEntry(BaseModel):

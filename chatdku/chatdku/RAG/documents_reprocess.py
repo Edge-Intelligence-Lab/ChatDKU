@@ -1,6 +1,6 @@
 import pandas as pd
 import pickle
-from config import Config
+from chatdku.config import Config
 
 def documents_reprocess():
     with open(config.documents_path, "rb") as file:

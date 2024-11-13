@@ -1,10 +1,8 @@
 import asyncio
 import dspy
 import json
-import os
 import pandas as pd
 import re
-import sys
 import tiktoken
 import time
 
@@ -29,10 +27,7 @@ from pydantic import Field
 from typing import Annotated
 from typing import Any
 
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from config import config
+from chatdku.config import config
 
 
 def json_clean(response: str):

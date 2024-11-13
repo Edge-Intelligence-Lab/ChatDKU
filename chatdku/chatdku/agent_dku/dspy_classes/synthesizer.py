@@ -21,9 +21,9 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from utils import token_limit_ratio_to_count, truncate_tokens_all
-from dspy_common import custom_cot_rationale, get_template
-from dspy_classes.prompt_settings import (
+from chatdku.agent_dku.utils import token_limit_ratio_to_count, truncate_tokens_all
+from chatdku.agent_dku.dspy_common import custom_cot_rationale, get_template
+from chatdku.agent_dku.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
@@ -31,18 +31,10 @@ from dspy_classes.prompt_settings import (
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
-from dspy_classes.conversation_memory import ConversationMemory
-from dspy_classes.plan import ToolMemory
+from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.agent_dku.dspy_classes.plan import ToolMemory
 
-import os
-import sys
-
-sys.path.append(
-    os.path.normpath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
-    )
-)
-from config import config
+from chatdku.config import config
 
 from datetime import date
 

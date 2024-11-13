@@ -30,7 +30,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from phoenix.config import get_env_host, get_env_port
 
-from config import config
+from chatdku.config import config
 
 # When executing tasks like summarizing, the LLM is supposed to ONLY generate the
 # summaries themselves. However, the LLM sometimes says things like

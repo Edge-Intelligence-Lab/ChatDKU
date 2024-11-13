@@ -13,17 +13,17 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from dspy_common import get_template, custom_cot_rationale
-from utils import (
+from chatdku.agent_dku.dspy_common import get_template, custom_cot_rationale
+from chatdku.agent_dku.utils import (
     NameParams,
     func_to_model,
     camel_to_snake_case,
     truncate_tokens_all,
     token_limit_ratio_to_count,
 )
-from dspy_classes.conversation_memory import ConversationMemory
-from dspy_classes.tool_memory import ToolMemory
-from dspy_classes.prompt_settings import (
+from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.agent_dku.dspy_classes.tool_memory import ToolMemory
+from chatdku.agent_dku.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
@@ -32,15 +32,7 @@ from dspy_classes.prompt_settings import (
     ROLE_PROMPT,
 )
 
-import os
-import sys
-
-sys.path.append(
-    os.path.normpath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../RAG")
-    )
-)
-from config import config
+from chatdku.config import config
 
 
 def make_planner_signature():

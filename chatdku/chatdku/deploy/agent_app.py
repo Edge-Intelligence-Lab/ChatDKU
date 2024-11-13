@@ -9,18 +9,9 @@ from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
 
 import dspy
-import os
-import sys
 
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from setup import setup, use_phoenix
-
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../agent_dku"))
-)
-from agent import Agent,CustomClient
+from chatdku.setup import setup, use_phoenix
+from chatdku.agent_dku.agent import Agent,CustomClient
 
 app = Flask(__name__)
 CORS(app)

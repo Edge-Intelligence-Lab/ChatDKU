@@ -10,13 +10,7 @@ from llama_index.core.node_parser import TokenTextSplitter
 from transformers import PreTrainedTokenizerBase
 from functools import partial
 
-import os
-import sys
-
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from config import config
+from chatdku.config import config
 
 
 class NameParams(BaseModel):

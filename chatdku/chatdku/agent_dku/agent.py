@@ -12,31 +12,25 @@ import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
-import dspy_patch
+import chatdku.agent_dku.dspy_patch
 
-from llamaindex_tools import VectorRetriever, KeywordRetriever
+from chatdku.agent_dku.llamaindex_tools import VectorRetriever, KeywordRetriever
 
-from dspy_classes.plan import Planner
-from dspy_classes.conversation_memory import ConversationMemory
-from dspy_classes.tool_memory import ToolMemory
-from dspy_classes.query_rewrite import QueryRewrite
-from dspy_classes.prompt_settings import VERBOSE
-from dspy_classes.synthesizer import Synthesizer
-from dspy_classes.judge import Judge
-
-import os
-import sys
+from chatdku.agent_dku.dspy_classes.plan import Planner
+from chatdku.agent_dku.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.agent_dku.dspy_classes.tool_memory import ToolMemory
+from chatdku.agent_dku.dspy_classes.query_rewrite import QueryRewrite
+from chatdku.agent_dku.dspy_classes.prompt_settings import VERBOSE
+from chatdku.agent_dku.dspy_classes.synthesizer import Synthesizer
+from chatdku.agent_dku.dspy_classes.judge import Judge
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
 from opentelemetry.trace import Status, StatusCode, use_span
 from openinference.semconv.trace import SpanAttributes, OpenInferenceSpanKindValues
 
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from config import config
-from setup import setup, use_phoenix
+from chatdku.config import config
+from chatdku.setup import setup, use_phoenix
 
 
 class CustomClient(LM):

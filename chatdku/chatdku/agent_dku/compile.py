@@ -14,14 +14,8 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 from dspy_common import custom_cot_rationale
 from agent import CustomClient, Agent
 
-import os
-import sys
-
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from config import config
-from setup import setup, use_phoenix
+from chatdku.config import config
+from chatdku.setup import setup, use_phoenix
 
 
 class QualityJudgeSignature(dspy.Signature):

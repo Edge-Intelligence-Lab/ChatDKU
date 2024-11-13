@@ -20,8 +20,8 @@ from llama_index.core.bridge.pydantic import Field
 from typing import Dict, Any
 import asyncio
 
-from config import config
-from setup import setup, use_phoenix
+from chatdku.config import config
+from chatdku.setup import setup, use_phoenix
 
 DEFAULT_CONDENSE_PROMPT = (
     "I have a conversation between a human user and an AI assistant, containing "

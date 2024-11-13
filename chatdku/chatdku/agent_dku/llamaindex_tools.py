@@ -16,8 +16,8 @@ from openinference.semconv.trace import (
 )
 from opentelemetry.util.types import AttributeValue
 
-from utils import truncate_tokens
-from dspy_common import custom_cot_rationale
+from chatdku.agent_dku.utils import truncate_tokens
+from chatdku.agent_dku.dspy_common import custom_cot_rationale
 import nltk
 from nltk.tokenize import word_tokenize
 import chromadb
@@ -40,16 +40,11 @@ from llama_index.core.vector_stores import (
 from redis import Redis
 from redis.commands.search.query import Query
 
-import os
-import sys
 import re
 import string
 from itertools import combinations
 
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../RAG"))
-)
-from config import config
+from chatdku.config import config
 
 
 def mydeepcopy(self, memo):

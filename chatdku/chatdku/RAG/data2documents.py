@@ -4,11 +4,11 @@ import os
 from pathlib import Path
 import pickle
 import chromadb
-from setup import setup
+from chatdku.setup import setup
 from update_data import update_data, hash_directory, update_sub_data
 
 
-from config import config
+from chatdku.config import config
 
 
 def load_data(

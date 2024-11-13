@@ -1,6 +1,6 @@
 import streamlit as st
 from query import get_pipeline
-from setup import setup
+from chatdku.setup import setup
 
 
 # Define the main Streamlit interface function

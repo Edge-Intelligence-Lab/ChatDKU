@@ -14,8 +14,8 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_parse import LlamaParse
 
-from config import config
-from setup import setup
+from chatdku.config import config
+from chatdku.setup import setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype

@@ -15,7 +15,7 @@ from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
 from http.cookiejar import CookieJar
-from utils import Status, DownloadInfo, print_summary
+from scraper.utils import Status, DownloadInfo, print_summary
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
 # infinite loop and make it possible to restore download progress
