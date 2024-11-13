@@ -210,3 +210,4 @@ RAG/rediss/load_log.txt
 RAG/rediss/load_logx.txt
 rediss/test_redis/custom_schema.yaml
 RAG/rediss/custom_schema.yaml
+deploy/logs
