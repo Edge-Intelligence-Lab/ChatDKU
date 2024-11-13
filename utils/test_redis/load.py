@@ -7,9 +7,9 @@ from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInfer
 from llama_index.core.ingestion import IngestionPipeline
 
 documents = [
-    TextNode(text="public doc, quick brown", metadata={"groups": "public"}),
-    TextNode(text="alpha doc, quick", metadata={"groups": "office_a,supervisor"}),
-    TextNode(text="beta doc, brown", metadata={"groups": "office_b,supervisor"}),
+    TextNode(text="alpha alpha alpha alpha"),
+    TextNode(text="beta beta beta"),
+    TextNode(text="alpha beta gamma gamma"),
 ]
 
 redis_client = Redis.from_url("redis://localhost:6379")
@@ -17,8 +17,8 @@ redis_client = Redis.from_url("redis://localhost:6379")
 custom_schema = IndexSchema.from_dict(
     {
         "index": {
-            "name": "idx:test",
-            "prefix": "test_doc",
+            "name": "idx:test_1",
+            "prefix": "test_doc_1",
             "key_separator": ":",
         },
         "fields": [
