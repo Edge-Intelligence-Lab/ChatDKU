@@ -369,7 +369,9 @@ class KeywordRetriever(dspy.Module):
             )
 
             try:
-                nltk.data.find("tokenizers/punkt_tab")
+                # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
+                # replaces nltk tokenizers with its own version.
+                nltk.data.find("tokenizers/punkt_tab/english")
             except LookupError:
                 nltk.download("punkt_tab")
             # Break down the query into tokens
