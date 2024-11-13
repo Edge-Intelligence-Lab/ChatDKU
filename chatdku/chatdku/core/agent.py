@@ -14,7 +14,7 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 # FIXME: Stop using these patches whenever the issues were addressed by DSPy.
 import chatdku.core.dspy_patch
 
-from chatdku.core.llamaindex_tools import VectorRetriever, KeywordRetriever
+from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
