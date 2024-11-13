@@ -137,6 +137,13 @@ class Agent(dspy.Module):
         )
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
+
+        # Store information not accessible to the LLM.
+        # Currently, only `ids` is stored, which tracks the documents already retrieved,
+        # so they can be excluded in the subsequent retrievals.
+        # NOTE: `VectorRetriever` and `KeywordRetriever` currently uses two different id formats,
+        # but mixing them appears to not cause any issues.
+        self.internal_memory = {}
         self.synthesizer = Synthesizer()
         self.judge = assert_transform_module(
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
@@ -177,6 +184,9 @@ class Agent(dspy.Module):
             # Need to make this an attribute so that DSPy can optimize it
             self.tool_memory.reset()
 
+            # Clear internal memory for each user message
+            self.internal_memory.clear()
+
             # Add previous response to conversation memory
             if self.prev_response is not None:
                 if self.streaming:
@@ -209,7 +219,14 @@ class Agent(dspy.Module):
             for (name, model), tool in zip(
                 self.planner.name_to_model.items(), self.planner.tools
             ):
-                first_ite_result = tool(query=current_user_message).result
+                r = tool(
+                    query=current_user_message, internal_memory=self.internal_memory
+                )
+                first_ite_result, internal_result = r.result, r.internal_result
+                if "ids" in internal_result:
+                    self.internal_memory["ids"] = (
+                        self.internal_memory.get("ids", set()) | internal_result["ids"]
+                    )
                 # if VERBOSE:
                 #     print(f"result: {first_ite_result}")
 
@@ -285,7 +302,17 @@ class Agent(dspy.Module):
 
                 if VERBOSE:
                     print(f"calls: {p.calls}")
-                result = p.tool(**p.calls[0].params.model_dump()).result
+
+                r = p.tool(
+                    **p.calls[0].params.model_dump(),
+                    internal_memory=self.internal_memory,
+                )
+                result, internal_result = r.result, r.internal_result
+                if "ids" in internal_result:
+                    self.internal_memory["ids"] = (
+                        self.internal_memory.get("ids", set()) | internal_result["ids"]
+                    )
+
                 if VERBOSE:
                     print(f"result: {result}")
                 self.tool_memory(
