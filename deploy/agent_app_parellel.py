@@ -28,7 +28,7 @@ dspy.settings.configure(lm=llama_client)
 
 @app.route("/reset", methods=["POST"])
 def reset_agent():
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
+    agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
     agent.reset()
     return {"good": "Agent has been reset."}, 200
 
@@ -47,7 +47,7 @@ async def chat():
 
         # 在线程池中运行Agent
         loop = asyncio.get_event_loop()
-        agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
+        agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
         responses_gen = await loop.run_in_executor(
             executor, agent, message_content
         )
@@ -63,4 +63,4 @@ async def chat():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5003, threaded=True)
+    app.run(host="0.0.0.0", port=9015, threaded=True)
