@@ -53,9 +53,11 @@ def chat():
         responses_gen = agent(current_user_message=messages)
     # 使用 Flask 的 Response 对象和 stream_with_context 进行流式输出
         def generate():
-            for i,r in enumerate(responses_gen):
-                for response in r.response:
-                    yield f"{response}"  # 每个响应后加换行符
+            for response in responses_gen.response:
+                yield f"{response}"  # 每个响应后加换行符
+            # for i,r in enumerate(responses_gen):
+            #     for response in r.response:
+            #         yield f"{response}"  # 每个响应后加换行符
 
         return Response(stream_with_context(generate()), content_type='text/plain')
     except Exception as e:

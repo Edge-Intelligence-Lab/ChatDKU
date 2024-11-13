@@ -369,17 +369,26 @@ def main():
             start_time = time.time()
             responses_gen = agent(current_user_message=current_user_message)
             first_token = True
-            for i, r in enumerate(responses_gen):
-                print("-" * 10)
-                print(f"Round {i} response:")
-                for r in r.response:
-                    if first_token:
-                        end_time = time.time()
-                        print(f"first token时间:{end_time-start_time}")
-                        first_token = False
-                    print(r, end="")
-                print()
-                print("-" * 10)
+            print("Response:")
+            for r in responses_gen.response:
+                if first_token:
+                    end_time = time.time()
+                    print(f"first token时间:{end_time-start_time}")
+                    first_token = False
+                print(r, end="")
+            print()
+
+            # for i, r in enumerate(responses_gen):
+            #     print("-" * 10)
+            #     print(f"Round {i} response:")
+            #     for r in r.response:
+            #         if first_token:
+            #             end_time = time.time()
+            #             print(f"first token时间:{end_time-start_time}")
+            #             first_token = False
+            #         print(r, end="")
+            #     print()
+            #     print("-" * 10)
         except EOFError:
             break
 
