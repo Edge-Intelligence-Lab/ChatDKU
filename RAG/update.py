@@ -124,7 +124,8 @@ def change_detect(data_dir):
         json.dump(new_state, f, indent=4)
 
     # Update documents
-    documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
+    #documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
+    ddocuments_path = os.path.join(config.data_dir, config.documents_path)
     if not os.path.exists(documents_path):
         with open(documents_path, "wb") as f:
             pickle.dump([], f)
