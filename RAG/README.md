@@ -149,8 +149,30 @@ Leaderboard so that my VRAM would not explode.
 - Customize the query engine/add a querying pipeline.
 
 
-
 # Auto-Retrieval Example for Duke Kunshan University
 
 This project demonstrates how to perform auto-retrieval from a vector database using LlamaIndex and Chroma. The sample data used is based on the introduction and key aspects of Duke Kunshan University (DKU).
+
+## Update Script Usage Instructions
+# Overview
+An update script update.py is provided to monitor changes in data directory and automatically update the vector store and RAG pipeline accordingly. This script detects added, modified, or removed files in the specified data directory and updates the indices and vector stores to reflect these changes.
+
+#Running the Update Script
+To use the update script, run:
+```bash
+./update.py [data_dir]
+```
+#How It Works
+Change Detection: The script checks the current state of the data directory against a saved state (data_state.json). It identifies added, modified, and removed files and records these changes in changed_data.json.
+
+Document Updating: Based on the detected changes, the script updates the existing documents by removing outdated entries and adding new or modified files. The updated documents are stored in new_parser_documents.pkl.
+
+Indexing and Vector Store Update: The script rebuilds the indices and updates the vector store (both ChromaDB and Redis) to include the latest changes.
+
+#Important Notes
+First-Time Run: If there are no existing state files in the data directory (i.e., it's the first time you run the script), the update process may take a longer time as it needs to index all files.
+
+Redis Server: Ensure that a Redis server is running locally on port 6379, as the script uses Redis for vector storage.
+
+
 
