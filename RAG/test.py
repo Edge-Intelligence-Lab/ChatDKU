@@ -2,6 +2,7 @@
 
 import os
 import pickle
+import chromadb
 from typing import Any
 import argparse
 import json
