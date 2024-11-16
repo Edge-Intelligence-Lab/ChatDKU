@@ -344,6 +344,7 @@ def load_and_index(
 def main(data_dir):
     setup(add_system_prompt=True)
     change_detect(data_dir)
+    #Uncomment before running
     '''
     load_and_index(
         data_dir=str(data_dir),
