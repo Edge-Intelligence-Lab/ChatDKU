@@ -32,7 +32,7 @@ dependencies = [
     "llama-index-retrievers-bm25~=0.3.0",
     "llama-index-postprocessor-cohere-rerank~=0.2.0",
     "llama-index-postprocessor-colbert-rerank~=0.2.1",
-    "unstructured[pdf]~=0.14.7"
+    "unstructured[pdf]~=0.14.7",
     "chromadb==0.5.5",
     "arize-phoenix~=5.5.2",
     "opentelemetry-api~=1.27.0",
