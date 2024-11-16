@@ -26,7 +26,7 @@ llama_client = CustomClient()
 dspy.settings.configure(lm=llama_client)
 
 # 创建全局的 agent 实例
-agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
+agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
 
 @app.route("/reset", methods=["POST"])
 def reset_agent():
