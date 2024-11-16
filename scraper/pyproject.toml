@@ -26,6 +26,3 @@ dependencies = [
     "setuptools; python_version>='3.12'",
     "MechanicalSoup>=1.3.0",
 ]
-
-[tool.setuptools]
-py-modules = []

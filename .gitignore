@@ -185,32 +185,10 @@ tags
 __MACOSX
 .DS_Store
 
-# RAG vector data store generated from the raw data
-RAG/chroma_db
-# RAG pipeline cache
-RAG/pipeline_storage
-# RAG document store
-RAG/docstore
+# Project-specific
 .venv
-demo/app_log.txt
-demo/http_log.txt
-agent_dku/tmp/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
-demo/app_logs.txt
-demo/server_log.txt
-documents
-RAG/logs
-RAG/pipeline_cache
-demo/agent_app_logs.txt
-demo/feedback.csv
-demo/test_logs.txt
-RAG/custom_schema.yaml
-RAG/processed_file.xlsx
-RAG/processed_week_menu.xlsx
-RAG/rediss/load_log.txt
-RAG/rediss/load_logx.txt
-rediss/test_redis/custom_schema.yaml
-RAG/rediss/custom_schema.yaml
-deploy/logs
+logs/
+backend/feedback/
 
 # Benchmark data and reports
 benchmarks/*.svg
