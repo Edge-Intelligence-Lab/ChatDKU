@@ -77,6 +77,7 @@ export default function () {
   const params = {
     headers: {
       'Content-Type': 'application/json',
+      'Connection': 'close' // There would be EOF errors without this.
     },
     timeout: '120s'
   };
