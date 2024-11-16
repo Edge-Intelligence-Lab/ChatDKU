@@ -27,7 +27,11 @@ from chatdku.core.dspy_classes.judge import Judge
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
 from opentelemetry.trace import Status, StatusCode, use_span
-from openinference.semconv.trace import SpanAttributes, OpenInferenceSpanKindValues
+from openinference.semconv.trace import (
+    SpanAttributes,
+    OpenInferenceSpanKindValues,
+    OpenInferenceMimeTypeValues,
+)
 
 from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
@@ -150,7 +154,7 @@ class Agent(dspy.Module):
         self.prev_response = None
         self.conversation_memory = ConversationMemory()
 
-    def _forward_gen(self, current_user_message: str):
+    def _forward_gen(self, current_user_message: str, question_id: str):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
         # More about the issue regarding the use of `with` in generators:
@@ -160,7 +164,13 @@ class Agent(dspy.Module):
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
-                    SpanAttributes.INPUT_VALUE: current_user_message,
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                        dict(
+                            current_user_message=current_user_message,
+                            question_id=question_id,
+                        )
+                    ),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
@@ -335,8 +345,8 @@ class Agent(dspy.Module):
             span.end()
         yield dspy.Prediction(response=self.prev_response)
 
-    def forward(self, current_user_message: str):
-        gen = self._forward_gen(current_user_message)
+    def forward(self, current_user_message: str, question_id: str = ""):
+        gen = self._forward_gen(current_user_message, question_id)
         if self.get_intermediate:
             return gen
         else:

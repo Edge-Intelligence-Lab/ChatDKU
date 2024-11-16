@@ -31,6 +31,7 @@ executor = ThreadPoolExecutor()
 @app.route("/chat", methods=["POST"])
 def chat():
     messages = request.json.get("messages", [])
+    question_id = request.json["chatHistoryId"]
     if not messages:
         return {"error": "No message provided"}, 400
 
@@ -38,7 +39,7 @@ def chat():
 
         message_content = messages[-1]["content"]
 
-        future = executor.submit(agent, current_user_message=message_content)
+        future = executor.submit(agent, current_user_message=message_content, question_id=question_id)
         responses_gen = future.result()
 
         def generate():

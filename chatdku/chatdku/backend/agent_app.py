@@ -41,7 +41,7 @@ def chat():
     try:
         print(messages[0]["content"])
         messages = messages[-1]["content"]
-        responses_gen = agent(current_user_message=messages)
+        responses_gen = agent(current_user_message=messages, question_id=question_id)
     # 使用 Flask 的 Response 对象和 stream_with_context 进行流式输出
         def generate():
             for response in responses_gen.response:
