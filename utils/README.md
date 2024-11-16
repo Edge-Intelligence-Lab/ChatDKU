@@ -1,5 +1,12 @@
 # Utilities
 
+## `test_backend.sh`
+
+Send a chat request to the ChatDKU backend running at the specific port. You can optionally specific the chat message content, which defaults to `"What do you know about DKU?"`.
+```bash
+./test_backend.sh <port> [content]
+```
+
 ## `data_count_size.sh`
 
 Run
