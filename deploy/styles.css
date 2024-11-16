@@ -27,7 +27,6 @@ body {
     #chat-log {
         flex: 1;
         padding: 20px;
-        overflow-y: auto;
     }
     .message {
         margin: 10px 0;
@@ -259,3 +258,195 @@ body {
     background-color: #e53935; /* 深红色 */
     transform: scale(1.05); /* 放大效果 */
 }
+
+.feedback_div {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-button {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.yes-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.no-button {
+    background-color: #f44336;
+    color: white;
+}
+
+.feedback-button:hover {
+    opacity: 0.8;
+}
+
+.options_div {
+    margin-top: 10px;
+}
+
+#reasonSelect, #otherInput {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#reasonSelect {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+#otherInput {
+    display: none; /* Initially hidden */
+}
+
+#fbsubmitButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#fbsubmitButton:hover {
+    background-color: #0056b3;
+}
+
+
+
+#feedbackDiv {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Center align content */
+}
+
+/* #yesButton, #noButton {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    color: white;
+} */
+
+#yesButton {
+    background-color: #4CAF50;
+}
+
+#noButton {
+    background-color: #f44336;
+}
+
+#yesButton:hover, #noButton:hover {
+    opacity: 0.8;
+}
+
+#optionsDiv {
+    margin-top: 10px;
+}
+
+#reasonSelect, #otherInput {
+    width: 80%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#reasonSelect {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+#otherInput {
+    display: none; /* Initially hidden */
+}
+
+#submitButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#submitButton:hover {
+    background-color: #0056b3;
+}
+
+.apologyMessage {
+    color: gray; /* 设置字体颜色为灰色 */
+    text-align: center; /* 居中显示文本 */
+    margin: 10px 0; /* 添加上下边距 */
+    font-style: italic; /* 使字体变为斜体（可选） */
+}
+
+
+#tips {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    width: 250px;
+    margin-top: 3%;
+    font-family: Arial, sans-serif;
+    color: #555; /* 灰色字体 */
+}
+#tips h3 {
+    margin-top: 0;
+    font-size: 16px;
+    text-align: center;
+    color: grey; /* 稍微深一点的灰色用于标题 */
+}
+#tips ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+#tips li {
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+    color: grey;
+}
+/* 
+#returnHomeButton {
+    position: absolute;
+    bottom:7%;
+    right:5%;
+    background-color: transparent;
+    color: grey;
+    font-size:20px;
+    font-family: serif;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+} */

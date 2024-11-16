@@ -144,6 +144,10 @@ class Judge(dspy.Module):
                         'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
                     )
             judgement = judgement_str == "Yes"
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, judgement)
+
+            # FIXME: While OpenTelemetry allows Boolean values, Arize Phoenix has issue with it,
+            # as there is a part of the code that assumes the attribute to be a string.
+            # Here: https://github.com/Arize-ai/phoenix/blob/2eae8c5df25c4454352d4167b3435675db19ae75/src/phoenix/server/api/types/Span.py#L93
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, str(judgement))
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(judgement=judgement)

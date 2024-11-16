@@ -9,11 +9,11 @@ import csv
 import mechanicalsoup
 import requests
 from argparse import ArgumentParser
+from contextlib import AsyncExitStack
 from bs4 import BeautifulSoup
 from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
-from getpass import getpass
 from http.cookiejar import CookieJar
 from utils import Status, DownloadInfo, print_summary
 
@@ -55,9 +55,12 @@ async def get(
         await asyncio.sleep(args.delay)
 
     try:
-        # XXX: Disable verification of SSL is a security risk,
-        # but some sites don't work for me if I don't do this
-        async with session.get(url, verify_ssl=False, allow_redirects=True) as response:
+        async with AsyncExitStack() as stack:
+            # XXX: Disable verification of SSL is a security risk,
+            # but some sites don't work for me if I don't do this
+            response = await stack.enter_async_context(
+                session.get(url, verify_ssl=False, allow_redirects=True)
+            )
             if response.status != 200:
                 if args.verbose >= 1:
                     print(f"Failed {response.status}: {url}")
@@ -66,7 +69,14 @@ async def get(
             if args.saml and response.url.host == "shib.oit.duke.edu":
                 cookiejar = saml_login(url)
                 session.cookie_jar.update_cookies(cookiejar)
-                return await get(session, url)
+
+                response = await stack.enter_async_context(
+                    session.get(url, verify_ssl=False, allow_redirects=True)
+                )
+                if response.url.host == "shib.oit.duke.edu":
+                    if args.verbose >= 1:
+                        print(f"SAML login failed: {url}")
+                    return None
 
             content_type = response.content_type.split("/")
             ty = content_type
@@ -117,7 +127,12 @@ def cut(path: str) -> str:
             chunks.insert(
                 0, part[max(0, len(part) - i - args.path_part_max_size) : len(part) - i]
             )
-        return os.path.join(*chunks)
+
+        # Handle the leading "/" of absolute path
+        if not chunks:
+            return "/"
+        else:
+            return os.path.join(*chunks)
 
     pieces = [cut_part(p) for p in parts]
     pieces[-1] += ext
@@ -261,6 +276,22 @@ async def scrape_site(
             )
 
 
+def dump_info() -> None:
+    with open(args.download_info_file, "w") as f:
+        # FIXME: I think dataclass_csv should take all iterables instead of just lists as input,
+        # as I think the conversion via `list()` is unnecessary.
+        #
+        # FIXME: dataclass_csv's `DataclassReader` considers both nothing `field,,field`
+        # and empty quotes `field,"",field` as `None`, which is inconsistent with the
+        # implementation of the csv module.
+        # Also see: https://stackoverflow.com/questions/11379300/csv-reader-behavior-with-none-and-empty-string
+
+        w = DataclassWriter(
+            f, list(tried.values()), DownloadInfo, quoting=csv.QUOTE_NONNUMERIC
+        )
+        w.write()
+
+
 async def peroidic_report() -> None:
     async def done() -> bool:
         await asyncio.sleep(args.check_if_done_delay)
@@ -280,10 +311,14 @@ async def peroidic_report() -> None:
         print(f"----------------PROGRESS {ts}----------------")
         print_summary(tried.values())
 
+        dump_info()
+
 
 async def main() -> None:
     headers = {"User-Agent": args.user_agent}
-    timeout = aiohttp.ClientTimeout(connect=args.connection_timeout)
+    timeout = aiohttp.ClientTimeout(
+        total=args.total_timeout, connect=args.connection_timeout
+    )
     # Enable `trust_env` so that environmental variables like `HTTP_PROXY`
     # would be used for proxy settings.
     async with aiohttp.ClientSession(
@@ -316,6 +351,13 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="Maximum depth of recursive website download.",
+    )
+    parser.add_argument(
+        "-T",
+        "--total-timeout",
+        type=float,
+        default=300,
+        help="Timeout (seconds) of the entire request.",
     )
     parser.add_argument(
         "-t",
@@ -393,7 +435,7 @@ if __name__ == "__main__":
         "--progress-report-delay",
         type=int,
         default=30,
-        help="Time (seconds) before printing the latest progress report.",
+        help="Time (seconds) before printing the latest progress report and dumping download information file.",
     )
     parser.add_argument(
         "-i",
@@ -405,14 +447,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         "--saml",
-        action="store_true",
-        help="Login with SAML 2.0/Shibboleth-based SSO",
+        nargs=2,
+        metavar=("saml_username", "saml_password"),
+        help="Login with SAML 2.0/Shibboleth-based SSO (provide username and password)",
     )
     args = parser.parse_args()
 
     if args.saml:
-        saml_username = input("Username: ")
-        saml_password = getpass("Password:")
+        saml_username, saml_password = args.saml
 
     try:
         asyncio.run(main())
@@ -422,16 +464,4 @@ if __name__ == "__main__":
 
     print_summary(tried.values())
 
-    with open(args.download_info_file, "w") as f:
-        # FIXME: I think dataclass_csv should take all iterables instead of just lists as input,
-        # as I think the conversion via `list()` is unnecessary.
-        #
-        # FIXME: dataclass_csv's `DataclassReader` considers both nothing `field,,field`
-        # and empty quotes `field,"",field` as `None`, which is inconsistent with the
-        # implementation of the csv module.
-        # Also see: https://stackoverflow.com/questions/11379300/csv-reader-behavior-with-none-and-empty-string
-
-        w = DataclassWriter(
-            f, list(tried.values()), DownloadInfo, quoting=csv.QUOTE_NONNUMERIC
-        )
-        w.write()
+    dump_info()

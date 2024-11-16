@@ -1,6 +1,15 @@
 const chatHistory = [];
 
-fetch('http://10.200.14.82:5002/reset', {
+
+let globalChatHistoryId = 0;
+
+
+function generateUniqueId() {
+    return Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+}
+
+
+fetch('http://10.200.14.82:9012/reset', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -58,33 +67,33 @@ function replaceBlocks(block_id) {
     if (block_id === 'academic') {
         console.log(1111)
         newBlocks = [
-            { id: 'block1', text: 'I am a freshman interested in majoring in computer science, please give me a course recommendation in the first session.' },
-            { id: 'block2', text: 'Introduce Credit/No Credit (CR/NC) grading system.' },
-            { id: 'block3', text: 'What are Common Core courses should I take?' },
-            { id: 'block4', text: 'What’s EAP course at DKU?' },
-            { id: 'block5', text: 'Do you know the Guidelines for Appointment of Adjunct Faculty?'}
+            { id: 'block1', text: 'I am a freshman interested in majoring in computer science. Could you recommend some courses for my first semester?' },
+            { id: 'block2', text: 'Introduce the Credit/No Credit (CR/NC) grading system.' },
+            { id: 'block3', text: 'What Common Core courses should I take?' },
+            { id: 'block4', text: 'What is an EAP course at DKU?' },
+            { id: 'block5', text: 'Do you know the guidelines for the appointment of adjunct faculty?' }
         ];
     } else if (block_id === 'campus') {
         newBlocks = [
-            { id: 'block6', text: 'How to make a medical withdrawal from a course?' },
-            { id: 'block7', text: 'When will students declare a major?' },
-            { id: 'block8', text: 'Where can I ask for help if I have difficulties studying some course?' },
-            { id: 'block9', text: 'Who to contact when I have an emergency at DKU?' }
+            { id: 'block6', text: 'How can I request a medical withdrawal from a course?' },
+            { id: 'block7', text: 'When should students declare their major?' },
+            { id: 'block8', text: 'Where can I get help if I am having difficulty in a course?' },
+            { id: 'block9', text: 'Who should I contact in case of an emergency at DKU?' }
         ];
     } else if (block_id === 'service') {
         newBlocks = [
-            { id: 'block11', text: 'How can I get help from Residence Life?' },
-            { id: 'block12', text: 'What should I do if I have IT problem (in DKU)?' },
-            { id: 'block13', text: 'What should I do if I have some mental problem (in DKU)?' },
-            { id: 'block14', text: 'How can I find an internship with the help of career services in DKU?' }
+            { id: 'block11', text: 'How can I get assistance from Residence Life?' },
+            { id: 'block12', text: 'What should I do if I have an IT issue at DKU?' },
+            { id: 'block13', text: 'What resources are available for mental health support at DKU?' },
+            { id: 'block14', text: 'How can I find an internship with the help of DKU career services?' }
         ];
     } else if (block_id === 'tools') {
         newBlocks = [
-            { id: 'block16', text: 'Please reserve a big meeting room in IB building.' },
-            { id: 'block17', text: 'Could you please briefly generate an email to invite professor Bing Luo to have a lunch meeting with me?' },
-            { id: 'block18', text: 'I am a rising Senior student. Please design a plan with timeline for my signature work to me.' },
-            { id: 'block19', text: 'Show me the menu in DKU this week.' },
-            { id: 'block20', text: 'How to organize my 7-week study plan for CS101 course.' }
+            { id: 'block16', text: 'Please reserve a large meeting room in the IB building.' },
+            { id: 'block17', text: 'Could you generate a brief email inviting Professor Bing Luo for a lunch meeting with me?' },
+            { id: 'block18', text: 'I am a rising senior. Please create a timeline for my signature work plan.' },
+            { id: 'block19', text: 'Show me the DKU menu for this week.' },
+            { id: 'block20', text: 'How can I organize my 7-week study plan for the CS101 course?' }
         ];
     }
 
@@ -148,9 +157,27 @@ function replaceBlocks(block_id) {
 
 }
 
-
 function sendMessage() {
-    // 删除原decoration
+    let exsitingButton = document.getElementById('returnHomeButton')
+    if(!exsitingButton){
+        const returnHomeButton = document.createElement('button');
+        returnHomeButton.textContent = "Return Home";
+        returnHomeButton.id = 'returnHomeButton';
+        returnHomeButton.style.position = 'fixed';
+        returnHomeButton.style.display = 'flex';
+        returnHomeButton.style.bottom = '60px';
+        returnHomeButton.style.right = '30px';
+        returnHomeButton.style.backgroundColor = 'transparent';
+        returnHomeButton.style.color = 'grey'
+        returnHomeButton.style.fontSize = '20px';
+        returnHomeButton.style.fontFamily = 'serif';
+        returnHomeButton.style.boxShadow = '2px 2px 5px rgba(0,0,0,0.3)';
+        returnHomeButton.onclick = function() {
+            window.location.href = 'http://chatdku.dukekunshan.edu.cn';  // 将此替换为您的初始网址
+        };
+        document.body.appendChild(returnHomeButton);
+    }
+
     const page_center_logo = document.getElementById('page-center-logo-div');
     if (page_center_logo) {
         page_center_logo.remove();
@@ -202,14 +229,22 @@ function sendMessage() {
     messageElement.appendChild(loader); // 将loader添加到messageElement中
     chatLog.scrollTop = chatLog.scrollHeight;
 
+    // 生成特定标识符
+    globalChatHistoryId = generateUniqueId();
+
+    // 将标识符添加到要发送给9012接口的请求数据中
+    const requestData = {
+        messages: chatHistory,
+        chatHistoryId: globalChatHistoryId
+    };
 
     // FIXME: Don't use hard-coded URL
-    fetch('http://10.200.14.82:5002/chat', {
+    fetch('http://10.200.14.82:9012/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ messages: chatHistory })
+        body: JSON.stringify(requestData)
     })
     .then(response => {
         // 接收到响应后隐藏加载动画
@@ -242,6 +277,7 @@ function sendMessage() {
 
                             // 询问用户对回答的质量是否满意
                             askForFeedback(receivedText, message);
+
                         }
                         sendButton.disabled = false;
                         input.disabled = false;
@@ -273,28 +309,50 @@ function sendMessage() {
     });
 }
 
+function addMessage(className, message) {
+    const chatLog = document.getElementById('chat-log');
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message ' + className;
+    messageElement.innerHTML = `<span>${message}</span>`;
+    chatLog.appendChild(messageElement);
+    chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 function askForFeedback(answer, userInput) {
     const chatLog = document.getElementById('chat-log');
     const feedbackDiv = document.createElement('div');
-    feedbackDiv.className = 'feedback_div';
+    feedbackDiv.id = 'feedbackDiv';
 
     const feedbackText = document.createElement('span');
     feedbackText.innerHTML = "Are you satisfied with the quality of the answers?";
 
     const yesButton = document.createElement('button');
     yesButton.textContent = 'Yes';
-    yesButton.className = 'feedback-button yes-button'; // 添加类名
+    yesButton.id = 'yesButton';
+    yesButton.style.margin = '5px';
+    yesButton.style.padding = '8px 16px';
+    yesButton.style.border = 'none';
+    yesButton.style.borderRadius = '4px';
+    yesButton.style.cursor = 'pointer';
+    yesButton.style.transition = 'background-color 0.3s';
+    yesButton.style.color = 'white';
     yesButton.onclick = () => {
-        feedbackDiv.remove(); // 移除反馈部分
+        feedbackDiv.remove();
     };
 
+
     const noButton = document.createElement('button');
-    noButton.textContent = 'No!!!';
-    noButton.className = 'feedback-button no-button'; // 添加类名
+    noButton.textContent = 'No';
+    noButton.id = 'noButton';
+    noButton.style.margin = '5px';
+    noButton.style.padding = '8px 16px';
+    noButton.style.border = 'none';
+    noButton.style.borderRadius = '4px';
+    noButton.style.cursor = 'pointer';
+    noButton.style.transition = 'background-color 0.3s';
+    noButton.style.color = 'white';
     noButton.onclick = () => {
-        // 存储用户输入和对应的答案
-        saveFeedback(userInput, answer);
-        feedbackDiv.remove(); // 移除反馈部分
+        showFeedbackOptions(userInput, answer, feedbackDiv);
     };
 
     feedbackDiv.appendChild(feedbackText);
@@ -304,14 +362,69 @@ function askForFeedback(answer, userInput) {
     chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+function showFeedbackOptions(userInput, answer, feedbackDiv) {
+    const optionsDiv = document.createElement('div');
+    optionsDiv.id = 'optionsDiv';
 
-function saveFeedback(input, answer) {
-    const data = {
-        userInput: input,
-        botAnswer: answer
+    const optionsText = document.createElement('span');
+    optionsText.innerHTML = "Please select the reason for dissatisfaction:";
+
+    const select = document.createElement('select');
+    select.id = 'reasonSelect';
+    const options = [
+        "Outdated data",
+        "Irrelevant answer",
+        "False answer",
+        "Others"
+    ];
+    options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option;
+        opt.textContent = option;
+        select.appendChild(opt);
+    });
+
+    const otherInput = document.createElement('input');
+    otherInput.type = 'text';
+    otherInput.id = 'otherInput';
+    otherInput.placeholder = 'Please specify';
+
+    select.onchange = () => {
+        if (select.value === "Others") {
+            otherInput.style.display = 'block';
+        } else {
+            otherInput.style.display = 'none';
+        }
     };
 
-    fetch('http://10.200.14.82:5003/save-feedback', {
+    const submitButton = document.createElement('button');
+    submitButton.textContent = 'Submit';
+    submitButton.id = 'fbsubmitButton';
+    submitButton.onclick = () => {
+        const selectedReason = select.value === "Others" ? otherInput.value : select.value;
+        saveFeedback(userInput, answer, selectedReason);
+        feedbackDiv.remove();
+        showApologyMessage(selectedReason);
+    };
+
+    optionsDiv.appendChild(optionsText);
+    optionsDiv.appendChild(select);
+    optionsDiv.appendChild(otherInput);
+    optionsDiv.appendChild(submitButton);
+    feedbackDiv.appendChild(optionsDiv);
+}
+
+function saveFeedback(input, answer, reason) {
+    console.log("jrer")
+    console.log(globalChatHistoryId)
+    const data = {
+        userInput: input,
+        botAnswer: answer,
+        feedbackReason: reason,
+        chatHistoryId: globalChatHistoryId,
+    };
+
+    fetch('http://10.200.14.82:9013/save-feedback', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -329,12 +442,31 @@ function saveFeedback(input, answer) {
     });
 }
 
-
-function addMessage(className, message) {
+function showApologyMessage(reason) {
     const chatLog = document.getElementById('chat-log');
-    const messageElement = document.createElement('div');
-    messageElement.className = 'message ' + className;
-    messageElement.innerHTML = `<span>${message}</span>`;
-    chatLog.appendChild(messageElement);
+    const apologyMessage = document.createElement('div');
+    apologyMessage.className = 'apologyMessage';
+    
+    let messageText;
+    switch (reason) {
+        case "Outdated data":
+            messageText = "We will update the database daily, if you are looking for the latest news, please wait for the update and try again!";
+            break;
+        case "Irrelevant answer":
+            messageText = "Irrelevant responses may be due to the fact that the answers to relevant questions do not exist in the database, we will seek help from the relevant office to continuously expand our database!";
+            break;
+        case "False answer":
+            messageText = "False answer may be due to the illusion effect of the large model, and we will continue to optimize our large model!";
+            break;
+        default:
+            messageText = "Thank you for your feedback. We will use it to improve our service！";
+    }
+    messageText += "\n"
+    messageText += "Tips for Better Answers: Try not to use abbreviations; Try to formulate the question logically."
+
+    apologyMessage.innerHTML = messageText.replace(/\n/g, "<br>");
+    chatLog.appendChild(apologyMessage);
     chatLog.scrollTop = chatLog.scrollHeight;
 }
+
+
