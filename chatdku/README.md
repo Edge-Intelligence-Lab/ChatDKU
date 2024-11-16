@@ -73,7 +73,10 @@ First, we need to turn this folder into a Python server so that users can see th
 nohup python -u -m http.server 9011 -d chatdku/frontend > ./logs/python_server_logs.txt &
 disown -h
 ```
-### Backend (`agent_app.py`)
+
+### Start One of the Following Main Backend
+
+#### Single-process (`agent_app.py`)
 
 Next, start the `agent_app.py` service. This is the agent interface.(agent_app use port 9012 now)
 ```bash
@@ -81,7 +84,14 @@ nohup python -u chatdku/backend/agent_app.py > ./logs/agent_logs.txt &
 disown -h
 ```
 
-### Backend (`save_feedback.py`)
+#### Multi-process (`agent_app_parallel.py`)
+
+```bash
+nohup python -u -m hypercorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:[backend port] --workers [# of workers] > ./logs/agent_logs.txt &
+disown -h
+```
+
+### Feedback Collection Backend (`save_feedback.py`)
 
 Finally, start the `save_feedback.py` service. (Using port 9013 now)
 ```bash
@@ -93,6 +103,32 @@ You can use this to check if ther are running.
 ```bash
 ps -aux | grep python
 ```
+
+### Update Script
+
+#### Overview
+
+An update script update.py is provided to monitor changes in data directory and automatically update the vector store and RAG pipeline accordingly. This script detects added, modified, or removed files in the specified data directory and updates the indices and vector stores to reflect these changes.
+
+#### Running the Update Script
+
+To use the update script, run:
+```bash
+./update.py [data_dir]
+```
+#### How It Works
+
+Change Detection: The script checks the current state of the data directory against a saved state (data_state.json). It identifies added, modified, and removed files and records these changes in changed_data.json.
+
+Document Updating: Based on the detected changes, the script updates the existing documents by removing outdated entries and adding new or modified files. The updated documents are stored in new_parser_documents.pkl.
+
+Indexing and Vector Store Update: The script rebuilds the indices and updates the vector store (both ChromaDB and Redis) to include the latest changes.
+
+#### Important Notes
+
+First-Time Run: If there are no existing state files in the data directory (i.e., it's the first time you run the script), the update process may take a longer time as it needs to index all files.
+
+Redis Server: Ensure that a Redis server is running locally on port 6379, as the script uses Redis for vector storage.
 
 # WIP: The following sections of the documentation needs update. DO NOT rely on them for now.
 
