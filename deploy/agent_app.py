@@ -23,7 +23,7 @@ sys.path.append(
 from agent import Agent,CustomClient
 
 app = Flask(__name__)
-CORS(app, resources={r"/chat": {"origins": "*"}})
+CORS(app)
 
 @app.route("/reset",methods=["POST"])
 def reset_agent():
@@ -41,6 +41,9 @@ def chat():
     # {'messages': [{'role': 'user', 'content': 'Hello'}, {'role': 'assistant', 'content': 'Hey there! How can I assist you today? 😊'}, {'role': 'user', 'content': 'What do you know about DKU?'}]}
 
     messages = request.json["messages"]
+    question_id = request.json["chatHistoryId"]
+    print("1"*100)
+    print(question_id)
     if not messages:
         return {"error": "No message provided"}, 400
 
@@ -50,9 +53,11 @@ def chat():
         responses_gen = agent(current_user_message=messages)
     # 使用 Flask 的 Response 对象和 stream_with_context 进行流式输出
         def generate():
-            for i,r in enumerate(responses_gen):
-                for response in r.response:
-                    yield f"{response}"  # 每个响应后加换行符
+            for response in responses_gen.response:
+                yield f"{response}"  # 每个响应后加换行符
+            # for i,r in enumerate(responses_gen):
+            #     for response in r.response:
+            #         yield f"{response}"  # 每个响应后加换行符
 
         return Response(stream_with_context(generate()), content_type='text/plain')
     except Exception as e:
@@ -61,10 +66,11 @@ def chat():
 
 if __name__ == "__main__":
     setup()
+    use_phoenix()
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=True)
-
+    agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
 
     # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=5020)
+    app.run(host="0.0.0.0", port=9012)
+

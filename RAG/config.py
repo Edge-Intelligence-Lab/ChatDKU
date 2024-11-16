@@ -20,7 +20,7 @@ class Config:
                 "csv_path": "/datapool/RAG_data_new_website/download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 # about query
-                "chroma_db": "/datapool/chroma_dbs/bge_m3_chroma_db",
+                "chroma_db": "/datapool/chroma_dbs/chatdku_chromadb_3",
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 # about graphrag
