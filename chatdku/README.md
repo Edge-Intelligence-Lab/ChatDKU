@@ -95,7 +95,7 @@ disown -h
 
 Finally, start the `save_feedback.py` service. (Using port 9013 now)
 ```bash
-nohup python -u chatdku/backend/save_feedback.py > ./logs/save_fb_logs.txt &
+nohup python -u chatdku/backend/save_feedback.py /datapool/chatdku_feedback/feedback.csv > ./logs/save_fb_logs.txt &
 disown -h
 ```
 

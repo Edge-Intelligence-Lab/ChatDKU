@@ -7,6 +7,13 @@ Send a chat request to the ChatDKU backend running at the specific port. You can
 ./test_backend.sh <port> [content]
 ```
 
+## `test_feedback.sh`
+
+Send a test request to the ChatDKU feedback app running at the specific port.
+```bash
+./test_feedback.sh <port>
+```
+
 ## `data_count_size.sh`
 
 Run

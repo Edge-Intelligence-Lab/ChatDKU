@@ -3,12 +3,16 @@ from flask_cors import CORS
 import csv
 import os
 from datetime import datetime
+from argparse import ArgumentParser
 
 app = Flask(__name__)
 CORS(app)
 
-# CSV 文件名
-csv_file = '/home/ChatDKU_Deployment/ChatDKU/deploy/feedback/feedback.csv'
+parser = ArgumentParser(description="Backend app for saving user feedback.")
+parser.add_argument('csv_file', help="Path to the CSV file for storing feedback.")
+args = parser.parse_args()
+
+csv_file = args.csv_file
 
 @app.route('/save-feedback', methods=['POST'])
 def save_feedback():
