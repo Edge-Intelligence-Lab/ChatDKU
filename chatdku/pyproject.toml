@@ -44,6 +44,7 @@ dependencies = [
     # backend
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",
+    "Hypercorn~=0.17.3",
 ]
 
 [tool.setuptools]
