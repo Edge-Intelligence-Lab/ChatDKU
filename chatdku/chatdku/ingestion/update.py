@@ -167,6 +167,13 @@ def change_detect(data_dir):
         result_type="markdown",
         verbose=True,
     )
+    
+
+# 定义目标文件类型
+    valid_extensions = {".htm", ".html", ".pdf", ".csv"}
+
+# 过滤掉不符合要求的文件
+    new_files = [file for file in new_files if os.path.splitext(file)[1].lower() in valid_extensions]
     new_documents = SimpleDirectoryReader(
         input_files=new_files,
         recursive=True,
@@ -277,7 +284,35 @@ def load_and_index(
     # 设置Redis向量存储
     redis_client = Redis.from_url("redis://localhost:6379")
     
-    custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
+    custom_schema = IndexSchema.from_dict(
+        {
+            "index": {
+                "name": "idx:test",
+                "prefix": "test_doc",
+                "key_separator": ":",
+            },
+            "fields": [
+                {"type": "tag", "name": "id"},
+                {"type": "tag", "name": "doc_id"},
+                {"type": "text", "name": "text"},
+                {"type": "tag", "name": "groups"},
+                {"type": "tag", "name": "file_path"},
+                {"type": "tag", "name": "file_name"},
+                {"type": "tag", "name": "last_modified_date"},
+                {
+                    "type": "vector",
+                    "name": "vector",
+                    "attrs": {
+                        "dims": 1024,
+                        "algorithm": "hnsw",
+                        "distance_metric": "cosine",
+                    },
+                },
+            ],
+        }
+    )
+
+    #custom_schema.to_yaml("custom_schema.yaml")
     
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=True
