@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import pickle
 import chromadb
 from typing import Any
@@ -10,7 +11,6 @@ import hashlib
 
 from redis import Redis
 from redisvl.schema import IndexSchema
-from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -25,6 +25,9 @@ from llama_index.core.extractors import (
     SummaryExtractor,
 )
 from llama_index.vector_stores.redis import RedisVectorStore
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
 
 from setup import setup
 from config import config
@@ -90,8 +93,8 @@ def export_changes(added, removed, modified, output_file):
 
 def change_detect(data_dir):
 
-    output_file = data_dir+"/changed_data.json"
-    state_file = data_dir+"/data_state.json"
+    output_file = os.path.join(data_dir, "changed_data.json")
+    state_file = os.path.join(data_dir, "data_state.json")
 
     if os.path.exists(state_file):
         with open(state_file, "r") as f:
@@ -125,7 +128,8 @@ def change_detect(data_dir):
 
     # Update documents
     #documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
-    ddocuments_path = os.path.join(config.data_dir, config.documents_path)
+    documents_path = config.documents_path
+
     if not os.path.exists(documents_path):
         with open(documents_path, "wb") as f:
             pickle.dump([], f)
@@ -222,7 +226,6 @@ def change_update(data_dir):
 
 
 def load_and_index(
-    data_dir: str,
     pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
@@ -230,7 +233,7 @@ def load_and_index(
     use_recursive_directory_summarize: bool = False,
     pipeline_workers: int = 1,
 ):
-    documents_path = os.path.join(config.data_dir, config.documents_path)
+    documents_path = config.documents_path
 
     with open(documents_path, 'rb') as f:
         documents = pickle.load(f)
@@ -268,24 +271,6 @@ def load_and_index(
     )
     db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    # NOTE: Currently, LlamaIndex has bug with using both caching and docstore.
-    # I am using only caching here and there is not much need for attaching a
-    # docstore for deduplication anyways.
-    # See https://github.com/run-llama/llama_index/issues/14068 for details.
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
-    nodes = pipeline.run(
-        documents=documents, num_workers=pipeline_workers, show_progress=True
-    )
-    pipeline.persist(pipeline_cache_path)
-    print("nodes over")
-
     
     trans.append(Settings.embed_model)
     
@@ -320,7 +305,7 @@ def load_and_index(
         }
     )
 
-    custom_schema.to_yaml("custom_schema.yaml")
+    #custom_schema.to_yaml("custom_schema.yaml")
     
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=True
@@ -330,24 +315,30 @@ def load_and_index(
         transformations=trans,
         vector_store=vector_store,
     )
+    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
 
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
 
-    nodes = pipeline.run(
-        documents=documents, num_workers=pipeline_workers, show_progress=True
+
+
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
+    pipeline = IngestionPipeline(
+        transformations=trans,
+        vector_store=vector_store,
     )
+    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
     
     pipeline.persist(pipeline_cache_path)
     
     
-def main(data_dir):
+def main():
     setup(add_system_prompt=True)
-    change_detect(data_dir)
+    change_detect(config.data_dir)
     #Uncomment before running
     '''
     load_and_index(
-        data_dir=str(data_dir),
         pipeline_cache_path=str(config.pipeline_cache),
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
@@ -357,7 +348,7 @@ def main(data_dir):
     )
     '''
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("data_dir", type=str)
-    args = parser.parse_args()
-    main(args.data_dir)
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument("data_dir", type=str)
+    #args = parser.parse_args()
+    main()
