@@ -29,6 +29,13 @@ __TODO: Allow user to pass in an arbitrary directory via commandline arguments._
 
 Save the tokenizer of an LLM from Hugging Face to a local directory.
 
+## `generate_redis_schema.py`
+
+Generate RedisVL schema and save to `custom_schema.yaml`. This will then be used by `RedisVectorStore` in `VectorRetriever`.
+```bash
+./generate_redis_schema.py
+```
+
 ## `test_redis`
 
 Example and testing code for working with Redis.

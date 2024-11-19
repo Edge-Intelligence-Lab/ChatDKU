@@ -2,6 +2,7 @@ from typing import Annotated, Any
 from enum import Enum
 from collections.abc import Iterable, Iterator, Mapping
 from pydantic import Field
+import os
 
 import dspy
 
@@ -39,6 +40,7 @@ from llama_index.core.vector_stores import (
 
 from redis import Redis
 from redis.commands.search.query import Query
+from redisvl.schema import IndexSchema
 
 import re
 import string
@@ -321,6 +323,11 @@ class KeywordRetriever(dspy.Module):
         self.client = Redis.from_url("redis://localhost:6379")
         self.retriever_top_k = retriever_top_k
 
+        schema = IndexSchema.from_yaml(
+            os.path.join(config.module_root_dir, "custom_schema.yaml")
+        )
+        self.index_name = schema.index.name
+
         # docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         # self.retriever = BM25Retriever.from_defaults(
         #     docstore=docstore, similarity_top_k=retriever_top_k
@@ -429,7 +436,7 @@ class KeywordRetriever(dspy.Module):
             query_cmd = (
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
-            results = self.client.ft("idx:test").search(query_cmd)
+            results = self.client.ft(self.index_name).search(query_cmd)
             print(results)
             try:
                 nodes = [

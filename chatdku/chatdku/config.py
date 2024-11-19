@@ -1,3 +1,6 @@
+import os
+
+
 class Config:
     _instance = None
 
@@ -27,6 +30,7 @@ class Config:
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
                 "response_type": "Multiple Paragraphs",
+                "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
             }
         return cls._instance
 

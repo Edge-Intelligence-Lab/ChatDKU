@@ -277,35 +277,7 @@ def load_and_index(
     # 设置Redis向量存储
     redis_client = Redis.from_url("redis://localhost:6379")
     
-    custom_schema = IndexSchema.from_dict(
-        {
-            "index": {
-                "name": "idx:test",
-                "prefix": "test_doc",
-                "key_separator": ":",
-            },
-            "fields": [
-                {"type": "tag", "name": "id"},
-                {"type": "tag", "name": "doc_id"},
-                {"type": "text", "name": "text"},
-                {"type": "tag", "name": "groups"},
-                {"type": "tag", "name": "file_path"},
-                {"type": "tag", "name": "file_name"},
-                {"type": "tag", "name": "last_modified_date"},
-                {
-                    "type": "vector",
-                    "name": "vector",
-                    "attrs": {
-                        "dims": 1024,
-                        "algorithm": "hnsw",
-                        "distance_metric": "cosine",
-                    },
-                },
-            ],
-        }
-    )
-
-    #custom_schema.to_yaml("custom_schema.yaml")
+    custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=True
