@@ -336,19 +336,23 @@ def load_and_index(
 def main():
     setup(add_system_prompt=True)
     change_detect(config.data_dir)
-    #Uncomment before running
-    '''
-    load_and_index(
-        pipeline_cache_path=str(config.pipeline_cache),
-        text_spliter="sentence_splitter",
-        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
-        extractors=[],
-        use_recursive_directory_summarize=False,
-        pipeline_workers=1,
-    )
-    '''
+
+    if args.load:
+        load_and_index(
+            pipeline_cache_path=str(config.pipeline_cache),
+            text_spliter="sentence_splitter",
+            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
+            extractors=[],
+            use_recursive_directory_summarize=False,
+            pipeline_workers=1,
+        )
+
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("data_dir", type=str)
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-l", "--load",
+        action="store_true",
+        help="Call the load_and_index function if this option is set."
+    )
+    args = parser.parse_args()
     main()
