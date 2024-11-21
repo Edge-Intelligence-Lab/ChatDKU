@@ -167,63 +167,35 @@ def change_detect(data_dir):
         result_type="markdown",
         verbose=True,
     )
-    new_documents = SimpleDirectoryReader(
-        input_files=new_files,
-        recursive=True,
-        required_exts=[".html", ".htm", ".pdf", ".csv"],
-        file_extractor={
-            ".htm": reader,
-            ".html": reader,
-            ".pdf": pdf_parser,
-            ".csv": reader,
-        },
-    ).load_data()
+    if(len(new_files)!=0):
+        new_documents = SimpleDirectoryReader(
+            input_files=new_files,
+            recursive=True,
+            required_exts=[".html", ".htm", ".pdf", ".csv"],
+            file_extractor={
+                ".htm": reader,
+                ".html": reader,
+                ".pdf": pdf_parser,
+                ".csv": reader,
+            },
+        ).load_data()
+    else:
+        new_documents=[]
 
     documents = documents + new_documents
-    
 
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
 
     print("Document successfully update")
+    return new_documents
 
 def set_state(data_dir):
     state_file = "data_state.json"
     new_state = record_directory_state(data_dir)
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
-
-def change_update(data_dir):
-
-    output_file = "changed_data.json"
-
-    # Load changed data
-    with open(output_file, "r") as f:
-        changed_data = json.load(f)
-
-    new_files = changed_data["added"] + changed_data["modified"]
-    new_files = list(data_dir + "/" + new_file for new_file in new_files)
-    timed_files = changed_data["modified"] + changed_data["removed"]
-    timed_files = list(data_dir + "/" + timed_file for timed_file in timed_files)
-
-    # If no data_update
-    if len(new_files + timed_files) == 0:
-        print("Nothing has changed")
-        return
-
-    print(
-        "Added",
-        len(changed_data["added"]),
-        "documents\n",
-        "Modified",
-        len(changed_data["modified"]),
-        "documents\n",
-        "Removed",
-        len(changed_data["removed"]),
-        "documents\n",
-    )
-
 
 def load_and_index(
     pipeline_cache_path: str,
@@ -319,8 +291,6 @@ def load_and_index(
 
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
-
-
 
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
