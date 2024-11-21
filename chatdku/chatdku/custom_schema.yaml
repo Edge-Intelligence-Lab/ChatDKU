@@ -1,0 +1,46 @@
+index:
+  name: idx:test
+  prefix: test_doc
+  key_separator: ':'
+  storage_type: hash
+fields:
+- name: id
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: doc_id
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: text
+  type: text
+  attrs:
+    sortable: false
+    weight: 1
+    no_stem: false
+    withsuffixtrie: false
+- name: groups
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: vector
+  type: vector
+  attrs:
+    dims: 1024
+    algorithm: hnsw
+    datatype: float32
+    distance_metric: cosine
+    m: 16
+    ef_construction: 200
+    ef_runtime: 10
+    epsilon: 0.01
+version: 0.1.0

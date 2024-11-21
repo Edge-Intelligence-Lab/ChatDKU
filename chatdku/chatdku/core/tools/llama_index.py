@@ -2,6 +2,7 @@ from typing import Annotated, Any
 from enum import Enum
 from collections.abc import Iterable, Iterator, Mapping
 from pydantic import Field
+import os
 
 import dspy
 
@@ -39,6 +40,7 @@ from llama_index.core.vector_stores import (
 
 from redis import Redis
 from redis.commands.search.query import Query
+from redisvl.schema import IndexSchema
 
 import re
 import string
@@ -228,8 +230,14 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
 class VectorRetriever(dspy.Module):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 5):
+    def __init__(
+        self,
+        retriever_top_k: int = 10,
+        use_reranker: bool = False,
+        reranker_top_n: int = 5,
+    ):
         self.retriever_top_k = retriever_top_k
+        self.use_reranker = use_reranker
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.PersistentClient(path=config.chroma_db)
@@ -286,16 +294,21 @@ class VectorRetriever(dspy.Module):
                 truncate_tokens(query, 7000)
             )
 
-            reranker = get_reranker(self.reranker_top_n)
-            reranked_nodes = reranker.postprocess_nodes(
-                retrieved_nodes,
-                # BERT token limit is 512, however, we should leave some space for special tokens
-                query_str=truncate_tokens(query, 500, tokenizer=reranker._tokenizer),
-            )
+            if self.use_reranker:
+                reranker = get_reranker(self.reranker_top_n)
+                nodes = reranker.postprocess_nodes(
+                    retrieved_nodes,
+                    # BERT token limit is 512, however, we should leave some space for special tokens
+                    query_str=truncate_tokens(
+                        query, 500, tokenizer=reranker._tokenizer
+                    ),
+                )
+            else:
+                nodes = retrieved_nodes
 
-            result = get_str_of_simplified_nodes(reranked_nodes)
+            result = get_str_of_simplified_nodes(nodes)
 
-            span.set_attributes(nodes_to_openinference(reranked_nodes))
+            span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
@@ -305,7 +318,7 @@ class VectorRetriever(dspy.Module):
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result,
-                internal_result={"ids": {r.node_id for r in reranked_nodes}},
+                internal_result={"ids": {r.node_id for r in nodes}},
             )
 
             # See notes about summarizer above
@@ -320,6 +333,11 @@ class KeywordRetriever(dspy.Module):
     def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
         self.client = Redis.from_url("redis://localhost:6379")
         self.retriever_top_k = retriever_top_k
+
+        schema = IndexSchema.from_yaml(
+            os.path.join(config.module_root_dir, "custom_schema.yaml")
+        )
+        self.index_name = schema.index.name
 
         # docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
         # self.retriever = BM25Retriever.from_defaults(
@@ -429,7 +447,7 @@ class KeywordRetriever(dspy.Module):
             query_cmd = (
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
-            results = self.client.ft("idx:test").search(query_cmd)
+            results = self.client.ft(self.index_name).search(query_cmd)
             print(results)
             try:
                 nodes = [

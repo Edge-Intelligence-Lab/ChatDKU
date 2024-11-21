@@ -167,7 +167,13 @@ def change_detect(data_dir):
         result_type="markdown",
         verbose=True,
     )
-    if(len(new_files)!=0):
+    
+    # 定义目标文件类型
+    valid_extensions = {".htm", ".html", ".pdf", ".csv"}
+
+    # 过滤掉不符合要求的文件
+    new_files = [file for file in new_files if os.path.splitext(file)[1].lower() in valid_extensions]
+    if(len(new_files)!=0):    
         new_documents = SimpleDirectoryReader(
             input_files=new_files,
             recursive=True,
@@ -198,6 +204,7 @@ def set_state(data_dir):
         json.dump(new_state, f, indent=4)
 
 def load_and_index(
+    new_documents,
     pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
@@ -249,35 +256,7 @@ def load_and_index(
     # 设置Redis向量存储
     redis_client = Redis.from_url("redis://localhost:6379")
     
-    custom_schema = IndexSchema.from_dict(
-        {
-            "index": {
-                "name": "idx:test",
-                "prefix": "test_doc",
-                "key_separator": ":",
-            },
-            "fields": [
-                {"type": "tag", "name": "id"},
-                {"type": "tag", "name": "doc_id"},
-                {"type": "text", "name": "text"},
-                {"type": "tag", "name": "groups"},
-                {"type": "tag", "name": "file_path"},
-                {"type": "tag", "name": "file_name"},
-                {"type": "tag", "name": "last_modified_date"},
-                {
-                    "type": "vector",
-                    "name": "vector",
-                    "attrs": {
-                        "dims": 1024,
-                        "algorithm": "hnsw",
-                        "distance_metric": "cosine",
-                    },
-                },
-            ],
-        }
-    )
-
-    #custom_schema.to_yaml("custom_schema.yaml")
+    custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=True
@@ -305,20 +284,24 @@ def load_and_index(
     
 def main():
     setup(add_system_prompt=True)
-    change_detect(config.data_dir)
-    #Uncomment before running
-    '''
-    load_and_index(
-        pipeline_cache_path=str(config.pipeline_cache),
-        text_spliter="sentence_splitter",
-        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
-        extractors=[],
-        use_recursive_directory_summarize=False,
-        pipeline_workers=1,
-    )
-    '''
+    new_documents=change_detect(config.data_dir)
+    if args.load:
+        load_and_index(
+            new_documents=new_documents,
+            pipeline_cache_path=str(config.pipeline_cache),
+            text_spliter="sentence_splitter",
+            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
+            extractors=[],
+            use_recursive_directory_summarize=False,
+            pipeline_workers=1,
+        )
+
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("data_dir", type=str)
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-l", "--load",
+        action="store_true",
+        help="Call the load_and_index function if this option is set."
+    )
+    args = parser.parse_args()
     main()
