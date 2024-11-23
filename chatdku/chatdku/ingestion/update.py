@@ -9,6 +9,9 @@ import argparse
 import json
 import hashlib
 
+import nltk
+#nltk.download('averaged_perceptron_tagger_eng')
+
 from redis import Redis
 from redisvl.schema import IndexSchema
 from llama_index.core import SimpleDirectoryReader, Settings
@@ -123,9 +126,6 @@ def change_detect(data_dir):
     timed_files = changed_data["modified"] + changed_data["removed"]
     timed_files = list(data_dir + "/" + timed_file for timed_file in timed_files)
 
-    with open(state_file, "w") as f:
-        json.dump(new_state, f, indent=4)
-
     # Update documents
     #documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
     documents_path = config.documents_path
@@ -193,6 +193,9 @@ def change_detect(data_dir):
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
+    
+    with open(state_file, "w") as f:
+        json.dump(new_state, f, indent=4)
 
     print("Document successfully update")
     return new_documents
@@ -255,7 +258,7 @@ def load_and_index(
     
     # 设置Redis向量存储
     redis_client = Redis.from_url("redis://localhost:6379")
-    
+    redis_client.flushdb()
     custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     
     vector_store = RedisVectorStore(
