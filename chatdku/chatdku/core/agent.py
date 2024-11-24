@@ -111,7 +111,13 @@ class CustomClient(LM):
 
 
 class Agent(dspy.Module):
-    def __init__(self, max_iterations=5, streaming=False, get_intermediate=False):
+    def __init__(
+        self,
+        max_iterations: int = 5,
+        streaming: bool = False,
+        get_intermediate: bool = False,
+        rewrite_query: bool = False,
+    ):
         """
         Args:
             max_iterations: The maximum rounds of tool call/evaluation the agent
@@ -128,6 +134,7 @@ class Agent(dspy.Module):
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
+        self.rewrite_query = rewrite_query
 
         self.planner = assert_transform_module(
             Planner([VectorRetriever(), KeywordRetriever()]),
@@ -276,15 +283,18 @@ class Agent(dspy.Module):
                 if judgement:
                     break
 
-                # TODO: This could be merged with `Planner` depends on how well the
-                # LLM understood its task.
-                rewritten_query = self.queryrewriter(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    tool_memory=self.tool_memory,
-                ).rewritten_query
-                if VERBOSE:
-                    print(f"rewritten query:{rewritten_query}")
+                if self.rewrite_query:
+                    # TODO: This could be merged with `Planner` depends on how well the
+                    # LLM understood its task.
+                    query = self.queryrewriter(
+                        current_user_message=current_user_message,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                    ).rewritten_query
+                    if VERBOSE:
+                        print(f"rewritten query:{query}")
+                else:
+                    query = current_user_message
 
                 try:
                     p = self.planner(
@@ -292,7 +302,7 @@ class Agent(dspy.Module):
                         # as the memory is not always updated for every iteration.
                         # Also, the memory should concern answering the overarching
                         # user question, while the planner can focus more on the current iteration.
-                        current_user_message=rewritten_query,
+                        current_user_message=query,
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
                         max_calls=self.max_iterations - i,
