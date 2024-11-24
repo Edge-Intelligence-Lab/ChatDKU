@@ -258,7 +258,7 @@ def load_and_index(
     
     # 设置Redis向量存储
     redis_client = Redis.from_url("redis://localhost:6379")
-    redis_client.flushdb()
+    #redis_client.flushdb()
     custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     
     vector_store = RedisVectorStore(
@@ -287,13 +287,18 @@ def load_and_index(
     
 def main():
     setup(add_system_prompt=True)
-    new_documents=change_detect(config.data_dir)
+    #new_documents=change_detect(config.data_dir)
+
+    processed_file_path = config.documents_path
+    with open(processed_file_path, "rb") as f:
+        new_documents = pickle.load(f)
+    print(new_documents[:2])
     if args.load:
         load_and_index(
             new_documents=new_documents,
             pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
-            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
+            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 200},
             extractors=[],
             use_recursive_directory_summarize=False,
             pipeline_workers=1,

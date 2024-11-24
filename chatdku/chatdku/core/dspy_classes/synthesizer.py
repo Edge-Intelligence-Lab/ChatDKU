@@ -69,9 +69,10 @@ def make_synthesizer_signature():
         "included at the end of your answer, like 'reference links:',"
         "The link needs to be markdown so that it can be clicked, and the text shown is a "
         "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. "
+        "make sure the reference link you offer is the accurate copy from your database. If you can't find one, do not provide the link"
         "Your internal operation should also not be transparent to the user, "
-        'so you should not mention phrases like "Based on the conversation history", '
-        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history". '
+        '"do not include phrases like "Based on the conversation history", '
+        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
         "When you're asked a general question, automatically change it to something DKU related, "
         "like 'what does CTL do?' to 'what does CTL do at DKU?' "
         "If the Current User Message is ambiguous, you may first try to answer it to the best extent "
