@@ -14,8 +14,7 @@ class Config:
                 "tokenizer": "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct",
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:8001/v1",
-                "context_window": 20000,
-                "context_window": 20000,
+                "context_window": 64000,
                 # about load_and_index
                 "data_dir": "/datapool/RAG_data",
                 "documents_path": "/datapool/student_pdf_parsed.pkl",

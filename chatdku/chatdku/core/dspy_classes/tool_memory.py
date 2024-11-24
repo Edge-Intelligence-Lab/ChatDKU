@@ -120,7 +120,7 @@ class ToolMemory(dspy.Module):
         conversation_memory: ConversationMemory,
         calls: list[NameParams],
         result: str,
-        max_history_size: int = 13000,
+        max_history_size: int,
     ):
         with (
             config.tracer.start_as_current_span("Tool Memory")
@@ -140,9 +140,8 @@ class ToolMemory(dspy.Module):
                 }
             )
 
-            # FIXME: Investigate why, and this should not be a fixed number
-            # Must assignment here, or will have some bug
-            max_history_size = 13000
+            # FIXME: There were reports that the max_history_size must be set here to avoid issues
+            # max_history_size = 13000
             self.plan = calls[1:].copy()
             min_index = strs_fit_max_tokens_reverse(
                 [i.model_dump_json() for i in self.history],
