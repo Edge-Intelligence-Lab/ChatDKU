@@ -114,7 +114,7 @@ def setup(add_system_prompt: bool = False) -> None:
 
 
 def use_phoenix():
-    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_student"})
+    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_student_release"})
     tracer_provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(tracer_provider)
     config.tracer = trace.get_tracer(__name__)
