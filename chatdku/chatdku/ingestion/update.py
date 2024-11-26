@@ -139,6 +139,7 @@ def change_detect(data_dir):
     print(f"Loaded documents from {documents_path}")
 
     for document in documents:
+        
         if document.metadata["file_path"] in timed_files:
             documents.remove(document)
 
@@ -283,16 +284,19 @@ def load_and_index(
     nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
     
     pipeline.persist(pipeline_cache_path)
-    
-    
+
+
+
 def main():
     setup(add_system_prompt=True)
     #new_documents=change_detect(config.data_dir)
-
+    
     processed_file_path = config.documents_path
     with open(processed_file_path, "rb") as f:
         new_documents = pickle.load(f)
     print(new_documents[:2])
+     
+    
     if args.load:
         load_and_index(
             new_documents=new_documents,
@@ -303,6 +307,81 @@ def main():
             use_recursive_directory_summarize=False,
             pipeline_workers=1,
         )
+# import pickle
+
+# def process_document(doc, chunk_size=1024):
+#     """
+#     处理单个文档，如果 Metadata 超长则跳过。
+#     """
+#     metadata = getattr(doc, "metadata", None)
+#     if metadata and isinstance(metadata, str) and len(metadata) > chunk_size:
+#         print(f"Skipping document with metadata length {len(metadata)}")
+#         return None  # 返回 None 表示跳过此文档
+
+#     print(f"Processing document with valid metadata (length {len(metadata) if metadata else 0})")
+#     return doc  # 返回处理后的文档
+
+# def load_and_index_with_metadata_check(
+#     new_documents,
+#     output_path: str,  # 新增：保存有效文档的文件路径
+#     pipeline_cache_path: str,
+#     text_spliter: str = "sentence_splitter",
+#     text_spliter_args: dict = {},
+#     extractors: list = [],
+#     use_recursive_directory_summarize: bool = False,
+#     pipeline_workers: int = 1,
+# ):
+#     """
+#     加载文档，跳过 Metadata 超长的文档，并执行索引，同时保存有效文档。
+#     """
+#     chunk_size = text_spliter_args.get("chunk_size", 1024)
+#     valid_documents = []  # 存储有效文档
+
+#     for i, doc in enumerate(new_documents):
+#         try:
+#             # 处理文档，跳过 Metadata 超长的情况
+#             processed_doc = process_document(doc, chunk_size=chunk_size)
+#             if processed_doc is not None:
+#                 valid_documents.append(processed_doc)
+
+#         except Exception as e:
+#             print(f"Error processing document {i}: {e}")
+#             continue  # 跳过出错文档
+
+#     print(f"Valid documents count: {len(valid_documents)}")
+
+#     # 保存有效文档到指定路径
+#     with open(output_path, "wb") as f:
+#         pickle.dump(valid_documents, f)
+#     print(f"Valid documents have been saved to {output_path}")
+
+#     # 在这里继续处理有效的文档（例如，调用实际向量化逻辑）
+#     print("All valid documents have been processed.")
+
+# def main():
+#     setup(add_system_prompt=True)
+    
+#     processed_file_path = config.documents_path
+#     output_file_path = "/datapool/chatdku_student/validfile.pkl"  # 指定保存有效文档的路径
+
+#     with open(processed_file_path, "rb") as f:
+#         new_documents = pickle.load(f)
+
+#     print(new_documents[:2])  # 打印前两个文档
+
+#     # 加载并索引文档，跳过 Metadata 超长的文档
+#     if args.load:
+#         load_and_index_with_metadata_check(
+#             new_documents=new_documents,
+#             output_path=output_file_path,  # 保存有效文档的路径
+#             pipeline_cache_path=str(config.pipeline_cache),
+#             text_spliter="sentence_splitter",
+#             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 200},
+#             extractors=[],
+#             use_recursive_directory_summarize=False,
+#             pipeline_workers=1,
+#         )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
