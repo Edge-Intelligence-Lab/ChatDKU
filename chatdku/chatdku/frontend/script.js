@@ -9,7 +9,7 @@ function generateUniqueId() {
 }
 
 
-fetch('http://10.200.14.82:9012/reset', {
+fetch('http://10.200.14.82:9015/reset', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -232,14 +232,14 @@ function sendMessage() {
     // 生成特定标识符
     globalChatHistoryId = generateUniqueId();
 
-    // 将标识符添加到要发送给9012接口的请求数据中
+    // 将标识符添加到要发送给9015接口的请求数据中
     const requestData = {
         messages: chatHistory,
         chatHistoryId: globalChatHistoryId
     };
 
     // FIXME: Don't use hard-coded URL
-    fetch('http://10.200.14.82:9012/chat', {
+    fetch('http://10.200.14.82:9015/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -424,7 +424,7 @@ function saveFeedback(input, answer, reason) {
         chatHistoryId: globalChatHistoryId,
     };
 
-    fetch('http://10.200.14.82:9013/save-feedback', {
+    fetch('http://10.200.14.82:9016/save-feedback', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
