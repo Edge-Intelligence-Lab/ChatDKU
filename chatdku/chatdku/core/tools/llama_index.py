@@ -232,7 +232,7 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 10,
+        retriever_top_k: int = 7, #original k value is 10
         use_reranker: bool = False,
         reranker_top_n: int = 5,
     ):
@@ -330,7 +330,7 @@ class VectorRetriever(dspy.Module):
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
+    def __init__(self, retriever_top_k: int = 4, reranker_top_n: int = 3):    #original k value is 10
         self.client = Redis.from_url("redis://localhost:6379")
         self.retriever_top_k = retriever_top_k
 

@@ -3,9 +3,12 @@
 from typing import Any
 import traceback
 
+import json 
+import atexit
 from llama_index.core import Settings
 from llama_index.core.base.llms.types import CompletionResponse
 
+from evaluation import TransformerEvaluator
 import functools
 from dsp import LM
 import dspy
@@ -111,7 +114,7 @@ class CustomClient(LM):
 
 
 class Agent(dspy.Module):
-    def __init__(self, max_iterations=5, streaming=False, get_intermediate=False):
+    def __init__(self, max_iterations=2, streaming=False, get_intermediate=False):    #Original max_iterations is 5
         """
         Args:
             max_iterations: The maximum rounds of tool call/evaluation the agent
@@ -128,6 +131,7 @@ class Agent(dspy.Module):
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
+        self.query_context_log = []
 
         self.planner = assert_transform_module(
             Planner([VectorRetriever(), KeywordRetriever()]),
@@ -220,6 +224,12 @@ class Agent(dspy.Module):
             with dspy.settings.lock:
                 dspy.settings.backtrack_to = None
 
+            combined_result = {
+                "query": current_user_message,
+                "retrieved_contexts": [],  # Collect all tool results here
+                "generated_answer": None   # Placeholder for the generated answer
+            }
+
             for (name, model), tool in zip(
                 self.planner.name_to_model.items(), self.planner.tools
             ):
@@ -227,6 +237,15 @@ class Agent(dspy.Module):
                     query=current_user_message, internal_memory=self.internal_memory
                 )
                 first_ite_result, internal_result = r.result, r.internal_result
+
+                # Add the result from the current tool to the combined result
+                combined_result["retrieved_contexts"].append({
+                    "tool_name": name,
+                    "context": first_ite_result
+                })
+
+                #print(f"Retrieved context for tool {name}: {first_ite_result}")
+
                 if "ids" in internal_result:
                     self.internal_memory["ids"] = (
                         self.internal_memory.get("ids", set()) | internal_result["ids"]
@@ -243,6 +262,20 @@ class Agent(dspy.Module):
                 )
                 # if VERBOSE:
                 #     print(f"tool memory: {self.tool_memory.history}")
+            
+            # Generate the answer using the synthesizer
+            generated_response = self.synthesizer(
+                current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
+                tool_memory=self.tool_memory,
+                streaming=False,  # Ensure we get the full response
+            ).response
+
+            # Add the generated answer to the combined result
+            combined_result["generated_answer"] = generated_response
+
+            # Append the combined result to the log
+            self.query_context_log.append(combined_result)
 
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -354,6 +387,22 @@ class Agent(dspy.Module):
                 return i
 
 
+
+
+def convert_to_serializable(obj):
+    """
+    Converts non-serializable types like numpy.float32 to serializable types.
+    """
+    if isinstance(obj, float):
+        return float(obj)  # Ensure all floats are native Python float
+    elif isinstance(obj, dict):
+        return {k: convert_to_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(x) for x in obj]
+    return obj
+
+
+
 def main():
     setup()
     # TODO: Might try integration with DSPy instead of LlamaIndex for better traces
@@ -366,21 +415,60 @@ def main():
 
     agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
 
+    # Create the evaluator
+    evaluator = TransformerEvaluator()
+
+    # Ensure JSON file is written at exit
+    def save_log():
+        with open("query_context_log.json", "w") as json_file:
+            json.dump(agent.query_context_log, json_file, indent=4, ensure_ascii=False)
+    atexit.register(save_log)
+
     while True:
         try:
             print("*" * 10)
             current_user_message = input("Enter your query about DKU: ")
             start_time = time.time()
             responses_gen = agent(current_user_message=current_user_message)
+            
+            # Retrieve context dynamically using agent's retrievers
+            retrieved_contexts = []
+            for retriever in agent.planner.tools:  # Tools include retrievers
+                retrieval_result = retriever(
+                    query=current_user_message, internal_memory=agent.internal_memory
+                ).result
+                retrieved_contexts.append(retrieval_result)
+            
+            
             first_token = True
-            print("Response:")
-            for r in responses_gen.response:
+            full_response = ""
+
+            print("\nResponse:")
+            for token in responses_gen.response:
+                print(token, end="", flush=True)
+                full_response += token
+
+                #Measure time for first token
                 if first_token:
                     end_time = time.time()
-                    print(f"first token时间:{end_time-start_time}")
+                    print(f"\nFirst token time: {end_time - start_time:.2f} seconds")
                     first_token = False
-                print(r, end="")
-            print()
+                #print(r, end="")
+            print("\n\nFinal Response:", full_response)
+
+            # Perform evaluation using TransformerEvaluator
+            evaluation = evaluator.evaluate(
+                user_query=current_user_message,
+                generated_answer=full_response,
+                context=retrieved_contexts,
+            )
+
+            # Convert evaluation metrics to JSON-serializable format
+            evaluation_serializable = convert_to_serializable(evaluation)          
+
+            # Display evaluation metrics
+            print("\nEvaluation Metrics:")
+            print(json.dumps(evaluation, indent=4))    
 
             # for i, r in enumerate(responses_gen):
             #     print("-" * 10)
@@ -395,7 +483,8 @@ def main():
             #     print("-" * 10)
         except EOFError:
             break
-
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     try:
