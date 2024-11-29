@@ -12,8 +12,6 @@ import hashlib
 import nltk
 #nltk.download('averaged_perceptron_tagger_eng')
 
-from redis import Redis
-from redisvl.schema import IndexSchema
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -27,7 +25,19 @@ from llama_index.core.extractors import (
     QuestionsAnsweredExtractor,
     SummaryExtractor,
 )
-from llama_index.vector_stores.redis import RedisVectorStore
+
+from redis import Redis
+from redisvl.index import SearchIndex
+from redisvl.schema import IndexSchema
+from llama_index.vector_stores.redis.schema import (
+    NODE_ID_FIELD_NAME,
+    DOC_ID_FIELD_NAME,
+    TEXT_FIELD_NAME,
+    VECTOR_FIELD_NAME,
+)
+from llama_index.core.schema import MetadataMode
+from redisvl.redis.utils import array_to_buffer
+from llama_index.core.vector_stores.utils import node_to_metadata_dict
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
@@ -247,42 +257,59 @@ def load_and_index(
     
     if "summary" in extractors:
         trans.append(SummaryExtractor())
-    
+
+    trans.append(Settings.embed_model)
+
+    pipeline = IngestionPipeline(transformations=trans)
+    if os.path.exists(pipeline_cache_path):
+        pipeline.load(pipeline_cache_path)
+    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    pipeline.persist(pipeline_cache_path)
+
+    # Load nodes into ChromaDB
+    # FIXME: This loading process is not atomic
     db = chromadb.PersistentClient(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
-    db.reset()  # Clear previously stored data in vector database
+    # Clear previously stored data in vector database
+    db.reset()
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
-    
-    trans.append(Settings.embed_model)
-    
-    # 设置Redis向量存储
+    chroma_vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    chroma_vector_store.add(nodes)
+
+    # Load nodes into Redis (RedisVL)
+    #
+    # Note that using `RedisVectorStore` from LlamaIndex directly won't work as RedisVL's `SearchIndex.set_client()`
+    # executes `MODULE LIST` and checks its return values. Since `MODULE LIST` will be simply queued within a transaction,
+    # and not give a return value, I must execute `SearchIndex.set_client()` first, outside of the transaction.
+    #
+    # Adapted from:
+    # https://github.com/run-llama/llama_index/blob/05828461588b7b35aa4eaabd738807067459e4d0/llama-index-integrations/vector_stores/llama-index-vector-stores-redis/llama_index/vector_stores/redis/base.py#L219-L266
+    data = []
+    for node in nodes:
+        embedding = node.get_embedding()
+        record = {
+            NODE_ID_FIELD_NAME: node.node_id,
+            DOC_ID_FIELD_NAME: node.ref_doc_id,
+            TEXT_FIELD_NAME: node.get_content(metadata_mode=MetadataMode.NONE),
+            VECTOR_FIELD_NAME: array_to_buffer(embedding, dtype="float32"),
+        }
+        # parse and append metadata
+        additional_metadata = node_to_metadata_dict(
+            node, remove_text=True, flat_metadata=False
+        )
+        print(f"additional metadata {additional_metadata}")
+        data.append({**record, **additional_metadata})
+
+    index = SearchIndex.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     redis_client = Redis.from_url("redis://localhost:6379")
-    redis_client.flushdb()
-    custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
-    
-    vector_store = RedisVectorStore(
-        redis_client=redis_client, schema=custom_schema, overwrite=True
-    )
+    index.set_client(redis_client)
 
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
-
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-    
-    pipeline.persist(pipeline_cache_path)
+    # Within a Redis transaction, (re)create the index and load data
+    redis_client.execute_command("MULTI")
+    index.create(overwrite=True, drop=True)
+    index.load(data, id_field=NODE_ID_FIELD_NAME)
+    redis_client.execute_command("EXEC")
     
     
 def main():
