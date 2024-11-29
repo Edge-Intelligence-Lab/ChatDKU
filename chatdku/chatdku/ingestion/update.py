@@ -10,7 +10,6 @@ import json
 import hashlib
 
 import nltk
-#nltk.download('averaged_perceptron_tagger_eng')
 
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.readers.file import UnstructuredReader
@@ -169,6 +168,29 @@ def change_detect(data_dir):
         len(changed_data["removed"]),
         "documents\n",
     )
+
+    # Check and download required nltk packages
+    try:
+        nltk.data.find("taggers/averaged_perceptron_tagger_eng")
+    except LookupError:
+        nltk.download("averaged_perceptron_tagger_eng")
+
+    try:
+        nltk.data.find("taggers/averaged_perceptron_tagger")
+    except LookupError:
+        nltk.download("averaged_perceptron_tagger")
+
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt")
+
+    try:
+        # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
+        # replaces nltk tokenizers with its own version.
+        nltk.data.find("tokenizers/punkt_tab/english")
+    except LookupError:
+        nltk.download("punkt_tab")
 
     reader = UnstructuredReader()
     llama_parse_api_key = "llx-dwGAqjLq7SqCXu7u9y2lBDyyIlnVvbh0pSJUed1toAsnwseQ"
