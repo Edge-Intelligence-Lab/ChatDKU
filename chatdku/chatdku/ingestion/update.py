@@ -320,7 +320,6 @@ def load_and_index(
         additional_metadata = node_to_metadata_dict(
             node, remove_text=True, flat_metadata=False
         )
-        print(f"additional metadata {additional_metadata}")
         data.append({**record, **additional_metadata})
 
     index = SearchIndex.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
