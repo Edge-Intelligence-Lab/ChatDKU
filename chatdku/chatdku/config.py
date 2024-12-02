@@ -19,7 +19,7 @@ class Config:
                 "data_dir": "/datapool/RAG_data",
                 "documents_path": "/datapool/RAG_data/new_parser_documents.pkl",
                 "pipeline_cache": "./pipeline_cache",
-                "csv_path": "/datapool/RAG_data_new_website/download_info.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/download_info/download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 # about query
                 "chroma_db": "/datapool/chroma_dbs/chatdku_chromadb_3",
