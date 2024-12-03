@@ -1,4 +1,4 @@
-# README: Evaluation Metrics for Retrieval-Augmented Generation (RAG)
+# Evaluation Metrics
 
 ## Overview
 
