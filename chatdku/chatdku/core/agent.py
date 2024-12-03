@@ -114,7 +114,7 @@ class CustomClient(LM):
 
 
 class Agent(dspy.Module):
-    def __init__(self, max_iterations=2, streaming=False, get_intermediate=False):    #Original max_iterations is 5
+    def __init__(self, max_iterations=1, streaming=False, get_intermediate=False):    #Original max_iterations is 5
         """
         Args:
             max_iterations: The maximum rounds of tool call/evaluation the agent
