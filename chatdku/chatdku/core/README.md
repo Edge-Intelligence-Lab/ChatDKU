@@ -2,7 +2,7 @@
 
 ---
 
-## Automated Evaluation: How It Works in This Branch
+## Automated Evaluation: How It Works
 
 ### Running the Evaluation
 In this branch, you can run the file `agent.py`, which automatically evaluates generated answers after they are produced.
