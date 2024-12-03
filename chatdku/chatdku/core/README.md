@@ -16,7 +16,6 @@ In this branch, you can run the file `agent.py`, which automatically evaluates g
 ### Purpose of Automated Evaluation
 The primary purpose of this automated evaluation is to facilitate **hyperparameter optimization** and **faster testing**. By approximating the evaluation scores, you can identify promising configurations without manual intervention.
 
-### Manual Evaluation for Benchmarking
 Despite the automated system, manual evaluation remains the **gold standard** for benchmarking. Final evaluations and comparisons will always rely on human judgment to ensure accuracy and reliability.
 
 ---
