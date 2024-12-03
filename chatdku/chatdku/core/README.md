@@ -1,5 +1,26 @@
 # Evaluation Metrics
 
+---
+
+## Automated Evaluation: How It Works in This Branch
+
+### Running the Evaluation
+In this branch, you can run the file `agent.py`, which automatically evaluates generated answers after they are produced.
+
+### Key Details
+- **Latency:** The latency for generating answers will be slightly higher because the evaluation is performed automatically after each generation.
+- **Faithfulness Scores Disclaimer:**  
+  - The faithfulness scores from this automated evaluation might appear **lower** than expected. This is because there is **no ground truth** for the generated answers during automated evaluation. Instead, the system approximates scores by comparing the retrieved context with the generated answers.
+  - This limitation makes automated faithfulness evaluation less reliable for benchmarking but useful for rapid experimentation.
+
+### Purpose of Automated Evaluation
+The primary purpose of this automated evaluation is to facilitate **hyperparameter optimization** and **faster testing**. By approximating the evaluation scores, you can identify promising configurations without manual intervention.
+
+### Manual Evaluation for Benchmarking
+Despite the automated system, manual evaluation remains the **gold standard** for benchmarking. Final evaluations and comparisons will always rely on human judgment to ensure accuracy and reliability.
+
+---
+
 ## Overview
 
 This repository provides an evaluation framework for assessing Retrieval-Augmented Generation (RAG) systems. The framework uses five core metrics to evaluate the quality of retrieval and generation:
