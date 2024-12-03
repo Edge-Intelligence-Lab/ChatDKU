@@ -137,6 +137,8 @@ import pandas as pd
 import re
 
 df = pd.read_csv(config.url_csv_path)
+# Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
+df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
 
 def get_url(metadata):
