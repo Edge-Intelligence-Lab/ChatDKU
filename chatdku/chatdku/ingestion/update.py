@@ -10,10 +10,7 @@ import json
 import hashlib
 
 import nltk
-#nltk.download('averaged_perceptron_tagger_eng')
 
-from redis import Redis
-from redisvl.schema import IndexSchema
 from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -27,7 +24,19 @@ from llama_index.core.extractors import (
     QuestionsAnsweredExtractor,
     SummaryExtractor,
 )
-from llama_index.vector_stores.redis import RedisVectorStore
+
+from redis import Redis
+from redisvl.index import SearchIndex
+from redisvl.schema import IndexSchema
+from llama_index.vector_stores.redis.schema import (
+    NODE_ID_FIELD_NAME,
+    DOC_ID_FIELD_NAME,
+    TEXT_FIELD_NAME,
+    VECTOR_FIELD_NAME,
+)
+from llama_index.core.schema import MetadataMode
+from redisvl.redis.utils import array_to_buffer
+from llama_index.core.vector_stores.utils import node_to_metadata_dict
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
@@ -139,7 +148,6 @@ def change_detect(data_dir):
     print(f"Loaded documents from {documents_path}")
 
     for document in documents:
-        
         if document.metadata["file_path"] in timed_files:
             documents.remove(document)
 
@@ -160,6 +168,29 @@ def change_detect(data_dir):
         len(changed_data["removed"]),
         "documents\n",
     )
+
+    # Check and download required nltk packages
+    try:
+        nltk.data.find("taggers/averaged_perceptron_tagger_eng")
+    except LookupError:
+        nltk.download("averaged_perceptron_tagger_eng")
+
+    try:
+        nltk.data.find("taggers/averaged_perceptron_tagger")
+    except LookupError:
+        nltk.download("averaged_perceptron_tagger")
+
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt")
+
+    try:
+        # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
+        # replaces nltk tokenizers with its own version.
+        nltk.data.find("tokenizers/punkt_tab/english")
+    except LookupError:
+        nltk.download("punkt_tab")
 
     reader = UnstructuredReader()
     llama_parse_api_key = "llx-dwGAqjLq7SqCXu7u9y2lBDyyIlnVvbh0pSJUed1toAsnwseQ"
@@ -248,140 +279,73 @@ def load_and_index(
     
     if "summary" in extractors:
         trans.append(SummaryExtractor())
-    
+
+    trans.append(Settings.embed_model)
+
+    pipeline = IngestionPipeline(transformations=trans)
+    if os.path.exists(pipeline_cache_path):
+        pipeline.load(pipeline_cache_path)
+    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    pipeline.persist(pipeline_cache_path)
+
+    # Load nodes into ChromaDB
+    # FIXME: This loading process is not atomic
     db = chromadb.PersistentClient(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
-    db.reset()  # Clear previously stored data in vector database
+    # Clear previously stored data in vector database
+    db.reset()
     chroma_collection = db.get_or_create_collection("dku_html_pdf")
-    
-    trans.append(Settings.embed_model)
-    
-    # 设置Redis向量存储
+    chroma_vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    chroma_vector_store.add(nodes)
+
+    # Load nodes into Redis (RedisVL)
+    #
+    # Note that using `RedisVectorStore` from LlamaIndex directly won't work as RedisVL's `SearchIndex.set_client()`
+    # executes `MODULE LIST` and checks its return values. Since `MODULE LIST` will be simply queued within a transaction,
+    # and not give a return value, I must execute `SearchIndex.set_client()` first, outside of the transaction.
+    #
+    # Adapted from:
+    # https://github.com/run-llama/llama_index/blob/05828461588b7b35aa4eaabd738807067459e4d0/llama-index-integrations/vector_stores/llama-index-vector-stores-redis/llama_index/vector_stores/redis/base.py#L219-L266
+    data = []
+    for node in nodes:
+        embedding = node.get_embedding()
+        record = {
+            NODE_ID_FIELD_NAME: node.node_id,
+            DOC_ID_FIELD_NAME: node.ref_doc_id,
+            TEXT_FIELD_NAME: node.get_content(metadata_mode=MetadataMode.NONE),
+            VECTOR_FIELD_NAME: array_to_buffer(embedding, dtype="float32"),
+        }
+        # parse and append metadata
+        additional_metadata = node_to_metadata_dict(
+            node, remove_text=True, flat_metadata=False
+        )
+        data.append({**record, **additional_metadata})
+
+    index = SearchIndex.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
     redis_client = Redis.from_url("redis://localhost:6379")
-    #redis_client.flushdb()
-    custom_schema = IndexSchema.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
+    index.set_client(redis_client)
+
+    # Within a Redis transaction, (re)create the index and load data
+    redis_client.execute_command("MULTI")
+    index.create(overwrite=True, drop=True)
+    index.load(data, id_field=NODE_ID_FIELD_NAME)
+    redis_client.execute_command("EXEC")
     
-    vector_store = RedisVectorStore(
-        redis_client=redis_client, schema=custom_schema, overwrite=True
-    )
-
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
-
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
     
-    pipeline.persist(pipeline_cache_path)
-
-
-
 def main():
     setup(add_system_prompt=True)
-    #new_documents=change_detect(config.data_dir)
-    
-    processed_file_path = config.documents_path
-    with open(processed_file_path, "rb") as f:
-        new_documents = pickle.load(f)
-    print(new_documents[:2])
-     
-    
+    new_documents=change_detect(config.data_dir)
     if args.load:
         load_and_index(
             new_documents=new_documents,
             pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
-            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 200},
+            text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
             extractors=[],
             use_recursive_directory_summarize=False,
             pipeline_workers=1,
         )
-# import pickle
-
-# def process_document(doc, chunk_size=1024):
-#     """
-#     处理单个文档，如果 Metadata 超长则跳过。
-#     """
-#     metadata = getattr(doc, "metadata", None)
-#     if metadata and isinstance(metadata, str) and len(metadata) > chunk_size:
-#         print(f"Skipping document with metadata length {len(metadata)}")
-#         return None  # 返回 None 表示跳过此文档
-
-#     print(f"Processing document with valid metadata (length {len(metadata) if metadata else 0})")
-#     return doc  # 返回处理后的文档
-
-# def load_and_index_with_metadata_check(
-#     new_documents,
-#     output_path: str,  # 新增：保存有效文档的文件路径
-#     pipeline_cache_path: str,
-#     text_spliter: str = "sentence_splitter",
-#     text_spliter_args: dict = {},
-#     extractors: list = [],
-#     use_recursive_directory_summarize: bool = False,
-#     pipeline_workers: int = 1,
-# ):
-#     """
-#     加载文档，跳过 Metadata 超长的文档，并执行索引，同时保存有效文档。
-#     """
-#     chunk_size = text_spliter_args.get("chunk_size", 1024)
-#     valid_documents = []  # 存储有效文档
-
-#     for i, doc in enumerate(new_documents):
-#         try:
-#             # 处理文档，跳过 Metadata 超长的情况
-#             processed_doc = process_document(doc, chunk_size=chunk_size)
-#             if processed_doc is not None:
-#                 valid_documents.append(processed_doc)
-
-#         except Exception as e:
-#             print(f"Error processing document {i}: {e}")
-#             continue  # 跳过出错文档
-
-#     print(f"Valid documents count: {len(valid_documents)}")
-
-#     # 保存有效文档到指定路径
-#     with open(output_path, "wb") as f:
-#         pickle.dump(valid_documents, f)
-#     print(f"Valid documents have been saved to {output_path}")
-
-#     # 在这里继续处理有效的文档（例如，调用实际向量化逻辑）
-#     print("All valid documents have been processed.")
-
-# def main():
-#     setup(add_system_prompt=True)
-    
-#     processed_file_path = config.documents_path
-#     output_file_path = "/datapool/chatdku_student/validfile.pkl"  # 指定保存有效文档的路径
-
-#     with open(processed_file_path, "rb") as f:
-#         new_documents = pickle.load(f)
-
-#     print(new_documents[:2])  # 打印前两个文档
-
-#     # 加载并索引文档，跳过 Metadata 超长的文档
-#     if args.load:
-#         load_and_index_with_metadata_check(
-#             new_documents=new_documents,
-#             output_path=output_file_path,  # 保存有效文档的路径
-#             pipeline_cache_path=str(config.pipeline_cache),
-#             text_spliter="sentence_splitter",
-#             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 200},
-#             extractors=[],
-#             use_recursive_directory_summarize=False,
-#             pipeline_workers=1,
-#         )
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
