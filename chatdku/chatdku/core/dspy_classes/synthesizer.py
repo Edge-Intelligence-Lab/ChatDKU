@@ -65,11 +65,13 @@ def make_synthesizer_signature():
         "a second option unless directly asked, or that resource is clearly "
         "available to the DKU community via means such as a partnership with DKU. "
         "The source of contexts is contained in the url in metadata,"
-        "Useful urls to the source document of the contexts used in your answer should be "
-        "included at the end of your answer, like 'reference links:',"
+        "Include the urls to the sources used in your answer at the end, like 'reference links:'. "
+        "Do not include the urls to the sources that you did not use in your answer. "
         "The link needs to be markdown so that it can be clicked, and the text shown is a "
         "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. "
-        "make sure the reference link you offer is the accurate copy from your database. If you can't find one, do not provide the link"
+        "make sure the reference link you offer is the accurate copy from your database. "
+        "If you see 'no url' for a source, do not provide the link. "
+        "Do not use the url of one source for another source, and do not guess the url. "
         "Your internal operation should also not be transparent to the user, "
         '"do not include phrases like "Based on the conversation history", '
         '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
@@ -224,7 +226,8 @@ class Synthesizer(dspy.Module):
                     [i.model_dump_json() for i in conversation_memory.history]
                 ),
                 conversation_summary=conversation_memory.summary,
-                tool_history="\n".join(
+                # TODO: Might want to unify conversion to string for `ToolMemory`
+                tool_history="\n\n###\n\n".join(
                     [i.model_dump_json() for i in tool_memory.history]
                 ),
                 tool_summary=tool_memory.summary,
