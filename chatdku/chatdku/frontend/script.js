@@ -9,7 +9,7 @@ function generateUniqueId() {
 }
 
 
-fetch('http://10.200.14.82:9012/reset', {
+fetch('http://10.200.14.82:9015/reset', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -65,37 +65,79 @@ function replaceBlocks(block_id) {
     let newBlocks = [];
     
     if (block_id === 'academic') {
-        console.log(1111)
         newBlocks = [
-            { id: 'block1', text: 'I am a freshman interested in majoring in computer science. Could you recommend some courses for my first semester?' },
-            { id: 'block2', text: 'Introduce the Credit/No Credit (CR/NC) grading system.' },
-            { id: 'block3', text: 'What Common Core courses should I take?' },
-            { id: 'block4', text: 'What is an EAP course at DKU?' },
-            { id: 'block5', text: 'Do you know the guidelines for the appointment of adjunct faculty?' }
-        ];
-    } else if (block_id === 'campus') {
-        newBlocks = [
-            { id: 'block6', text: 'How can I request a medical withdrawal from a course?' },
-            { id: 'block7', text: 'When should students declare their major?' },
-            { id: 'block8', text: 'Where can I get help if I am having difficulty in a course?' },
-            { id: 'block9', text: 'Who should I contact in case of an emergency at DKU?' }
-        ];
-    } else if (block_id === 'service') {
-        newBlocks = [
-            { id: 'block11', text: 'How can I get assistance from Residence Life?' },
-            { id: 'block12', text: 'What should I do if I have an IT issue at DKU?' },
-            { id: 'block13', text: 'What resources are available for mental health support at DKU?' },
-            { id: 'block14', text: 'How can I find an internship with the help of DKU career services?' }
-        ];
-    } else if (block_id === 'tools') {
-        newBlocks = [
-            { id: 'block16', text: 'Please reserve a large meeting room in the IB building.' },
-            { id: 'block17', text: 'Could you generate a brief email inviting Professor Bing Luo for a lunch meeting with me?' },
-            { id: 'block18', text: 'I am a rising senior. Please create a timeline for my signature work plan.' },
-            { id: 'block19', text: 'Show me the DKU menu for this week.' },
-            { id: 'block20', text: 'How can I organize my 7-week study plan for the CS101 course?' }
+            { id: 'block1', text: 'Can I change my declared major?' },
+            { id: 'block2', text: 'What are the Distribution Requirements?' },
+            { id: 'block3', text: 'What are the core components of the DKU Curriculum?' },
+            { id: 'block4', text: 'What’s Common Core?' },
+            { id: 'block5', text: 'What are the required language courses?' },
+            { id: 'block6', text: 'Can I make changes to my course schedule after registration?' },
+            { id: 'block7', text: 'How many credits can I take in a semester?' },
+            { id: 'block8', text: 'What is a course overload and how can I request for an overload?' },
+            { id: 'block9', text: 'Will courses that I withdrew show on my transcript?' },
+            { id: 'block10', text: 'What is the procedure of CR/NC a course?' },
+            { id: 'block11', text: 'What letter grade would be considered CR and what would be considered NC?' },
+            { id: 'block12', text: 'How many credits can I CR/NC?' },
+            { id: 'block13', text: 'Can I CR/NC a course that’s a major requirement?' },
+            { id: 'block14', text: 'Can I repeat a course in which the grade of the record is CR/NC?' },
+            { id: 'block15', text: 'What’s the regular deadline for resolving the Incomplete grade?' }
         ];
     }
+    else if (block_id === 'campus') {
+        newBlocks = [
+            { id: 'block16', text: 'What majors are available at Duke Kunshan University?' },
+            { id: 'block17', text: 'Are there advisors who can guide me in selecting a major?' },
+            { id: 'block18', text: 'Can I switch my major later on? How?' },
+            { id: 'block19', text: 'What are the prerequisites for STATS 302 at DKU?' },
+            { id: 'block20', text: 'What is the process for major declaration?' },
+            { id: 'block21', text: 'When can I declare a major?' },
+            { id: 'block22', text: 'Can I repeat Music Courses for credits?' },
+            { id: 'block23', text: 'What are the core courses required and electives of the Data Science major?' },
+            { id: 'block24', text: 'What are the prerequisites of the Data Science major?' },
+            { id: 'block25', text: 'How do I choose a major?' },
+            { id: 'block26', text: 'I would like to major in Data Science. Please draw a 4-year course map for me, with all the prerequisites considered.' },
+            { id: 'block27', text: 'I am interested in Natural Language Processing. Are there any courses at DKU that cover this topic?' },
+            { id: 'block28', text: 'When is the deadline to add an Independent Study (research or non-research) course?' },
+            { id: 'block29', text: 'What majors are available for me to consider?' }
+        ];
+    }
+    else if (block_id === 'service') {
+        newBlocks = [
+            { id: 'block30', text: 'Can I request a Leave of Absence for military service?' },
+            { id: 'block31', text: 'How do I request a Medical Leave of Absence?' },
+            { id: 'block32', text: 'How long can I be on Leave of Absence?' },
+            { id: 'block33', text: 'What is considered an Academic Warning?' },
+            { id: 'block34', text: 'What is considered Academic Probation?' },
+            { id: 'block35', text: 'What should I do if I’m placed on academic probation?' },
+            { id: 'block36', text: 'How do I clear my probationary status?' },
+            { id: 'block37', text: 'How do I return from Academic Suspension?' },
+            { id: 'block38', text: 'What is the policy on academic probation and dismissal?' },
+            { id: 'block39', text: 'How many credits can I transfer from Study Abroad?' },
+            { id: 'block40', text: 'Can I transfer credits from the college-level courses that I took prior to coming to DKU?' },
+            { id: 'block41', text: 'What is the process for declaring or changing a major?' },
+            { id: 'block42', text: 'How are transfer credits evaluated and applied?' },
+            { id: 'block43', text: 'How can I make up the NSPHST if I fail the first time?' }
+        ];
+    }
+    else if (block_id === 'tools') {
+        newBlocks = [
+            { id: 'block44', text: 'How can I get assistance from Residence Life?' },
+            { id: 'block45', text: 'What should I do if I have an IT issue at DKU?' },
+            { id: 'block46', text: 'What resources are available for mental health support at DKU?' },
+            { id: 'block47', text: 'How can I find an internship with the help of DKU career services?' },
+            { id: 'block48', text: 'What career services are offered, including resume workshops and job fairs?' },
+            { id: 'block49', text: 'What scholarships and grants are available, and what are the eligibility criteria?' },
+            { id: 'block50', text: 'What is the process for applying for financial aid?' },
+            { id: 'block51', text: 'What are the resources for students interested in entrepreneurship?' },
+            { id: 'block52', text: 'What student organizations and clubs are available?' },
+            { id: 'block53', text: 'Are there work-study programs available, and how can students apply?' },
+            { id: 'block54', text: 'Are there recreational and fitness facilities on campus?' },
+            { id: 'block55', text: 'What are the rules regarding library rooms?' },
+            { id: 'block56', text: 'What health services are provided on campus?' },
+            { id: 'block57', text: 'Who should I contact in case of an emergency at DKU?' }
+        ];
+    }
+
 
     newBlocks.forEach(blockInfo => {
         const block = document.createElement('div');
@@ -232,14 +274,14 @@ function sendMessage() {
     // 生成特定标识符
     globalChatHistoryId = generateUniqueId();
 
-    // 将标识符添加到要发送给9012接口的请求数据中
+    // 将标识符添加到要发送给9015接口的请求数据中
     const requestData = {
         messages: chatHistory,
         chatHistoryId: globalChatHistoryId
     };
 
     // FIXME: Don't use hard-coded URL
-    fetch('http://10.200.14.82:9012/chat', {
+    fetch('http://10.200.14.82:9015/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -424,7 +466,7 @@ function saveFeedback(input, answer, reason) {
         chatHistoryId: globalChatHistoryId,
     };
 
-    fetch('http://10.200.14.82:9013/save-feedback', {
+    fetch('http://10.200.14.82:9016/save-feedback', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
