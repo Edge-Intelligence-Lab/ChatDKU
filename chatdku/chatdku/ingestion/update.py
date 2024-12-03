@@ -168,23 +168,53 @@ def change_detect(data_dir):
         verbose=True,
     )
     
+    # 加载已解析的文件记录
+    parsed_files_record = os.path.join(data_dir, "parsed_files.pkl")
+    if os.path.exists(parsed_files_record):
+        with open(parsed_files_record, "rb") as f:
+            parsed_files = pickle.load(f)
+    else:
+        parsed_files = set()
+
     # 定义目标文件类型
     valid_extensions = {".htm", ".html", ".pdf", ".csv"}
 
     # 过滤掉不符合要求的文件
     new_files = [file for file in new_files if os.path.splitext(file)[1].lower() in valid_extensions]
+    # 二次过滤已解析的文件
+    new_files = [file for file in new_files if file not in parsed_files]
     if(len(new_files)!=0):    
-        new_documents = SimpleDirectoryReader(
-            input_files=new_files,
-            recursive=True,
-            required_exts=[".html", ".htm", ".pdf", ".csv"],
-            file_extractor={
-                ".htm": reader,
-                ".html": reader,
-                ".pdf": pdf_parser,
-                ".csv": reader,
-            },
-        ).load_data()
+        for file in new_files:
+            try:
+                # Parse the file
+                if os.path.splitext(file)[1].lower() in valid_extensions:
+                    new_document = SimpleDirectoryReader(
+                        input_files=[file],
+                        recursive=True,
+                        required_exts=[".html", ".htm", ".pdf", ".csv"],
+                        file_extractor={
+                            ".htm": reader,
+                            ".html": reader,
+                            ".pdf": pdf_parser,
+                            ".csv": reader,
+                        },
+                    ).load_data()
+
+                    # Update documents and save
+                    documents.extend(new_document)
+                    with open(documents_path, "wb") as f:
+                        pickle.dump(documents, f)
+
+                    # Update parsed files record and save
+                    parsed_files.add(file)
+                    with open(parsed_files_record, "wb") as f:
+                        pickle.dump(parsed_files, f)
+                else:
+                    print(f"Skipping unsupported file type: {file}")
+            except Exception as e:
+                print(f"Error parsing {file}: {e}")
+                # Optionally log the error to a file
+                continue  # Proceed to the next file
     else:
         new_documents=[]
 
@@ -196,6 +226,8 @@ def change_detect(data_dir):
     
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
+    # 删除临时文件
+    os.remove(parsed_files_record)
 
     print("Document successfully update")
     return new_documents
