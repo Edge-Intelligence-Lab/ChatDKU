@@ -1,8 +1,6 @@
 # Evaluation Metrics
 
----
-
-## Automated Evaluation: How It Works
+## Automated Evaluation
 
 ### Running the Evaluation
 In this branch, you can run the file `agent.py`, which automatically evaluates generated answers after they are produced.
