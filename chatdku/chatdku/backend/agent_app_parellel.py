@@ -35,7 +35,7 @@ def chat():
         message_content = messages[-1]["content"]
 
         # Create a new Agent instance per request
-        agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
+        agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id
         )

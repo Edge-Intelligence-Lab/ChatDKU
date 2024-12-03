@@ -60,7 +60,7 @@ if __name__ == "__main__":
     use_phoenix()
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
+    agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
     # NOTE: Might want to make it easier to change the port
     app.run(host="0.0.0.0", port=9015)
