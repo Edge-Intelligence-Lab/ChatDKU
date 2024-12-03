@@ -43,7 +43,7 @@ Faithfulness measures whether the generated response is factually accurate and g
 - Traditional metrics like BLEU and ROUGE focus on n-gram overlap, which does not guarantee factual correctness. For instance, a response could match the ground truth textually but still be factually incorrect.
 - Perplexity evaluates the fluency of a model’s output but does not assess whether the content is factually accurate or grounded.
 
-Faithfulness directly evaluates factual alignment, making it a more appropriate metric for RAG systems.
+Faithfulness directly evaluates factual alignment.
 
 ---
 
@@ -65,7 +65,7 @@ Context precision evaluates how much of the retrieved evidence is relevant to th
 - Recall@k and similar metrics measure retrieval coverage but do not penalize irrelevant retrieval. This can result in high scores even if much of the retrieved context is irrelevant.
 - BLEU and ROUGE are unsuitable for assessing retrieval quality because they only compare generated answers to reference outputs.
 
-Context precision is critical for evaluating the quality of retrieval in RAG systems, ensuring the retrieved context is useful for downstream generation.
+Context precision is critical for evaluating the quality of retrieval, ensuring the retrieved context is useful for downstream generation.
 
 ---
 
