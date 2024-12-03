@@ -67,20 +67,18 @@ function replaceBlocks(block_id) {
     if (block_id === 'academic') {
         console.log(1111)
         newBlocks = [
-            { id: 'block1', text: 'What is the procedure of CR/NC a course?' },
-            { id: 'block2', text: 'What are the requirements and processes for declaring or changing a major?' },
-            { id: 'block3', text: 'What are the guidelines for academic integrity and plagiarism?' },
-            { id: 'block4', text: 'What scholarships and grants are available, and what are the eligibility criteria?' },
-            { id: 'block5', text: 'How are transfer credits evaluated and applied?' }
+            { id: 'block1', text: 'I am a freshman interested in majoring in computer science. Could you recommend some courses for my first semester?' },
+            { id: 'block2', text: 'Introduce the Credit/No Credit (CR/NC) grading system.' },
+            { id: 'block3', text: 'What Common Core courses should I take?' },
+            { id: 'block4', text: 'What is an EAP course at DKU?' },
+            { id: 'block5', text: 'Do you know the guidelines for the appointment of adjunct faculty?' }
         ];
     } else if (block_id === 'campus') {
         newBlocks = [
-            { id: 'block6', text: 'What is the National PE test and must I take it?' },
-            { id: 'block7', text: 'What are the rules regarding library rooms' },
-            { id: 'block8', text: 'What health services are provided on campus?' },
-            { id: 'block9', text: 'What student organizations and clubs are available?' },
-            { id: 'block10', text: 'Are there recreational and fitness facilities on campus?' },
-            { id: 'block11', text: 'Where to find IT services?' }
+            { id: 'block6', text: 'How can I request a medical withdrawal from a course?' },
+            { id: 'block7', text: 'When should students declare their major?' },
+            { id: 'block8', text: 'Where can I get help if I am having difficulty in a course?' },
+            { id: 'block9', text: 'Who should I contact in case of an emergency at DKU?' }
         ];
     } else if (block_id === 'service') {
         newBlocks = [

@@ -136,7 +136,8 @@ def get_reranker(top_n: int):
 import pandas as pd
 import re
 
-df = pd.read_csv(config.url_csv_path)
+url_csv_path = "/datapool/download_info/download_info.csv"
+df = pd.read_csv(url_csv_path)
 
 
 def get_url(metadata):
