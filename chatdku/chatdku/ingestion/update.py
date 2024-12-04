@@ -8,6 +8,7 @@ from typing import Any
 import argparse
 import json
 import hashlib
+import uuid
 
 import nltk
 
@@ -217,6 +218,12 @@ def change_detect(data_dir):
                 ".csv": reader,
             },
         ).load_data()
+
+        # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
+        # which causes collision for files with the same filename.
+        # See: https://github.com/run-llama/llama_index/issues/17144
+        for doc in new_documents:
+            doc.doc_id = str(uuid.uuid4())
     else:
         new_documents=[]
 
