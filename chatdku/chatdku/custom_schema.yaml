@@ -1,6 +1,6 @@
 index:
-  name: idx:test3
-  prefix: test_doc3
+  name: idx:test4
+  prefix: test_doc4
   key_separator: ':'
   storage_type: hash
 fields:

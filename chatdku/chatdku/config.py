@@ -22,7 +22,7 @@ class Config:
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 # about query
-                "chroma_db": "/datapool/db_Chatdku_student_1",
+                "chroma_db": "/datapool/db_Chatdku_student_2",
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 # about graphrag
