@@ -239,7 +239,6 @@ def set_state(data_dir):
         json.dump(new_state, f, indent=4)
 
 def load_and_index(
-    new_documents,
     pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
@@ -335,10 +334,9 @@ def load_and_index(
     
 def main():
     setup(add_system_prompt=True)
-    new_documents=change_detect(config.data_dir)
+    change_detect(config.data_dir)
     if args.load:
         load_and_index(
-            new_documents=new_documents,
             pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
