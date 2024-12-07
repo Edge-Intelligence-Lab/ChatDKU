@@ -25,21 +25,39 @@ This script allows you to visualize data distributions in 2D and 3D using Python
 ## Requirements
 
 Install the following Python libraries if you haven't already:
-
-	1.	Prepare Your Dataset:
+1. Prepare Your Dataset:
 The dataset should be a Pandas DataFrame. For testing, you can generate a synthetic dataset using the example code provided.
-	2.	Initialize the Visualizer:
+   ```bash
+   import pandas as pd
+   import numpy as np
+
+   data = {
+      'Category': ['A', 'B', 'C', 'D', 'E'],
+      'Values': np.random.randint(10, 100, 5),
+      'Scores': np.random.rand(5) * 100
+   }
+   df = pd.DataFrame(data)
+   print(df)
+   ```
+   
+   
+2. Initialize the Visualizer:
 Create an instance of the DataVisualizer class with your dataset.
-	3.	Call Visualization Functions:
+   ```bash
+   from ChatDKU.utils.data_visualizer import DataVisualizer
+
+   visualizer = DataVisualizer(df)
+   ```
+3. Call Visualization Functions:
 Use the methods provided to generate different types of plots.
 
 ## Example Outputs：
 
-	1.	2D Scatter Plot with KDE:
+   1.	2D Scatter Plot with KDE:
    ```bash
    visualizer.plot_2d_distribution('x', 'y', kind='scatter', kde=True)
    ```
-	2.	3D Scatter Plot:
+   2. 3D Scatter Plot:
    ```bash
    visualizer.plot_3d_distribution('x', 'y', 'z', kind='scatter')
    ```
