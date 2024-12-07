@@ -8,6 +8,7 @@ from typing import Any
 import argparse
 import json
 import hashlib
+import uuid
 
 import nltk
 
@@ -217,6 +218,12 @@ def change_detect(data_dir):
                 ".csv": reader,
             },
         ).load_data()
+
+        # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
+        # which causes collision for files with the same filename.
+        # See: https://github.com/run-llama/llama_index/issues/17144
+        for doc in new_documents:
+            doc.doc_id = str(uuid.uuid4())
     else:
         new_documents=[]
 
@@ -239,7 +246,6 @@ def set_state(data_dir):
         json.dump(new_state, f, indent=4)
 
 def load_and_index(
-    new_documents,
     pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
@@ -335,10 +341,9 @@ def load_and_index(
     
 def main():
     setup(add_system_prompt=True)
-    new_documents=change_detect(config.data_dir)
+    change_detect(config.data_dir)
     if args.load:
         load_and_index(
-            new_documents=new_documents,
             pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
