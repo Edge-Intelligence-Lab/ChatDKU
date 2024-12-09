@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from typing import Any
 
 import dspy
 
@@ -32,7 +33,7 @@ from chatdku.config import config
 class ToolMemoryEntry(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name_params: NameParams
-    result: str
+    result: Any
 
 
 def make_compress_tool_memory_signature():

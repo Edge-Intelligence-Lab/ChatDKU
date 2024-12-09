@@ -180,8 +180,8 @@ def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     ]
 
 
-def nodes_to_string(nodes: list[NodeWithScore]):
-    return "\n\n".join([node.get_content(MetadataMode.LLM) for node in nodes])
+def nodes_to_dicts(nodes: list[NodeWithScore]):
+    return [{"text": node.text, "metadata": node.metadata} for node in nodes]
 
 
 # Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
@@ -310,7 +310,7 @@ class VectorRetriever(dspy.Module):
                 nodes = retrieved_nodes
 
             nodes = simplify_nodes(nodes)
-            result = nodes_to_string(nodes)
+            result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
@@ -477,7 +477,7 @@ class KeywordRetriever(dspy.Module):
             # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 
             nodes = simplify_nodes(nodes)
-            result = nodes_to_string(nodes)
+            result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
