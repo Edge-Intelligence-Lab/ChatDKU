@@ -157,9 +157,7 @@ class ToolMemory(dspy.Module):
             if min_index > 0:
                 compressor_inputs = dict(
                     current_user_message=current_user_message,
-                    conversation_history="\n".join(
-                        [i.model_dump_json() for i in conversation_memory.history]
-                    ),
+                    conversation_history=conversation_memory.history_str(),
                     conversation_summary=conversation_memory.summary,
                     history_to_discard=self.history_str(0, min_index),
                     previous_summary=self.summary,

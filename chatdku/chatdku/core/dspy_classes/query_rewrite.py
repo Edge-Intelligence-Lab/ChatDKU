@@ -92,9 +92,7 @@ class QueryRewrite(dspy.Module):
 
             rewrite_inputs = dict(
                 current_user_message=current_user_message,
-                conversation_history="\n".join(
-                    [i.model_dump_json() for i in conversation_memory.history]
-                ),
+                conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 tool_history=tool_memory.history_str(),
                 tool_summary=tool_memory.summary,
