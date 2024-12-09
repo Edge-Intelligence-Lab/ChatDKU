@@ -452,7 +452,6 @@ class KeywordRetriever(dspy.Module):
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
-            print(results)
             try:
                 nodes = [
                     NodeWithScore(
