@@ -226,10 +226,7 @@ class Synthesizer(dspy.Module):
                     [i.model_dump_json() for i in conversation_memory.history]
                 ),
                 conversation_summary=conversation_memory.summary,
-                # TODO: Might want to unify conversion to string for `ToolMemory`
-                tool_history="\n\n###\n\n".join(
-                    [i.model_dump_json() for i in tool_memory.history]
-                ),
+                tool_history=tool_memory.history_str(),
                 tool_summary=tool_memory.summary,
             )
             synthesizer_args = truncate_tokens_all(

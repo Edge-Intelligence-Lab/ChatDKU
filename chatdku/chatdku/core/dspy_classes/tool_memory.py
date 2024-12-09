@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Any
+from typing import Any, Optional
 
 import dspy
 
@@ -110,6 +110,11 @@ class ToolMemory(dspy.Module):
         }
         self.reset()
 
+    def history_str(self, l: int = 0, r: Optional[int] = None):
+        if r is None:
+            r = len(self.history)
+        return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r]])
+
     def get_token_limits(self) -> dict[str, int]:
         return token_limit_ratio_to_count(
             self.token_ratios, len(get_template(self.compressor))
@@ -156,9 +161,7 @@ class ToolMemory(dspy.Module):
                         [i.model_dump_json() for i in conversation_memory.history]
                     ),
                     conversation_summary=conversation_memory.summary,
-                    history_to_discard="\n".join(
-                        [i.model_dump_json() for i in self.history[:min_index]]
-                    ),
+                    history_to_discard=self.history_str(0, min_index),
                     previous_summary=self.summary,
                 )
                 compressor_inputs = truncate_tokens_all(
