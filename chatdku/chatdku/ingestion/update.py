@@ -155,20 +155,19 @@ def change_detect(data_dir):
 
 
     if len(new_files + timed_files) == 0:
-        print("Nothing has changed")
-        return
-
-    print(
-        "Added",
-        len(changed_data["added"]),
-        "documents\n",
-        "Modified",
-        len(changed_data["modified"]),
-        "documents\n",
-        "Removed",
-        len(changed_data["removed"]),
-        "documents\n",
-    )
+        print("Nothing has changed")   
+    else:
+        print(
+            "Added",
+            len(changed_data["added"]),
+            "documents\n",
+            "Modified",
+            len(changed_data["modified"]),
+            "documents\n",
+            "Removed",
+            len(changed_data["removed"]),
+            "documents\n",
+        )
 
     # Check and download required nltk packages
     try:
@@ -234,7 +233,7 @@ def change_detect(data_dir):
                         },
                     ).load_data()
 
-                    # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
+                    # FIXME: Mitigate the issue of  ,
                     # which causes collision for files with the same filename.
                     # See: https://github.com/run-llama/llama_index/issues/17144
                     for doc in new_documents:
