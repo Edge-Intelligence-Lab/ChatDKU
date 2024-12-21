@@ -217,7 +217,7 @@ def change_detect(data_dir):
     # 二次过滤已解析的文件
     new_files = [file for file in new_files if file not in parsed_files]
     if(len(new_files)!=0):    
-<<<<<<< HEAD
+
         for file in new_files:
             try:
                 # Parse the file
@@ -234,6 +234,12 @@ def change_detect(data_dir):
                         },
                     ).load_data()
 
+                    # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
+                    # which causes collision for files with the same filename.
+                    # See: https://github.com/run-llama/llama_index/issues/17144
+                    for doc in new_documents:
+                        doc.doc_id = str(uuid.uuid4())
+                    
                     # Update documents and save
                     documents.extend(new_document)
                     with open(documents_path, "wb") as f:
@@ -249,25 +255,6 @@ def change_detect(data_dir):
                 print(f"Error parsing {file}: {e}")
                 # Optionally log the error to a file
                 continue  # Proceed to the next file
-=======
-        new_documents = SimpleDirectoryReader(
-            input_files=new_files,
-            recursive=True,
-            required_exts=[".html", ".htm", ".pdf", ".csv"],
-            file_extractor={
-                ".htm": reader,
-                ".html": reader,
-                ".pdf": pdf_parser,
-                ".csv": reader,
-            },
-        ).load_data()
-
-        # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
-        # which causes collision for files with the same filename.
-        # See: https://github.com/run-llama/llama_index/issues/17144
-        for doc in new_documents:
-            doc.doc_id = str(uuid.uuid4())
->>>>>>> 8ee07ca5a45a440fdcb7e4277240ee584f2a66b2
     else:
         new_documents=[]
 
