@@ -136,8 +136,9 @@ def get_reranker(top_n: int):
 import pandas as pd
 import re
 
-url_csv_path = "/datapool/download_info/download_info.csv"
-df = pd.read_csv(url_csv_path)
+df = pd.read_csv(config.url_csv_path)
+# Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
+df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
 
 def get_url(metadata):
@@ -165,20 +166,22 @@ def get_url(metadata):
         return f"no url, error: {str(e)}"
 
 
-def get_str_of_simplified_nodes(nodes: list[NodeWithScore]):
-    simplified_nodes = [
-        TextNode(
-            text=node.text,
-            metadata={
-                "url": get_url(node.metadata),
-            },
+def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
+    return [
+        NodeWithScore(
+            node=TextNode(
+                node_id=node.node_id,
+                text=node.text,
+                metadata={"url": get_url(node.metadata)},
+            ),
+            score=node.score,
         )
         for node in nodes
     ]
 
-    return "\n\n".join(
-        [node.get_content(MetadataMode.LLM) for node in simplified_nodes]
-    )
+
+def nodes_to_dicts(nodes: list[NodeWithScore]):
+    return [{"text": node.text, "metadata": node.metadata} for node in nodes]
 
 
 # Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
@@ -306,7 +309,8 @@ class VectorRetriever(dspy.Module):
             else:
                 nodes = retrieved_nodes
 
-            result = get_str_of_simplified_nodes(nodes)
+            nodes = simplify_nodes(nodes)
+            result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
@@ -448,7 +452,6 @@ class KeywordRetriever(dspy.Module):
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
-            print(results)
             try:
                 nodes = [
                     NodeWithScore(
@@ -473,7 +476,9 @@ class KeywordRetriever(dspy.Module):
             # )
             # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
 
-            result = get_str_of_simplified_nodes(nodes)
+            nodes = simplify_nodes(nodes)
+            result = nodes_to_dicts(nodes)
+
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
                 {

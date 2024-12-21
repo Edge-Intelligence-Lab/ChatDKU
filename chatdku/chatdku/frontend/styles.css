@@ -3,10 +3,18 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 108vh;
     margin: 0;
     background-color: white;
     flex-direction: column;
+    overflow: auto;
+}
+
+
+/* 调整列表项之间的间距 */
+ul li {
+    margin-bottom: 10px; /* 增加下方的间距 */
+    line-height: 1.6; /* 调整行距，如果需要可以增大 */
 }
 
 #chat-container {
@@ -20,9 +28,11 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        height: 100%;
         margin: 0;
         background-color: black;
+        overflow: auto;
+        flex-direction: column;
     }
     #chat-log {
         flex: 1;
@@ -60,6 +70,7 @@ body {
         border-radius: 40px;
         /* margin-bottom: 10%; */
     }
+
     #message-input {
         flex: 1;
         padding: 5px;
@@ -68,6 +79,7 @@ body {
         background-color: #d6d6d1;
         outline: none; /* 输入文字时边框不高亮 */
     }
+
     #send-button {
         margin-left: 10px;
         width: 40px; /* 设置宽度 */
@@ -83,7 +95,6 @@ body {
         align-items: center;
         padding: 0; /* 移除内边距 */
     }
-    
     #send-button.active {
         background-color: black; /* 输入框有内容时的按钮颜色 */
     }
@@ -133,9 +144,9 @@ body {
     font-family: serif;
 }
 
-#head_logo{
+/* #head_logo{
 
-}
+} */
 
 #page-center-logo-div{
     display: flex;
@@ -180,7 +191,7 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 50%;
+    height: 100%;
     background-color: #fff;
     padding: 10px;
     text-align: center;

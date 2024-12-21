@@ -2,11 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ChatDKU</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+    <style>
+        /* Style for demo question boxes */
+        .block {
+            width: 300px;
+            height: 150px;
+            margin: 10px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
+            padding: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .block .logo img {
+            max-width: 60%;
+            max-height: 60%;
+        }
+        .block .text {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        #about-chatdku p {
+            margin: 5px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #about-chatdku a {
+            color: #0073e6;
+            text-decoration: none;
+        }
+        #about-chatdku a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div id="head">
@@ -15,65 +48,60 @@
     </div>
     <div id="chat-container">
         <div id="chat-log">
-            <div id="page-center-logo-div"> <img src="res/edge_logo.svg" width="80px" alt="edge_lab_logo"></img></div>
-            <div id="usecase-div">
-                <div class="block" id="academic" data-content="Do we have courses to learn other foreign languages? How to take it?" style="width: 250px; height: 200px; margin: 0 auto;">
-                    <div class="logo" style="text-align: center;">
-                        <img src="res/academic_logo.png" alt="Logo 1" style="max-width: 80%; max-height: 80%;">
-                    </div>
-                    <div class="text" style="font-size: 18px;">Demo Questions</div>
-                </div>
-                <!-- <div class="block" id="academic" data-content="Do we have courses to learn other foreign languages? How to take it?">
-                    <div class="logo">
-                        <img src="res/academic_logo.png" alt="Logo 1" style="max-width: 80%; max-height: 80%;">
-                    </div>
-                    <div class="text">Academic</div>
-                </div>
-                <div class="block" id="campus" data-content="Is it better to have one mentor or two for my signature work?">
-                    <div class="logo">
-                        <img src="res/campus_life_logo.png" alt="Logo 2" style="max-width: 80%; max-height: 80%;">
-                    </div>
-                    <div class="text">Campus Life</div>
-                </div>
-                <div class="block" id="service" data-content="What is the email or contact information for the school’s IT department?">
-                    <div class="logo">
-                        <img src="res/service_logo.png" alt="Logo 3" style="max-width: 80%; max-height: 80%;">
-                    </div>
-                    <div class="text">Service</div>
-                </div>
-                <div class="block" id="tools" data-content="What preparations do I need to make if I want to organize a club at DKU?">
-                    <div class="logo">
-                        <img src="res/tools_logo.png" alt="Logo 4" style="max-width: 80%; max-height: 80%;">
-                    </div>
-                    <div class="text">Tools</div>
-                </div> -->
+            <div id="page-center-logo-div"> 
+                <img src="res/edge_logo.svg" width="80px" alt="edge_lab_logo"></img>
             </div>
-                <!-- 新增的声明和链接 -->
-                <div id="about-chatdku" style="text-align: center; margin-top: 20px;">
-                    <p><strong>About ChatDKU</strong></p>
-                    <p style="font-size: 14px; margin-top: 10px;">
-                        Please note: This agent version is designed only to answer public and official questions related to Duke Kunshan University. 
-                        Please provide accurate and complete information as well as specific terms in your questions to avoid misunderstanding or inability to retrieve answers.
-                    </p>
-                    Click here for <a href="terms.html">Terms & Conditions</a>, and <a href="chatdku_remarks.html">more information.</a>
+            <div id="about-chatdku" style="text-align: center; margin-top: 20px;">
+                <p><strong>About ChatDKU 1.0</strong></p>
+                <ul>
+                    <li>1. ChatDKU only provides answers based on official and publicly available information from Duke Kunshan University, including resources like Student Bulletin, Academic Advising, Faculty Research, Office Services.</li>
+                    <li>2. To improve answer accuracy, please ensure your questions contain specific and detailed keywords. This helps avoid misunderstandings or incorrect interpretations.</li>
+                </ul>
+                <p><a href="terms.html">Terms & Conditions</a> and <a href="chatdku_remarks.html">more information.</a></p>
+            </div>
+            <div id="usecase-div">
+                <div class="block" id="academic">
+                    <div class="logo">
+                        <img src="res/academic_logo.png" alt="Logo 1" style="max-width: 60%; max-height: 60%;">
+                    </div>
+                    <div class="text" style="font-size: small;">
+                        Academic and Course Inquiries
+                    </div>
                 </div>
+                <div class="block" id="campus">
+                    <div class="logo">
+                        <img src="res/sg_work_logo.png" alt="Logo 2" style="max-width: 60%; max-height: 60%;">
+                    </div>
+                    <div class="text" style="font-size: small;">
+                        Majors and Career Development
+                    </div>
+                </div>
+                <div class="block" id="service">
+                    <div class="logo">
+                        <img src="res/service_logo.png" alt="Logo 3" style="max-width: 60%; max-height: 60%;">
+                    </div>
+                    <div class="text" style="font-size: small;">
+                        Academic Guidelines and Policies
+                    </div>
+                </div>
+                <div class="block" id="tools">
+                    <div class="logo">
+                        <img src="res/campus_life_logo.png" alt="Logo 4" style="max-width: 60%; max-height: 60%;">
+                    </div>
+                    <div class="text" style="font-size: small;">
+                        Campus Life and Student Support 
+                    </div>
+                </div>
+            </div>
+            <!-- Updated About ChatDKU section -->
         </div>
-        <div id="input-container">
+        <div id="input-container" style="text-align: center;">
             <input type="text" id="message-input" placeholder="Type a message..." />
             <button id="send-button">⬆</button>
         </div>
         <div id="declaration">
             Developed by DKU Edge Intelligence Lab.
         </div>
-
-        <!-- <div id="tips">
-            <h3>Tips for Better Answers</h3>
-            <ul>
-                <li>Try not to use abbreviations</li>
-                <li>Try to formulate the question logically</li>
-            </ul>
-
-        </div> -->
     </div>
     <script src="script.js"></script>
 </body>

@@ -87,7 +87,7 @@ disown -h
 #### Multi-process (`agent_app_parallel.py`)
 
 ```bash
-nohup python -u -m hypercorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:[backend port] --workers [# of workers] > ./logs/agent_logs.txt &
+nohup python -u -m gunicorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:[backend port] --workers [number of workers] --timeout 120 > ./logs/agent_logs.txt &
 disown -h
 ```
 

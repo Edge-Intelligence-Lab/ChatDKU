@@ -65,13 +65,16 @@ def make_synthesizer_signature():
         "a second option unless directly asked, or that resource is clearly "
         "available to the DKU community via means such as a partnership with DKU. "
         "The source of contexts is contained in the url in metadata,"
-        "Useful urls to the source document of the contexts used in your answer should be "
-        "included at the end of your answer, like 'reference links:',"
+        "Include the urls to the sources used in your answer at the end, like 'reference links:'. "
+        "Do not include the urls to the sources that you did not use in your answer. "
         "The link needs to be markdown so that it can be clicked, and the text shown is a "
         "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. "
+        "make sure the reference link you offer is the accurate copy from your database. "
+        "If you see 'no url' for a source, do not provide the link. "
+        "Do not use the url of one source for another source, and do not guess the url. "
         "Your internal operation should also not be transparent to the user, "
-        'so you should not mention phrases like "Based on the conversation history", '
-        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history". '
+        '"do not include phrases like "Based on the conversation history", '
+        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
         "When you're asked a general question, automatically change it to something DKU related, "
         "like 'what does CTL do?' to 'what does CTL do at DKU?' "
         "If the Current User Message is ambiguous, you may first try to answer it to the best extent "
@@ -219,13 +222,9 @@ class Synthesizer(dspy.Module):
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             synthesizer_args = dict(
                 current_user_message=current_user_message,
-                conversation_history="\n".join(
-                    [i.model_dump_json() for i in conversation_memory.history]
-                ),
+                conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
-                tool_history="\n".join(
-                    [i.model_dump_json() for i in tool_memory.history]
-                ),
+                tool_history=tool_memory.history_str(),
                 tool_summary=tool_memory.summary,
             )
             synthesizer_args = truncate_tokens_all(
