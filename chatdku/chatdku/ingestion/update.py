@@ -221,7 +221,7 @@ def change_detect(data_dir):
             try:
                 # Parse the file
                 if os.path.splitext(file)[1].lower() in valid_extensions:
-                    new_document = SimpleDirectoryReader(
+                    new_documents = SimpleDirectoryReader(
                         input_files=[file],
                         recursive=True,
                         required_exts=[".html", ".htm", ".pdf", ".csv"],
