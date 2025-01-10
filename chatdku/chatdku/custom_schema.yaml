@@ -1,6 +1,6 @@
 index:
-  name: idx:test4
-  prefix: test_doc4
+  name: idx:chat_dku_advising
+  prefix: chat_dku_advising_doc
   key_separator: ':'
   storage_type: hash
 fields:
