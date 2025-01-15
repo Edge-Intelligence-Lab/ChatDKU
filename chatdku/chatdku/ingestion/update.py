@@ -266,7 +266,8 @@ def change_detect(data_dir):
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
     # 删除临时文件
-    os.remove(parsed_files_record)
+    if os.path.exists(parsed_files_record):
+        os.remove(parsed_files_record)
 
     print("Document successfully update")
     return new_documents
