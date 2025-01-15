@@ -278,7 +278,6 @@ def set_state(data_dir):
         json.dump(new_state, f, indent=4)
 
 def load_and_index(
-    pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
     extractors: list[str] = [],
@@ -321,10 +320,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     pipeline = IngestionPipeline(transformations=trans)
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
     nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-    pipeline.persist(pipeline_cache_path)
 
     # Load nodes into ChromaDB
     # FIXME: This loading process is not atomic
@@ -376,7 +372,6 @@ def main():
     change_detect(config.data_dir)
     if args.load:
         load_and_index(
-            pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
             extractors=[],
