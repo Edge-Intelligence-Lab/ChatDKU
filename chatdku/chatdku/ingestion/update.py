@@ -240,7 +240,7 @@ def change_detect(data_dir):
                         doc.doc_id = str(uuid.uuid4())
                     
                     # Update documents and save
-                    documents.extend(new_document)
+                    documents.extend(new_documents)
                     with open(documents_path, "wb") as f:
                         pickle.dump(documents, f)
 
