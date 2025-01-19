@@ -66,57 +66,34 @@ function replaceBlocks(block_id) {
     
     if (block_id === 'academic') {
         newBlocks = [
-            { id: 'block1', text: 'Can I change my declared major?' },
-            { id: 'block2', text: 'What are the Distribution Requirements?' },
-            { id: 'block3', text: 'What are the core components of the DKU Curriculum?' },
-            { id: 'block4', text: 'What’s Common Core?' },
-            { id: 'block5', text: 'What are the required language courses?' },
-            { id: 'block6', text: 'Can I make changes to my course schedule after registration?' },
-            { id: 'block7', text: 'How many credits can I take in a semester?' },
-            { id: 'block8', text: 'What is a course overload and how can I request for an overload?' },
-            { id: 'block9', text: 'Will courses that I withdrew show on my transcript?' },
-            { id: 'block10', text: 'What is the procedure of CR/NC a course?' },
-            { id: 'block11', text: 'What letter grade would be considered CR and what would be considered NC?' },
-            { id: 'block12', text: 'How many credits can I CR/NC?' },
-            { id: 'block13', text: 'Can I CR/NC a course that’s a major requirement?' },
-            { id: 'block14', text: 'Can I repeat a course in which the grade of the record is CR/NC?' },
-            { id: 'block15', text: 'What’s the regular deadline for resolving the Incomplete grade?' }
+            { id: 'block1', text: 'What are the Distribution Requirements?' },
+            { id: 'block2', text: 'What’s Common Core?' },
+            { id: 'block3', text: 'Can I make changes to my course schedule after registration?' },
+            { id: 'block4', text: 'How many credits can I take in a semester?' },
+            { id: 'block5', text: 'Will courses that I withdrew show on my transcript?' },
+            { id: 'block6', text: 'What letter grade would be considered CR and what would be considered NC?' },
+            { id: 'block7', text: 'Can I repeat a course in which the grade of the record is CR/NC?' },
         ];
     }
     else if (block_id === 'campus') {
         newBlocks = [
-            { id: 'block16', text: 'What majors are available at Duke Kunshan University?' },
-            { id: 'block17', text: 'Are there advisors who can guide me in selecting a major?' },
-            { id: 'block18', text: 'Can I switch my major later on? How?' },
-            { id: 'block19', text: 'What are the prerequisites for STATS 302 at DKU?' },
-            { id: 'block20', text: 'What is the process for major declaration?' },
-            { id: 'block21', text: 'When can I declare a major?' },
-            { id: 'block22', text: 'Can I repeat Music Courses for credits?' },
-            { id: 'block23', text: 'What are the core courses required and electives of the Data Science major?' },
-            { id: 'block24', text: 'What are the prerequisites of the Data Science major?' },
-            { id: 'block25', text: 'How do I choose a major?' },
-            { id: 'block26', text: 'I would like to major in Data Science. Please draw a 4-year course map for me, with all the prerequisites considered.' },
-            { id: 'block27', text: 'I am interested in Natural Language Processing. Are there any courses at DKU that cover this topic?' },
-            { id: 'block28', text: 'When is the deadline to add an Independent Study (research or non-research) course?' },
-            { id: 'block29', text: 'What majors are available for me to consider?' }
+            { id: 'block8', text: 'Can I change my declared major?' },
+            { id: 'block9', text: 'What majors are available at Duke Kunshan University?' },
+            { id: 'block10', text: 'Are there advisors who can guide me in selecting a major?' },
+            { id: 'block11', text: 'Can I switch my major later on? How?' },
+            { id: 'block12', text: 'What is the process for major declaration?' },
+            { id: 'block13', text: 'When can I declare a major?' },
+            { id: 'block14', text: 'What are the core courses required and electives of the Data Science major?' }
         ];
     }
     else if (block_id === 'service') {
         newBlocks = [
-            { id: 'block30', text: 'Can I request a Leave of Absence for military service?' },
-            { id: 'block31', text: 'How do I request a Medical Leave of Absence?' },
-            { id: 'block32', text: 'How long can I be on Leave of Absence?' },
-            { id: 'block33', text: 'What is considered an Academic Warning?' },
-            { id: 'block34', text: 'What is considered Academic Probation?' },
-            { id: 'block35', text: 'What should I do if I’m placed on academic probation?' },
-            { id: 'block36', text: 'How do I clear my probationary status?' },
-            { id: 'block37', text: 'How do I return from Academic Suspension?' },
-            { id: 'block38', text: 'What is the policy on academic probation and dismissal?' },
-            { id: 'block39', text: 'How many credits can I transfer from Study Abroad?' },
-            { id: 'block40', text: 'Can I transfer credits from the college-level courses that I took prior to coming to DKU?' },
-            { id: 'block41', text: 'What is the process for declaring or changing a major?' },
-            { id: 'block42', text: 'How are transfer credits evaluated and applied?' },
-            { id: 'block43', text: 'How can I make up the NSPHST if I fail the first time?' }
+            { id: 'block15', text: 'Can I request a Leave of Absence for military service?' },
+            { id: 'block16', text: 'How do I request a Medical Leave of Absence?' },
+            { id: 'block17', text: 'What is considered an Academic Warning?' },
+            { id: 'block18', text: 'How do I clear my probationary status?' },
+            { id: 'block19', text: 'How many credits can I transfer from Study Abroad?' },
+            { id: 'block20', text: 'What is the scoring standard for NSPHST and graduation requirement?' }
         ];
     }
     else if (block_id === 'tools') {
