@@ -57,10 +57,9 @@ def make_synthesizer_signature():
     # instruction = "Your current task is to answer the Current User Message according to your Tool Memory."
     instruction = (
         "Your current task is to answer the Current User Message according to your Tool Memory."
-        # "Your answer should be as detailed as possible."
+        "Your answer should be as detailed as possible."
         "Your answer should be be organized and use bullet points if needed."
-        "Only use DKU resources in the database. ""
-        "You can only refer to 3 URL beow in the reference:"
+        "Always select the following sources and form a reference:"
         "1. 2024-2025 Undergraduate Bulletin:https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n;"
         "2. DKU Definitions page:https://academic-advising.dukekunshan.edu.cn/dkudefinitions/;"
         "3. Faculty Directory:https://faculty.dukekunshan.edu.cn/;"
@@ -80,10 +79,10 @@ def make_synthesizer_signature():
         # "Do not include the urls to the sources that you did not use in your answer. "
         # "Links should be in markdown format for easy clicking, with the link text accurately reflecting the URL’s content."
         # "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. "
-        "make sure the reference link you offer is the accurate copy from your database. "
-        "If you see 'no url' for a source, do not provide the link. "
-        "Do not guess the url."
-        "Do not use the url of one source for another source. "
+        # "make sure the reference link you offer is the accurate copy from your database. "
+        # "If you see 'no url' for a source, do not provide the link. "
+        # "Do not guess the url."
+        # "Do not use the url of one source for another source. "
         "Your internal operation should also not be transparent to the user, "
         '"do not include phrases like "Based on the conversation history", '
         '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
