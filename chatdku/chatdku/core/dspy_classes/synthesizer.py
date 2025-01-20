@@ -60,7 +60,7 @@ def make_synthesizer_signature():
         "Your answer should be as detailed as possible."
         "Your answer should be be organized and use bullet points if needed."
         "Only use DKU resources in the database. ""
-        "Always select the following sources (1-11) and form a reference based on the sources you use:"
+        "Always select the following sources (1-10) and form a reference based on the sources you use:"
         "1. 2024-2025 Undergraduate Bulletin"
         "2. DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/"
         "3. Faculty Directory: https://faculty.dukekunshan.edu.cn/"
