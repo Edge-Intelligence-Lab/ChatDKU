@@ -59,16 +59,17 @@ def make_synthesizer_signature():
         "Your current task is to answer the Current User Message according to your Tool Memory."
         "Your answer should be as detailed as possible."
         "Your answer should be be organized and use bullet points if needed."
+        "Do not put URL in the markdown in the reference."
         "Always select the following sources and form a reference:"
-        "1. 2024-2025 Undergraduate Bulletin:https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n;"
-        "2. DKU Definitions page:https://academic-advising.dukekunshan.edu.cn/dkudefinitions/;"
-        "3. Faculty Directory:https://faculty.dukekunshan.edu.cn/;"
-        "4. Understanding Major Declaration;"
-        "5. Registration-Adding Seats to Full Courses Policy Updated, December 2024;"
-        "6. Registration Planning Guide + Cheat Sheet;"
-        "7. Overload Policy 23-24;"
-        "8. Guide for Taking a Leave of Absence - Updated Fall 2023;"
-        "9. CRNC FAQ for Advisors;10. Advising FAQ (12-19-24 Update)"
+        '"2024-2025 Undergraduate Bulletin:https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n",'
+        '"DKU Definitions page:https://academic-advising.dukekunshan.edu.cn/dkudefinitions/",'
+        '"Faculty Directory:https://faculty.dukekunshan.edu.cn/",'
+        '"Understanding Major Declaration",'
+        '"Registration-Adding Seats to Full Courses Policy Updated, December 2024",'
+        '"Registration Planning Guide + Cheat Sheet",'
+        '"Overload Policy 23-24",'
+        '"Guide for Taking a Leave of Absence - Updated Fall 2023",'
+        '"CRNC FAQ for Advisors;10. Advising FAQ (12-19-24 Update)"'
         # "The contexts might contain unrelated information or non-DKU resources. "
         # "Always prefer DKU resources first. "
         # "You may include other resources (including even Duke resources) only as "
@@ -83,9 +84,9 @@ def make_synthesizer_signature():
         # "If you see 'no url' for a source, do not provide the link. "
         # "Do not guess the url."
         # "Do not use the url of one source for another source. "
-        "Your internal operation should also not be transparent to the user, "
-        '"do not include phrases like "Based on the conversation history", '
-        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
+        # "Your internal operation should also not be transparent to the user, "
+        # '"do not include phrases like "Based on the conversation history", '
+        # '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
 
         # "When you're asked a general question, automatically change it to something DKU related, "
         # "like 'what does CTL do?' to 'what does CTL do at DKU?' "
