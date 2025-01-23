@@ -77,20 +77,19 @@ function replaceBlocks(block_id) {
     }
     else if (block_id === 'campus') {
         newBlocks = [
-            { id: 'block8', text: 'Can I change my declared major?' },
+            // { id: 'block8', text: 'Can I change my declared major?' },
             { id: 'block9', text: 'What majors are available at Duke Kunshan University?' },
-            { id: 'block10', text: 'Are there advisors who can guide me in selecting a major?' },
             { id: 'block11', text: 'Can I switch my major later on? How?' },
             { id: 'block12', text: 'What is the process for major declaration?' },
             { id: 'block13', text: 'When can I declare a major?' },
-            { id: 'block14', text: 'What are the core courses required and electives of the Data Science major?' }
+            { id: 'block14', text: 'What are the core courses required and electives of Applied Math major?' }
         ];
     }
     else if (block_id === 'service') {
         newBlocks = [
             { id: 'block15', text: 'Can I request a Leave of Absence for military service?' },
             { id: 'block16', text: 'How do I request a Medical Leave of Absence?' },
-            { id: 'block17', text: 'What is considered an Academic Warning?' },
+            { id: 'block17', text: 'Who should I consult if I have concerns related to my registration?' },
             { id: 'block18', text: 'How do I clear my probationary status?' },
             { id: 'block19', text: 'How many credits can I transfer from Study Abroad?' },
             { id: 'block20', text: 'What is the scoring standard for NSPHST and graduation requirement?' }

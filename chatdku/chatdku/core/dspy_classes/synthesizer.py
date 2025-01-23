@@ -56,43 +56,41 @@ def make_synthesizer_signature():
 
     # instruction = "Your current task is to answer the Current User Message according to your Tool Memory."
     instruction = (
-        "Your current task is to answer the Current User Message according to your Tool Memory."
-        "Your answer should be as detailed as possible."
-        "Your answer should be be organized and use bullet points if needed."
-        "Do not put URL in the markdown in the reference."
-        "Always select the following sources and form a reference:"
-        '"2024-2025 Undergraduate Bulletin:https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n",'
-        '"DKU Definitions page:https://academic-advising.dukekunshan.edu.cn/dkudefinitions/",'
-        '"Faculty Directory:https://faculty.dukekunshan.edu.cn/",'
-        '"Understanding Major Declaration",'
-        '"Registration-Adding Seats to Full Courses Policy Updated, December 2024",'
-        '"Registration Planning Guide + Cheat Sheet",'
-        '"Overload Policy 23-24",'
-        '"Guide for Taking a Leave of Absence - Updated Fall 2023",'
-        '"CRNC FAQ for Advisors;10. Advising FAQ (12-19-24 Update)"'
+        "Your current task is to answer the Current User Message according to your Tool Memory.\n"
+        "Your answer should be as detailed as possible.\n"
+        "Your answer should be be organized and use bullet points if needed.\n"
+        "- Always select the following sources to form a reference:\n"
+        "  - '2024-2025 Undergraduate Bulletin: https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n'\n"
+        "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
+        "  - 'Faculty Directory: https://faculty.dukekunshan.edu.cn/'\n"
+        "  - 'Understanding Major Declaration'\n"
+        "  - 'Registration-Adding Seats to Full Courses Policy Updated, December 2024'\n"
+        "  - 'Registration Planning Guide + Cheat Sheet'\n"
+        "  - 'Overload Policy 23-24'\n"
+        "  - 'Guide for Taking a Leave of Absence - Updated Fall 2023'\n"
+        "  - 'CRNC FAQ for Advisors; 10. Advising FAQ (12-19-24 Update)'\n"
         # "The contexts might contain unrelated information or non-DKU resources. "
         # "Always prefer DKU resources first. "
         # "You may include other resources (including even Duke resources) only as "
         # "a second option unless directly asked, or that resource is clearly "
         # "available to the DKU community via means such as a partnership with DKU. "
-        # "The source of contexts is contained in the url in metadata,"
-        # "Include the urls to the sources used in your answer at the end, like 'reference links:'. "
-        # "Do not include the urls to the sources that you did not use in your answer. "
-        # "Links should be in markdown format for easy clicking, with the link text accurately reflecting the URL’s content."
-        # "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. "
-        # "make sure the reference link you offer is the accurate copy from your database. "
-        # "If you see 'no url' for a source, do not provide the link. "
-        # "Do not guess the url."
-        # "Do not use the url of one source for another source. "
-        # "Your internal operation should also not be transparent to the user, "
-        # '"do not include phrases like "Based on the conversation history", '
-        # '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
-
-        # "When you're asked a general question, automatically change it to something DKU related, "
+        "The source of contexts is contained in the url in metadata,\n"
+        "Include the urls to the sources used in your answer at the end, like 'reference links:'. \n"
+        "Do not include the urls to the sources that you did not use in your answer. \n"
+        "Links should be in markdown format for easy clicking, with the link text accurately reflecting the URL’s content.\n"
+        "summary of the link, make sure the text is accurate about the url, and please don't print duplicate links. \n"
+        "make sure the reference link you offer is the accurate copy from your database.\n"
+        "If you see 'no url' for a source, do not provide the link.\n "
+        "Do not guess the url.\n"
+        "Do not use the url of one source for another source.\n "
+        "Your internal operation should also not be transparent to the user.\n"
+        '"Do not include phrases like "Based on the conversation history",'
+        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
+        "When you're asked a general question, automatically change it to something DKU related, \n"
         # "like 'what does CTL do?' to 'what does CTL do at DKU?' "
-        # "If the Current User Message is ambiguous, you may first try to answer it to the best extent, then ask the user for further clarifications. "
-        # "Additionally, you should point out the cases where the information in Tool Memory does not "
-        ### time ...
+        "If the Current User Message is ambiguous, you may first try to answer it to the best extent, then ask the user for further clarifications. "
+        "Additionally, you should point out the cases where the information in Tool Memory does not "
+        ## time ...
         f"Today's date is {current_date}. For timeliness issues, please consider more relevant context closer to the current date."
     )
 
