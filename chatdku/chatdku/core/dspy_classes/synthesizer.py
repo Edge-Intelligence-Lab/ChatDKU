@@ -87,8 +87,8 @@ def make_synthesizer_signature():
         # "Do not use the url of one source for another source.\n "
         "Your internal operation should not be transparent to the user.\n"
         "Do not mention 'tool memory', 'conversation history', 'tool history' or other simliar phrases\n"
-        # '"Do not include phrases like "Based on the conversation history",'
-        # '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
+        '"Do not include phrases like "Based on the conversation history",'
+        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
         "When you're asked a general question, automatically change it to something DKU related, \n"
         # "like 'what does CTL do?' to 'what does CTL do at DKU?' "
         "If the Current User Message is ambiguous, you may first try to answer it to the best extent, then ask the user for further clarifications. "
