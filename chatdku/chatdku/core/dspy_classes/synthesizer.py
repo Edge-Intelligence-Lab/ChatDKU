@@ -60,7 +60,7 @@ def make_synthesizer_signature():
         "Your answer should be as detailed as possible.\n"
         "Your answer should be be organized and use bullet points if needed.\n"
         "Select the following sources that contains the information of your answers to form a reference at the end, starting with 'reference:':\n"
-        "  - '2024-2025 Undergraduate Bulletin: https://duke.app.box.com/s/u6ajvjuo2yocn57rld4ztu6jrrdxfn0n'\n"
+        "  - '2024-2025 Undergraduate Bulletin: https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq'\n"
         "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
         "  - 'Faculty Directory: https://faculty.dukekunshan.edu.cn/'\n"
         "  - 'Understanding Major Declaration'(no URL)\n"
