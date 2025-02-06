@@ -56,9 +56,14 @@ def make_synthesizer_signature():
 
     # instruction = "Your current task is to answer the Current User Message according to your Tool Memory."
     instruction = (
-        "Your current task is to answer the Current User Message.\n"
+        "Your current task is to answer the Current User Message according to your Tool Memory.\n"
         "Your answer should be as detailed as possible.\n"
         "Your answer should be be organized and use bullet points if needed.\n"
+        "Your internal operation should not be shown to the user.\n"
+        "Do not include phrases like 'tool memory', 'conversation history', 'tool history', 'keyword_retriever tool' or other simliar phrases\n"
+        '"Do not include phrases like "Based on the conversation history",'
+        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
+        "When you're asked a general question, automatically change it to something DKU related, \n"
         "Select the following sources that contains the information of your answers to form a reference at the end, starting with 'reference:':\n"
         "  - '2024-2025 Undergraduate Bulletin: https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq'\n"
         "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
@@ -85,11 +90,6 @@ def make_synthesizer_signature():
         # "If you see 'no url' for a source, do not provide the link.\n "
         # "Do not guess the url.\n"
         # "Do not use the url of one source for another source.\n "
-        "Your internal operation should not be transparent to the user.\n"
-        "Do not include phrases like 'tool memory', 'conversation history', 'tool history', 'keyword_retriever tool' or other simliar phrases\n"
-        '"Do not include phrases like "Based on the conversation history",'
-        '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
-        "When you're asked a general question, automatically change it to something DKU related, \n"
         # "like 'what does CTL do?' to 'what does CTL do at DKU?' "
         "If the Current User Message is ambiguous, you may first try to answer it to the best extent, then ask the user for further clarifications. "
         "Additionally, you should point out the cases where the information in Tool Memory does not "
