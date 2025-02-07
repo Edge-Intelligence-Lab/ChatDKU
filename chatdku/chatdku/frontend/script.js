@@ -82,7 +82,7 @@ function replaceBlocks(block_id) {
             { id: 'block11', text: 'Can I switch my major later on? How?' },
             { id: 'block12', text: 'What is the process for major declaration?' },
             { id: 'block13', text: 'When can I declare a major?' },
-            { id: 'block14', text: 'What are the core courses required and electives of Applied Math major?' }
+            { id: 'block14', text: 'What are the courses of Applied Mathematics?' }
         ];
     }
     else if (block_id === 'service') {
