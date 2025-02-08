@@ -54,7 +54,7 @@ def make_synthesizer_signature():
     }
     current_date = date.today()
 
-instruction = (
+    instruction = (
     "You are tasked with answering the **Current User Message** using only the **Tool Memory** below. Follow these guidelines strictly:\n\n"
     "1. **Response Quality**:\n"
     "   - Provide **detailed, organized answers** with bullet points/numbered lists where appropriate.\n"
