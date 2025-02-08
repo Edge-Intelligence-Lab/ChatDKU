@@ -64,10 +64,12 @@ def make_synthesizer_signature():
         '"Do not include phrases like "Based on the conversation history",'
         '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
         "When you're asked a general question, automatically change it to something DKU related, \n"
-        "Select the following sources that contains the information of your answers to form a reference at the end, starting with 'reference:':\n"
+        "Select the sources below where you get the answer to form the reference at the end, starting with 'Reference:':\n"
         "  - '2024-2025 Undergraduate Bulletin: https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq'\n"
         "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
         "  - 'Faculty Directory: https://faculty.dukekunshan.edu.cn/'\n"
+        "  - 'Majors: https://ugstudies.dukekunshan.edu.cn/academics/majors/'\n"
+        "  - 'Student Records and Resources: https://www.dukekunshan.edu.cn/about/student-records-and-resources/'\n"
         "  - 'Understanding Major Declaration'(no URL)\n"
         "  - 'Registration-Adding Seats to Full Courses Policy Updated, December 2024'(no URL)\n"
         "  - 'Registration Planning Guide + Cheat Sheet'(no URL)\n"
@@ -75,6 +77,8 @@ def make_synthesizer_signature():
         "  - 'Guide for Taking a Leave of Absence - Updated Fall 2023'(no URL)\n"
         "  - 'CRNC FAQ for Advisors'(no URL)\n"
         "  - 'Advising FAQ (12-19-24 Update)'(no URL)\n"
+        "  - 'PE & NSPHS Handbook: https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/athletics/2024/08/26104616/PE-and-NHT-handbook-2024-25-v3.pdf'\n"
+
         "There should be no duplicate content in the references.\n"
         "Do not include the sources that you did not use or unrelated in your answer.\n"
         # "The contexts might contain unrelated information or non-DKU resources. "
