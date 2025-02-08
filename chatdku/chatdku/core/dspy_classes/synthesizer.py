@@ -64,7 +64,7 @@ def make_synthesizer_signature():
         '"Do not include phrases like "Based on the conversation history",'
         '"Based on the information retrieved from the Tool History and Conversation History", "According to the tool history" in your answer. '
         "When you're asked a general question, automatically change it to something DKU related, \n"
-        "Select the sources below where you get the answer to form the reference at the end, starting with 'Reference:':\n"
+        "Select the sources from the following to form the reference at the end, starting with 'Reference:':\n"
         "  - '2024-2025 Undergraduate Bulletin: https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq'\n"
         "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
         "  - 'Faculty Directory: https://faculty.dukekunshan.edu.cn/'\n"
