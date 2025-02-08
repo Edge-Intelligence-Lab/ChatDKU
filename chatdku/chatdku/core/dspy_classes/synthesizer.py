@@ -68,7 +68,7 @@ def make_synthesizer_signature():
         "  - '2024-2025 Undergraduate Bulletin: https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq'\n"
         "  - 'DKU Definitions page: https://academic-advising.dukekunshan.edu.cn/dkudefinitions/'\n"
         "  - 'Faculty Directory: https://faculty.dukekunshan.edu.cn/'\n"
-        "  - 'Majors: https://ugstudies.dukekunshan.edu.cn/academics/majors/'\n"
+        "  - 'Majors: https://ugstudies.dukekunshan.edu.cn/academics/majors/'(Choose this if the question is about majors information)\n"
         "  - 'Student Records and Resources: https://www.dukekunshan.edu.cn/about/student-records-and-resources/'\n"
         "  - 'Understanding Major Declaration'(no URL)\n"
         "  - 'Registration-Adding Seats to Full Courses Policy Updated, December 2024'(no URL)\n"
@@ -78,7 +78,6 @@ def make_synthesizer_signature():
         "  - 'CRNC FAQ for Advisors'(no URL)\n"
         "  - 'Advising FAQ (12-19-24 Update)'(no URL)\n"
         "  - 'PE & NSPHS Handbook: https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/athletics/2024/08/26104616/PE-and-NHT-handbook-2024-25-v3.pdf'\n"
-
         "There should be no duplicate content in the references.\n"
         "Do not include the sources that you did not use or unrelated in your answer.\n"
         # "The contexts might contain unrelated information or non-DKU resources. "
