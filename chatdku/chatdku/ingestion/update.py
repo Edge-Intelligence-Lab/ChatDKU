@@ -155,20 +155,19 @@ def change_detect(data_dir):
 
 
     if len(new_files + timed_files) == 0:
-        print("Nothing has changed")
-        return
-
-    print(
-        "Added",
-        len(changed_data["added"]),
-        "documents\n",
-        "Modified",
-        len(changed_data["modified"]),
-        "documents\n",
-        "Removed",
-        len(changed_data["removed"]),
-        "documents\n",
-    )
+        print("Nothing has changed")   
+    else:
+        print(
+            "Added",
+            len(changed_data["added"]),
+            "documents\n",
+            "Modified",
+            len(changed_data["modified"]),
+            "documents\n",
+            "Removed",
+            len(changed_data["removed"]),
+            "documents\n",
+        )
 
     # Check and download required nltk packages
     try:
@@ -201,29 +200,60 @@ def change_detect(data_dir):
         verbose=True,
     )
     
+    # 加载已解析的文件记录
+    parsed_files_record = os.path.join(data_dir, "parsed_files.pkl")
+    if os.path.exists(parsed_files_record):
+        with open(parsed_files_record, "rb") as f:
+            parsed_files = pickle.load(f)
+    else:
+        parsed_files = set()
+
     # 定义目标文件类型
     valid_extensions = {".htm", ".html", ".pdf", ".csv"}
 
     # 过滤掉不符合要求的文件
     new_files = [file for file in new_files if os.path.splitext(file)[1].lower() in valid_extensions]
+    # 二次过滤已解析的文件
+    new_files = [file for file in new_files if file not in parsed_files]
     if(len(new_files)!=0):    
-        new_documents = SimpleDirectoryReader(
-            input_files=new_files,
-            recursive=True,
-            required_exts=[".html", ".htm", ".pdf", ".csv"],
-            file_extractor={
-                ".htm": reader,
-                ".html": reader,
-                ".pdf": pdf_parser,
-                ".csv": reader,
-            },
-        ).load_data()
 
-        # FIXME: Mitigate the issue of `UnstructuredReader` using filename as `doc_id`,
-        # which causes collision for files with the same filename.
-        # See: https://github.com/run-llama/llama_index/issues/17144
-        for doc in new_documents:
-            doc.doc_id = str(uuid.uuid4())
+        for file in new_files:
+            try:
+                # Parse the file
+                if os.path.splitext(file)[1].lower() in valid_extensions:
+                    new_documents = SimpleDirectoryReader(
+                        input_files=[file],
+                        recursive=True,
+                        required_exts=[".html", ".htm", ".pdf", ".csv"],
+                        file_extractor={
+                            ".htm": reader,
+                            ".html": reader,
+                            ".pdf": pdf_parser,
+                            ".csv": reader,
+                        },
+                    ).load_data()
+
+                    # FIXME: Mitigate the issue of  ,
+                    # which causes collision for files with the same filename.
+                    # See: https://github.com/run-llama/llama_index/issues/17144
+                    for doc in new_documents:
+                        doc.doc_id = str(uuid.uuid4())
+                    
+                    # Update documents and save
+                    documents.extend(new_documents)
+                    with open(documents_path, "wb") as f:
+                        pickle.dump(documents, f)
+
+                    # Update parsed files record and save
+                    parsed_files.add(file)
+                    with open(parsed_files_record, "wb") as f:
+                        pickle.dump(parsed_files, f)
+                else:
+                    print(f"Skipping unsupported file type: {file}")
+            except Exception as e:
+                print(f"Error parsing {file}: {e}")
+                # Optionally log the error to a file
+                continue  # Proceed to the next file
     else:
         new_documents=[]
 
@@ -235,6 +265,9 @@ def change_detect(data_dir):
     
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
+    # 删除临时文件
+    if os.path.exists(parsed_files_record):
+        os.remove(parsed_files_record)
 
     print("Document successfully update")
     return new_documents
@@ -246,7 +279,6 @@ def set_state(data_dir):
         json.dump(new_state, f, indent=4)
 
 def load_and_index(
-    pipeline_cache_path: str,
     text_spliter: str = "sentence_splitter",
     text_spliter_args: dict[str, Any] = {},
     extractors: list[str] = [],
@@ -289,10 +321,7 @@ def load_and_index(
     trans.append(Settings.embed_model)
 
     pipeline = IngestionPipeline(transformations=trans)
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
     nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-    pipeline.persist(pipeline_cache_path)
 
     # Load nodes into ChromaDB
     # FIXME: This loading process is not atomic
@@ -344,7 +373,6 @@ def main():
     change_detect(config.data_dir)
     if args.load:
         load_and_index(
-            pipeline_cache_path=str(config.pipeline_cache),
             text_spliter="sentence_splitter",
             text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
             extractors=[],
