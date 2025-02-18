@@ -374,7 +374,7 @@ def main():
     dspy.settings.configure(lm=llama_client)
     import time
 
-    agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
+    agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
 
     while True:
         try:

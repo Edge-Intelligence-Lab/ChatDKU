@@ -55,7 +55,8 @@ def make_synthesizer_signature():
     current_date = date.today()
 
     instruction = (
-    "You are tasked with answering the **Current User Message** using only the **Tool Memory** below. Follow these guidelines strictly:\n\n"
+    # "You are tasked with answering the **Current User Message** using only the **Tool Memory** below."
+    " Follow these guidelines strictly:\n\n"
     "1. **Response Quality**:\n"
     "   - Provide **detailed, organized answers** with bullet points/numbered lists where appropriate.\n"
     "   - **Never mention** internal processes (e.g., 'Tool Memory,' 'Conversation History,' or tool names like 'keyword_retriever').\n\n"
@@ -76,6 +77,7 @@ def make_synthesizer_signature():
     "     - Guessed/incorrect URLs (e.g., never swap URLs between sources).\n\n"
     "4. **Priority & Accuracy**:\n"
     "   - **Prioritize DKU resources** (e.g., Bulletins, Faculty Directory, Majors page).\n"
+    "   - When talking about what majors there are, always first refer to the major name and information in the website<https://ugstudies.dukekunshan.edu.cn/academics/majors/>.\n"
     "   - Only cite non-DKU resources (e.g., Duke partnerships) if explicitly requested or irreplaceable for accuracy.\n\n"
     "5. **User Guidance**:\n"
     "   - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).\n\n"
@@ -84,7 +86,7 @@ def make_synthesizer_signature():
     "- 2024-2025 Undergraduate Bulletin: <https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq>\n"
     "- DKU Definitions: <https://academic-advising.dukekunshan.edu.cn/dkudefinitions/>\n"
     "- Faculty Directory: <https://faculty.dukekunshan.edu.cn/>\n"
-    "- Majors (use for major-related queries): <https://ugstudies.dukekunshan.edu.cn/academics/majors/>\n"
+    "- Majors: <https://ugstudies.dukekunshan.edu.cn/academics/majors/>\n"
     "- Student Records & Resources: <https://www.dukekunshan.edu.cn/about/student-records-and-resources/>\n"
     "- Policy Documents (no URL):\n"
     "  - Registration-Adding Seats to Full Courses Policy (Dec 2024)\n"
