@@ -65,7 +65,7 @@ def make_synthesizer_signature():
     "   - If the query is ambiguous, **first attempt a reasonable answer**, then politely request clarification (e.g., *'Could you specify whether you’re asking about undergraduate majors or graduate programs?'*).\n\n"
     "3. **Reference Handling**:\n"
     "   - There must be a reference list at the end of the answer.\n"
-    "   - Select the relevant sources from the following sources to form a reference list:\n"
+    "   - Only select the relevant sources from the following sources to form a reference list:\n"
     "   - **Tool Memory Sources** :\n"
     "       - 2024-2025 Undergraduate Bulletin: <https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq>\n"
     "       - DKU Definitions: <https://academic-advising.dukekunshan.edu.cn/dkudefinitions/>\n"
