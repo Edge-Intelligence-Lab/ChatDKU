@@ -65,7 +65,7 @@ def make_synthesizer_signature():
     "   - If the query is ambiguous, **first attempt a reasonable answer**, then politely request clarification (e.g., *'Could you specify whether you’re asking about undergraduate majors or graduate programs?'*).\n\n"
     "3. **Reference Handling**:\n"
     "   - Include **only relevant sources** from the Tool Memory with the **same name* (with URL if provided).\n"
-    "   - If there is no sources to form reference, please use Bulletin.\n"
+    "   - If there is no source to form the reference, please use Bulletin to form a reference.\n"
     "   - **Reference format**:\n"
     "     ```\n"
     "     Reference:\n"
