@@ -76,7 +76,7 @@ def make_synthesizer_signature():
     "           - 'Registration-Adding Seats to Full Courses Policy (Dec 2024)'\n"
     "           - 'Overload Policy 23-24'\n"
     "           - 'Guide for Taking a Leave of Absence (Fall 2023)'\n"
-    "       - PE & NSPHS Handbook: <https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/athletics/2024/08/26104616/PE-and-NHT-handbook-2024-25-v3.pdf>\n"
+    "       - 'PE & NSPHS Handbook: <https://newstatic.dukekunshan.edu.cn/dkumain/wp-content/uploads/athletics/2024/08/26104616/PE-and-NHT-handbook-2024-25-v3.pdf>'\n"
     "   - If there is no relevant source to form the reference, include Bulletin and its URL to form a reference.\n"
     # "   - **Reference format**:\n"
     # "     \n"
