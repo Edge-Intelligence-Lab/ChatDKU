@@ -10,8 +10,8 @@ class Config:
             cls._instance._config = {
                 # about settings.py
                 "embedding": "BAAI/bge-m3",
-                "llm": "deepseek",#"meta-llama/Meta-Llama-3.1-70B-Instruct",
-                "tokenizer": "/datapool/tokenizers/manifests/registry.ollama.ai/library/deepseek-r1",#"/datapool/tokenizers/Meta-Llama-3.1-70B-Instruct",
+                "llm": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+                "tokenizer": "/datapool/tokenizers/Meta-Llama-3.1-70B-Instruct",
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:8001/v1",
                 "context_window": 64000,
