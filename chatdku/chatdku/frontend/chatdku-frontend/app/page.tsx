@@ -8,21 +8,16 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 
-import Image from "next/image";
 import { AIInput } from "@/components/ui/ai-input";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import DynamicLogo from "@/components/ui/dynamic-logo";
 
 export default function Home() {
   return (
     <div className="p-4 flex">
       <NavigationMenu className="m-4 p-4 flex justify-between items-center absolute min-w-4/5 top-0 left-1/2 transform -translate-x-1/2 z-10 shadow-md shadow-blue-400/20 border border-primary/5 rounded-2xl">
         <div className="flex items-center p-2 space-x-2">
-          <Image
-        src={"/logos/Light-Logo.svg"}
-        alt="ChatDKU Logo Light Variant"
-        width={30}
-        height={30}
-          />
+          <DynamicLogo />
           <h2 className="font-inter text-3xl font-bold">ChatDKU</h2>
         </div>
         <NavigationMenuList>
@@ -36,7 +31,7 @@ export default function Home() {
           New session
         </NavigationMenuLink>
           </NavigationMenuItem>
-          <NavigationMenuItem>
+          <NavigationMenuItem className="pr-2">
         <ModeToggle />
           </NavigationMenuItem>
         </NavigationMenuList>
