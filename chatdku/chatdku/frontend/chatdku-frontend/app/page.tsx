@@ -1,74 +1,68 @@
 "use client";
-import { PlusCircleIcon } from '@heroicons/react/24/outline'
-import { PlusCircle } from 'lucide-react';
+import { useState } from 'react';
 
 import Starter from "@/components/starter";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
-
 import { AIInput } from "@/components/ui/ai-input";
-import { ModeToggle } from "@/components/ui/mode-toggle";
+import { Navbar } from "@/components/ui/navbar";
 import DynamicLogo from "@/components/ui/dynamic-logo";
 
 export default function Home() {
+  const [showStarter, setShowStarter] = useState(true);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen relative">
-      <NavigationMenu className="w-full max-w-[95vw] mx-auto flex justify-between items-center fixed top-4 left-1/2 -translate-x-1/2 z-10 shadow-md shadow-blue-400/20 border border-primary/5 rounded-2xl bg-background/85 backdrop-blur-sm">
-        <div className="flex flex-row items-center p-4 space-x-2">
-          <DynamicLogo width={30} height={30} />
-          <h2 className="font-inter text-xl lg:text-3xl font-bold">ChatDKU</h2>
-        </div>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/about" className="lg:text-md">
-              About
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink href="/" className="lg:text-md flex flex-row items-center">
-              New Chat
-              <PlusCircle className='size-4 text-primary-500' />
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem className="mr-2 lg:ml-4">
-            <ModeToggle />
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+      <Navbar />
 
-      <div className="flex flex-col items-center justify-center flex-grow">
-        <Starter />
+      <div className="flex flex-col items-center justify-center flex-grow w-full">
+        <div className={`w-full flex justify-center transition-all duration-500 ease-in-out transform ${showStarter ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+          <Starter />
+        </div>
         <div
           id="chat-log"
-          className="space-y-4 p-4 rounded-md h-[300px] overflow-y-auto"
+          className="w-full max-w-3xl mx-auto space-y-4 p-4 rounded-md h-[calc(100vh-300px)] overflow-y-auto"
         ></div>
       </div>
-      <div className="w-full max-w-[95vw] fixed bottom-0 left-1/2 -translate-x-1/2 p-4 bg-background/50 backdrop-blur-sm border-t ">
+      <div className="w-full max-w-[95vw] fixed bottom-0 left-1/2 -translate-x-1/2 p-4 pt-0 backdrop-blur-md">
         <div>
           <AIInput
             onSubmit={(value) => {
               if (!value.trim()) return;
 
+              setShowStarter(false);
+
               const chatLog = document.getElementById("chat-log");
               const messageElement = document.createElement("div");
-              messageElement.className = "message user-message";
-              messageElement.innerHTML = `<span>${value}</span>`;
+              messageElement.className = "flex items-start gap-3 p-4 rounded-lg bg-primary/5 dark:bg-primary/10";
+              messageElement.innerHTML = `
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center">
+                    <span class="text-sm font-medium">U</span>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm text-foreground">${value}</div>
+                </div>
+              `;
               chatLog?.appendChild(messageElement);
               chatLog?.scrollTo(0, chatLog.scrollHeight);
 
               const loader = document.createElement("div");
               const loadingTxt = document.createElement("span");
-              loadingTxt.innerHTML =
-                "Searching relevant documents for you, this can take several seconds...";
+              loadingTxt.innerHTML = "Searching relevant documents for you, this can take several seconds...";
               loader.className = "loader";
               const botMessageElement = document.createElement("div");
-              botMessageElement.className = "message bot-message";
-              botMessageElement.appendChild(loadingTxt);
-              botMessageElement.appendChild(loader);
+              botMessageElement.className = "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
+              botMessageElement.innerHTML = `
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center overflow-hidden">
+                    <DynamicLogo width={32} height={32} />
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm text-foreground">${loadingTxt.outerHTML}</div>
+                  <div class="mt-2">${loader.outerHTML}</div>
+                </div>
+              `;
               chatLog?.appendChild(botMessageElement);
               chatLog?.scrollTo(0, chatLog.scrollHeight);
 
@@ -92,15 +86,33 @@ export default function Home() {
                 })
                 .then((data) => {
                   const botResponse = document.createElement("div");
-                  botResponse.className = "message bot-message";
-                  botResponse.innerHTML = `<span>${data}</span>`;
+                  botResponse.className = "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
+                  botResponse.innerHTML = `
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center overflow-hidden">
+                        <DynamicLogo width={32} height={32} />
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm text-foreground whitespace-pre-wrap">${data}</div>
+                    </div>
+                  `;
                   chatLog?.appendChild(botResponse);
                   chatLog?.scrollTo(0, chatLog.scrollHeight);
                 })
                 .catch((error) => {
                   const errorMessage = document.createElement("div");
-                  errorMessage.className = "message bot-message";
-                  errorMessage.innerHTML = `<span>Error: ${error.message}</span>`;
+                  errorMessage.className = "flex items-start gap-3 p-4 rounded-lg bg-destructive/10 dark:bg-destructive/20";
+                  errorMessage.innerHTML = `
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 rounded-full bg-destructive/20 dark:bg-destructive/30 flex items-center justify-center">
+                        <span class="text-sm font-medium">!</span>
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm text-destructive">Error: ${error.message}</div>
+                    </div>
+                  `;
                   chatLog?.appendChild(errorMessage);
                   chatLog?.scrollTo(0, chatLog.scrollHeight);
                 });
@@ -108,7 +120,7 @@ export default function Home() {
           />
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          Developed by DKU Edge Intelligence Lab.
+          AI responses may contain errors.
         </p>
       </div>
     </div>

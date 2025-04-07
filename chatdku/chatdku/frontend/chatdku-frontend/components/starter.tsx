@@ -1,8 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import DynamicLogo from "./ui/dynamic-logo";
-import { Button } from "./ui/button";
-
+import StarterButtons from "./ui/starter-buttons";
 
 const Starter: React.FC = () => {
   return (
@@ -20,34 +19,9 @@ const Starter: React.FC = () => {
         Developed by DKU Edge Intelligence Lab.
       </p>
 
-
       <p className="text-xs pt-8"><Link className=" text-blue-500" href="https://chatdku.dukekunshan.edu.cn/terms.html">Terms & Conditions</Link> and <Link className="text-blue-500" href={"https://chatdku.dukekunshan.edu.cn/chatdku_remarks.html"}>more information</Link>.</p>
 
-      <div className="flex flex-col sm:flex-row justify-around mt-8 gap-4 sm:space-x-6">
-        <Button
-          variant="outline"
-          className="flex flex-col items-center w-full sm:min-w-[200px] sm:max-w-[200px] p-4 hover:bg-secondary shadow-lg shadow-primary/5 h-[120px]"
-        >
-          <div className="text-4xl mb-2">🔍</div>
-          <p className="text-center text-sm font-medium whitespace-normal">Academic and Course Inquiries</p>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="flex flex-col items-center w-full sm:min-w-[200px] sm:max-w-[200px] p-4 hover:bg-secondary shadow-lg shadow-primary/5 h-[120px]"
-        >
-          <div className="text-4xl mb-2">🎓</div>
-          <p className="text-center text-sm font-medium whitespace-normal">Major and Career Development</p>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="flex flex-col items-center w-full sm:min-w-[200px] sm:max-w-[200px] p-4 hover:bg-secondary shadow-lg shadow-primary/5 h-[120px]"
-        >
-          <div className="text-4xl mb-2">⚙️</div>
-          <p className="text-center text-sm font-medium whitespace-normal">Academic Guidelines and Policies</p>
-        </Button>
-      </div>
+      <StarterButtons />
     </div>
   );
 };
