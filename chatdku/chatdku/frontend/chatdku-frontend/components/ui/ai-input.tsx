@@ -43,23 +43,30 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl bg-black/5 dark:bg-white/5 rounded-3xl pl-6 pr-16",
+            "max-w-xl bg-background dark:bg-background rounded-3xl pl-6 pr-16",
             "placeholder:text-black/50 dark:placeholder:text-white/50",
             "border-none ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
             "overflow-y-auto resize-none",
             "focus-visible:ring-0 focus-visible:ring-offset-0",
-            "transition-[height] duration-100 ease-out",
+            "transition-[height] duration-75 ease-out",
             "leading-[1.2] py-[16px]",
-            `min-h-[${minHeight}px]`,
-            `max-h-[${maxHeight}px]`,
-            "[&::-webkit-resizer]:hidden" // Скрываем ресайзер
+            `min-h-[${minHeight}px] max-h-[${maxHeight}px]`,
+            "[&::-webkit-resizer]:hidden",
+            "shadow-lg shadow-[0_0_8px_rgba(16,185,129,0.15),0_0_8px_rgba(59,130,246,0.15)]",
+            "transition-all duration-200",
+            inputValue ? "shadow-[0_0_12px_rgba(16,185,129,0.2),0_0_12px_rgba(59,130,246,0.2)]" : "",
           )}
           ref={textareaRef}
           value={inputValue}
           onChange={(e) => {
-            setInputValue(e.target.value);
-            adjustHeight();
+            const newValue = e.target.value;
+            setInputValue(newValue);
+            if (!newValue.trim()) {
+              adjustHeight(true);
+            } else {
+              requestAnimationFrame(() => adjustHeight());
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {

@@ -1,4 +1,6 @@
 "use client";
+import { PlusCircleIcon } from '@heroicons/react/24/outline'
+import { PlusCircle } from 'lucide-react';
 
 import Starter from "@/components/starter";
 import {
@@ -14,28 +16,30 @@ import DynamicLogo from "@/components/ui/dynamic-logo";
 
 export default function Home() {
   return (
-    <div className="p-4 flex">
-      <NavigationMenu className="m-4 p-4 flex justify-between items-center absolute min-w-4/5 top-0 left-1/2 transform -translate-x-1/2 z-10 shadow-md shadow-blue-400/20 border border-primary/5 rounded-2xl">
-        <div className="flex items-center p-2 space-x-2">
-          <DynamicLogo />
-          <h2 className="font-inter text-3xl font-bold">ChatDKU</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen relative">
+      <NavigationMenu className="w-full max-w-[95vw] mx-auto flex justify-between items-center fixed top-4 left-1/2 -translate-x-1/2 z-10 shadow-md shadow-blue-400/20 border border-primary/5 rounded-2xl bg-background/85 backdrop-blur-sm">
+        <div className="flex flex-row items-center p-4 space-x-2">
+          <DynamicLogo width={30} height={30} />
+          <h2 className="font-inter text-xl lg:text-3xl font-bold">ChatDKU</h2>
         </div>
         <NavigationMenuList>
           <NavigationMenuItem>
-        <NavigationMenuLink href="/about" className="text-md">
-          About
-        </NavigationMenuLink>
+            <NavigationMenuLink href="/about" className="lg:text-md">
+              About
+            </NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
-        <NavigationMenuLink href="/" className="text-md">
-          New session
-        </NavigationMenuLink>
+            <NavigationMenuLink href="/" className="lg:text-md flex flex-row items-center">
+              New Chat
+              <PlusCircle className='size-4 text-primary-500' />
+            </NavigationMenuLink>
           </NavigationMenuItem>
-          <NavigationMenuItem className="pr-2">
-        <ModeToggle />
+          <NavigationMenuItem className="mr-2 lg:ml-4">
+            <ModeToggle />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
+
       <div className="flex flex-col items-center justify-center flex-grow">
         <Starter />
         <div
@@ -43,7 +47,7 @@ export default function Home() {
           className="space-y-4 p-4 rounded-md h-[300px] overflow-y-auto"
         ></div>
       </div>
-      <div className="space-y-8 min-w-[400px] absolute bottom-0 left-0 right-0 p-4">
+      <div className="w-full max-w-[95vw] fixed bottom-0 left-1/2 -translate-x-1/2 p-4 bg-background/50 backdrop-blur-sm border-t ">
         <div>
           <AIInput
             onSubmit={(value) => {
@@ -103,7 +107,7 @@ export default function Home() {
             }}
           />
         </div>
-        <p className="space-y-8 min-w-[400px] absolute bottom-0 left-0 right-0 p-1 text-sm text-muted-foreground">
+        <p className="text-center text-xs text-muted-foreground">
           Developed by DKU Edge Intelligence Lab.
         </p>
       </div>
