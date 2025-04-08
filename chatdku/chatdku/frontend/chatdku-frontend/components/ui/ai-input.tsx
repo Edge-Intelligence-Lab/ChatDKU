@@ -53,7 +53,7 @@ export function AIInput({
             "leading-[1.2] py-[16px]",
             `min-h-[${minHeight}px] max-h-[${maxHeight}px]`,
             "[&::-webkit-resizer]:hidden",
-            "shadow-lg shadow-[0_0_8px_rgba(16,185,129,0.15),0_0_8px_rgba(59,130,246,0.15)]",
+            "shadow-[0_0_8px_rgba(16,185,129,0.15),0_0_8px_rgba(59,130,246,0.15)]",
             "transition-all duration-200",
             inputValue ? "shadow-[0_0_12px_rgba(16,185,129,0.2),0_0_12px_rgba(59,130,246,0.2)]" : "",
           )}
