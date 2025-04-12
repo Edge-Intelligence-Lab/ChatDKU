@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/ui/navbar";
-import DynamicLogo from "@/components/ui/dynamic-logo";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
