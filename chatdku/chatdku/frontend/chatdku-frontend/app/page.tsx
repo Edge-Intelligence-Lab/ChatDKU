@@ -13,9 +13,11 @@ export default function Home() {
       <Navbar />
 
       <div className="flex flex-col items-center justify-center flex-grow w-full">
-        <div className={`w-full flex justify-center transition-all duration-500 ease-in-out transform ${showStarter ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-          <Starter />
-        </div>
+        {showStarter && (
+          <div className="w-full flex justify-center">
+            <Starter />
+          </div>
+        )}
         <div
           id="chat-log"
           className="w-full max-w-3xl mx-auto space-y-4 p-4 rounded-md h-[calc(100vh-300px)] overflow-y-auto"
