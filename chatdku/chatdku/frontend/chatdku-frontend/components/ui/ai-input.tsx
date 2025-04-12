@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 
 interface AIInputProps {
-  id?: string
-  placeholder?: string
-  minHeight?: number
-  maxHeight?: number
-  onSubmit?: (value: string) => void
-  className?: string
+  id?: string;
+  placeholder?: string;
+  minHeight?: number;
+  maxHeight?: number;
+  onSubmit?: (value: string) => void;
+  className?: string;
 }
 
 export function AIInput({
@@ -21,7 +21,7 @@ export function AIInput({
   minHeight = 52,
   maxHeight = 200,
   onSubmit,
-  className
+  className,
 }: AIInputProps) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
@@ -55,7 +55,9 @@ export function AIInput({
             "[&::-webkit-resizer]:hidden",
             "shadow-[0_0_8px_rgba(16,185,129,0.15),0_0_8px_rgba(59,130,246,0.15)]",
             "transition-all duration-200",
-            inputValue ? "shadow-[0_0_12px_rgba(16,185,129,0.2),0_0_12px_rgba(59,130,246,0.2)]" : "",
+            inputValue
+              ? "shadow-[0_0_12px_rgba(16,185,129,0.3),0_0_12px_rgba(59,130,246,0.3)]"
+              : ""
           )}
           ref={textareaRef}
           value={inputValue}
@@ -84,20 +86,20 @@ export function AIInput({
         >
           <Mic className="w-4 h-4 text-black/70 dark:text-white/70" />
         </div>
-       <button
-  onClick={handleReset}
-  type="button"
-  className={cn(
-    "absolute top-1/2 -translate-y-1/2 right-3",
-    "rounded-xl bg-black/5 dark:bg-white/5 py-1 px-1",
-    "transition-all duration-200",
-    inputValue 
-      ? "opacity-100 scale-100" 
-      : "opacity-0 scale-95 pointer-events-none"
-  )}
->
-  <CornerRightUp className="w-4 h-4 text-black/70 dark:text-white/70" />
-</button>
+        <button
+          onClick={handleReset}
+          type="button"
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 right-3",
+            "rounded-xl bg-black/5 dark:bg-white/5 py-1 px-1",
+            "transition-all duration-200",
+            inputValue
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-95 pointer-events-none"
+          )}
+        >
+          <CornerRightUp className="w-4 h-4 text-black/70 dark:text-white/70" />
+        </button>
       </div>
     </div>
   );

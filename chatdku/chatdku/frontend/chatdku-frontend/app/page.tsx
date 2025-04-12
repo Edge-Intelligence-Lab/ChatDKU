@@ -1,10 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useState } from "react";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/ui/navbar";
-
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
@@ -24,7 +23,7 @@ export default function Home() {
           className="w-full max-w-3xl mx-auto space-y-4 p-4 rounded-md h-[calc(100vh-300px)] overflow-y-auto"
         ></div>
       </div>
-      <div className="w-full max-w-[95vw] fixed bottom-0 left-1/2 -translate-x-1/2 p-4 pt-0 backdrop-blur-md">
+      <div className="w-full max-w-[95vw] fixed bottom-0 left-1/2 -translate-x-1/2 p-4 pt-0 ">
         <div>
           <AIInput
             onSubmit={(value) => {
@@ -34,7 +33,8 @@ export default function Home() {
 
               const chatLog = document.getElementById("chat-log");
               const messageElement = document.createElement("div");
-              messageElement.className = "flex items-start gap-3 p-4 rounded-lg bg-primary/5 dark:bg-primary/10";
+              messageElement.className =
+                "flex items-start gap-3 p-4 rounded-lg bg-primary/5 dark:bg-primary/10";
               messageElement.innerHTML = `
                 <div class="flex-shrink-0">
                   <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center">
@@ -50,10 +50,12 @@ export default function Home() {
 
               const loader = document.createElement("div");
               const loadingTxt = document.createElement("span");
-              loadingTxt.innerHTML = "Searching relevant documents for you, this can take several seconds...";
+              loadingTxt.innerHTML =
+                "Searching relevant documents for you, this can take several seconds...";
               loader.className = "loader";
               const botMessageElement = document.createElement("div");
-              botMessageElement.className = "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
+              botMessageElement.className =
+                "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
               botMessageElement.innerHTML = `
                 <div class="flex-shrink-0">
                   <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center overflow-hidden">
@@ -88,7 +90,8 @@ export default function Home() {
                 })
                 .then((data) => {
                   const botResponse = document.createElement("div");
-                  botResponse.className = "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
+                  botResponse.className =
+                    "flex items-start gap-3 p-4 rounded-lg bg-muted/50 dark:bg-muted/30";
                   botResponse.innerHTML = `
                     <div class="flex-shrink-0">
                       <div class="w-8 h-8 rounded-full bg-primary/20 dark:bg-primary/30 flex items-center justify-center overflow-hidden">
@@ -104,7 +107,8 @@ export default function Home() {
                 })
                 .catch((error) => {
                   const errorMessage = document.createElement("div");
-                  errorMessage.className = "flex items-start gap-3 p-4 rounded-lg bg-destructive/10 dark:bg-destructive/20";
+                  errorMessage.className =
+                    "flex items-start gap-3 p-4 rounded-lg bg-destructive/10 dark:bg-destructive/20";
                   errorMessage.innerHTML = `
                     <div class="flex-shrink-0">
                       <div class="w-8 h-8 rounded-full bg-destructive/20 dark:bg-destructive/30 flex items-center justify-center">
@@ -121,7 +125,7 @@ export default function Home() {
             }}
           />
         </div>
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-[12px]/0 text-muted-foreground/50">
           AI responses may contain errors.
         </p>
       </div>

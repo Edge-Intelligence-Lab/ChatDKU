@@ -13,7 +13,7 @@ export function Navbar() {
     <NavigationMenu className="w-full max-w-[95vw] mx-auto flex justify-between items-center fixed top-4 left-1/2 -translate-x-1/2 z-10 shadow-sm border border-primary/5 rounded-2xl bg-background/85 backdrop-blur-sm">
       <div className="flex flex-row items-center p-4 space-x-2">
         <DynamicLogo width={30} height={30} />
-        <h2 className="font-inter text-xl lg:text-3xl font-bold">ChatDKU</h2>
+        <h2 className="font-inter text-md md:text-xl lg:text-3xl font-bold">ChatDKU</h2>
       </div>
       <NavigationMenuList>
         <NavigationMenuItem>
