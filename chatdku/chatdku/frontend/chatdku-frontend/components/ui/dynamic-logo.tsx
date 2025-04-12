@@ -31,9 +31,11 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({ width = 96, height = 96 }) =>
             <Image
                 src={currentTheme === "dark" ? "/logos/Dark-Logo.png" : "/logos/Light-Logo.png"}
                 alt="Logo"
-                className="relative transition-all duration-300 hover:scale-105"
+                className="relative transition-all duration-300"
                 width={width}
                 height={height}
+                priority
+                loading="eager"
             />
         </div>
     );
