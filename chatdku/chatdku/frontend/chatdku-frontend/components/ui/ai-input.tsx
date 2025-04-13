@@ -1,7 +1,7 @@
 "use client";
 
 import { CornerRightUp, Mic } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
@@ -36,6 +36,21 @@ export function AIInput({
     adjustHeight(true);
   };
 
+  // Listen for external value changes through the input event
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handleInput = (e: Event) => {
+      const target = e.target as HTMLTextAreaElement;
+      setInputValue(target.value);
+      adjustHeight();
+    };
+
+    textarea.addEventListener("input", handleInput);
+    return () => textarea.removeEventListener("input", handleInput);
+  }, [textareaRef, adjustHeight]);
+
   return (
     <div className={cn("w-full py-4", className)}>
       <div className="relative max-w-xl w-full mx-auto">
@@ -43,7 +58,7 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl rounded-3xl pl-6 pr-16",
+            "max-w-xl rounded-3xl pl-6 pr-16 dark:bg-secondary/50",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
             "border-none ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
@@ -53,10 +68,10 @@ export function AIInput({
             "leading-[1.2] py-[16px]",
             `min-h-[${minHeight}px] max-h-[${maxHeight}px]`,
             "[&::-webkit-resizer]:hidden",
-            "shadow-[0_0_8px_rgba(16,185,129,0.15),0_0_8px_rgba(59,130,246,0.15)]",
+            "shadow-[0_0_2px_rgba(16,185,129,0.3),0_0_16px_rgba(59,130,246,0.3)]",
             "transition-all duration-200",
             inputValue
-              ? "shadow-[0_0_12px_rgba(16,185,129,0.3),0_0_12px_rgba(59,130,246,0.3)]"
+              ? "shadow-[0_0_12px_rgba(16,185,129,0.5),0_0_12px_rgba(59,130,246,0.5)]"
               : ""
           )}
           ref={textareaRef}

@@ -10,11 +10,13 @@ import DynamicLogo from "@/components/ui/dynamic-logo";
 
 export function Navbar() {
   return (
-    <NavigationMenu className="w-full max-w-[95vw] mx-auto flex justify-between items-center fixed top-0 left-1/2 -translate-x-1/2 z-10 bg-background/80 backdrop-blur-md">
-      <div className="flex flex-row items-center p-4 space-x-2">
+    <NavigationMenu className="w-full max-w-[95vw] mx-auto flex justify-between items-center fixed top-0 left-1/2 -translate-x-1/2 z-10 bg-background lg:bg-transparent">
+          <NavigationMenuLink href="/" className="hover:bg-transparent p-0">
+          <div className="flex flex-row items-center p-4 space-x-2">
         <DynamicLogo width={30} height={30} />
-        <h2 className="font-inter text-xl md:text-2xl lg:text-3xl font-bold">ChatDKU</h2>
+        <h2 className="hidden sm:block font-inter text-xl md:text-2xl lg:text-3xl font-bold">ChatDKU</h2>
       </div>
+</NavigationMenuLink>
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuLink href="/about" className="lg:text-md">
@@ -33,4 +35,4 @@ export function Navbar() {
       </NavigationMenuList>
     </NavigationMenu>
   );
-} 
+}

@@ -154,7 +154,7 @@
 
 #chat-log {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) transparent;
+  scrollbar-color: "#888888" transparent;
 }
 
 #chat-log::-webkit-scrollbar {
