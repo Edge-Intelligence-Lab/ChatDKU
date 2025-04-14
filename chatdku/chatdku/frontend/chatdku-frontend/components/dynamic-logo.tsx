@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -22,14 +24,14 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({ width = 96, height = 96 }) =>
     return (
         <div className="relative">
             <div 
-                className={`absolute blur-lg animate-pulse [background:linear-gradient(45deg,theme(colors.emerald.600),theme(colors.blue.400),theme(colors.green.300),theme(colors.blue.500))] bg-opacity-20`}
+                className={`absolute blur-xl animate-pulse [background:linear-gradient(45deg,theme(colors.emerald.700),theme(colors.blue.600),theme(colors.white),theme(colors.blue.500))] bg-opacity-10`}
                 style={{
                     inset: `${insetValue}px`,
                     borderRadius: '50%'
                 }}
             />
             <Image
-                src={currentTheme === "dark" ? "/logos/Dark-Logo.png" : "/logos/Light-Logo.png"}
+                src="/logos/new_logo.svg"
                 alt="Logo"
                 className="relative transition-all duration-300"
                 width={width}

@@ -4,8 +4,8 @@ import { marked } from "marked";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
-import { Navbar } from "@/components/ui/navbar";
-import { PromptRecs } from "@/components/ui/prompt_recs";
+import { Navbar } from "@/components/navbar";
+import { PromptRecs } from "@/components/prompt_recs";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
@@ -49,7 +49,7 @@ export default function Home() {
       messageElement.innerHTML = `
       <div class="flex flex-col ${isUser ? 'items-end max-w-[85%] sm:max-w-[80%]' : 'items-start w-full sm:max-w-[85%]'}">
         <div class="flex flex-col ${isUser ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
-          ${isUser ? '' : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-white dark:bg-black flex items-center justify-center"><img src="/logos/Light-Logo.png" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/Dark-Logo.png" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'}
+          ${isUser ? '' : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-white dark:bg-black flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'}
           <div class="${isUser ? 'text-right' : 'text-left'} overflow-hidden">
             <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere">${content}</div>
           </div>

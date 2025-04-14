@@ -1,6 +1,4 @@
 import React from "react";
-import Link from "next/link";
-import DynamicLogo from "./ui/dynamic-logo";
 
 const Starter: React.FC = () => {
   return (
