@@ -161,4 +161,4 @@ if __name__ == "__main__":
     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
     # NOTE: Might want to make it easier to change the port
-    socketio.run(host="0.0.0.0", port=8000)
+    socketio.run(app=app,host="0.0.0.0", port=8000)
