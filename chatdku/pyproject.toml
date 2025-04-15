@@ -45,6 +45,9 @@ dependencies = [
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",
     "gunicorn~=23.0.0",
+    "whisper~=1.1.10",
+    "Flask-SocketIO~=5.5.1",
+    "pydub~="0.25.1"
 ]
 
 [tool.setuptools]
