@@ -18,6 +18,7 @@ import os
 import gc
 from ollama import chat, ChatResponse
 import dspy
+import logging
 
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
@@ -25,6 +26,9 @@ from chatdku.core.agent import Agent, CustomClient
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Using device: {device}")

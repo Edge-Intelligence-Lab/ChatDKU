@@ -47,7 +47,8 @@ dependencies = [
     "gunicorn~=23.0.0",
     "whisper~=1.1.10",
     "Flask-SocketIO~=5.5.1",
-    "pydub~=0.25.1"
+    "pydub~=0.25.1",
+    "python-ffmpeg~=2.0.12"
 ]
 
 [tool.setuptools]
