@@ -26,6 +26,12 @@ from chatdku.core.agent import Agent, CustomClient
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+
+setup()
+use_phoenix()
+llama_client = CustomClient()
+dspy.settings.configure(lm=llama_client)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 

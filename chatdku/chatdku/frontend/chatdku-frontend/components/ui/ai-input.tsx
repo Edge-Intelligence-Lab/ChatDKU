@@ -34,7 +34,7 @@ export function AIInput({
   const socketRef = useRef<any>(null);
 
   useEffect(() => {
-    socketRef.current = io("http://localhost:5000", {
+    socketRef.current = io("http://10.200.14.82:8000/", {
       transports: ["websocket"],
     });
 
