@@ -28,14 +28,15 @@ export function AIInput({
   });
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const socketRef = useRef<any>(null);
 
   useEffect(() => {
-    socketRef.current = io("http://10.200.14.82:8000/", {
+    socketRef.current = io("http://localhost:5000", {
       transports: ["websocket"],
+      secure: true,
     });
 
     return () => {
@@ -46,7 +47,22 @@ export function AIInput({
     };
   }, []);
 
+  useEffect(() => {
+    // Check if running in browser and if media devices are supported
+    if (typeof window !== "undefined") {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        console.warn("Media Devices API not supported in this browser");
+      }
+    }
+  }, []);
+
   const startRecording = async () => {
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      console.error("Media Devices API not supported");
+      alert("Your browser does not support audio recording");
+      return;
+    }
+
     try {
       audioChunksRef.current = [];
       setIsRecording(true);
@@ -77,7 +93,9 @@ export function AIInput({
 
       mediaRecorderRef.current.onstop = async () => {
         try {
-          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: mimeType,
+          });
           if (audioBlob.size > 0) {
             const buffer = await audioBlob.arrayBuffer();
             const uint8Array = new Uint8Array(buffer);
@@ -114,12 +132,27 @@ export function AIInput({
 
   const cleanupRecording = () => {
     if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
       audioStreamRef.current = null;
     }
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
   };
+
+  // Listen for external value changes through the input event
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handleInput = (e: Event) => {
+      const target = e.target as HTMLTextAreaElement;
+      setInputValue(target.value);
+      adjustHeight();
+    };
+
+    textarea.addEventListener("input", handleInput);
+    return () => textarea.removeEventListener("input", handleInput);
+  }, [textareaRef, adjustHeight]);
 
   const toggleRecording = async () => {
     if (isRecording) {
@@ -185,12 +218,12 @@ export function AIInput({
             isRecording ? "bg-red-500/80 " : "bg-black/5 dark:bg-white/5"
           )}
         >
-          <Mic 
-            className="cursor-pointer w-4 h-4 text-black/70 dark:text-white/70" 
-            onClick={toggleRecording} 
+          <Mic
+            className="cursor-pointer w-4 h-4 text-black/70 dark:text-white/70"
+            onClick={toggleRecording}
           />
         </div>
-        
+
         <button
           onClick={handleReset}
           type="button"
