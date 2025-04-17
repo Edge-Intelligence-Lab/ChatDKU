@@ -20,6 +20,9 @@ from ollama import chat, ChatResponse
 import dspy
 import logging
 
+import eventlet
+from eventlet import wsgi
+
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
 
@@ -160,12 +163,13 @@ def handle_audio(data):
         emit("audio_received", {"status": "error", "message": str(e)})
 
 
-if __name__ == "__main__":
-    setup()
-    use_phoenix()
-    llama_client = CustomClient()
-    dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
+# if __name__ == "__main__":
+#     setup()
+#     use_phoenix()
+#     llama_client = CustomClient()
+#     dspy.settings.configure(lm=llama_client)
+#     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
-    # NOTE: Might want to make it easier to change the port
-    socketio.run(app=app,host="0.0.0.0", port=8000)
+#     # NOTE: Might want to make it easier to change the port
+#     socketio.run(app=app,host="0.0.0.0", port=8000)
+
