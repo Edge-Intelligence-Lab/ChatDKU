@@ -22,13 +22,16 @@ import logging
 
 import eventlet
 from eventlet import wsgi
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
 
 app = Flask(__name__)
+app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1)
+
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet")
 
 
 setup()
