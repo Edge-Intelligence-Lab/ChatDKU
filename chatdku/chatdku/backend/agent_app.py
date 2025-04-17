@@ -28,10 +28,10 @@ from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
 
 app = Flask(__name__)
-app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1)
+app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet") #Socket IO to receive audio 
 
 
 setup()
@@ -166,6 +166,9 @@ def handle_audio(data):
         emit("audio_received", {"status": "error", "message": str(e)})
 
 
+# NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it commented out. For development it can be uncommented and used with `python agent_app.py`
+
+
 # if __name__ == "__main__":
 #     setup()
 #     use_phoenix()
@@ -173,6 +176,6 @@ def handle_audio(data):
 #     dspy.settings.configure(lm=llama_client)
 #     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
-#     # NOTE: Might want to make it easier to change the port
 #     socketio.run(app=app,host="0.0.0.0", port=8000)
+#     # NOTE: Might want to make it easier to change the port
 
