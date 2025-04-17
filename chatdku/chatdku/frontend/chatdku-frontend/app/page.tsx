@@ -109,7 +109,7 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch("http://10.200.14.82:8000/chat", {
+                const response = await fetch("http://10.200.14.82:9015/chat", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -128,7 +128,7 @@ export default function Home() {
                   "assistant",
                   marked.parse(data),
                   "text-sm"
-                );
+                ); 
 
                 if (messageDiv) { // Add null check here
                   // Add feedback buttons
@@ -153,11 +153,73 @@ export default function Home() {
                   });
 
                   noButton?.addEventListener('click', () => {
-                    handleFeedback(value, data, 'not_helpful');
-                    feedbackDiv.innerHTML = '<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
+                    feedbackDiv.innerHTML = `
+                      <div class="absolute inset-0 w-screen h-screen flex items-center justify-center bg-black/30 z-50">
+                        <div class="form flex flex-col p-4 bg-white dark:bg-secondary/50 rounded-lg shadow-lg w-[90%] max-w-md">
+                          <h3 class="text-base font-semibold text-muted-foreground mb-2">Sorry to hear that. Can you tell us why?</h3>
+                          
+                          <div class="flex flex-col gap-2" id="reason-options">
+                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50  text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_correct">Not Correct</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_clear">Not Clear</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_relevant">Not Relevant</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="other">Other</button>
+                          </div>
+              
+                          <textarea id="custom-reason" class="w-full p-2 rounded-md border border-muted bg-background text-foreground text-sm mt-3 hidden resize-none" rows="5" placeholder="Please describe the issue"></textarea>
+                  
+                          <div class="flex justify-end mt-4 gap-2">
+                            <button id="submit-feedback" class="px-3 py-1 rounded-md text-sm bg-secondary/70 hover:bg-secondary">Submit</button>
+                            <button id="cancel-feedback" class="px-3 py-1 rounded-md text-sm bg-muted hover:bg-muted/70">Cancel</button>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  
+                    const optionButtons = feedbackDiv.querySelectorAll(".reason-btn");
+                    const customReason = feedbackDiv.querySelector("#custom-reason") as HTMLTextAreaElement;
+                    const submitBtn = feedbackDiv.querySelector("#submit-feedback");
+                    const cancelBtn = feedbackDiv.querySelector("#cancel-feedback");
+                  
+                    let selectedReason: string | null = null;
+                  
+                    optionButtons.forEach((btn) => {
+                      btn.addEventListener("click", () => {
+                        selectedReason = (btn as HTMLElement).dataset.reason || null;
+                  
+                        optionButtons.forEach((b) => b.classList.remove("bg-secondary", "text-white"));
+                        btn.classList.add("bg-secondary", "text-white");
+                  
+                        if (selectedReason === "other") {
+                          customReason.classList.remove("hidden");
+                        } else {
+                          customReason.classList.add("hidden");
+                        }
+                      });
+                    });
+                  
+                    submitBtn?.addEventListener("click", () => {
+                      if (!selectedReason) return;
+                  
+                      let reasonToSend = selectedReason === "other" ? customReason.value.trim() : selectedReason;
+                  
+                      if (selectedReason === "other" && !reasonToSend) {
+                        customReason.classList.add("border-destructive");
+                        customReason.placeholder = "Please write something!";
+                        return;
+                      }
+                  
+                      handleFeedback(value, data, reasonToSend);
+                      feedbackDiv.innerHTML = `<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>`;
+                    });
+                  
+                    cancelBtn?.addEventListener("click", () => {
+                      feedbackDiv.innerHTML = `<span class="text-sm text-muted-foreground">Feedback canceled.</span>`;
+                    });
                   });
-
+                  
                   messageDiv.appendChild(feedbackDiv);
+
+
                 }
               } catch (error) {
                 if (botMessage) {
