@@ -60,7 +60,7 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+#feedback route for saving feedback. The feedbacks are saved into the SQLAlchemy database.
 
 @app.route('/save-feedback', methods=['POST'])
 def save_feedback():
