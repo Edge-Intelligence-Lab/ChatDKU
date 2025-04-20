@@ -20,7 +20,7 @@ export default function Home() {
   const handleFeedback = useCallback(
     async (userInput: any, answer: any, reason: any) => {
       try {
-        await fetch("http://10.200.14.82:9016/save-feedback", {
+        await fetch("http://10.200.14.82:8000/save-feedback", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch("https://10.200.14.82:8000/chat", {
+                const response = await fetch("http://10.200.14.82:8000/chat", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({

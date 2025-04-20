@@ -63,7 +63,7 @@ def chat():
 
 
 
-@app.route('/save-feedback', methods=['POST'])
+@app.route('/save_feedback', methods=['POST'])
 def save_feedback():
     try:
         data = request.get_json()
