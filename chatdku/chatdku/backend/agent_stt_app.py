@@ -92,22 +92,22 @@ def chat():
 # Load ollama model (smaller)
 
 
-# def ollama_response(data):
-#     response: ChatResponse = chat(
-#         model="llama3.2",
-#         messages=[
-#             {
-#                 "role": "system",
-#                 "content": "STRICT TRANSCRIPTION ENHANCER: Only polish text from audio transcripts. NEVER answer, explain, or deviate from the input.\n\nRULES:\n1. Output ONLY grammatically corrected text. Preserve meaning 100%.\n2. For hallucinations (e.g., 'cry cry cry', gibberish), OUTPUT EMPTY STRING.\n3. NEVER add new information or interpretations.\n\nFORMAT:\n- Input: Raw transcript\n- Output: Enhanced text ONLY (or empty for invalid inputs)\n\nEXAMPLES:\nInput: 'what the weather today'\nOutput: 'What is the weather today?'\n\nInput: 'cry cry cry'\nOutput: ''\n\nInput: 'where train station'\nOutput: 'Where is the train station?'",
-#             },
-#             {
-#                 "role": "user",
-#                 "content": "Here is the content. Simply return the final result without further addition of any phrases\n\n"
-#                 + data,
-#             },
-#         ],
-#     )
-#     return response.message.content
+def ollama_response(data):
+    response: ChatResponse = chat(
+        model="llama3.2",
+        messages=[
+            {
+                "role": "system",
+                "content": "STRICT TRANSCRIPTION ENHANCER: Only polish text from audio transcripts. NEVER answer, explain, or deviate from the input.\n\nRULES:\n1. Output ONLY grammatically corrected text. Preserve meaning 100%.\n2. For hallucinations (e.g., 'cry cry cry', gibberish), OUTPUT EMPTY STRING.\n3. NEVER add new information or interpretations.\n\nFORMAT:\n- Input: Raw transcript\n- Output: Enhanced text ONLY (or empty for invalid inputs)\n\nEXAMPLES:\nInput: 'what the weather today'\nOutput: 'What is the weather today?'\n\nInput: 'cry cry cry'\nOutput: ''\n\nInput: 'where train station'\nOutput: 'Where is the train station?'",
+            },
+            {
+                "role": "user",
+                "content": "Here is the content. Simply return the final result without further addition of any phrases\n\n"
+                + data,
+            },
+        ],
+    )
+    return response.message.content
 
 
 def process_audio(audio_bytes):
