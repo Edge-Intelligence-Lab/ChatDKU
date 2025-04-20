@@ -17,6 +17,11 @@ from extentions import db, migrate
 
 app = Flask(__name__)
 CORS(app)
+setup()
+use_phoenix()
+llama_client = CustomClient()
+dspy.settings.configure(lm=llama_client)
+agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
 db.init_app(app)
 migrate.init_app(app, db)
