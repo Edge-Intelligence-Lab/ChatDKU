@@ -79,6 +79,7 @@ def save_feedback():
         feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id)
         db.session.add(feedback)
         db.session.commit()
+        print("data recorded")
         return jsonify({'message': 'Feedback saved successfully'})
     except Exception as e:
         return jsonify({"message":str(e)})
