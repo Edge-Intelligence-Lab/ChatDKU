@@ -168,14 +168,13 @@ def handle_audio(data):
 
 # NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it commented out. For development it can be uncommented and used with `python agent_app.py`
 
+if __name__ == "__main__":
+     setup()
+     use_phoenix()
+     llama_client = CustomClient()
+     dspy.settings.configure(lm=llama_client)
+     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
-# if __name__ == "__main__":
-#     setup()
-#     use_phoenix()
-#     llama_client = CustomClient()
-#     dspy.settings.configure(lm=llama_client)
-#     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
-
-#     socketio.run(app=app,host="0.0.0.0", port=8000)
+     socketio.run(app=app,host="0.0.0.0", port=8000)
 #     # NOTE: Might want to make it easier to change the port
 
