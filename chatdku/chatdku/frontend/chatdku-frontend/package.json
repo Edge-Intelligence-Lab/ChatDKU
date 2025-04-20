@@ -1,9 +1,10 @@
 {
   "name": "chatdku-frontend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
