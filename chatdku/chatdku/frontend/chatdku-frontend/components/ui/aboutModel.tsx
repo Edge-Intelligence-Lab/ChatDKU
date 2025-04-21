@@ -16,7 +16,7 @@ interface ModalProps {
           : "pointer-events-none translate-y-6 opacity-0 scale-95"
       }`}
     >
-      <div className={`container relative z-20 w-[80vw] md:w-[70vw] h-[75vh] p-3 bg-zinc-100 dark:bg-muted/50 rounded-2xl backdrop-blur-2xl`}>
+      <div className={`container relative z-20 w-[80vw] md:w-[70vw] h-[75vh] p-3 bg-zinc-100/60 dark:bg-muted/50 rounded-2xl shadow-lg`}>
         <button
           className="absolute right-4 cursor-pointer z-50 w-4 h-4"
           onClick={onClose}

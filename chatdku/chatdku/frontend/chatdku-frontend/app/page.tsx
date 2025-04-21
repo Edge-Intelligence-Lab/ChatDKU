@@ -64,7 +64,7 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen relative">
+    <div className="flex flex-col items-center justify-center min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
       <Navbar />
 
       <div className="flex flex-col lg:justify-normal items-center flex-grow w-full">

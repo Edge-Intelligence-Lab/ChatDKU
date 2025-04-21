@@ -73,7 +73,7 @@ const About: React.FC = () => {
       <Modal
       isOpen={remarks}
       onClose={()=>setRemarks(false)}
-      title="Some Remarks on ChatDKU for a General Audience"
+      title="About ChatDKU"
       >
         <Remark/>
 
