@@ -21,7 +21,7 @@ const About: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col items-center p-4 mt-32 w-4/5 md:max-w-1/2 sm:max-w-4/5">
+      <div className="flex flex-col items-center p-4 mt-32 w-4/5 md:max-w-1/2 sm:max-w-4/5  selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
         <DynamicLogo height={64} width={64} />
 
         <h1 className="mt-4 lg:mt-8 font-bold text-xl lg:text-2xl">
