@@ -106,3 +106,314 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
   File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'chatdku'
+[2025-04-15 15:52:23 +0000] [3527878] [INFO] Starting gunicorn 23.0.0
+[2025-04-15 15:52:23 +0000] [3527878] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:23 +0000] [3527878] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:24 +0000] [3527878] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:24 +0000] [3527878] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:25 +0000] [3527878] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:25 +0000] [3527878] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:26 +0000] [3527878] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:26 +0000] [3527878] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:27 +0000] [3527878] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:27 +0000] [3527878] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:28 +0000] [3527878] [ERROR] Can't connect to ('0.0.0.0', 9015)
+[2025-04-15 15:52:56 +0000] [3527902] [INFO] Starting gunicorn 23.0.0
+[2025-04-15 15:52:56 +0000] [3527902] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:56 +0000] [3527902] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:57 +0000] [3527902] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:57 +0000] [3527902] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:58 +0000] [3527902] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:58 +0000] [3527902] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:52:59 +0000] [3527902] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:52:59 +0000] [3527902] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:00 +0000] [3527902] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:00 +0000] [3527902] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:01 +0000] [3527902] [ERROR] Can't connect to ('0.0.0.0', 9015)
+[2025-04-15 15:53:14 +0000] [3527911] [INFO] Starting gunicorn 23.0.0
+[2025-04-15 15:53:14 +0000] [3527911] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:14 +0000] [3527911] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:15 +0000] [3527911] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:15 +0000] [3527911] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:16 +0000] [3527911] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:16 +0000] [3527911] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:17 +0000] [3527911] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:17 +0000] [3527911] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:18 +0000] [3527911] [ERROR] Connection in use: ('0.0.0.0', 9015)
+[2025-04-15 15:53:18 +0000] [3527911] [ERROR] connection to ('0.0.0.0', 9015) failed: [Errno 98] Address already in use
+[2025-04-15 15:53:19 +0000] [3527911] [ERROR] Can't connect to ('0.0.0.0', 9015)
+[2025-04-15 15:53:51 +0000] [3527930] [INFO] Starting gunicorn 23.0.0
+[2025-04-15 15:53:51 +0000] [3527930] [INFO] Listening at: http://0.0.0.0:8000 (3527930)
+[2025-04-15 15:53:51 +0000] [3527930] [INFO] Using worker: sync
+[2025-04-15 15:53:51 +0000] [3527931] [INFO] Booting worker with pid: 3527931
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:agent_app:Using device: cuda
+[2025-04-15 15:54:14 +0000] [3527931] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:54:41 +0000] [3527931] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:56:05 +0000] [3527930] [CRITICAL] WORKER TIMEOUT (pid:3527931)
+[2025-04-15 15:56:05 +0000] [3527931] [ERROR] Error handling request /socket.io/?EIO=4&transport=websocket
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/socketio/server.py", line 434, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/server.py", line 261, in handle_request
+    r = self._handle_connect(environ, start_response,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/server.py", line 416, in _handle_connect
+    ret = s.handle_get_request(environ, start_response)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 92, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 151, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/async_drivers/eventlet.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 141, in __call__
+    self.handler(ws)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 225, in _websocket_handler
+    p = websocket_wait()
+        ^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 156, in websocket_wait
+    data = ws.wait()
+           ^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 825, in wait
+    for i in self.iterator:
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 666, in _iter_frames
+    message = self._recv_frame(message=fragmented_message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 692, in _recv_frame
+    header = recv(2)
+             ^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 594, in _get_bytes
+    d = self.socket.recv(numbytes - len(data))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2025-04-15 15:56:05 +0000] [3527931] [INFO] Worker exiting (pid: 3527931)
+[2025-04-15 15:56:06 +0000] [3527930] [ERROR] Worker (pid:3527931) was sent SIGKILL! Perhaps out of memory?
+[2025-04-15 15:56:06 +0000] [3528212] [INFO] Booting worker with pid: 3528212
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:agent_app:Using device: cuda
+[2025-04-15 15:56:31 +0000] [3528212] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:56:58 +0000] [3528212] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:57:20 +0000] [3528212] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:57:41 +0000] [3528212] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:58:03 +0000] [3528212] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 184, in handle_request
+    resp.close()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 399, in close
+    self.send_headers()
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/http/wsgi.py", line 330, in send_headers
+    util.write(self.sock, util.to_bytestring(header_str, "latin-1"))
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/util.py", line 298, in write
+    sock.sendall(data)
+OSError: [Errno 9] Bad file descriptor
+[2025-04-15 15:58:27 +0000] [3527930] [INFO] Handling signal: int
+[2025-04-15 15:58:27 +0000] [3528212] [ERROR] Error handling request /socket.io/?EIO=4&transport=websocket
+Traceback (most recent call last):
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/flask/app.py", line 1498, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/flask_socketio/__init__.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/middleware.py", line 63, in __call__
+    return self.engineio_app.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/socketio/server.py", line 434, in handle_request
+    return self.eio.handle_request(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/server.py", line 261, in handle_request
+    r = self._handle_connect(environ, start_response,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/server.py", line 416, in _handle_connect
+    ret = s.handle_get_request(environ, start_response)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 92, in handle_get_request
+    return getattr(self, '_upgrade_' + transport)(environ,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 151, in _upgrade_websocket
+    return ws(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/async_drivers/eventlet.py", line 42, in __call__
+    return super().__call__(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 141, in __call__
+    self.handler(ws)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 225, in _websocket_handler
+    p = websocket_wait()
+        ^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/engineio/socket.py", line 156, in websocket_wait
+    data = ws.wait()
+           ^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 825, in wait
+    for i in self.iterator:
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 666, in _iter_frames
+    message = self._recv_frame(message=fragmented_message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 692, in _recv_frame
+    header = recv(2)
+             ^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/eventlet/websocket.py", line 594, in _get_bytes
+    d = self.socket.recv(numbytes - len(data))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 198, in handle_quit
+    time.sleep(0.1)
+  File "/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 199, in handle_quit
+    sys.exit(0)
+SystemExit: 0
+[2025-04-15 15:58:27 +0000] [3528212] [INFO] Worker exiting (pid: 3528212)
+[2025-04-15 15:58:27 +0000] [3527930] [ERROR] Worker (pid:3528212) was sent SIGINT!
+[2025-04-15 15:58:27 +0000] [3527930] [INFO] Shutting down: Master

@@ -194,3 +194,5 @@ backend/feedback/
 benchmarks/*.svg
 benchmarks/*.html
 benchmarks/questions.json
+
+.idea

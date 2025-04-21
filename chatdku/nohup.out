@@ -1,0 +1,581 @@
+[2025-04-15 17:59:32 +0000] [3556698] [INFO] Starting gunicorn 23.0.0
+[2025-04-15 17:59:32 +0000] [3556698] [INFO] Listening at: http://0.0.0.0:8000 (3556698)
+[2025-04-15 17:59:32 +0000] [3556698] [INFO] Using worker: sync
+[2025-04-15 17:59:32 +0000] [3556699] [INFO] Booting worker with pid: 3556699
+[2025-04-15 17:59:32 +0000] [3556700] [INFO] Booting worker with pid: 3556700
+[2025-04-15 17:59:32 +0000] [3556701] [INFO] Booting worker with pid: 3556701
+[2025-04-15 17:59:32 +0000] [3556702] [INFO] Booting worker with pid: 3556702
+[2025-04-15 17:59:32 +0000] [3556703] [INFO] Booting worker with pid: 3556703
+[2025-04-15 17:59:32 +0000] [3556704] [INFO] Booting worker with pid: 3556704
+[2025-04-15 17:59:32 +0000] [3556705] [INFO] Booting worker with pid: 3556705
+[2025-04-15 17:59:33 +0000] [3556706] [INFO] Booting worker with pid: 3556706
+[2025-04-15 17:59:33 +0000] [3556707] [INFO] Booting worker with pid: 3556707
+[2025-04-15 17:59:33 +0000] [3556708] [INFO] Booting worker with pid: 3556708
+[2025-04-15 17:59:33 +0000] [3556709] [INFO] Booting worker with pid: 3556709
+[2025-04-15 17:59:33 +0000] [3556710] [INFO] Booting worker with pid: 3556710
+[2025-04-15 17:59:33 +0000] [3556711] [INFO] Booting worker with pid: 3556711
+[2025-04-15 17:59:33 +0000] [3556712] [INFO] Booting worker with pid: 3556712
+[2025-04-15 17:59:33 +0000] [3556713] [INFO] Booting worker with pid: 3556713
+[2025-04-15 17:59:33 +0000] [3556714] [INFO] Booting worker with pid: 3556714
+[2025-04-15 17:59:33 +0000] [3556715] [INFO] Booting worker with pid: 3556715
+[2025-04-15 17:59:33 +0000] [3556716] [INFO] Booting worker with pid: 3556716
+[2025-04-15 17:59:33 +0000] [3556780] [INFO] Booting worker with pid: 3556780
+[2025-04-15 17:59:33 +0000] [3556844] [INFO] Booting worker with pid: 3556844
+[2025-04-15 17:59:33 +0000] [3556909] [INFO] Booting worker with pid: 3556909
+[2025-04-15 17:59:33 +0000] [3556972] [INFO] Booting worker with pid: 3556972
+[2025-04-15 17:59:33 +0000] [3557036] [INFO] Booting worker with pid: 3557036
+[2025-04-15 17:59:33 +0000] [3557100] [INFO] Booting worker with pid: 3557100
+[2025-04-15 17:59:33 +0000] [3557101] [INFO] Booting worker with pid: 3557101
+[2025-04-15 17:59:33 +0000] [3557102] [INFO] Booting worker with pid: 3557102
+[2025-04-15 17:59:33 +0000] [3557103] [INFO] Booting worker with pid: 3557103
+[2025-04-15 17:59:33 +0000] [3557104] [INFO] Booting worker with pid: 3557104
+[2025-04-15 17:59:34 +0000] [3557105] [INFO] Booting worker with pid: 3557105
+[2025-04-15 17:59:34 +0000] [3557169] [INFO] Booting worker with pid: 3557169
+[2025-04-15 17:59:34 +0000] [3557170] [INFO] Booting worker with pid: 3557170
+[2025-04-15 17:59:34 +0000] [3557171] [INFO] Booting worker with pid: 3557171
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_url" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_path" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+/home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:161: UserWarning: Field "model_kwargs" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Using embedding model BAAI/bge-m3
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+Loaded tokenizer
+Using LLM
+[2025-04-15 18:00:02 +0000] [3556698] [INFO] Handling signal: int
+[2025-04-15 18:00:02 +0000] [3556701] [INFO] Worker exiting (pid: 3556701)
+[2025-04-15 18:00:02 +0000] [3556714] [INFO] Worker exiting (pid: 3556714)
+[2025-04-15 18:00:02 +0000] [3556699] [INFO] Worker exiting (pid: 3556699)
+[2025-04-15 18:00:02 +0000] [3556705] [INFO] Worker exiting (pid: 3556705)
+[2025-04-15 18:00:02 +0000] [3556706] [INFO] Worker exiting (pid: 3556706)
+[2025-04-15 18:00:02 +0000] [3556712] [INFO] Worker exiting (pid: 3556712)
+[2025-04-15 18:00:02 +0000] [3557036] [INFO] Worker exiting (pid: 3557036)
+[2025-04-15 18:00:02 +0000] [3556707] [INFO] Worker exiting (pid: 3556707)
+[2025-04-15 18:00:02 +0000] [3556711] [INFO] Worker exiting (pid: 3556711)
+[2025-04-15 18:00:02 +0000] [3556704] [INFO] Worker exiting (pid: 3556704)
+[2025-04-15 18:00:02 +0000] [3556713] [INFO] Worker exiting (pid: 3556713)
+[2025-04-15 18:00:02 +0000] [3556708] [INFO] Worker exiting (pid: 3556708)
+[2025-04-15 18:00:02 +0000] [3556909] [INFO] Worker exiting (pid: 3556909)
+[2025-04-15 18:00:02 +0000] [3556700] [INFO] Worker exiting (pid: 3556700)
+[2025-04-15 18:00:02 +0000] [3556710] [INFO] Worker exiting (pid: 3556710)
+[2025-04-15 18:00:02 +0000] [3556715] [INFO] Worker exiting (pid: 3556715)
+[2025-04-15 18:00:02 +0000] [3556844] [INFO] Worker exiting (pid: 3556844)
+[2025-04-15 18:00:02 +0000] [3557102] [INFO] Worker exiting (pid: 3557102)
+[2025-04-15 18:00:02 +0000] [3557171] [INFO] Worker exiting (pid: 3557171)
+[2025-04-15 18:00:02 +0000] [3557103] [INFO] Worker exiting (pid: 3557103)
+[2025-04-15 18:00:02 +0000] [3556972] [INFO] Worker exiting (pid: 3556972)
+[2025-04-15 18:00:02 +0000] [3557105] [INFO] Worker exiting (pid: 3557105)
+[2025-04-15 18:00:02 +0000] [3557101] [INFO] Worker exiting (pid: 3557101)
+[2025-04-15 18:00:02 +0000] [3557104] [INFO] Worker exiting (pid: 3557104)
+[2025-04-15 18:00:02 +0000] [3556702] [INFO] Worker exiting (pid: 3556702)
+[2025-04-15 18:00:02 +0000] [3557169] [INFO] Worker exiting (pid: 3557169)
+[2025-04-15 18:00:02 +0000] [3556716] [INFO] Worker exiting (pid: 3556716)
+[2025-04-15 18:00:02 +0000] [3556703] [INFO] Worker exiting (pid: 3556703)
+[2025-04-15 18:00:02 +0000] [3556780] [INFO] Worker exiting (pid: 3556780)
+[2025-04-15 18:00:02 +0000] [3557100] [INFO] Worker exiting (pid: 3557100)
+[2025-04-15 18:00:02 +0000] [3556709] [INFO] Worker exiting (pid: 3556709)
+[2025-04-15 18:00:02 +0000] [3557170] [INFO] Worker exiting (pid: 3557170)
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556713) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556709) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556707) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556701) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557104) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557102) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557171) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556705) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556704) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556710) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556703) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556844) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556714) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556716) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557105) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557169) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557103) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556712) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556706) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557170) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556708) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556699) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556780) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557036) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556702) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556700) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556972) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556711) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556715) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3556909) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557100) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [ERROR] Worker (pid:3557101) was sent SIGINT!
+[2025-04-15 18:00:02 +0000] [3556698] [INFO] Shutting down: Master
