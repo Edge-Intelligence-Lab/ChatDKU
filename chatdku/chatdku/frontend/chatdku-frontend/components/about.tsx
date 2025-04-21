@@ -3,9 +3,9 @@
 import React from "react";
 import DynamicLogo from "./dynamic-logo";
 import { useState } from "react";
-import { X } from "lucide-react";
 import Remark from "./chatdku_remark";
 import Terms from "./ui/terms";
+import Modal from "./ui/aboutModel"
 
 const About: React.FC = () => {
   const [termsAndCondition, setTermsAndCondition] = useState(false);
@@ -61,74 +61,24 @@ const About: React.FC = () => {
           </span>
         </div>
       </div>
-      <div
-        className={`T&C   absolute t-0 w-[100%] h-[calc(90vh-90px)] overflow-auto bg-white my-3 dark:bg-background backdrop-blur-md  flex justify-center align-center items-center transition-all duration-300 transform ${
-          termsAndCondition
-            ? "translate-y-0 opacity-100 scale-100"
-            : "pointer-events-none translate-y-4 opacity-0 scale-90"
-        }`}
+      <Modal
+      isOpen={termsAndCondition}
+      onClose={()=>setTermsAndCondition(false)}
+      title="Terms & Conditions"
       >
-        <div
-          className={`container relative z-20 w-[80vw] md:w-[70vw] h-[75vh] p-3 bg-zinc-100 dark:bg-muted/50 rounded-2xl backdrop-blur-2xl transition-all duration-300 transform ${
-            termsAndCondition
-              ? "translate-y-0 opacity-100 scale-100"
-              : "pointer-events-none translate-y-6 opacity-0 scale-95"
-          }`}
-        >
-          <div
-            className="cross absolute right-4 cursor-pointer z-50 w-4 h-4"
-            onClick={() => {
-              setTermsAndCondition(false);
-            }}
-          >
-            <X />
-          </div>
-          <div className="overflow-auto h-[90%] flex flex-col">
-            <div className="sticky top-0 z-10 pb-2 ">
-              <h2 className="text-center text-xl ls:text-2xl font-bold mb-2">
-                Terms & Conditions
-              </h2>
-            </div>
-            <div className="flex-1 overflow-auto pr-2 ">
-              <Terms />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        className={`LM  absolute t-0 w-[100%] h-[calc(90vh-90px)] overflow-auto bg-white dark:bg-background backdrop-blur-md  flex justify-center align-center items-center transition-all duration-300 transform ${
-          remarks
-            ? "translate-y-0 opacity-100 scale-100"
-            : "pointer-events-none translate-y-6 opacity-0 scale-95"
-        }`}
+        <Terms/>
+
+      </Modal>
+
+      <Modal
+      isOpen={remarks}
+      onClose={()=>setRemarks(false)}
+      title="Some Remarks on ChatDKU for a General Audience"
       >
-        <div
-          className={`container relative z-20 w-[80vw] md:w-[70vw] h-[75vh] p-3 bg-zinc-100 dark:bg-muted/50 rounded-2xl backdrop-blur-2xl transition-all duration-300 transform ${
-            remarks
-              ? "translate-y-0 opacity-100 scale-100"
-              : "pointer-events-none translate-y-6 opacity-0 scale-90"
-          }`}
-        >
-          <div
-            className="cross absolute right-4 cursor-pointer z-50 w-4 h-4"
-            onClick={() => {
-              setRemarks(false);
-            }}
-          >
-            <X />
-          </div>
-          <div className="overflow-auto h-full flex flex-col">
-            <div className="sticky top-0 z-10 pb-2 ">
-              <h2 className="text-center text-xl ls:text-2xl font-bold mb-2 my-3">
-              Some Remarks on ChatDKU for a General Audience
-              </h2>
-            </div>
-            <div className="flex-1 overflow-auto pr-2 ">
-              <Remark />
-            </div>
-          </div>
-        </div>
-      </div>
+        <Remark/>
+
+      </Modal>
+      
     </>
   );
 };
