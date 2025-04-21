@@ -176,7 +176,7 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl rounded-3xl pl-6 pr-16 dark:bg-secondary/50",
+            "max-w-xl rounded-3xl pl-6 pr-16 backdrop-blur-md bg-white/50 dark:bg-black/50",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
             "border-none ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
