@@ -178,7 +178,7 @@ export function AIInput({
           className={cn(
             "max-w-xl rounded-3xl pl-6 pr-16 backdrop-blur-md bg-white dark:bg-white/10",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
-            "border-none ring-black/20 dark:ring-white/20",
+            "border border-foreground/10 ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
             "overflow-y-auto resize-none",
             "focus-visible:ring-0 focus-visible:ring-offset-0",
@@ -186,10 +186,10 @@ export function AIInput({
             "leading-[1.2] py-[16px]",
             `min-h-[${minHeight}px] max-h-[${maxHeight}px]`,
             "[&::-webkit-resizer]:hidden",
-            "shadow-[0_0_2px_rgba(16,185,129,0.3),0_0_16px_rgba(59,130,246,0.3)]",
+            "shadow-[0_0_2px_rgba(16,185,129,0.1),0_0_16px_rgba(59,130,246,0.1)]",
             "transition-all duration-200",
             inputValue
-              ? "shadow-[0_0_12px_rgba(16,185,129,0.5),0_0_12px_rgba(59,130,246,0.5)]"
+              ? "shadow-[0_0_12px_rgba(46,205,199,0.3),0_0_12px_rgba(59,170,246,0.3)]"
               : ""
           )}
           ref={textareaRef}

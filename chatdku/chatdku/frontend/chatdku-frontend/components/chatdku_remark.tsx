@@ -3,7 +3,7 @@ import React from "react";
 export default function Remark() {
   return (
     <div>
-      <h2 className="text-xl font-bold m-0.5">LLM</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">LLM</h2>
       <p>
         A Large Language Model (LLM) is effectively a calculator for languages,
         where given a sequence of tokens as its input, it will return the most
@@ -25,7 +25,7 @@ export default function Remark() {
         extent.
       </p>
 
-      <h2 className="text-xl font-bold m-0.5">ChatDKU</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">ChatDKU</h2>
       <p>
         ChatDKU is a conversational agent powered by LLM and Retrieval-Augmented
         Generation (RAG) pipeline. By "agent", it means that it can call
@@ -48,7 +48,7 @@ export default function Remark() {
         specifically.
       </p>
       <p>Here are the components of ChatDKU agent:</p>
-      <h3 className="text-xl font-bold m-0.5">Tools</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Tools</h3>
       <ul className="my-3">
         Tools are the foundation of agent, agent decides how to call the tool to
         achieve the user's requirements by planning. ChatDKU has two types of
@@ -59,29 +59,29 @@ export default function Remark() {
         which is good at summarizing and comparing problems. Some API tools will
         also be introduced, such as the mail tool.
       </ul>
-      <h3 className="text-xl font-bold m-0.5">Tool Memory</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Tool Memory</h3>
       <ul className="my-3">
         Tool memory is the module that stores memory during one round of Q&A of
         the agent, including retrieved results, user queries, chat history, chat
         summaries, tool call history, etc.
       </ul>
-      <h3 className="text-xl font-bold m-0.5">Judge</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Judge</h3>
       <ul className="my-3">
         The judgment module is used to determine whether the information that is
         now known (the information that has been retrieved) can answer the
         user's question.
       </ul>
-      <h3 className="text-xl font-bold m-0.5">Query Rewrite</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Query Rewrite</h3>
       <ul className="my-3">
         The Query Rewrite module is used to rewrite queries to make it easier to
         search for relevant results.
       </ul>
-      <h3 className="text-xl font-bold m-0.5">Planner</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Planner</h3>
       <ul className="my-3">
         Planner is the main thinking module of agent, which is responsible for
         intelligently calling tool to provide services for users.
       </ul>
-      <h3 className="text-xl font-bold m-0.5">Synthesizer</h3>
+      <h3 className="text-xl font-bold mt-2 mb-1">Synthesizer</h3>
       <ul className="my-3">
         The Synthesizer module is used to summarize all the known information
         and give response to the user's question.
@@ -134,18 +134,24 @@ export default function Remark() {
         </li>
       </ol>
 
-      <h2 className="text-xl font-bold m-0.5">Hallucination</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">Hallucination</h2>
       <p>
         Hallucination is when the LLM outputs counterfactual information. As the
         LLM is basically a predictor for the most probable next token, this is
-        unavoidable. According to the <a className="text-blue-700 decoration-0" target="_blank" href="https://huggingface.co/spaces/vectara/leaderboard">Hughes Hallucination Evaluation Model
-        (HHEM)
-        leaderboard</a>,Meta-Llama-3.1-70B-Instruct
-        and Meta-Llama-3.1-8B-Instruct each has a Hallucination Rate of 5 % and
-        5.5 % respectively, which is indeed higher than the current top model in
-        the leaderboard GPT-4o, which has a hallucination rate of 1.5 %.
-        However, this is still better than some widely used models such as
-        Gemini-1.5-flash at 6.6 % and Claude-3-5-Sonnet at 8.6 %.
+        unavoidable. According to the{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://huggingface.co/spaces/vectara/leaderboard"
+        >
+          Hughes Hallucination Evaluation Model (HHEM) leaderboard
+        </a>
+        ,Meta-Llama-3.1-70B-Instruct and Meta-Llama-3.1-8B-Instruct each has a
+        Hallucination Rate of 5 % and 5.5 % respectively, which is indeed higher
+        than the current top model in the leaderboard GPT-4o, which has a
+        hallucination rate of 1.5 %. However, this is still better than some
+        widely used models such as Gemini-1.5-flash at 6.6 % and
+        Claude-3-5-Sonnet at 8.6 %.
       </p>
       <p>
         We would try to minimize the risk of hallucination by prompting the LLM
@@ -153,8 +159,15 @@ export default function Remark() {
         it to say "I don't know" or ask for clarifications from the user when it
         is unable to answer the question as opposed to generating an answer that
         "appears" to be correct. Simultaneous, the usage of prompting techniques
-        such as <a className="text-blue-700 decoration-0" target="_blank" href="https://arxiv.org/abs/2201.11903">chain-of-thought</a>  could
-        elicit explicit reasoning so the LLM might make better use of the
+        such as{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://arxiv.org/abs/2201.11903"
+        >
+          chain-of-thought
+        </a>{" "}
+        could elicit explicit reasoning so the LLM might make better use of the
         knowledge injected into the prompt.
       </p>
       <p>
@@ -164,7 +177,7 @@ export default function Remark() {
         detect cases of hallucinations.
       </p>
 
-      <h2 className="text-xl font-bold m-0.5">AI Safety</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">AI Safety</h2>
       <p>
         Similar to hallucination, there is no absolute guarantee that an LLM
         would not produce any harmful output. There are two common techniques to
@@ -179,43 +192,76 @@ export default function Remark() {
       </p>
       <p>
         Nevertheless, measures could be taken to minimize the risk of LLM
-        outputting harmful content. According to <a className="text-blue-700 decoration-0" target="_blank" href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md#responsibility--safety">Llama 3.1's model card</a>,
-        it has been aligned for its safety in generic use cases. It is also
+        outputting harmful content. According to{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md#responsibility--safety"
+        >
+          Llama 3.1's model card
+        </a>
+        , it has been aligned for its safety in generic use cases. It is also
         stated by Meta that "Large language models, including Llama 3.1, are not
         designed to be deployed in isolation but instead should be deployed as
         part of an overall AI system with additional safety guardrails as
         required." Thus, safeguards that are designed to be used in companion
-        with Llama such as <a className="text-blue-700 decoration-0" target="_blank" href="https://llama.meta.com/trust-and-safety/#safeguard-model">Llama Guard and Prompt
-        Guard</a>could
-        be also used in the system to minimize the risks. Llama Guard can detect
-        harmful behaviors such as those that could cause injuries, and Prompt
-        Guard can detect prompt attacks such as prompt injection and jailbreak.
-        Additionally, the tool calling ability of ChatDKU is constrained by an
-        additional permission system that would not allow the user to execute
-        operations beyond its privileges even if the LLM has been compromised.
-        The execution of external capabilities, such as mail-sending, would also
-        require the explicit confirmation by the user.
+        with Llama such as{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://llama.meta.com/trust-and-safety/#safeguard-model"
+        >
+          Llama Guard and Prompt Guard
+        </a>
+        could be also used in the system to minimize the risks. Llama Guard can
+        detect harmful behaviors such as those that could cause injuries, and
+        Prompt Guard can detect prompt attacks such as prompt injection and
+        jailbreak. Additionally, the tool calling ability of ChatDKU is
+        constrained by an additional permission system that would not allow the
+        user to execute operations beyond its privileges even if the LLM has
+        been compromised. The execution of external capabilities, such as
+        mail-sending, would also require the explicit confirmation by the user.
       </p>
       <p>
-        It should be also noted that <a className="text-blue-700 decoration-0" target="_blank" href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md#intended-use">Meta discourages Llama 3.1's use outside
-        of its supported
-        languages</a>,
-        which does not include Chinese. It does, however, mention that
+        It should be also noted that{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md#intended-use"
+        >
+          Meta discourages Llama 3.1's use outside of its supported languages
+        </a>
+        , which does not include Chinese. It does, however, mention that
         fine-tuning Llama 3.1 to support languages beyond those officially
         supported is acceptable as long as they comply with the Llama 3.1
         Community License and the Acceptable Use Policy.
       </p>
       <p>
-        Meta has evaluated Llama 3.1 with <a className="text-blue-700 decoration-0" target="_blank" href="https://arxiv.org/abs/2408.01605">CYBERSECEVAL
-        3</a>, which evaluates Llama 3.1's risks
-        in different areas, including its susceptibility to prompt injection and
-        been utilized to help conduct cyberattacks. This evaluation, however,
-        does not include its risk of generating harmful content, which could be
-        evaluated by benchmarks such as <a className="text-blue-700 decoration-0" target="_blank" href="https://arxiv.org/abs/2402.04249">HarmBench</a>. While HarmBench only
-        evaluated Llama 2 models, we could also adopt it to Llama 3.1.
+        Meta has evaluated Llama 3.1 with{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://arxiv.org/abs/2408.01605"
+        >
+          CYBERSECEVAL 3
+        </a>
+        , which evaluates Llama 3.1's risks in different areas, including its
+        susceptibility to prompt injection and been utilized to help conduct
+        cyberattacks. This evaluation, however, does not include its risk of
+        generating harmful content, which could be evaluated by benchmarks such
+        as{" "}
+        <a
+          className="text-blue-700 decoration-0"
+          target="_blank"
+          href="https://arxiv.org/abs/2402.04249"
+        >
+          HarmBench
+        </a>
+        . While HarmBench only evaluated Llama 2 models, we could also adopt it
+        to Llama 3.1.
       </p>
 
-      <h2 className="text-xl font-bold m-0.5">Information Flow</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">Information Flow</h2>
       <p>
         The user information that ChatDKU has access to is limited to the
         conversation history of the users and their identity in the Duke
@@ -252,100 +298,100 @@ export default function Remark() {
         sensitive information.
       </p>
 
-      <h2 className="text-xl font-bold m-0.5">Database Permissions</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">Database Permissions</h2>
       <p>
         Suppose that you want to have data that are accessible to only student,
         faculty, or staff, or some, or all of them, I would recommend the
         approach of adding three permission attributes to the entries in the
         database:
       </p>
-      <table className="w-full border-collapse border my-2 border-gray-200 dark:border-gray-700">
-  <thead className="bg-gray-50 dark:bg-gray-800">
-    <tr>
-      <th 
-        colSpan={3}
-        className="px-3 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-      >
-        Permission
-      </th>
-      <th 
-        rowSpan={2}
-        className="px-3 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-      >
-        Data
-      </th>
-    </tr>
-    <tr>
-      <th className="px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        Student
-      </th>
-      <th className="px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        Faculty
-      </th>
-      <th className="px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        Staff
-      </th>
-    </tr>
-  </thead>
-  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        false
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        example data 1
-      </td>
-    </tr>
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        false
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        example data 2
-      </td>
-    </tr>
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        false
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        example data 3
-      </td>
-    </tr>
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        false
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        false
-      </td>
-      <td className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        true
-      </td>
-      <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-        example data 4
-      </td>
-    </tr>
-  </tbody>
-</table>
+      <table className=" text-left w-full text-sm border-collapse border my-2 border-gray-200 dark:border-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-800">
+          <tr>
+            <th
+              colSpan={3}
+              className="p-1 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+            >
+              Permission
+            </th>
+            <th
+              rowSpan={2}
+              className="p-1 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+            >
+              Data
+            </th>
+          </tr>
+          <tr>
+            <th className="p-1  text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              Student
+            </th>
+            <th className="p-1  text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              Faculty
+            </th>
+            <th className="p-1  text-left text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              Staff
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              false
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              example data 1
+            </td>
+          </tr>
+          <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              false
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              example data 2
+            </td>
+          </tr>
+          <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              false
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              example data 3
+            </td>
+          </tr>
+          <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              false
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              false
+            </td>
+            <td className="p-1  text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+              true
+            </td>
+            <td className="p-1  text-sm  border border-gray-200 dark:border-gray-700">
+              example data 4
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       <p>
         Thus, student would only be able to access the first and the third row,
@@ -356,7 +402,7 @@ export default function Remark() {
         repeated for each accessible database.
       </p>
 
-      <h2 className="text-xl font-bold m-0.5">Extensibility</h2>
+      <h2 className="text-xl font-bold mt-2 mb-1">Extensibility</h2>
       <p>
         As we currently do not use fine-tuning, for ChatDKU to answer questions
         regarding other information, it is sufficient to just add the relevant

@@ -15,7 +15,7 @@ export function Navbar() {
         <div className="flex flex-row items-center p-4 space-x-2">
           <DynamicLogo width={35} height={35} />
           <h2 className="font-inter text-xl md:text-2xl lg:text-3xl font-bold">
-            ChatDKU <span className="font-inter text-xs md:text-sm lg:text-sm italic">dev preview</span>
+            ChatDKU <span className="font-inter text-xs md:text-sm lg:text-sm italic">dev</span>
           </h2>
         </div>
       </NavigationMenuLink>
