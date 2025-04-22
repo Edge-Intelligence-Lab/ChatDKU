@@ -178,22 +178,24 @@ export default function Home() {
 
                   noButton?.addEventListener("click", () => {
                     feedbackDiv.innerHTML = `
-                      <div class="absolute inset-0 w-screen h-screen flex items-center justify-center bg-black/30 z-50 transition-all duration-300">
-                        <div class="form flex flex-col p-4 bg-white dark:bg-black rounded-lg shadow-lg w-[90%] max-w-md">
-                          <h3 class="text-base font-semibold text-muted-foreground mb-2">Sorry to hear that. Can you tell us why?</h3>
-                          
-                          <div class="flex flex-col gap-2 z-50 transition-all duration-300" id="reason-options">
-                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground  text-left border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="not_correct">Not Correct</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700 " data-reason="not_clear">Not Clear</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left  border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="not_relevant">Not Relevant</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left border rounded-md bg-secondary  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="other">Other</button>
-                          </div>
-              
-                          <textarea id="custom-reason" class="w-full p-2 rounded-md border border-muted bg-background text-foreground text-sm mt-3 hidden resize-none" rows="5" placeholder="Please describe the issue"></textarea>
-                  
-                          <div class="flex justify-end mt-4 gap-2 transition-all duration-300">
-                            <button id="submit-feedback" class="px-3 py-1 rounded-md text-sm bg-secondary/70 hover:bg-secondary/40 dark:hover:bg-black">Submit</button>
-                            <button id="cancel-feedback" class="px-3 py-1 rounded-md text-sm bg-muted hover:bg-red-600 hover:text-white transition-all duration-300">Cancel</button>
+                      <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
+                        <div class="fixed inset-0 flex items-center justify-center">
+                          <div class="dialog bg-background border shadow-lg rounded-lg w-[90%] max-w-md p-6">
+                            <h3 class="text-lg font-semibold mb-4">Sorry to hear that. Can you tell us why?</h3>
+                            
+                            <div class="feedback-options space-y-2" id="reason-options">
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_correct">Not Correct</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_clear">Not Clear</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_relevant">Not Relevant</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="other">Other</button>
+                            </div>
+            
+                            <textarea id="custom-reason" class="w-full mt-4 p-2 rounded-md border bg-background text-foreground hidden" rows="5" placeholder="Please describe the issue"></textarea>
+                
+                            <div class="flex justify-end mt-6 space-x-2">
+                              <button id="submit-feedback" class="btn px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Submit</button>
+                              <button id="cancel-feedback" class="btn px-4 py-2 text-sm rounded-md bg-secondary text-secondary-foreground hover:bg-destructive hover:text-destructive-foreground">Cancel</button>
+                            </div>
                           </div>
                         </div>
                       </div>
