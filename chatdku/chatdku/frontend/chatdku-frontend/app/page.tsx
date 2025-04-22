@@ -10,21 +10,16 @@ import { PromptRecs } from "@/components/prompt_recs";
 
 // Configure marked options
 const configureMarked = () => {
+  // Use only the options that are supported by the current MarkedOptions type
   marked.setOptions({
     breaks: true, // Enable line breaks
-    gfm: true, // Enable GitHub Flavored Markdown
-    headerIds: true, // Enable header IDs for linking
-    mangle: false, // Don't mangle header IDs
-    smartLists: true, // Use smarter list behavior
-    smartypants: true, // Use "smart" typographic punctuation
-    xhtml: true, // Use XHTML style tags
+    gfm: true,    // Enable GitHub Flavored Markdown
   });
 };
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
-  const [chatHistory, setChatHistory] = useState([]);
   const [chatHistoryId, setChatHistoryId] = useState("");
 
   // Initialize marked configuration on component mount
@@ -66,8 +61,9 @@ export default function Home() {
       messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
 
       // Use DOMPurify to sanitize HTML content when it's from markdown
+      // Cast the result to string as we know marked.parse returns string in our configuration
       const sanitizedContent =
-        role === "user" ? content : DOMPurify.sanitize(marked.parse(content));
+        role === "user" ? content : DOMPurify.sanitize(marked.parse(content) as string);
 
       messageElement.innerHTML = `
       <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
