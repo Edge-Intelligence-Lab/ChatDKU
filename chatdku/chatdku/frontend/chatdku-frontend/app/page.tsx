@@ -161,7 +161,7 @@ export default function Home() {
                     <div class="flex items-center gap-2 text-left">
                       <span class="text-sm text-muted-foreground">Was this response helpful?</span>
                       <button class="feedback-yes px-2 py-1 text-sm rounded-md bg-secondary/50 hover:bg-secondary">Yes</button>
-                      <button class="feedback-no px-2 py-1 text-sm rounded-md bg-secondary/50 hover:bg-destructive/50">No</button>
+                      <button class="feedback-no px-2 py-1 text-sm rounded-md bg-secondary/50 transition-all duration-300 hover:bg-red-600 hover:text-white">No</button>
                     </div>
                   `;
                   feedbackDiv.innerHTML = feedbackContent;
@@ -178,22 +178,22 @@ export default function Home() {
 
                   noButton?.addEventListener("click", () => {
                     feedbackDiv.innerHTML = `
-                      <div class="absolute inset-0 w-screen h-screen flex items-center justify-center bg-black/30 z-50">
-                        <div class="form flex flex-col p-4 bg-white dark:bg-secondary/50 rounded-lg shadow-lg w-[90%] max-w-md">
+                      <div class="absolute inset-0 w-screen h-screen flex items-center justify-center bg-black/30 z-50 transition-all duration-300">
+                        <div class="form flex flex-col p-4 bg-white dark:bg-black rounded-lg shadow-lg w-[90%] max-w-md">
                           <h3 class="text-base font-semibold text-muted-foreground mb-2">Sorry to hear that. Can you tell us why?</h3>
                           
-                          <div class="flex flex-col gap-2" id="reason-options">
-                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50  text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_correct">Not Correct</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_clear">Not Clear</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="not_relevant">Not Relevant</button>
-                            <button class="reason-btn px-3 py-2 text-black dark:text-secondary/50 text-left border rounded-md bg-muted/50 hover:bg-muted" data-reason="other">Other</button>
+                          <div class="flex flex-col gap-2 z-50 transition-all duration-300" id="reason-options">
+                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground  text-left border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="not_correct">Not Correct</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700 " data-reason="not_clear">Not Clear</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left  border rounded-md bg-muted/50  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="not_relevant">Not Relevant</button>
+                            <button class="reason-btn px-3 py-2 text-black dark:text-muted-foreground text-left border rounded-md bg-secondary  hover:text-zinc-800 dark:hover:bg-zinc-700" data-reason="other">Other</button>
                           </div>
               
                           <textarea id="custom-reason" class="w-full p-2 rounded-md border border-muted bg-background text-foreground text-sm mt-3 hidden resize-none" rows="5" placeholder="Please describe the issue"></textarea>
                   
-                          <div class="flex justify-end mt-4 gap-2">
-                            <button id="submit-feedback" class="px-3 py-1 rounded-md text-sm bg-secondary/70 hover:bg-secondary">Submit</button>
-                            <button id="cancel-feedback" class="px-3 py-1 rounded-md text-sm bg-muted hover:bg-muted/70">Cancel</button>
+                          <div class="flex justify-end mt-4 gap-2 transition-all duration-300">
+                            <button id="submit-feedback" class="px-3 py-1 rounded-md text-sm bg-secondary/70 hover:bg-secondary/40 dark:hover:bg-black">Submit</button>
+                            <button id="cancel-feedback" class="px-3 py-1 rounded-md text-sm bg-muted hover:bg-red-600 hover:text-white transition-all duration-300">Cancel</button>
                           </div>
                         </div>
                       </div>
@@ -219,7 +219,7 @@ export default function Home() {
                         optionButtons.forEach((b) =>
                           b.classList.remove("bg-secondary", "text-white")
                         );
-                        btn.classList.add("bg-secondary", "text-white");
+                        btn.classList.add("bg-secondary", "text-black");
 
                         if (selectedReason === "other") {
                           customReason.classList.remove("hidden");
