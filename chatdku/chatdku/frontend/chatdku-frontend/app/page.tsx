@@ -125,7 +125,7 @@ export default function Home() {
               addMessageToChat(
                 "user",
                 value,
-                "bg-muted/50 dark:bg-muted/50 text-sm font-bold" // Removed background color classes
+                "bg-muted/50 dark:bg-muted/50 text-sm" // Removed background color classes
               );
 
               const botMessage = addMessageToChat(
@@ -159,7 +159,7 @@ export default function Home() {
                 if (messageDiv) {
                   // Add feedback buttons
                   const feedbackDiv = document.createElement("div");
-                  feedbackDiv.className = "mt-2 mb-2";
+                  feedbackDiv.className = "ml-4 mb-2";
                   const feedbackContent = `
                     <div class="flex items-center gap-2 text-left">
                       <span class="text-sm text-muted-foreground">Was this response helpful?</span>
