@@ -13,7 +13,8 @@ import dspy
 
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent,CustomClient
-from extentions import db, migrate
+from extentions import db, migrate,admin
+from admin_setup import AdminView
 
 app = Flask(__name__)
 CORS(app)
@@ -27,7 +28,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 migrate.init_app(app, db)
-
+admin.init_app(app)
+admin.add_view(AdminView(Feedback,db.session))
 
 @app.route("/reset",methods=["POST"])
 def reset_agent():
