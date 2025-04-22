@@ -5,7 +5,7 @@ import DynamicLogo from "./dynamic-logo";
 import { useState } from "react";
 import Remark from "./chatdku_remark";
 import Terms from "./ui/terms";
-import Modal from "./ui/aboutModel"
+import Modal from "./ui/aboutModel";
 
 const About: React.FC = () => {
   const [termsAndCondition, setTermsAndCondition] = useState(false);
@@ -60,25 +60,22 @@ const About: React.FC = () => {
             <h3>Learn More</h3>
           </span>
         </div>
+      <Modal
+        isOpen={termsAndCondition}
+        onClose={() => setTermsAndCondition(false)}
+        title="Terms & Conditions"
+      >
+        <Terms />
+      </Modal>
+
+      <Modal
+        isOpen={remarks}
+        onClose={() => setRemarks(false)}
+        title="About ChatDKU"
+      >
+        <Remark />
+      </Modal>
       </div>
-      <Modal
-      isOpen={termsAndCondition}
-      onClose={()=>setTermsAndCondition(false)}
-      title="Terms & Conditions"
-      >
-        <Terms/>
-
-      </Modal>
-
-      <Modal
-      isOpen={remarks}
-      onClose={()=>setRemarks(false)}
-      title="About ChatDKU"
-      >
-        <Remark/>
-
-      </Modal>
-      
     </>
   );
 };

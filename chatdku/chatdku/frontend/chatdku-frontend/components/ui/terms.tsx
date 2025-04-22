@@ -3,7 +3,7 @@ import React from 'react'
 export default function Terms() {
   return (
     <div>
-        <h2 className="text-xl font-bold m-0.5">1. Access and Use</h2>
+        <h2 className="text-xl font-bold">1. Access and Use</h2>
               <ul className="my-3">
                 <li>
                   <strong>Community Access:</strong> ChatDKU is available to all
