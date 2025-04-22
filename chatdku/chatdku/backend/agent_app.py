@@ -9,12 +9,15 @@ from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
 from flask import request
 from models import Feedback
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 import dspy
 
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent,CustomClient
 from extentions import db, migrate,admin
 from admin_setup import AdminView
+
 
 app = Flask(__name__)
 CORS(app)
@@ -25,6 +28,9 @@ dspy.settings.configure(lm=llama_client)
 agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
+
+
 
 db.init_app(app)
 migrate.init_app(app, db)

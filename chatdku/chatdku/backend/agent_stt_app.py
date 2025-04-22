@@ -8,6 +8,11 @@ from flask_cors import CORS
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
 from flask_socketio import SocketIO, emit
+from flask import request
+from models import Feedback
+
+from extentions import db, migrate,admin
+from admin_setup import AdminView
 
 import io
 import torch
@@ -41,7 +46,14 @@ dspy.settings.configure(lm=llama_client)
 agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
+db.init_app(app)
+migrate.init_app(app, db)
+admin.init_app(app)
+admin.add_view(AdminView(Feedback,db.session))
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Using device: {device}")
@@ -165,7 +177,22 @@ def handle_audio(data):
         logger.error(f"Transcription failed: {str(e)}")
         emit("audio_received", {"status": "error", "message": str(e)})
 
+@app.route('/save-feedback', methods=['POST'])
+def save_feedback():
+    try:
+        data = request.get_json()
+        user_input = data['userInput']
+        bot_answer = data['botAnswer']
+        feedback_reason = data['feedbackReason']
+        question_id = data['chatHistoryId']
 
+        feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id)
+        db.session.add(feedback)
+        db.session.commit()
+        print("data recorded")
+        return jsonify({'message': 'Feedback saved successfully'})
+    except Exception as e:
+        return jsonify({"message":str(e)})
 # NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it commented out. For development it can be uncommented and used with `python agent_app.py`
 
 if __name__ == "__main__":
