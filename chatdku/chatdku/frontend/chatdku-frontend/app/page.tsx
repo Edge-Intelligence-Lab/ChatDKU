@@ -1,17 +1,36 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
 
+// Configure marked options
+const configureMarked = () => {
+  marked.setOptions({
+    breaks: true, // Enable line breaks
+    gfm: true, // Enable GitHub Flavored Markdown
+    headerIds: true, // Enable header IDs for linking
+    mangle: false, // Don't mangle header IDs
+    smartLists: true, // Use smarter list behavior
+    smartypants: true, // Use "smart" typographic punctuation
+    xhtml: true, // Use XHTML style tags
+  });
+};
+
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
   const [chatHistoryId, setChatHistoryId] = useState("");
+
+  // Initialize marked configuration on component mount
+  useEffect(() => {
+    configureMarked();
+  }, []);
 
   const generateUniqueId = () => {
     return Date.now() + "-" + Math.random().toString(36).substring(2, 15);
@@ -44,21 +63,29 @@ export default function Home() {
       const chatLog = document.getElementById("chat-log");
       const messageElement = document.createElement("div");
       const isUser = role === "user";
-      messageElement.className = `flex ${isUser ? 'justify-end' : ''} w-full`;
+      messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
+
+      // Use DOMPurify to sanitize HTML content when it's from markdown
+      const sanitizedContent =
+        role === "user" ? content : DOMPurify.sanitize(marked.parse(content));
 
       messageElement.innerHTML = `
-      <div class="flex flex-col ${isUser ? 'items-end max-w-[85%] sm:max-w-[80%]' : 'items-start w-full sm:max-w-[85%]'}">
-        <div class="flex flex-col ${isUser ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
-          ${isUser ? '' : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-white dark:bg-black flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'}
-          <div class="${isUser ? 'text-right' : 'text-left'} overflow-hidden">
-            <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere">${content}</div>
+      <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
+        <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+          ${
+            isUser
+              ? ""
+              : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
+          }
+          <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
+            <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? 'text-[0.9375rem]' : ''}">${sanitizedContent}</div>
           </div>
         </div>
       </div>
     `;
       chatLog?.appendChild(messageElement);
       chatLog?.scrollTo(0, chatLog.scrollHeight);
-      return messageElement.querySelector('.flex.flex-col'); // Return the inner container for feedback
+      return messageElement.querySelector(".flex.flex-col"); // Return the inner container for feedback
     },
     []
   );
@@ -126,11 +153,11 @@ export default function Home() {
                 }
                 const messageDiv = addMessageToChat(
                   "assistant",
-                  marked.parse(data),
+                  data,
                   "text-sm"
-                ); 
+                );
 
-                if (messageDiv) { // Add null check here
+                if (messageDiv) {
                   // Add feedback buttons
                   const feedbackDiv = document.createElement("div");
                   feedbackDiv.className = "mt-2 mb-2";
@@ -144,15 +171,16 @@ export default function Home() {
                   feedbackDiv.innerHTML = feedbackContent;
 
                   // Add event listeners to feedback buttons
-                  const yesButton = feedbackDiv.querySelector('.feedback-yes');
-                  const noButton = feedbackDiv.querySelector('.feedback-no');
+                  const yesButton = feedbackDiv.querySelector(".feedback-yes");
+                  const noButton = feedbackDiv.querySelector(".feedback-no");
 
-                  yesButton?.addEventListener('click', () => {
-                    handleFeedback(value, data, 'helpful');
-                    feedbackDiv.innerHTML = '<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
+                  yesButton?.addEventListener("click", () => {
+                    handleFeedback(value, data, "helpful");
+                    feedbackDiv.innerHTML =
+                      '<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
                   });
 
-                  noButton?.addEventListener('click', () => {
+                  noButton?.addEventListener("click", () => {
                     feedbackDiv.innerHTML = `
                       <div class="absolute inset-0 w-screen h-screen flex items-center justify-center bg-black/30 z-50">
                         <div class="form flex flex-col p-4 bg-white dark:bg-secondary/50 rounded-lg shadow-lg w-[90%] max-w-md">
@@ -174,21 +202,29 @@ export default function Home() {
                         </div>
                       </div>
                     `;
-                  
-                    const optionButtons = feedbackDiv.querySelectorAll(".reason-btn");
-                    const customReason = feedbackDiv.querySelector("#custom-reason") as HTMLTextAreaElement;
-                    const submitBtn = feedbackDiv.querySelector("#submit-feedback");
-                    const cancelBtn = feedbackDiv.querySelector("#cancel-feedback");
-                  
+
+                    const optionButtons =
+                      feedbackDiv.querySelectorAll(".reason-btn");
+                    const customReason = feedbackDiv.querySelector(
+                      "#custom-reason"
+                    ) as HTMLTextAreaElement;
+                    const submitBtn =
+                      feedbackDiv.querySelector("#submit-feedback");
+                    const cancelBtn =
+                      feedbackDiv.querySelector("#cancel-feedback");
+
                     let selectedReason: string | null = null;
-                  
+
                     optionButtons.forEach((btn) => {
                       btn.addEventListener("click", () => {
-                        selectedReason = (btn as HTMLElement).dataset.reason || null;
-                  
-                        optionButtons.forEach((b) => b.classList.remove("bg-secondary", "text-white"));
+                        selectedReason =
+                          (btn as HTMLElement).dataset.reason || null;
+
+                        optionButtons.forEach((b) =>
+                          b.classList.remove("bg-secondary", "text-white")
+                        );
                         btn.classList.add("bg-secondary", "text-white");
-                  
+
                         if (selectedReason === "other") {
                           customReason.classList.remove("hidden");
                         } else {
@@ -196,30 +232,31 @@ export default function Home() {
                         }
                       });
                     });
-                  
+
                     submitBtn?.addEventListener("click", () => {
                       if (!selectedReason) return;
-                  
-                      let reasonToSend = selectedReason === "other" ? customReason.value.trim() : selectedReason;
-                  
+
+                      let reasonToSend =
+                        selectedReason === "other"
+                          ? customReason.value.trim()
+                          : selectedReason;
+
                       if (selectedReason === "other" && !reasonToSend) {
                         customReason.classList.add("border-destructive");
                         customReason.placeholder = "Please write something!";
                         return;
                       }
-                  
+
                       handleFeedback(value, data, reasonToSend);
                       feedbackDiv.innerHTML = `<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>`;
                     });
-                  
+
                     cancelBtn?.addEventListener("click", () => {
                       feedbackDiv.innerHTML = `<span class="text-sm text-muted-foreground">Feedback canceled.</span>`;
                     });
                   });
-                  
+
                   messageDiv.appendChild(feedbackDiv);
-
-
                 }
               } catch (error) {
                 if (botMessage) {
@@ -227,7 +264,11 @@ export default function Home() {
                 }
                 addMessageToChat(
                   "assistant",
-                  `Error: ${error instanceof Error ? error.message : "An unknown error occurred"}`,
+                  `Error: ${
+                    error instanceof Error
+                      ? error.message
+                      : "An unknown error occurred"
+                  }`,
                   "bg-destructive/10 dark:bg-destructive/20"
                 );
               }
