@@ -63,7 +63,8 @@ export default function Home() {
       // Use DOMPurify to sanitize HTML content when it's from markdown
       // Cast the result to string as we know marked.parse returns string in our configuration
       const sanitizedContent =
-        role === "user" ? content : DOMPurify.sanitize(marked.parse(content) as string);
+        role === "user" ? content : marked.parse(content);
+        // role === "user" ? content : DOMPurify.sanitize(marked.parse(content) as string);
 
       messageElement.innerHTML = `
       <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">

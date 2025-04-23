@@ -10,7 +10,7 @@ import { io } from "socket.io-client";
 export function AIInput({
   id = "ai-input",
   placeholder = "Type your message...",
-  minHeight = 52,
+  minHeight = 53,
   maxHeight = 200,
   onSubmit,
   className,
