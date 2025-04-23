@@ -21,8 +21,10 @@ const About: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col items-center p-4 mt-32 w-4/5 md:max-w-1/2 sm:max-w-4/5  selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
-        <DynamicLogo height={64} width={64} />
+      <div className="flex flex-col items-center p-2 mt-16 w-10/12 md:max-w-1/2">
+        <div className="mt-12">
+          <DynamicLogo height={64} width={64} />
+        </div>
 
         <h1 className="mt-4 lg:mt-8 font-bold text-xl lg:text-2xl">
           About ChatDKU-Advising
@@ -51,7 +53,7 @@ const About: React.FC = () => {
             className="text-blue-700 active:text-blue-500 cursor-pointer c"
             onClick={handleTermsAndCondition}
           >
-            <h3>Terms & Condition</h3>
+            <h3>Terms & Conditions</h3>
           </span>
           <span
             className="text-blue-700 active:text-blue-500 cursor-pointer c"
@@ -60,21 +62,21 @@ const About: React.FC = () => {
             <h3>Learn More</h3>
           </span>
         </div>
-      <Modal
-        isOpen={termsAndCondition}
-        onClose={() => setTermsAndCondition(false)}
-        title="Terms & Conditions"
-      >
-        <Terms />
-      </Modal>
+        <Modal
+          isOpen={termsAndCondition}
+          onClose={() => setTermsAndCondition(false)}
+          title="Terms & Conditions"
+        >
+          <Terms />
+        </Modal>
 
-      <Modal
-        isOpen={remarks}
-        onClose={() => setRemarks(false)}
-        title="About ChatDKU"
-      >
-        <Remark />
-      </Modal>
+        <Modal
+          isOpen={remarks}
+          onClose={() => setRemarks(false)}
+          title="About ChatDKU"
+        >
+          <Remark />
+        </Modal>
       </div>
     </>
   );

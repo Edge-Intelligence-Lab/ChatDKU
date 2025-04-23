@@ -87,20 +87,23 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
-      <Navbar />
+    <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
+      <header className="sticky top-0 z-20 w-full">
+        <Navbar />
+      </header>
 
-      <div className="flex flex-col lg:justify-normal items-center flex-grow w-full">
+      <main className="flex-1 w-full flex flex-col items-center pt-16">
         <div
           id="chat-log"
-          className="w-full max-w-3xl mx-auto space-y-4 mt-12 lg:mt-0 p-4 lg:h-[calc(100vh-90px)] h-[calc(100vh-150px)] overflow-y-auto"
+          className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-32 overflow-y-auto"
         ></div>
-      </div>
+      </main>
+
       <div
         className={`w-full max-w-[95vw] p-2 pt-0 transition-all duration-300 ${
           isChatboxCentered
             ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-            : "fixed bottom-0 left-1/2 -translate-x-1/2"
+            : "fixed bottom-0 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm z-10"
         }`}
       >
         {showStarter && (
@@ -122,7 +125,7 @@ export default function Home() {
               addMessageToChat(
                 "user",
                 value,
-                "bg-muted/50 dark:bg-muted/50 text-sm font-bold" // Removed background color classes
+                "bg-muted/50 dark:bg-muted/50 text-sm" // Removed background color classes
               );
 
               const botMessage = addMessageToChat(
@@ -156,7 +159,7 @@ export default function Home() {
                 if (messageDiv) {
                   // Add feedback buttons
                   const feedbackDiv = document.createElement("div");
-                  feedbackDiv.className = "mt-2 mb-2";
+                  feedbackDiv.className = "ml-4 mb-2";
                   const feedbackContent = `
                     <div class="flex items-center gap-2 text-left">
                       <span class="text-sm text-muted-foreground">Was this response helpful?</span>
