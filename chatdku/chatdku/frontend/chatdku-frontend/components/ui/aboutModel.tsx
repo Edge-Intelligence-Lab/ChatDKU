@@ -10,7 +10,7 @@ interface ModalProps {
   
   const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => (
     <div
-      className={`absolute t-0 w-full h-[90vh] overflow-auto flex justify-center items-center transition-all transform ${
+      className={`absolute t-0 w-full h-[90vh] overflow-auto flex justify-center items-center transition-all transform selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black ${
         isOpen
           ? "translate-y-0 opacity-100 scale-100"
           : "pointer-events-none translate-y-6 opacity-0 scale-95"
