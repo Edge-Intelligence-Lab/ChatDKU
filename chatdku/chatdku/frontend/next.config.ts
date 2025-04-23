@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  output: 'export',  // This enables static HTML export
+  // If you're using basePath, add it here:
+  // basePath: '',
+  
+  // If you have images, you might need this:
+  images: {
+    unoptimized: true,  // For static export
+  },
+  
+  // If you need to disable trailing slashes:
+  // trailingSlash: false,
+  };
 
 export default nextConfig;
