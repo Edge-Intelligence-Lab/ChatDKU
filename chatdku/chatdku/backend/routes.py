@@ -1,5 +1,6 @@
 from flask import request,jsonify
 import io
+import torch
 import whisper
 from pydub import AudioSegment
 import tempfile
@@ -8,7 +9,8 @@ import gc
 from ollama import chat, ChatResponse
 from flask_socketio import emit
 from models import Feedback
-from agent import agent_config
+from chatdku.core.agent import Agent
+from flask import Response, stream_with_context
 
 
 def routes(app,db,socketio,logger,model):
@@ -30,7 +32,17 @@ def routes(app,db,socketio,logger,model):
             message_content = messages[-1]["content"]
 
             # Create a new Agent instance per request
-            agent_config(message_content,question_id,max_iterations=1,streaming=True,get_intermediate=False)
+            agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
+            responses_gen = agent(
+                current_user_message=message_content, question_id=question_id
+            )
+
+            # Stream the responses
+            def generate():
+                for response in responses_gen.response:
+                    yield f"{response}"
+
+            return Response(stream_with_context(generate()), content_type="text/plain")
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
