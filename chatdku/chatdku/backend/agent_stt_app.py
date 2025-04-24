@@ -44,7 +44,7 @@ setup()
 use_phoenix()
 llama_client = CustomClient()
 dspy.settings.configure(lm=llama_client)
-agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
+agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
@@ -178,7 +178,7 @@ def handle_audio(data):
         logger.error(f"Transcription failed: {str(e)}")
         emit("audio_received", {"status": "error", "message": str(e)})
 
-@app.route('/api/save-feedback', methods=['POST'])
+@app.route('/save-feedback', methods=['POST'])
 def save_feedback():
     try:
         data = request.get_json()
