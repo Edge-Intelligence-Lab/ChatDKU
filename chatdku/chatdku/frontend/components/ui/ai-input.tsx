@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
-import { io } from "socket.io-client";
 
 export function AIInput({
   id = "ai-input",
@@ -31,27 +30,6 @@ export function AIInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const socketRef = useRef<any>(null);
-
-  useEffect(() => {
-    // socketRef.current = io("https://10.200.14.82:8000", {
-    //   transports: ["websocket"],
-    //   secure: true,
-    //   path: "/socket.io",
-    // });
-
-    socketRef.current = io({
-      path: "/socket.io"
-      // No need for host when connecting to same origin
-    })
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-      stopRecording();
-    };
-  }, []);
 
   useEffect(() => {
     // Check if running in browser and if media devices are supported
@@ -103,9 +81,7 @@ export function AIInput({
             type: mimeType,
           });
           if (audioBlob.size > 0) {
-            const buffer = await audioBlob.arrayBuffer();
-            const uint8Array = new Uint8Array(buffer);
-            socketRef.current.emit("audio_data", uint8Array);
+            console.log("Audio recording completed, but transcription is disabled");
           }
         } catch (error) {
           console.error("Error processing audio:", error);
@@ -113,11 +89,6 @@ export function AIInput({
           cleanupRecording();
         }
       };
-
-      // Handle transcription responses
-      socketRef.current.on("audio_transcribed", (data: { text: string }) => {
-        setInputValue(data.text);
-      });
 
       mediaRecorderRef.current.start();
       console.log("Recording started...");

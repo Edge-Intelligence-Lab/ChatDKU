@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
-import DOMPurify from "dompurify";
+// import DOMPurify from "dompurify";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
@@ -34,7 +34,7 @@ export default function Home() {
   const handleFeedback = useCallback(
     async (userInput: any, answer: any, reason: any) => {
       try {
-        await fetch("/api/save-feedback", {
+        await fetch("https://10.200.14.82:9013/save-feedback", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch("/api/chat", {
+                const response = await fetch("https://10.200.14.82:9015/chat", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
