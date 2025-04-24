@@ -61,13 +61,13 @@ logger.info(f"Using device: {device}")
 model = whisper.load_model("base").to(device)
 
 
-@app.route("/reset", methods=["POST"])
+@app.route("/api/reset", methods=["POST"])
 def reset_agent():
     agent.reset()
     return {"good": "Agent has been reset."}, 200
 
 
-@app.route("/chat", methods=["POST"])
+@app.route("/api/chat", methods=["POST"])
 def chat():
     """
     Return response stream from query pipeline given JSON formatted chat history as input.
@@ -178,7 +178,7 @@ def handle_audio(data):
         logger.error(f"Transcription failed: {str(e)}")
         emit("audio_received", {"status": "error", "message": str(e)})
 
-@app.route('/save-feedback', methods=['POST'])
+@app.route('/api/save-feedback', methods=['POST'])
 def save_feedback():
     try:
         data = request.get_json()
