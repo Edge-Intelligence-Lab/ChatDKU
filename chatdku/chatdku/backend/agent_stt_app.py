@@ -2,6 +2,8 @@
 # FIXME: Purge API key from the history of this file
 
 ### TODO: Create multiple app objects in advance, lock the app object for each user, and reset the app object when the user is not using it.
+import eventlet
+eventlet.monkey_patch()
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -25,7 +27,6 @@ from ollama import chat, ChatResponse
 import dspy
 import logging
 
-import eventlet
 from eventlet import wsgi
 from werkzeug.middleware.proxy_fix import ProxyFix
 
