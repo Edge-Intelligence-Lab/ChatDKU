@@ -61,13 +61,13 @@ logger.info(f"Using device: {device}")
 model = whisper.load_model("base").to(device)
 
 
-@app.route("/api/reset", methods=["POST"])
+@app.route("/reset", methods=["POST"])
 def reset_agent():
     agent.reset()
     return {"good": "Agent has been reset."}, 200
 
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/chat", methods=["POST"])
 def chat():
     """
     Return response stream from query pipeline given JSON formatted chat history as input.
