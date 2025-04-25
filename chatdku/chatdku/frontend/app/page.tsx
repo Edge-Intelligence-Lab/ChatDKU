@@ -18,11 +18,8 @@ const configureMarked = () => {
   });
 };
 
-// API endpoint configuration
-const API_ENDPOINTS = {
-  default: "http://10.200.14.82:9099",
-  thinking: "http://10.200.14.82:8000", // Thinking mode endpoint
-};
+// API endpoint
+const API_ENDPOINT = "http://10.200.14.82:8000";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
@@ -151,19 +148,15 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch(
-                  thinkingMode
-                    ? API_ENDPOINTS.thinking
-                    : API_ENDPOINTS.default,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      messages: [{ role: "user", content: value }],
-                      chatHistoryId: newChatHistoryId,
-                    }),
-                  }
-                );
+                const response = await fetch(API_ENDPOINT, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    messages: [{ role: "user", content: value }],
+                    chatHistoryId: newChatHistoryId,
+                    mode: thinkingMode ? "agent" : ""
+                  }),
+                });
 
                 if (!response.ok) throw new Error("Failed to fetch response");
 
