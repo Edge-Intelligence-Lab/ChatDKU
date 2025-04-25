@@ -25,6 +25,8 @@ def routes(app,db,socketio,logger,model):
     def chat():
         messages = request.json.get("messages", [])
         question_id = request.json["chatHistoryId"]
+        mode=request.json.get("mode","default")
+        max_iteration=10 if mode=="agent" else 1
         if not messages:
             return {"error": "No message provided"}, 400
 
@@ -32,7 +34,7 @@ def routes(app,db,socketio,logger,model):
             message_content = messages[-1]["content"]
 
             # Create a new Agent instance per request
-            agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
+            agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
             responses_gen = agent(
                 current_user_message=message_content, question_id=question_id
             )
