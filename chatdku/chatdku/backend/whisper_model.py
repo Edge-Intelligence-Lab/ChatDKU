@@ -37,7 +37,7 @@ def process_audio():
 
         audio_np = whisper.load_audio(temp_path)
 
-        return jsonify({"audio_np":audio_np})
+        return jsonify({"audio_np":audio_np.tolist()})
     except Exception as e:
         logger.error(f"Audio processing error: {str(e)}")
         raise
