@@ -1,6 +1,6 @@
 "use client";
 
-import { CornerRightUp, Mic } from "lucide-react";
+import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ export function AIInput({
   maxHeight = 200,
   onSubmit,
   className,
+  thinkingMode,
+  onThinkingModeChange,
 }: {
   id?: string;
   placeholder?: string;
@@ -20,13 +22,17 @@ export function AIInput({
   maxHeight?: number;
   onSubmit?: (value: string) => void;
   className?: string;
+  thinkingMode?: boolean;
+  onThinkingModeChange?: (value: boolean) => void;
 }) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
     maxHeight,
   });
+  const [isAgentic] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isThinking, setIsThinking] = useState(thinkingMode || false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -39,6 +45,18 @@ export function AIInput({
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (thinkingMode !== undefined && thinkingMode !== isThinking) {
+      setIsThinking(thinkingMode);
+    }
+  }, [thinkingMode]);
+
+  const toggleThinkingMode = () => {
+    const newValue = !isThinking;
+    setIsThinking(newValue);
+    onThinkingModeChange?.(newValue);
+  };
 
   const startRecording = async () => {
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -81,7 +99,9 @@ export function AIInput({
             type: mimeType,
           });
           if (audioBlob.size > 0) {
-            console.log("Audio recording completed, but transcription is disabled");
+            console.log(
+              "Audio recording completed, but transcription is disabled"
+            );
           }
         } catch (error) {
           console.error("Error processing audio:", error);
@@ -188,11 +208,25 @@ export function AIInput({
           }}
         />
 
+        {/* Thinking mode toggle button */}
+        <div 
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer",
+            "transition-all duration-200",
+            inputValue ? "right-17" : "right-10",
+            isThinking ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/50 text-secondary-foreground"
+          )}
+          onClick={toggleThinkingMode}
+        >
+          <Brain className="w-4 h-4" />
+          <span className="text-sm font-medium">Think</span>
+        </div>
+      
         <div
           className={cn(
             "absolute top-1/2 -translate-y-1/2 rounded-xl py-1 px-1 transition-all duration-200",
             inputValue ? "right-10" : "right-3",
-            isRecording ? "bg-red-500/80 " : "bg-black/5 dark:bg-white/5"
+            isRecording ? "bg-red-500/80 " : "bg-secondary hover:bg-secondary/50"
           )}
         >
           <Mic
@@ -206,7 +240,7 @@ export function AIInput({
           type="button"
           className={cn(
             "absolute top-1/2 -translate-y-1/2 right-3",
-            "rounded-xl bg-black/5 dark:bg-white/5 py-1 px-1",
+            "rounded-xl bg-secondary hover:bg-secondary/50 py-1 px-1",
             "transition-all duration-200",
             inputValue
               ? "opacity-100 scale-100"

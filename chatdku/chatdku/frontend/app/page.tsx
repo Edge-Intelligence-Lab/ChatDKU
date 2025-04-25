@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
 // import DOMPurify from "dompurify";
+import { Brain } from "lucide-react";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
@@ -17,10 +18,17 @@ const configureMarked = () => {
   });
 };
 
+// API endpoint configuration
+const API_ENDPOINTS = {
+  default: "http://10.200.14.82:8000",
+  thinking: "http://10.200.14.82:8001", // Thinking mode endpoint
+};
+
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistoryId, setChatHistoryId] = useState("");
+  const [thinkingMode, setThinkingMode] = useState(false);
 
   // Initialize marked configuration on component mount
   useEffect(() => {
@@ -29,6 +37,10 @@ export default function Home() {
 
   const generateUniqueId = () => {
     return Date.now() + "-" + Math.random().toString(36).substring(2, 15);
+  };
+
+  const toggleThinkingMode = () => {
+    setThinkingMode((prev) => !prev);
   };
 
   const handleFeedback = useCallback(
@@ -115,6 +127,8 @@ export default function Home() {
         )}
         <div>
           <AIInput
+            thinkingMode={thinkingMode}
+            onThinkingModeChange={(value) => setThinkingMode(value)}
             onSubmit={async (value) => {
               if (!value.trim()) return;
 
@@ -137,14 +151,19 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch("/api/chat", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    messages: [{ role: "user", content: value }],
-                    chatHistoryId: newChatHistoryId,
-                  }),
-                });
+                const response = await fetch(
+                  thinkingMode
+                    ? API_ENDPOINTS.thinking
+                    : API_ENDPOINTS.default,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messages: [{ role: "user", content: value }],
+                      chatHistoryId: newChatHistoryId,
+                    }),
+                  }
+                );
 
                 if (!response.ok) throw new Error("Failed to fetch response");
 
