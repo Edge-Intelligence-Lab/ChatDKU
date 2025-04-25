@@ -20,8 +20,8 @@ const configureMarked = () => {
 
 // API endpoint configuration
 const API_ENDPOINTS = {
-  default: "http://10.200.14.82:8000",
-  thinking: "http://10.200.14.82:8001", // Thinking mode endpoint
+  default: "http://10.200.14.82:9099",
+  thinking: "http://10.200.14.82:8000", // Thinking mode endpoint
 };
 
 export default function Home() {
