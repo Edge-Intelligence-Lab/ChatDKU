@@ -22,7 +22,7 @@ def routes(app,db,socketio,logger):
         messages = request.json.get("messages", [])
         question_id = request.json["chatHistoryId"]
         mode=request.json.get("mode","default")
-        max_iteration=10 if mode=="agent" else 1
+        max_iteration=2 if mode=="agent" else 1
         if not messages:
             return {"error": "No message provided"}, 400
 
