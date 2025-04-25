@@ -5,6 +5,9 @@ import numpy as np
 from flask import request, Flask, jsonify
 import io
 import logging
+import gc
+import os
+import tempfile
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -17,28 +20,35 @@ model = whisper.load_model("base").to(device)
 def process_audio():
     if "audio_bytes" not in request.files:
         return jsonify({"error": "Missing audio_bytes file"}), 400
-
+    
+    audio_file = request.files["audio_bytes"]
+    audio_bytes = audio_file.read()
     try:
-        audio_file = request.files["audio_bytes"]
-        audio_bytes = audio_file.read()
-        
-        # Convert WebM to WAV in-memory
-        audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")
-        audio = audio.set_frame_rate(16000).set_channels(1)
-        
-        # Export to WAV in-memory
-        wav_buffer = io.BytesIO()
-        audio.export(wav_buffer, format="wav")
-        wav_buffer.seek(0)
-        
-        # Load directly into numpy array
-        audio_np = whisper.load_audio(wav_buffer)
-        return jsonify({"audio_np": audio_np.tolist()})
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
+            temp_path = temp_wav.name
 
+            # Load WebM audio and convert to WAV
+            audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="webm")
+            audio = audio.set_frame_rate(16000).set_channels(
+                1
+            )  # set config based on whisper compatiability (mono with 16khz)
+            audio.export(temp_path, format="wav")
+
+        audio_np = whisper.load_audio(temp_path)
+
+        return jsonify({"audio_np":audio_np})
     except Exception as e:
         logger.error(f"Audio processing error: {str(e)}")
-        return jsonify({"error": "Audio processing failed"}), 500
-
+        raise
+    finally:
+        # ensure cleanup happens even after error occurs
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)  # delete the file from the system
+                gc.collect()  # forche the garbage collector to run and cleanup
+            except Exception as e:
+                logger.warning(f"Could not delete temp file {temp_path}: {str(e)}")
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
     if not request.json or "audio_np" not in request.json:
