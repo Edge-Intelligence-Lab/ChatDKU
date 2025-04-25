@@ -1,8 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
-// import DOMPurify from "dompurify";
-import { Brain } from "lucide-react";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
@@ -19,7 +17,7 @@ const configureMarked = () => {
 };
 
 // API endpoint
-const API_ENDPOINT = "http://10.200.14.82:8000";
+const API_ENDPOINT = "http://10.200.14.82:8000/chat";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
