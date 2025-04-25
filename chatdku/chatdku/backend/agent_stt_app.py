@@ -48,11 +48,8 @@ migrate.init_app(app, db)
 admin.init_app(app)
 admin.add_view(AdminView(Feedback,db.session))
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-logger.info(f"Using device: {device}")
-model = whisper.load_model("base").to(device)
 
-routes(app=app,db=db,socketio=socketio,logger=logger,model=model)
+routes(app=app,db=db,socketio=socketio,logger=logger)
 
 
 
