@@ -2,6 +2,9 @@
 # FIXME: Purge API key from the history of this file
 
 ### TODO: Create multiple app objects in advance, lock the app object for each user, and reset the app object when the user is not using it.
+###TODO: Add limiter to prevent Ddos attack. Can use flask-limiter, with ePPn from Shibboleth to limit unique identity. If not possible, restricy general question over a specific IP to a specific number.
+
+
 import eventlet
 eventlet.monkey_patch()
 
@@ -12,9 +15,6 @@ from models import Feedback
 
 from extentions import db, migrate,admin
 from admin_setup import AdminView
-
-import torch
-import whisper
 
 import dspy
 import logging
@@ -28,8 +28,8 @@ from routes import routes
 app = Flask(__name__)
 app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet") #Socket IO to receive audio 
+CORS(app,origins=["https://chatdku.dukekunshan.edu.cn"])
+socketio = SocketIO(app, cors_allowed_origins=["https://chatdku.dukekunshan.edu.cn"],async_mode="eventlet") #Socket IO to receive audio 
 
 
 setup()
@@ -48,15 +48,12 @@ migrate.init_app(app, db)
 admin.init_app(app)
 admin.add_view(AdminView(Feedback,db.session))
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-logger.info(f"Using device: {device}")
-model = whisper.load_model("base").to(device)
 
-routes(app=app,db=db,socketio=socketio,logger=logger,model=model)
+routes(app=app,db=db,socketio=socketio,logger=logger)
 
 
 
-# NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it commented out. For development it can be uncommented and used with `python agent_app.py`
+# NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it can be commented out. For development it can be uncommented and used with `python agent_app.py`
 
 if __name__ == "__main__":
      setup()
@@ -66,5 +63,5 @@ if __name__ == "__main__":
      agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
      socketio.run(app=app,host="0.0.0.0", port=8000)
-#     # NOTE: Might want to make it easier to change the port
+    # NOTE: Might want to make it easier to change the port
 
