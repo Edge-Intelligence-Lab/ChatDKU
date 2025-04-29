@@ -313,8 +313,8 @@ export default function Home() {
           )}
         </div>
         {!isChatboxCentered && (
-          <p className="text-center text-[11px]/0 pb-1 text-muted-foreground/70">
-            AI responses may contain errors.
+          <p className="text-center text-[11px]/3 pb-1 text-muted-foreground/70">
+            AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
           </p>
         )}
       </div>

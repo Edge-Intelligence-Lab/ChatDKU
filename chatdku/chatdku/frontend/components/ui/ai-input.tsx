@@ -173,7 +173,7 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl rounded-3xl pl-6 pr-16 backdrop-blur-md bg-white dark:bg-white/10",
+            "max-w-xl rounded-3xl pl-6 pr-20 backdrop-blur-md bg-white dark:bg-white/10",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
             "border border-foreground/10 ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
@@ -209,45 +209,55 @@ export function AIInput({
         />
 
         {/* Thinking mode toggle button */}
-        <div 
+        <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer",
+            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
             "transition-all duration-200",
-            inputValue ? "right-17" : "right-10",
-            isThinking ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/50 text-secondary-foreground"
+            inputValue ? "right-8 px-2" : "right-8 px-2",
+            isThinking
+              ? "bg-primary text-primary-foreground"
+              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
           )}
           onClick={toggleThinkingMode}
         >
-          <Brain className="w-4 h-4" />
-          <span className="text-sm font-medium">Think</span>
+          <Brain className="w-5 h-5" />
+          <span
+            className={cn(
+              "text-sm font-medium transition-all pr-1",
+              inputValue ? "hidden" : ""
+            )}
+          >
+            Think
+          </span>
         </div>
-      
+
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 rounded-xl py-1 px-1 transition-all duration-200",
-            inputValue ? "right-10" : "right-3",
-            isRecording ? "bg-red-500/80 " : "bg-secondary hover:bg-secondary/50"
+            "absolute top-1/2 -translate-y-1/2 rounded-4xl p-2 transition-all duration-200",
+            inputValue ? "hidden" : "right-1",
+            isRecording
+              ? "bg-red-500 border border-foreground/10 shadow hover:shadow-lg hover:mask-bg-secondary/50 text-secondary"
+              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
           )}
+          onClick={toggleRecording}
         >
-          <Mic
-            className="cursor-pointer w-4 h-4 text-black/70 dark:text-white/70"
-            onClick={toggleRecording}
-          />
+          <Mic className="cursor-pointer w-5 h-5" />
         </div>
 
         <button
           onClick={handleReset}
           type="button"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 right-3",
-            "rounded-xl bg-secondary hover:bg-secondary/50 py-1 px-1",
+            "absolute top-1/2 -translate-y-1/2 right-1",
+            "rounded-4xl p-2",
+            "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground",
             "transition-all duration-200",
             inputValue
               ? "opacity-100 scale-100"
               : "opacity-0 scale-95 pointer-events-none"
           )}
         >
-          <CornerRightUp className="w-4 h-4 text-black/70 dark:text-white/70" />
+          <CornerRightUp className="w-5 h-5" />
         </button>
       </div>
     </div>
