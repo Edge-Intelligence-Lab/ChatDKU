@@ -10,6 +10,12 @@ from flask import Response, stream_with_context
 def routes(app,db,socketio,logger):
     WHISPER_MODEL_URI="http://10.200.14.82:8002"
 
+    @app.after_request
+    def no_sniff_header(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
     @app.route("/reset", methods=["POST"])
     def reset_agent():
         return {
