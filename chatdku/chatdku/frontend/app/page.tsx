@@ -17,7 +17,7 @@ const configureMarked = () => {
 };
 
 // API endpoint
-const API_ENDPOINT = "http://10.200.14.82:8000/chat";
+const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);

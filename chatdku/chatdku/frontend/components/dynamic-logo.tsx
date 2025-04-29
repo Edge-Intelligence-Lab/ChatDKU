@@ -37,6 +37,7 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({ width = 96, height = 96 }) =>
                 width={width}
                 height={height}
                 priority
+                unoptimized
                 loading="eager"
             />
         </div>
