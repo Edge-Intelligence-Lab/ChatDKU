@@ -95,7 +95,7 @@ def routes(app,db,socketio,logger):
             logger.error(f"Transcription failed: {str(e)}")
             emit("audio_received", {"status": "error", "message": str(e)})
 
-    @app.route('/save-feedback', methods=['POST'])
+    @app.route('/feedback', methods=['POST'])
     def save_feedback():
         try:
             data = request.get_json()
