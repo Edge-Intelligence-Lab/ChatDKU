@@ -5,6 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
+import { io } from "socket.io-client";
+
 
 export function AIInput({
   id = "ai-input",
@@ -21,8 +23,8 @@ export function AIInput({
   placeholder?: string;
   minHeight?: number;
   maxHeight?: number;
-  onSubmit?: (value: string) => void;
   onInputChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
   className?: string;
   thinkingMode?: boolean;
   onThinkingModeChange?: (value: boolean) => void;
@@ -31,12 +33,18 @@ export function AIInput({
     minHeight,
     maxHeight,
   });
+  const [isAgentic] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isThinking, setIsThinking] = useState(thinkingMode || false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const socketRef = useRef<any>(null);
+
+
+
+
 
   useEffect(() => {
     // Check if running in browser and if media devices are supported
@@ -52,6 +60,20 @@ export function AIInput({
       setIsThinking(thinkingMode);
     }
   }, [thinkingMode]);
+
+  useEffect(() => {
+    socketRef.current = io("https://chatdku.dukekunshan.edu.cn/socket.io/", {
+      transports: ["websocket"],
+      secure: true,
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+      stopRecording();
+    };
+  }, []);
 
   const toggleThinkingMode = () => {
     const newValue = !isThinking;
@@ -100,9 +122,9 @@ export function AIInput({
             type: mimeType,
           });
           if (audioBlob.size > 0) {
-            console.log(
-              "Audio recording completed, but transcription is disabled"
-            );
+            const buffer = await audioBlob.arrayBuffer();
+            const uint8Array = new Uint8Array(buffer);
+            socketRef.current.emit("audio_data", uint8Array);
           }
         } catch (error) {
           console.error("Error processing audio:", error);
@@ -110,6 +132,12 @@ export function AIInput({
           cleanupRecording();
         }
       };
+
+      // Handle transcription responses
+      socketRef.current.on("audio_transcribed", (data: { text: string }) => {
+        setInputValue(data.text);
+      });
+
 
       mediaRecorderRef.current.start();
       console.log("Recording started...");
