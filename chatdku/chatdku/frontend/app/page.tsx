@@ -16,6 +16,66 @@ const configureMarked = () => {
   });
 };
 
+// Helper function to safely handle marked.parse which might return Promise<string>
+const parseMarkdown = (content: string): string => {
+  const parsed = marked.parse(content);
+  // If it's a promise, return empty string initially (will be updated later)
+  if (parsed instanceof Promise) {
+    return '';
+  }
+  return parsed;
+};
+
+// Simulates a streaming effect for text
+const streamText = async (text: string, elementContainer: HTMLElement, delay = 15) => {
+  let currentText = '';
+  const streamContainer = document.createElement('div');
+  streamContainer.className = 'text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]';
+  elementContainer.appendChild(streamContainer);
+  
+  // Create cursor element
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  cursor.innerHTML = '▌';
+  cursor.style.animation = 'cursor-blink 1s infinite';
+  streamContainer.appendChild(cursor);
+  
+  // Add styles for cursor if not already present
+  if (!document.getElementById('cursor-style')) {
+    const style = document.createElement('style');
+    style.id = 'cursor-style';
+    style.innerHTML = `
+      @keyframes cursor-blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      .typing-cursor {
+        display: inline-block;
+        margin-left: 1px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Split into tokens - in a real implementation you might want to use a more sophisticated approach
+  const tokens = text.split(/(?<=[\s.,;:!?])/);
+  
+  for (const token of tokens) {
+    currentText += token;
+    streamContainer.textContent = currentText;
+    streamContainer.appendChild(cursor);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  // Remove cursor when done
+  cursor.remove();
+  
+  // Parse Markdown after streaming is complete
+  streamContainer.innerHTML = parseMarkdown(text);
+  
+  return streamContainer;
+};
+
 // API endpoint
 const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
 
@@ -63,34 +123,59 @@ export default function Home() {
   );
 
   const addMessageToChat = useCallback(
-    (role: string, content: any, className: any) => {
+    (role: string, content: any, className: any, shouldStream = false) => {
       const chatLog = document.getElementById("chat-log");
       const messageElement = document.createElement("div");
       const isUser = role === "user";
       messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
 
-      // Use DOMPurify to sanitize HTML content when it's from markdown
-      // Cast the result to string as we know marked.parse returns string in our configuration
-      const sanitizedContent =
-        role === "user" ? content : marked.parse(content);
+      // For user messages or non-streamed assistant messages
+      if (isUser || !shouldStream) {
+        // Use DOMPurify to sanitize HTML content when it's from markdown
+        const sanitizedContent = 
+          role === "user" ? content : parseMarkdown(content);
 
-      messageElement.innerHTML = `
-      <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
-        <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
-          ${
-            isUser
-              ? ""
-              : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
-          }
-          <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
-            <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? 'text-[0.9375rem]' : ''}">${sanitizedContent}</div>
+        messageElement.innerHTML = `
+        <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
+          <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+            ${
+              isUser
+                ? ""
+                : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
+            }
+            <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
+              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? 'text-[0.9375rem]' : ''}">${sanitizedContent}</div>
+            </div>
           </div>
         </div>
-      </div>
-    `;
-      chatLog?.appendChild(messageElement);
-      chatLog?.scrollTo(0, chatLog.scrollHeight);
-      return messageElement.querySelector(".flex.flex-col"); // Return the inner container for feedback
+      `;
+        chatLog?.appendChild(messageElement);
+        chatLog?.scrollTo(0, chatLog.scrollHeight);
+        return messageElement.querySelector(".flex.flex-col"); // Return the inner container for feedback
+      } 
+      // For streamed assistant messages
+      else {
+        messageElement.innerHTML = `
+        <div class="flex flex-col items-start w-full sm:max-w-[85%]">
+          <div class="flex flex-col lg:flex-row gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+            <div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>
+            <div class="text-left overflow-hidden" id="stream-container">
+              <!-- Content will be streamed here -->
+            </div>
+          </div>
+        </div>
+      `;
+        chatLog?.appendChild(messageElement);
+        chatLog?.scrollTo(0, chatLog.scrollHeight);
+        
+        // Start streaming the content
+        const streamContainer = messageElement.querySelector("#stream-container") as HTMLElement;
+        if (streamContainer) {
+          streamText(content, streamContainer);
+        }
+        
+        return messageElement.querySelector(".flex.flex-col");
+      }
     },
     []
   );
@@ -158,19 +243,31 @@ export default function Home() {
                 });
 
                 if (!response.ok) throw new Error("Failed to fetch response");
-
-                const data = await response.text();
+                
                 if (botMessage) {
                   botMessage.remove();
                 }
+
+                // Create a message container for the streamed response
                 const messageDiv = addMessageToChat(
                   "assistant",
-                  data,
-                  "text-sm"
+                  "",
+                  "text-sm",
+                  true // Use streaming mode
                 );
 
+                // Get the stream container
+                const streamContainer = messageDiv?.querySelector("#stream-container");
+                if (!streamContainer) throw new Error("Failed to create stream container");
+
+                // Process the streamed response
+                const data = await response.text();
+                
+                // Instead of displaying all at once, simulate token-by-token streaming
+                await streamText(data, streamContainer as HTMLElement);
+                
+                // Add feedback buttons after streaming is complete
                 if (messageDiv) {
-                  // Add feedback buttons
                   const feedbackDiv = document.createElement("div");
                   feedbackDiv.className = "ml-4 mb-2";
                   const feedbackContent = `
@@ -205,9 +302,9 @@ export default function Home() {
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_relevant">Not Relevant</button>
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="other">Other</button>
                             </div>
-            
-                            <textarea id="custom-reason" class="w-full mt-4 p-2 rounded-md border bg-background text-foreground hidden" rows="5" placeholder="Please describe the issue"></textarea>
                 
+                            <textarea id="custom-reason" class="w-full mt-4 p-2 rounded-md border bg-background text-foreground hidden" rows="5" placeholder="Please describe the issue"></textarea>
+                    
                             <div class="flex justify-end mt-6 space-x-2">
                               <button id="submit-feedback" class="btn px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Submit</button>
                               <button id="cancel-feedback" class="btn px-4 py-2 text-sm rounded-md bg-secondary text-secondary-foreground hover:bg-destructive hover:text-destructive-foreground">Cancel</button>
