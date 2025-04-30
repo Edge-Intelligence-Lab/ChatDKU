@@ -72,6 +72,7 @@ def routes(app,db,socketio,logger):
 
     @socketio.on("audio_data")
     def handle_audio(data):
+        logger.info("audio received")
         try:
             if not isinstance(data, bytes):
                 raise ValueError("Audio data must be bytes")
