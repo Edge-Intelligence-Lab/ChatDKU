@@ -1,6 +1,6 @@
 "use client";
 
-import { CornerRightUp, Mic } from "lucide-react";
+import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,8 @@ export function AIInput({
   maxHeight = 200,
   onSubmit,
   className,
+  thinkingMode,
+  onThinkingModeChange,
 }: {
   id?: string;
   placeholder?: string;
@@ -20,13 +22,17 @@ export function AIInput({
   maxHeight?: number;
   onSubmit?: (value: string) => void;
   className?: string;
+  thinkingMode?: boolean;
+  onThinkingModeChange?: (value: boolean) => void;
 }) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
     maxHeight,
   });
+  const [isAgentic] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isThinking, setIsThinking] = useState(thinkingMode || false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -39,6 +45,18 @@ export function AIInput({
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (thinkingMode !== undefined && thinkingMode !== isThinking) {
+      setIsThinking(thinkingMode);
+    }
+  }, [thinkingMode]);
+
+  const toggleThinkingMode = () => {
+    const newValue = !isThinking;
+    setIsThinking(newValue);
+    onThinkingModeChange?.(newValue);
+  };
 
   const startRecording = async () => {
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -81,7 +99,9 @@ export function AIInput({
             type: mimeType,
           });
           if (audioBlob.size > 0) {
-            console.log("Audio recording completed, but transcription is disabled");
+            console.log(
+              "Audio recording completed, but transcription is disabled"
+            );
           }
         } catch (error) {
           console.error("Error processing audio:", error);
@@ -153,7 +173,7 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl rounded-3xl pl-6 pr-16 backdrop-blur-md bg-white dark:bg-white/10",
+            "max-w-xl rounded-3xl pl-6 pr-20 backdrop-blur-md bg-white dark:bg-white/10",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
             "border border-foreground/10 ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
@@ -188,32 +208,56 @@ export function AIInput({
           }}
         />
 
+        {/* Thinking mode toggle button */}
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 rounded-xl py-1 px-1 transition-all duration-200",
-            inputValue ? "right-10" : "right-3",
-            isRecording ? "bg-red-500/80 " : "bg-black/5 dark:bg-white/5"
+            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
+            "transition-all duration-200",
+            inputValue ? "right-8 px-2" : "right-8 px-2",
+            isThinking
+              ? "bg-primary text-primary-foreground"
+              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
           )}
+          onClick={toggleThinkingMode}
         >
-          <Mic
-            className="cursor-pointer w-4 h-4 text-black/70 dark:text-white/70"
-            onClick={toggleRecording}
-          />
+          <Brain className="w-5 h-5" />
+          <span
+            className={cn(
+              "text-sm font-medium transition-all pr-1",
+              inputValue ? "hidden" : ""
+            )}
+          >
+            Think
+          </span>
+        </div>
+
+        <div
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 rounded-4xl p-2 transition-all duration-200",
+            inputValue ? "hidden" : "right-1",
+            isRecording
+              ? "bg-red-500 border border-foreground/10 shadow hover:shadow-lg hover:mask-bg-secondary/50 text-secondary"
+              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+          )}
+          onClick={toggleRecording}
+        >
+          <Mic className="cursor-pointer w-5 h-5" />
         </div>
 
         <button
           onClick={handleReset}
           type="button"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 right-3",
-            "rounded-xl bg-black/5 dark:bg-white/5 py-1 px-1",
+            "absolute top-1/2 -translate-y-1/2 right-1",
+            "rounded-4xl p-2",
+            "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground",
             "transition-all duration-200",
             inputValue
               ? "opacity-100 scale-100"
               : "opacity-0 scale-95 pointer-events-none"
           )}
         >
-          <CornerRightUp className="w-4 h-4 text-black/70 dark:text-white/70" />
+          <CornerRightUp className="w-5 h-5" />
         </button>
       </div>
     </div>

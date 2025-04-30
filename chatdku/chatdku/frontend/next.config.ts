@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'export',  // This enables static HTML export
+  trailingSlash: true,      // <-- adds /about/index.html
   // If you're using basePath, add it here:
   // basePath: '',
   

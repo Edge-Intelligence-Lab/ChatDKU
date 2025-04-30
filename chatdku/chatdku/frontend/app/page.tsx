@@ -1,7 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
-// import DOMPurify from "dompurify";
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
@@ -17,10 +16,14 @@ const configureMarked = () => {
   });
 };
 
+// API endpoint
+const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
+
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistoryId, setChatHistoryId] = useState("");
+  const [thinkingMode, setThinkingMode] = useState(false);
 
   // Initialize marked configuration on component mount
   useEffect(() => {
@@ -29,6 +32,10 @@ export default function Home() {
 
   const generateUniqueId = () => {
     return Date.now() + "-" + Math.random().toString(36).substring(2, 15);
+  };
+
+  const toggleThinkingMode = () => {
+    setThinkingMode((prev) => !prev);
   };
 
   const handleFeedback = useCallback(
@@ -115,6 +122,8 @@ export default function Home() {
         )}
         <div>
           <AIInput
+            thinkingMode={thinkingMode}
+            onThinkingModeChange={(value) => setThinkingMode(value)}
             onSubmit={async (value) => {
               if (!value.trim()) return;
 
@@ -137,12 +146,13 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch("/api/chat", {
+                const response = await fetch(API_ENDPOINT, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     messages: [{ role: "user", content: value }],
                     chatHistoryId: newChatHistoryId,
+                    mode: thinkingMode ? "agent" : ""
                   }),
                 });
 
@@ -303,8 +313,8 @@ export default function Home() {
           )}
         </div>
         {!isChatboxCentered && (
-          <p className="text-center text-[11px]/0 pb-1 text-muted-foreground/70">
-            AI responses may contain errors.
+          <p className="text-center text-[11px]/3 pb-1 text-muted-foreground/70">
+            AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
           </p>
         )}
       </div>
