@@ -24,6 +24,7 @@ export default function Home() {
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistoryId, setChatHistoryId] = useState("");
   const [thinkingMode, setThinkingMode] = useState(false);
+  const [inputValue, setInputValue] = useState(""); // Add state for tracking input value
 
   // Initialize marked configuration on component mount
   useEffect(() => {
@@ -72,7 +73,6 @@ export default function Home() {
       // Cast the result to string as we know marked.parse returns string in our configuration
       const sanitizedContent =
         role === "user" ? content : marked.parse(content);
-        // role === "user" ? content : DOMPurify.sanitize(marked.parse(content) as string);
 
       messageElement.innerHTML = `
       <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
@@ -124,6 +124,7 @@ export default function Home() {
           <AIInput
             thinkingMode={thinkingMode}
             onThinkingModeChange={(value) => setThinkingMode(value)}
+            onInputChange={(value) => setInputValue(value)} // Track input value changes
             onSubmit={async (value) => {
               if (!value.trim()) return;
 
@@ -288,28 +289,34 @@ export default function Home() {
             }}
           />
           {isChatboxCentered && (
-            <PromptRecs
-              onPromptSelect={(prompt) => {
-                const aiInput = document.getElementById(
-                  "ai-input"
-                ) as HTMLTextAreaElement;
-                if (aiInput) {
-                  aiInput.value = prompt;
-                  // Update the internal state of AIInput
-                  const inputEvent = new Event("input", { bubbles: true });
-                  aiInput.dispatchEvent(inputEvent);
-                  // Trigger the onSubmit directly
-                  const enterEvent = new KeyboardEvent("keydown", {
-                    key: "Enter",
-                    code: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                    shiftKey: false,
-                  });
-                  aiInput.dispatchEvent(enterEvent);
-                }
-              }}
-            />
+            <div 
+              className={`transition-all duration-300 ${
+                inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"
+              }`}
+            >
+              <PromptRecs
+                onPromptSelect={(prompt) => {
+                  const aiInput = document.getElementById(
+                    "ai-input"
+                  ) as HTMLTextAreaElement;
+                  if (aiInput) {
+                    aiInput.value = prompt;
+                    // Update the internal state of AIInput
+                    const inputEvent = new Event("input", { bubbles: true });
+                    aiInput.dispatchEvent(inputEvent);
+                    // Trigger the onSubmit directly
+                    const enterEvent = new KeyboardEvent("keydown", {
+                      key: "Enter",
+                      code: "Enter",
+                      bubbles: true,
+                      cancelable: true,
+                      shiftKey: false,
+                    });
+                    aiInput.dispatchEvent(enterEvent);
+                  }
+                }}
+              />
+            </div>
           )}
         </div>
         {!isChatboxCentered && (

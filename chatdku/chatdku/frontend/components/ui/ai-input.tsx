@@ -12,6 +12,7 @@ export function AIInput({
   minHeight = 53,
   maxHeight = 200,
   onSubmit,
+  onInputChange,
   className,
   thinkingMode,
   onThinkingModeChange,
@@ -21,6 +22,7 @@ export function AIInput({
   minHeight?: number;
   maxHeight?: number;
   onSubmit?: (value: string) => void;
+  onInputChange?: (value: string) => void;
   className?: string;
   thinkingMode?: boolean;
   onThinkingModeChange?: (value: boolean) => void;
@@ -29,7 +31,6 @@ export function AIInput({
     minHeight,
     maxHeight,
   });
-  const [isAgentic] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isThinking, setIsThinking] = useState(thinkingMode || false);
@@ -144,12 +145,13 @@ export function AIInput({
     const handleInput = (e: Event) => {
       const target = e.target as HTMLTextAreaElement;
       setInputValue(target.value);
+      onInputChange?.(target.value);
       adjustHeight();
     };
 
     textarea.addEventListener("input", handleInput);
     return () => textarea.removeEventListener("input", handleInput);
-  }, [textareaRef, adjustHeight]);
+  }, [textareaRef, adjustHeight, onInputChange]);
 
   const toggleRecording = async () => {
     if (isRecording) {
@@ -173,7 +175,7 @@ export function AIInput({
           id={id}
           placeholder={placeholder}
           className={cn(
-            "max-w-xl rounded-3xl pl-6 pr-20 backdrop-blur-md bg-white dark:bg-white/10",
+            "max-w-xl rounded-4xl pl-6 pr-20 backdrop-blur-md bg-white dark:bg-white/10",
             "placeholder:text-black/40 dark:placeholder:text-white/40",
             "border border-foreground/10 ring-black/20 dark:ring-white/20",
             "text-black dark:text-white text-wrap",
@@ -194,6 +196,7 @@ export function AIInput({
           onChange={(e) => {
             const newValue = e.target.value;
             setInputValue(newValue);
+            onInputChange?.(newValue);
             if (!newValue.trim()) {
               adjustHeight(true);
             } else {
