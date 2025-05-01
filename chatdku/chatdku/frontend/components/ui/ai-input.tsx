@@ -2,7 +2,7 @@
 
 import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
