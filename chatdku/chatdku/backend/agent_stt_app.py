@@ -28,7 +28,7 @@ from routes import routes
 app = Flask(__name__)
 app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 
-CORS(app,origins=["https://chatdku.dukekunshan.edu.cn"])
+CORS(app, origins=["https://chatdku.dukekunshan.edu.cn"])
 socketio = SocketIO(app, cors_allowed_origins=["https://chatdku.dukekunshan.edu.cn"],async_mode="eventlet") #Socket IO to receive audio 
 
 

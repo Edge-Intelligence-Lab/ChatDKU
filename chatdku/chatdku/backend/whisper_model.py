@@ -8,13 +8,14 @@ import logging
 import gc
 import os
 import tempfile
+torch.cuda.empty_cache()
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Using device: {device}")
-model = whisper.load_model("large-v3").to(device)
+model = whisper.load_model("base").to(device)
 
 @app.route("/process_audio", methods=["POST"])
 def process_audio():
