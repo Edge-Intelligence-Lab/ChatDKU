@@ -24,7 +24,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
 from routes import routes
-
 app = Flask(__name__)
 app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 
