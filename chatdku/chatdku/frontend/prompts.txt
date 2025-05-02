@@ -1,0 +1,5 @@
+please make the proceed button obviously disabled until the user ticks the accept terms and conditions.
+
+make it so that when the user successfully clicks proceed, a cookie is saved, recording that the user has accepted the tac.
+
+can you add a shadcn tooltip that appears when the user tries to click or tap the proceed button when it's disabled, saying please accept tac to use chatdku or something

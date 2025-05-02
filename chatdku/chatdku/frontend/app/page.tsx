@@ -1,6 +1,8 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { marked } from "marked";
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 
 import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
@@ -85,11 +87,18 @@ export default function Home() {
   const [chatHistoryId, setChatHistoryId] = useState("");
   const [thinkingMode, setThinkingMode] = useState(false);
   const [inputValue, setInputValue] = useState(""); // Add state for tracking input value
+  const router = useRouter();
 
-  // Initialize marked configuration on component mount
+  // Initialize marked configuration on component mount and check for terms acceptance
   useEffect(() => {
     configureMarked();
-  }, []);
+    
+    // Check if the user has accepted terms and conditions
+    const termsAccepted = Cookies.get('terms_accepted');
+    if (!termsAccepted) {
+      router.push('/landing');
+    }
+  }, [router]);
 
   const generateUniqueId = () => {
     return Date.now() + "-" + Math.random().toString(36).substring(2, 15);

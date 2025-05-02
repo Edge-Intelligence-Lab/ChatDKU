@@ -18,10 +18,6 @@ export function Navbar() {
   return (
     <NavigationMenu className="w-full max-w-[98vw] mx-auto flex justify-between items-center fixed top-0 left-1/2 -translate-x-1/2 z-10 bg-background lg:bg-transparent">
       <div className="flex flex-row items-center">
-        <NavigationMenuLink
-          href="/"
-          className="rounded-t-none active:bg-transparent hover:bg-transparent p-0"
-        >
           <div className="flex flex-row items-center p-3 pr-0 space-x-2">
             <DynamicLogo width={35} height={35} />
             <h2 className="font-inter text-xl md:text-xl font-bold">
@@ -29,7 +25,6 @@ export function Navbar() {
               {/* <span className="font-inter text-xs md:text-sm lg:text-sm italic text-primary/20">dev</span> */}
             </h2>
           </div>
-        </NavigationMenuLink>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

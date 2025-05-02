@@ -243,11 +243,10 @@ export function AIInput({
         <div
           className={cn(
             "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
-            "transition-all duration-200",
-            inputValue ? "right-8 px-2" : "right-8 px-2",
+            "transition-all duration-200 right-8 px-2 border border-foreground/10",
             isThinking
               ? "bg-primary text-primary-foreground"
-              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+              : "shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
           )}
           onClick={toggleThinkingMode}
         >
