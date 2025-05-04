@@ -54,6 +54,7 @@ def make_synthesizer_signature():
     current_date = date.today()
 
     instruction = (
+
         "You are tasked with answering the **Current User Message**."
         " Follow these guidelines strictly:\n\n"
         "1. **Provide high quality responses**:\n"
