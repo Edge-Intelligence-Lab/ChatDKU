@@ -40,7 +40,6 @@ from datetime import date
 
 
 def make_synthesizer_signature():
-
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
         "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
