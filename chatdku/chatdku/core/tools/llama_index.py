@@ -16,7 +16,7 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 from opentelemetry.util.types import AttributeValue
-
+import json
 from chatdku.core.utils import truncate_tokens
 from chatdku.core.dspy_common import custom_cot_rationale
 import nltk
@@ -52,6 +52,7 @@ from chatdku.config import config
 def mydeepcopy(self, memo):
     return self
 
+ENABLE_PRINT = True
 
 # FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
 # certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
@@ -137,9 +138,19 @@ import pandas as pd
 import re
 
 df = pd.read_csv(config.url_csv_path)
-# Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
-df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
+# Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
+df["website_file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
+
+def get_file_path(metadata):
+    try:
+        path = metadata["file_path"]
+    except:
+        path = metadata["file_directory"] + "/" + metadata["filename"]
+    # if "bulletin" in path:
+    #     if ENABLE_PRINT:
+    #         # print(metadata)
+    return path
 
 def get_url(metadata):
     try:
@@ -151,20 +162,27 @@ def get_url(metadata):
             match = re.search(r"dku_website/.*", path)
             if match:
                 result = match.group(0)
-                matching_row = df[df["file_path"] == result]
+                matching_row = df[df["website_file_path"] == result]
                 if not matching_row.empty:
                     return matching_row.iloc[0]["url"]
-        elif "new_bulletin" in path:
-            match = re.search(r"new_bulletin/.*", path)
-            if match:
-                result = match.group(0)
-                matching_row = df[df["file_path"] == result]
-                if not matching_row.empty:
-                    return matching_row.iloc[0]["url"]
-        return "no url"
+        else:  # pay attention, this code is only for chatdku advising
+            matching_row = df[df["file_path"] == metadata["file_path"]]
+            if not matching_row.empty:
+                return matching_row.iloc[0]["url"]
+            else:
+                return "no url"
     except Exception as e:
         return f"no url, error: {str(e)}"
 
+def get_page_number(node):
+    try:
+        path = node.metadata["file_path"]
+        if "bulletin" in path:
+            return node.metadata["page"]
+        else:  # pay attention, this code is only for chatdku advising
+            return "no page number"
+    except:
+        return "no page number"
 
 def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     return [
@@ -172,7 +190,7 @@ def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
             node=TextNode(
                 node_id=node.node_id,
                 text=node.text,
-                metadata={"url": get_url(node.metadata)},
+                metadata={"url": get_url(node.metadata),"page_number": get_page_number(node), "file_path":get_file_path(node.metadata)},
             ),
             score=node.score,
         )
@@ -308,8 +326,13 @@ class VectorRetriever(dspy.Module):
                 )
             else:
                 nodes = retrieved_nodes
-
+            print("Vector------------------------")
             nodes = simplify_nodes(nodes)
+            for node in nodes:
+                if ENABLE_PRINT:
+                    print(node.metadata["file_path"])
+                    print(node.metadata["url"])
+                    print(node.metadata["page_number"])
             result = nodes_to_string(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -320,6 +343,7 @@ class VectorRetriever(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
+            # print(result)
             return dspy.Prediction(
                 result=result,
                 internal_result={"ids": {r.node_id for r in nodes}},
@@ -452,12 +476,16 @@ class KeywordRetriever(dspy.Module):
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
-            print(results)
+            # for r in results.docs:
+            #     if 'bulletin' in json.loads(r["_node_content"]).get('metadata')['file_path']:
+            #         if ENABLE_PRINT:
+            #             print(r)
+
             try:
                 nodes = [
                     NodeWithScore(
                         node=TextNode(
-                            id=r.id, text=r.text, metadata={"file_path": r.file_path}
+                            id=r.id, text=r.text, metadata=json.loads(r["_node_content"]).get('metadata')
                         ),
                         score=r.score,
                     )
@@ -476,8 +504,13 @@ class KeywordRetriever(dspy.Module):
             #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
             # )
             # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
-
+            print("Keyword------------------------")
             nodes = simplify_nodes(nodes)
+            for node in nodes:
+                if ENABLE_PRINT:
+                    print(node.metadata["file_path"])
+                    print(node.metadata["url"])
+                    print(node.metadata["page_number"])
             result = nodes_to_string(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -488,6 +521,9 @@ class KeywordRetriever(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
+
+            # print(result)
+
             return dspy.Prediction(
                 result=result, internal_result={"ids": {r.id for r in results.docs}}
             )

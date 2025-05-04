@@ -42,7 +42,7 @@ setup(add_system_prompt=True)
 
 
 
-with open('/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl', 'rb') as f:
+with open('/home/Glitterccc/CODESSSS/page_number/chatdku/bulletin_page_parsed.pkl', 'rb') as f:
     documents = pickle.load(f)
 
 
@@ -51,8 +51,8 @@ redis_client = Redis.from_url("redis://localhost:6379")
 custom_schema = IndexSchema.from_dict(
     {
         "index": {
-            "name": "idx:test",
-            "prefix": "test_doc",
+            "name": "idx:chat_dku_advising",
+            "prefix": "chat_dku_advising_doc",
             "key_separator": ":",
         },
         "fields": [
@@ -63,6 +63,7 @@ custom_schema = IndexSchema.from_dict(
             # Custom metadata fields
             {"type": "tag", "name": "groups"},
             {"type": "tag", "name": "file_path"},
+            {"type": "tag", "name": "page"},
             {"type": "tag", "name": "file_name"},
             {"type": "tag", "name": "last_modified_date"},
             # Custom vector embeddings field definition

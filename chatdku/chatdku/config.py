@@ -17,14 +17,14 @@ class Config:
                 "context_window": 64000,
                 # about load_and_index
                 "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "documents_path": "/home/Glitterccc/CODESSSS/page_number/chatdku/bulletin_page_parsed.pkl",
                 "pipeline_cache": "./pipeline_cache",
-                "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/url_csv/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 # about query
-                "chroma_db": "/datapool/db_chat_dku_advising",
+                "chroma_db": "/datapool/chatdku_advising_chromadb",
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
-                "docstore_path": "/datapool/docstores/bge_m3_docstore",
+                # "docstore_path": "/home/Glitterccc/CODESSSS/page_number/page_number_file/bge_m3_docstore",
                 # about graphrag
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
