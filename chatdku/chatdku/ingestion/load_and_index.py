@@ -52,7 +52,7 @@ def load_and_index(
     # please use only a single process for now.
     pipeline_workers: int = 1,
 ):
-    documents_path = os.path.join(config.data_dir, config.documents_path)
+    documents_path = "/home/Glitterccc/CODESSSS/ChatDKU-chat_dku_student_release/chatdku/bulletin_page_parsed.pkl"
     hash_path = os.path.join("./", "hash.pkl")
     now_hash = hash_directory(data_dir)
 
