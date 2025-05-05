@@ -50,24 +50,24 @@ const About: React.FC = () => {
             deployment to ensure data privacy and security.
           </li>
           <li className="text-sm lg:text-md font-medium">
-            ChatDKU is now live and available for beta testing by all faculty,
-            with a student launch coming later. This launch version is focused
-            on advising and policy questions, meaning it’s a tool that faculty
-            and students can turn to for immediate clarification when they have
-            general advising questions. It is not meant to be a replacement for
-            advisors but it should be a great resource for both advisors and
-            their students. Developed by the DKU Edge Intelligence Lab, in
-            partnership with the Office of Undergraduate Advising, the hope is
-            that your feedback will help ChatDKU become as robust a tool as
-            possible before the full launch to the students.
-          </li>
-          <li className="text-sm lg:text-md font-medium">
             ChatDKU-Advising is not meant to be a replacement for advisor
             meetings or reaching out to the relevant offices when you need
             support. It is a tool to give quick, accurate answers about DKU
             policies but it is important for users to follow up with the
             university personnel involved if you are going to be taking some
             sort of action based on policy.
+          </li>
+          <li className="text-sm lg:text-md font-medium">
+            All A.I. systems have the potential to make an error for a variety
+            of reasons. While the developers of this platform will make every effort
+            to make this platform as accurate as possible, it is the user's
+            responsibility to double check the accuracy of any answers provided
+            by the system. If a user misses a deadline or neglects to take an action
+            because of an answer given by the system, the responsibility for that
+            rests on the user, not on ChatDKU. Screenshots of responses provided
+            by the system cannot serve as a rationale to provide exceptions to
+            policies outlined in the Undergraduate Bulletin or deadlines set in
+            the Academic Calendar.
           </li>
           <li className="text-sm lg:text-md font-medium">
             To improve answer accuracy, please ensure your questions contain
@@ -98,11 +98,11 @@ const About: React.FC = () => {
           <DialogTrigger asChild className="my-4 cursor-pointer">
             <Button variant="outline">See Full Terms and Conditions</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Terms and Conditions</DialogTitle>
             </DialogHeader>
-            <ScrollArea className="h-[400px] md:h-[800px] w-full rounded-md p-2">
+            <ScrollArea className="h-[80vh] w-full rounded-md p-2">
               <h2 className="text-xl font-bold">1. Access and Use</h2>
               <ul className="my-3">
                 <li>
@@ -273,8 +273,6 @@ const About: React.FC = () => {
             </DialogFooter> */}
           </DialogContent>
         </Dialog>
-
-        
       </div>
     </>
   );

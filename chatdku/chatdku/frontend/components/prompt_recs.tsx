@@ -217,7 +217,7 @@ export function PromptRecs({ onPromptSelect, onSubmit }: PromptRecsProps) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 justify-center w-full max-w-xl mx-auto">
+    <div className="flex flex-col sm:flex-row gap-2 justify-center w-full mx-auto">
       {selectedPrompts.map((prompt, index) => (
         <Button
           key={`${prompt.text}-${index}`}
