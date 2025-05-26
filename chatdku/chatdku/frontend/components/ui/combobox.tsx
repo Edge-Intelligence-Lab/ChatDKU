@@ -37,6 +37,10 @@ const statuses: Status[] = [
     value: "qwen",
     label: "Qwen",
   },
+  {
+    value: "9030",
+    label: "Temuulen",
+  },
 ];
 
 interface ComboBoxResponsiveProps {
@@ -56,7 +60,7 @@ export function ComboBoxResponsive({ inputValue }: ComboBoxResponsiveProps) {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="w-auto rounded-4xl py-4.5 gap-0 px-0 justify-start"
+            className="w-auto rounded-4xl py-4.5 gap-0 justify-start"
           >
             {!inputValue &&
               (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
@@ -75,7 +79,7 @@ export function ComboBoxResponsive({ inputValue }: ComboBoxResponsiveProps) {
       <DrawerTrigger asChild>
         <Button
           variant="outline"
-          className="w-auto rounded-4xl py-4.5 gap-0 px-0 justify-start"
+          className="w-auto rounded-4xl transition-colors duration-300 active:bg-foreground/10 py-4.5 justify-start"
         >
           {!inputValue &&
             (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}

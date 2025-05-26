@@ -79,7 +79,7 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 };
 
 // API endpoint
-const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
+const API_ENDPOINT = "10.200.14.82:9030";
 
 export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
