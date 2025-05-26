@@ -1,12 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
-
+import { ComboBoxResponsive } from "./combobox";
 
 export function AIInput({
   id = "ai-input",
@@ -42,9 +43,8 @@ export function AIInput({
   const audioChunksRef = useRef<Blob[]>([]);
   const socketRef = useRef<any>(null);
 
-
-
-
+  const pathname = usePathname();
+  const isDevRoute = pathname === "/dev" || pathname === "/dev/";
 
   useEffect(() => {
     // Check if running in browser and if media devices are supported
@@ -137,7 +137,6 @@ export function AIInput({
       socketRef.current.on("audio_transcribed", (data: { text: string }) => {
         setInputValue(data.text);
       });
-
 
       mediaRecorderRef.current.start();
       console.log("Recording started...");
@@ -240,26 +239,39 @@ export function AIInput({
         />
 
         {/* Thinking mode toggle button */}
-        <div
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
-            "transition-all duration-200 right-8 px-2 border border-foreground/10",
-            isThinking
-              ? "bg-primary text-primary-foreground"
-              : "shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
-          )}
-          onClick={toggleThinkingMode}
-        >
-          <Brain className="w-5 h-5" />
-          <span
+        {!isDevRoute && (
+          <div
             className={cn(
-              "text-sm font-medium transition-all pr-1",
-              inputValue ? "hidden" : ""
+              "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
+              "transition-all duration-200 right-8 px-2 border border-foreground/10",
+              isThinking
+                ? "bg-primary text-primary-foreground"
+                : "shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+            )}
+            onClick={toggleThinkingMode}
+          >
+            <Brain className="w-5 h-5" />
+            <span
+              className={cn(
+                "text-sm font-medium transition-all pr-1",
+                inputValue ? "hidden" : ""
+              )}
+            >
+              Think
+            </span>
+          </div>
+        )}
+
+        {isDevRoute && (
+          <div
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 flex items-center right-8 mr-3 cursor-pointer",
+              "transition-all duration-200 drop-shadow-xs hover:drop-shadow-lg",
             )}
           >
-            Think
-          </span>
-        </div>
+            <ComboBoxResponsive inputValue={inputValue} />
+          </div>
+        )}
 
         <div
           className={cn(
