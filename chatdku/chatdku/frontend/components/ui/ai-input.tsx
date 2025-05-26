@@ -19,6 +19,7 @@ export function AIInput({
   className,
   thinkingMode,
   onThinkingModeChange,
+  onEndpointChange,
 }: {
   id?: string;
   placeholder?: string;
@@ -29,6 +30,7 @@ export function AIInput({
   className?: string;
   thinkingMode?: boolean;
   onThinkingModeChange?: (value: boolean) => void;
+  onEndpointChange?: (endpoint: string) => void;
 }) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
@@ -196,7 +198,7 @@ export function AIInput({
   };
 
   return (
-    <div className={cn("w-full py-4", className)}>
+    <div className={cn("w-full py-2", className)}>
       <div className="relative max-w-xl w-full mx-auto">
         <Textarea
           id={id}
@@ -246,7 +248,7 @@ export function AIInput({
               "transition-all duration-200 right-8 px-2 border border-foreground/10",
               isThinking
                 ? "bg-primary text-primary-foreground"
-                : "shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+                : "hover:bg-secondary/50 text-secondary-foreground"
             )}
             onClick={toggleThinkingMode}
           >
@@ -265,11 +267,10 @@ export function AIInput({
         {isDevRoute && (
           <div
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 flex items-center right-8 mr-3 cursor-pointer",
-              "transition-all duration-200 drop-shadow-xs hover:drop-shadow-lg",
+              "absolute top-1/2 -translate-y-1/2 rounded-4xl border-0 border-foreground/10 flex items-center right-8 mr-3 cursor-pointer"
             )}
           >
-            <ComboBoxResponsive inputValue={inputValue} />
+            <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />
           </div>
         )}
 
@@ -278,8 +279,8 @@ export function AIInput({
             "absolute top-1/2 -translate-y-1/2 rounded-4xl p-2 transition-all duration-200",
             inputValue ? "hidden" : "right-1",
             isRecording
-              ? "bg-red-500 border border-foreground/10 shadow hover:shadow-lg hover:mask-bg-secondary/50 text-secondary"
-              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+              ? "bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary"
+              : "border border-foreground/10 hover:bg-secondary/50 text-secondary-foreground"
           )}
           onClick={toggleRecording}
         >
@@ -292,7 +293,7 @@ export function AIInput({
           className={cn(
             "absolute top-1/2 -translate-y-1/2 right-1",
             "rounded-4xl p-2",
-            "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground",
+            "border border-foreground/10 hover:bg-secondary/50 text-secondary-foreground",
             "transition-all duration-200",
             inputValue
               ? "opacity-100 scale-100"

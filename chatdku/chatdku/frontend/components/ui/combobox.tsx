@@ -19,48 +19,57 @@ import {
 } from "@/components/ui/popover";
 import { ChevronsUpDown } from "lucide-react";
 
-type Status = {
-  value: string;
+
+type Branch = {
+  chatEndpoint: string;
   label: string;
 };
 
-const statuses: Status[] = [
+const branches: Branch[] = [
   {
-    value: "standard",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/api/chat",
     label: "Standard",
   },
   {
-    value: "deepThink",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/think/chat",
     label: "Deep Think",
   },
   {
-    value: "qwen",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/qwen/chat",
     label: "Qwen",
   },
   {
-    value: "9030",
-    label: "Temuulen",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/chat",
+    label: "integrated_new_prompt",
   },
 ];
 
 interface ComboBoxResponsiveProps {
   inputValue: string;
+  onEndpointChange: (endpoint: string) => void;
 }
 
-export function ComboBoxResponsive({ inputValue }: ComboBoxResponsiveProps) {
+export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxResponsiveProps) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [selectedStatus, setSelectedStatus] = React.useState<Status | null>(
-    statuses[0] // Set "Standard" as default option
+  const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(
+    branches[0]
   );
+
+  // Update endpoint when selected status changes
+  React.useEffect(() => {
+    if (selectedStatus) {
+      onEndpointChange(selectedStatus.chatEndpoint);
+    }
+  }, [selectedStatus, onEndpointChange]);
 
   if (isDesktop) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
-            className="w-auto rounded-4xl py-4.5 gap-0 justify-start"
+            variant="ghost"
+            className="transition-colors border border-foreground/10 duration-300 w-auto rounded-4xl py-4.5 justify-start"
           >
             {!inputValue &&
               (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
@@ -78,12 +87,12 @@ export function ComboBoxResponsive({ inputValue }: ComboBoxResponsiveProps) {
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <Button
-          variant="outline"
-          className="w-auto rounded-4xl transition-colors duration-300 active:bg-foreground/10 py-4.5 justify-start"
+          variant="ghost"
+          className="w-auto rounded-4xl border border-foreground/10 transition-colors duration-300 bg-transparent active:bg-foreground/10 py-4.5 justify-start"
         >
           {!inputValue &&
             (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
-          {inputValue && <ChevronsUpDown className="opacity-50" />}
+          {inputValue && <ChevronsUpDown className="text-foreground" />}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
@@ -100,7 +109,7 @@ function StatusList({
   setSelectedStatus,
 }: {
   setOpen: (open: boolean) => void;
-  setSelectedStatus: (status: Status | null) => void;
+  setSelectedStatus: (status: Branch | null) => void;
 }) {
   return (
     <Command>
@@ -108,13 +117,13 @@ function StatusList({
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup>
-          {statuses.map((status) => (
+          {branches.map((status) => (
             <CommandItem
-              key={status.value}
-              value={status.value}
+              key={status.chatEndpoint}
+              value={status.chatEndpoint}
               onSelect={(value) => {
                 setSelectedStatus(
-                  statuses.find((priority) => priority.value === value) || null
+                  branches.find((priority) => priority.chatEndpoint === value) || null
                 );
                 setOpen(false);
               }}

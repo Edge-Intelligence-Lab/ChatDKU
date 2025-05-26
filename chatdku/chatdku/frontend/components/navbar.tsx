@@ -22,7 +22,7 @@ export function Navbar() {
   const isDevRoute = pathname === "/dev" || pathname === "/dev/";
 
   return (
-    <NavigationMenu className="w-full max-w-[98vw] mx-auto flex justify-between items-center fixed top-0 left-1/2 -translate-x-1/2 z-10 bg-background lg:bg-transparent">
+    <NavigationMenu className="w-full max-w-[98vw] mx-auto flex justify-between items-center border-b lg:border-none fixed top-0 left-1/2 -translate-x-1/2 z-10 bg-background lg:bg-transparent">
       <div className="flex flex-row items-center">
         <div className="flex flex-row items-center p-3 pr-0 space-x-2">
           <DynamicLogo width={35} height={35} />
@@ -51,7 +51,6 @@ export function Navbar() {
         </TooltipProvider>
       </div>
       <NavigationMenuList>
-        <NavigationMenuItem></NavigationMenuItem>
         <NavigationMenuItem>
           <TooltipProvider>
             <Tooltip>

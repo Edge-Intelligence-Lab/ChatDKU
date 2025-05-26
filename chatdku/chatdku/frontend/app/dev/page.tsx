@@ -86,7 +86,8 @@ export default function Home() {
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistoryId, setChatHistoryId] = useState("");
   const [thinkingMode, setThinkingMode] = useState(false);
-  const [inputValue, setInputValue] = useState(""); // Add state for tracking input value
+  const [inputValue, setInputValue] = useState("");
+  const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/dev/chat");
   const router = useRouter();
 
   // Initialize marked configuration on component mount and check for terms acceptance
@@ -218,7 +219,8 @@ export default function Home() {
           <AIInput
             thinkingMode={thinkingMode}
             onThinkingModeChange={(value) => setThinkingMode(value)}
-            onInputChange={(value) => setInputValue(value)} // Track input value changes
+            onInputChange={(value) => setInputValue(value)}
+            onEndpointChange={setApiEndpoint}
             onSubmit={async (value) => {
               if (!value.trim()) return;
 
@@ -241,7 +243,7 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch(API_ENDPOINT, {
+                const response = await fetch(apiEndpoint, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -426,7 +428,7 @@ export default function Home() {
           )}
         </div>
         {!isChatboxCentered && (
-          <p className="text-center text-[11px]/3 pb-1 text-muted-foreground/70">
+          <p className="text-center text-[11px]/3 py-0 text-muted-foreground/70">
             AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
           </p>
         )}
