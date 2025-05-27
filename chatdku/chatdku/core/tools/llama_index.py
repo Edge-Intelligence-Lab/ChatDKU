@@ -165,6 +165,8 @@ def get_url(metadata):
                 matching_row = df[df["website_file_path"] == result]
                 if not matching_row.empty:
                     return matching_row.iloc[0]["url"]
+        elif metadata["file_path"] == "/datapool/chat_dku_advising/update_5_13/registration.html":
+            return "https://www.dukekunshan.edu.cn/about/registration/"
         else:  # pay attention, this code is only for chatdku advising
             matching_row = df[df["file_path"] == metadata["file_path"]]
             if not matching_row.empty:
