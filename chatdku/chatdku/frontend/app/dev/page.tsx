@@ -105,10 +105,6 @@ export default function Home() {
     return Date.now() + "-" + Math.random().toString(36).substring(2, 15);
   };
 
-  const toggleThinkingMode = () => {
-    setThinkingMode((prev) => !prev);
-  };
-
   const handleFeedback = useCallback(
     async (userInput: any, answer: any, reason: any) => {
       try {
@@ -429,7 +425,7 @@ export default function Home() {
         </div>
         {!isChatboxCentered && (
           <p className="text-center text-[11px]/3 py-0 text-muted-foreground/70">
-            AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
+            This is an unreleased testing site for development purposes only. 
           </p>
         )}
       </div>

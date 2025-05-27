@@ -31,15 +31,15 @@ const branches: Branch[] = [
     label: "Standard",
   },
   {
-    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/think/chat",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/think/chat",
     label: "Deep Think",
   },
   {
-    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/qwen/chat",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/qwen/chat",
     label: "Qwen",
   },
   {
-    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/chat",
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/inp/chat",
     label: "integrated_new_prompt",
   },
 ];
