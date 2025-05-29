@@ -7,7 +7,7 @@ from chatdku.core.agent import Agent
 from flask import Response, stream_with_context
 from dotenv import load_dotenv
 import os
-from datetime import datetime,timezone
+from datetime import datetime,timezone,date
 load_dotenv()
 
 def routes(app,db,socketio,logger):
@@ -112,7 +112,6 @@ def routes(app,db,socketio,logger):
             feedback_reason = data['feedbackReason']
             question_id = data['chatHistoryId']
             time=datetime.now(timezone.utc)
-
             feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id,time=time)
             db.session.add(feedback)
             db.session.commit()
