@@ -28,6 +28,9 @@ def routes(app,db,socketio,logger):
 
     @app.route("/chat", methods=["POST"])
     def chat():
+        req=Request(date_=datetime.now(timezone.utc),req_count=1)
+        db.session.add(req)
+        db.session.commit()
         messages = request.json.get("messages", [])
         question_id = request.json["chatHistoryId"]
         mode=request.json.get("mode","default")
@@ -49,9 +52,7 @@ def routes(app,db,socketio,logger):
                 for response in responses_gen.response:
                     yield f"{response}"
 
-            req=Request(date_=datetime.now(timezone.utc),req_count=1)
-            db.session.add(req)
-            db.session.commit()
+            
             return Response(stream_with_context(generate()), content_type="text/plain")
 
         except Exception as e:
