@@ -2,7 +2,7 @@ from flask import request,jsonify
 from ollama import chat, ChatResponse
 import requests
 from flask_socketio import emit
-from chatdku.chatdku.backend.app.models import Feedback
+from app.models import Feedback
 from chatdku.core.agent import Agent
 from flask import Response, stream_with_context
 from dotenv import load_dotenv

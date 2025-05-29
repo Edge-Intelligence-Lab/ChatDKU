@@ -22,7 +22,7 @@ from chatdku.core.agent import Agent, CustomClient
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_admin import Admin
-from backend.config import Config
+from config import Config
 import os
 
 
@@ -41,8 +41,8 @@ socketio = SocketIO(
 
 
 db = SQLAlchemy(app=app)
-migrate = Migrate(app=app)
-admin = Admin(name="Dashboard", template_mode="bootstrap4", app=app)
+migrate = Migrate(app=app,db=db)
+admin_config = Admin(name="Dashboard", template_mode="bootstrap4", app=app)
 
 setup()
 use_phoenix()
@@ -67,10 +67,10 @@ if not app.debug:
 
 
 from app import models, routes
-from admin import AdminView
+from app.admin import AdminView
 
 routes.routes(app=app, db=db, socketio=socketio, logger=app.logger or logger)
-admin.add_view(AdminView(models.Feedback, db.session))
+admin_config.add_view(AdminView(models.Feedback, db.session))
 
 
 
