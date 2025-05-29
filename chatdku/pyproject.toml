@@ -54,7 +54,8 @@ dependencies = [
     "Flask-Admin~=1.6.1",
     "eventlet~=0.39.1",
     "openai-whisper",
-    "ollama~=0.4.8"
+    "ollama~=0.4.8",
+    "plotly~=6.1.2"
 ]
 
 [tool.setuptools]

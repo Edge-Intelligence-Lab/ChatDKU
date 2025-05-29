@@ -1,18 +1,24 @@
 # About Backend
 
-### This is the updated backend for ChatDKU. This current branch has 2 versions of the backend:
+### This is the updated backend for ChatDKU. 
 
-1. `agent_app.py`: This version of backend **Does Not** have `speech-to-text` built into it.
-2. `agent_stt_app.py`: This version of backend **Does** support `speech-to-text`.
+The main backend module can be found in `./app`
 
-## Backend Layout
-- `admin_setup.py`: Views for Admin route
+## Backend Layout (`./app`)
+- `admin.py`: Views for Admin route
 - `routes.py`: All the routes for ChatDKU
 -  `models.py`: SQL-Alchemy based ORM for ChatDKU
 -  `extentions.py`: Import references
--  `whsiper_model.py`: Whisper model
--   `agent_app.py` / `agent_stt_app.py` / `agent_app_parallel.py`: Flask app file.
+-   `__init__.py`: Flask app file.
 
+## Other Flask App and python scripts
+-  `whsiper_model.py`: Whisper model
+-  `main.py`: flask app for debugugging during dev
+-  `config.py`: flask config class
+-  `stt_app.py`: speech-to-text flask app
+-  `agent_app_parallel.py`: parallel agent flask app
+
+**NOTE**: Do **NOT** use `main.py` for production
 ## Using the backend
 
 ### Activating environment
@@ -49,10 +55,10 @@ In order to access the database via admin, go to `<server:port>/admin`. However,
 
 ### Running the Flask app
 
-We are using `gunicorn` to deploy our backend. If you are running `agent_stt_app.py` run this script:
+We are using `gunicorn` to deploy our backend. If you are running `app.py` run this script:
 
 ```bash
-gunicorn --worker-class eventlet -w 1 -b <server:port> agent_stt_app:app
+gunicorn --worker-class eventlet -w 1 -b <server:port> app:app
 
 ```
 This should deploy your backend on `http`. If you want to deploy it on `https` run this script:
@@ -61,12 +67,12 @@ This should deploy your backend on `http`. If you want to deploy it on `https` r
 gunicorn --worker-class eventlet -w 1 -b <server:port> \
 --certfile certs/dev.crt \
 --key certs/dev.key \
-agent_stt_app:app
+app:app
 ```
 
 If you are running `agent_app` on `http` run this:
 ```bash
-gunicorn -w 1 -b <server:port> agent_app:app
+gunicorn -w 1 -b <server:port> app:app
 ```
 For `https`, run this:
 

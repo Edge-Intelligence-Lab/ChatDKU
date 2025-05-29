@@ -10,10 +10,9 @@ from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
 from flask_socketio import SocketIO, emit
 from flask import request
-from models import Feedback
-
-from extentions import db, migrate,admin
-from admin_setup import AdminView
+from chatdku.chatdku.backend.app.models import Feedback
+from app.admin import AdminView
+from backend.config import Config
 
 import io
 import torch
@@ -25,6 +24,9 @@ import gc
 from ollama import chat, ChatResponse
 import dspy
 import logging
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_admin import Admin
 
 from eventlet import wsgi
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -33,6 +35,7 @@ from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent, CustomClient
 
 app = Flask(__name__)
+app.config.from_object(Config)
 app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet") #Socket IO to receive audio 
@@ -44,8 +47,9 @@ dspy.settings.configure(lm=llama_client)
 agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app=app)
+migrate = Migrate(app=app)
+admin = Admin(name="Dashboard", template_mode="bootstrap4", app=app)
 
 
 db.init_app(app)
