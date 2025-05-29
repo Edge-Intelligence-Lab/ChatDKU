@@ -11,6 +11,8 @@ from app.models import Request
 
 
 class AdminView(ModelView):
+    form_excluded_columns=['Date']
+    column_exclude_list=['Date']
     can_create=False
     can_delete=True
     can_edit=False
