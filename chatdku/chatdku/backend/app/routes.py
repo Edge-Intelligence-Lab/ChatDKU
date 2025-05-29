@@ -2,7 +2,7 @@ from flask import request,jsonify
 from ollama import chat, ChatResponse
 import requests
 from flask_socketio import emit
-from app.models import Feedback
+from app.models import Feedback,Request
 from chatdku.core.agent import Agent
 from flask import Response, stream_with_context
 from dotenv import load_dotenv
@@ -49,6 +49,9 @@ def routes(app,db,socketio,logger):
                 for response in responses_gen.response:
                     yield f"{response}"
 
+            req=Request(date_=datetime.now(timezone.utc),req_count=1)
+            db.session.add(req)
+            db.session.commit()
             return Response(stream_with_context(generate()), content_type="text/plain")
 
         except Exception as e:

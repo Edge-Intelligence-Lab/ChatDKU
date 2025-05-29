@@ -26,7 +26,7 @@ from config import Config
 import os
 
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder='templates')
 app.config.from_object(Config)
 app.wsgi_app = ProxyFix(
     app.wsgi_app, x_proto=1, x_host=1
@@ -42,7 +42,8 @@ socketio = SocketIO(
 
 db = SQLAlchemy(app=app)
 migrate = Migrate(app=app,db=db)
-admin_config = Admin(name="Dashboard", template_mode="bootstrap4", app=app)
+from app.admin import Base
+admin_config = Admin(name="Dashboard", template_mode="bootstrap4", app=app,index_view=Base())
 
 setup()
 use_phoenix()
