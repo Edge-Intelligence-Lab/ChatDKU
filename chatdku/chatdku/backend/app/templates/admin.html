@@ -1,0 +1,15 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+  <div class="container-fluid">
+    <h3>ChatDKU Dashboard</h3>
+    <div id="plot"></div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+      var graph =JSON.parse(`{{ graphJson | safe }}`);
+      Plotly.newPlot('plot', graph.data, graph.layout);
+    </script>
+  </div>
+{% endblock %}
+
