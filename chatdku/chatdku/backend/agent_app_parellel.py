@@ -11,7 +11,7 @@ from flask import Response, stream_with_context, jsonify
 from flask_socketio import SocketIO, emit
 from flask import request
 from chatdku.chatdku.backend.app.models import Feedback
-from admin_setup import AdminView
+from admin import AdminView
 from backend.config import Config
 
 import io
