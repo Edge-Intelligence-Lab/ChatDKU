@@ -1,4 +1,0 @@
-Requirement already satisfied: python-engineio in /home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages (4.9.1)
-Requirement already satisfied: simple-websocket>=0.10.0 in /home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages (from python-engineio) (1.1.0)
-Requirement already satisfied: wsproto in /home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages (from simple-websocket>=0.10.0->python-engineio) (1.2.0)
-Requirement already satisfied: h11<1,>=0.9.0 in /home/munishlohani/test/ChatDKU/chatdku/.venv/lib/python3.12/site-packages (from wsproto->simple-websocket>=0.10.0->python-engineio) (0.14.0)

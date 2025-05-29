@@ -2,13 +2,16 @@ from flask import request,jsonify
 from ollama import chat, ChatResponse
 import requests
 from flask_socketio import emit
-from models import Feedback
+from chatdku.chatdku.backend.app.models import Feedback
 from chatdku.core.agent import Agent
 from flask import Response, stream_with_context
-
+from dotenv import load_dotenv
+import os
+from datetime import datetime,timezone
+load_dotenv()
 
 def routes(app,db,socketio,logger):
-    WHISPER_MODEL_URI="http://10.200.14.82:8002"
+    WHISPER_MODEL_URI=os.getenv("WHISPER_MODEL_URI")
 
     @app.after_request
     def no_sniff_header(response):
@@ -104,8 +107,9 @@ def routes(app,db,socketio,logger):
             bot_answer = data['botAnswer']
             feedback_reason = data['feedbackReason']
             question_id = data['chatHistoryId']
+            time=datetime.now(timezone.utc)
 
-            feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id)
+            feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id,time=time)
             db.session.add(feedback)
             db.session.commit()
             print("data recorded")
