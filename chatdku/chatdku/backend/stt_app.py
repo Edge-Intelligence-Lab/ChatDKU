@@ -15,7 +15,7 @@ import logging
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, async_mode="eventlet")  # Socket IO to receive audio
+socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet")  # Socket IO to receive audio
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 WHISPER_MODEL_URI = os.getenv("WHISPER_MODEL_URI")
@@ -42,37 +42,39 @@ def ollama_response(data):
 
 @socketio.on("audio_data")
 def handle_audio(data):
-    logger.info("audio received")
-    try:
-        if not isinstance(data, bytes):
-            raise ValueError("Audio data must be bytes")
+    print("socket.iooo")
+    emit("Socket",{"status":"success"})
+    #logger.info("audio received")
+    #try:
+     #   if not isinstance(data, bytes):
+      #      raise ValueError("Audio data must be bytes")
 
-        logger.info("Processing audio...")
-        audio_np_req = requests.post(
-            f"{WHISPER_MODEL_URI}/process_audio", files={"audio_bytes": data}
-        )  # converts to np array
-        audio_np = audio_np_req.json()["audio_np"]
-        logger.info("Transcribing...")
-        result = requests.post(
-            f"{WHISPER_MODEL_URI}/transcribe", json={"audio_np": audio_np}
-        )
-        text = result.json()["text"]
+       # logger.info("Processing audio...")
+        #audio_np_req = requests.post(
+         #   f"{WHISPER_MODEL_URI}/process_audio", files={"audio_bytes": data}
+        #)  # converts to np array
+        #audio_np = audio_np_req.json()["audio_np"]
+        #logger.info("Transcribing...")
+        #result = requests.post(
+         #   f"{WHISPER_MODEL_URI}/transcribe", json={"audio_np": audio_np}
+        #)
+        #text = result.json()["text"]
 
-        if text:
-            logger.info(f"Transcription successful: {text}")
+        #if text:
+         #   logger.info(f"Transcription successful: {text}")
             # response = ollama_response(text)  # tweak the transcribed response
-            emit("audio_transcribed", {"status": "success", "text": text})
-        else:
-            logger.warning("No text was transcribed")
-            emit("audio_transcribed", {"status": "success", "text": ""})
+          #  emit("audio_transcribed", {"status": "success", "text": text})
+        #else:
+         #   logger.warning("No text was transcribed")
+           # emit("audio_transcribed", {"status": "success", "text": ""})
 
-    except Exception as e:
-        logger.error(f"Transcription failed: {str(e)}")
-        emit("audio_received", {"status": "error", "message": str(e)})
+    #except Exception as e:
+     #   logger.error(f"Transcription failed: {str(e)}")
+      #  emit("audio_received", {"status": "error", "message": str(e)})
 
 
 # NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it can be commented out. For development it can be uncommented and used with `python agent_app.py`
 
 if __name__ == "__main__":
-    socketio.run(app=app, host="0.0.0.0", port=8002)
+    socketio.run(app=app, host="0.0.0.0", port=8003, ssl_context=("/etc/ssl/certs/chatdku.dukekunshan.edu.cn.pem", "/etc/ssl/updated_certs/chatdku.dukekunshan.edu.cn.key"))
 # NOTE: Might want to make it easier to change the port
