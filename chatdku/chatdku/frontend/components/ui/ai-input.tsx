@@ -64,7 +64,7 @@ export function AIInput({
   }, [thinkingMode]);
 
   useEffect(() => {
-    socketRef.current = io("https://chatdku.dukekunshan.edu.cn/socket.io/", {
+    socketRef.current = io("https://10.200.14.82:8003", {
       transports: ["websocket"],
       secure: true,
     });
