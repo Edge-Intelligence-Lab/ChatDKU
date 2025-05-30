@@ -21,7 +21,7 @@ classifiers = [
 
 dependencies = [
     # core
-    "pydantic>=2.8.0",
+    "pydantic==2.10.5",
     "llama-index~=0.11.9",
     "llama-index-storage-docstore-redis~=0.2.0",
     "llama-index-vector-stores-redis~=0.3.2",
@@ -45,6 +45,17 @@ dependencies = [
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",
     "gunicorn~=23.0.0",
+    "whisper~=1.1.10",
+    "Flask-SocketIO~=5.5.1",
+    "pydub~=0.25.1",
+    "python-ffmpeg~=2.0.12",
+    "Flask-SQLAlchemy~=3.1.1",
+    "Flask-Migrate~=4.1.0",
+    "Flask-Admin~=1.6.1",
+    "eventlet~=0.39.1",
+    "openai-whisper",
+    "ollama~=0.4.8",
+    "plotly~=6.1.2"
 ]
 
 [tool.setuptools]
