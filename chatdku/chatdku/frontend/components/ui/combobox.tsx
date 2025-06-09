@@ -42,6 +42,10 @@ const branches: Branch[] = [
     chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/inp/chat",
     label: "integrated_new_prompt",
   },
+  {
+    chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/ant/chat",
+    label: "Anar testing",
+  },
 ];
 
 interface ComboBoxResponsiveProps {

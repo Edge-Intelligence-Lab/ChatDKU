@@ -29,7 +29,7 @@ const parseMarkdown = (content: string): string => {
 };
 
 // Simulates a streaming effect for text
-const streamText = async (text: string, elementContainer: HTMLElement, delay = 15) => {
+const streamText = async (text: string, elementContainer: HTMLElement, delay = 10) => {
   let currentText = '';
   const streamContainer = document.createElement('div');
   streamContainer.className = 'text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]';
@@ -139,7 +139,7 @@ export default function Home() {
       if (isUser || !shouldStream) {
         // Use DOMPurify to sanitize HTML content when it's from markdown
         const sanitizedContent = 
-          role === "user" ? content : parseMarkdown(content);
+          content = parseMarkdown(content);
 
         messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
