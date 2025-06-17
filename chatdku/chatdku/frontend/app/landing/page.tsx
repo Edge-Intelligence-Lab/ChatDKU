@@ -1,0 +1,80 @@
+"use client";
+import About from "@/components/about";
+import { Navbar } from "@/components/navbar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+export default function AboutPage() {
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const router = useRouter();
+
+  const handleProceed = () => {
+    if (termsAccepted) {
+      // Set cookie for terms acceptance - expires in 30 days
+      Cookies.set('terms_accepted', 'true', { expires: 30 });
+      // Navigate to the main app
+      router.push('/');
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col items-center">
+        <About />
+        <div className="flex flex-col items-center">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="terms" 
+              checked={termsAccepted}
+              className="cursor-pointer"
+              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+            />
+            <label
+              htmlFor="terms"
+              className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Accept Terms and Conditions
+            </label>
+          </div>
+          
+          <p className="text-xs text-muted-foreground mt-2">
+            We save a cookie to remember your preferences.
+          </p>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild className="my-8">
+                <div>
+                  <Button 
+                    variant="default" 
+                    className="cursor-pointer" 
+                    disabled={!termsAccepted}
+                    onClick={handleProceed}
+                  >
+                    <p>
+                      Proceed to <span className="font-bold">ChatDKU</span>
+                    </p>
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!termsAccepted && (
+                <TooltipContent >
+                  <p>Please accept the Terms and Conditions to use ChatDKU</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+    </div>
+  );
+}
