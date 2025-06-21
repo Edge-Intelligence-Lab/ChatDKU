@@ -74,7 +74,15 @@ nohup python -u -m http.server 9014 -d chatdku/frontend > ./logs/python_server_l
 disown -h
 ```
 
-### Start One of the Following Main Backend
+### Main Backend
+
+Set the Phoenix authentication token in the environment variable:
+```bash
+export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6NCJ9.63j_N4wrKUZL4ZumPhqyM2svLifie-LwqFDqao7ZJrQ'
+```
+_This is considered [unsecure](https://github.com/Glitterccc/ChatDKU/issues/15), but only a temporary convenience during development._
+
+Then start one of the following:
 
 #### Single-process (`agent_app.py`)
 

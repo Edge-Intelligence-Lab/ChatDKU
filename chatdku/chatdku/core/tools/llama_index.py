@@ -200,8 +200,8 @@ def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     ]
 
 
-def nodes_to_string(nodes: list[NodeWithScore]):
-    return "\n\n".join([node.get_content(MetadataMode.LLM) for node in nodes])
+def nodes_to_dicts(nodes: list[NodeWithScore]):
+    return [{"text": node.text, "metadata": node.metadata} for node in nodes]
 
 
 # Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
@@ -330,12 +330,16 @@ class VectorRetriever(dspy.Module):
                 nodes = retrieved_nodes
             print("Vector------------------------")
             nodes = simplify_nodes(nodes)
+<<<<<<< HEAD
             for node in nodes:
                 if ENABLE_PRINT:
                     print(node.metadata["file_path"])
                     print(node.metadata["url"])
                     print(node.metadata["page_number"])
             result = nodes_to_string(nodes)
+=======
+            result = nodes_to_dicts(nodes)
+>>>>>>> chat_dku_student_release
 
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(
@@ -478,11 +482,14 @@ class KeywordRetriever(dspy.Module):
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
+<<<<<<< HEAD
             # for r in results.docs:
             #     if 'bulletin' in json.loads(r["_node_content"]).get('metadata')['file_path']:
             #         if ENABLE_PRINT:
             #             print(r)
 
+=======
+>>>>>>> chat_dku_student_release
             try:
                 nodes = [
                     NodeWithScore(
@@ -508,12 +515,16 @@ class KeywordRetriever(dspy.Module):
             # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
             print("Keyword------------------------")
             nodes = simplify_nodes(nodes)
+<<<<<<< HEAD
             for node in nodes:
                 if ENABLE_PRINT:
                     print(node.metadata["file_path"])
                     print(node.metadata["url"])
                     print(node.metadata["page_number"])
             result = nodes_to_string(nodes)
+=======
+            result = nodes_to_dicts(nodes)
+>>>>>>> chat_dku_student_release
 
             span.set_attributes(nodes_to_openinference(nodes))
             span.set_attributes(

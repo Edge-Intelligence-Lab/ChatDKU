@@ -147,6 +147,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.idea/
 
 # pytype static type analyzer
 .pytype/
@@ -184,6 +185,7 @@ tags
 # macOS
 __MACOSX
 .DS_Store
+.idea
 
 # Project-specific
 .venv

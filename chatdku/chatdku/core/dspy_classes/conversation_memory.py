@@ -1,4 +1,6 @@
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
+
 from chatdku.core.utils import (
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
@@ -84,6 +86,11 @@ class ConversationMemory(dspy.Module):
             "previous_summary": 1 / 4,
         }
 
+    def history_str(self, l: int = 0, r: Optional[int] = None):
+        if r is None:
+            r = len(self.history)
+        return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r]])
+
     def get_token_limits(self) -> dict[str, int]:
         return token_limit_ratio_to_count(
             self.token_ratios, len(get_template(self.compressor))
@@ -115,9 +122,7 @@ class ConversationMemory(dspy.Module):
             )
             if min_index > 0:
                 compressor_inputs = dict(
-                    history_to_discard="\n".join(
-                        [i.model_dump_json() for i in self.history[:min_index]]
-                    ),
+                    history_to_discard=self.history_str(0, min_index),
                     previous_summary=self.summary,
                 )
                 compressor_inputs = truncate_tokens_all(

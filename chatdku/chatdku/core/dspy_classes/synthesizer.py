@@ -296,9 +296,7 @@ class Synthesizer(dspy.Module):
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             synthesizer_args = dict(
                 current_user_message=current_user_message,
-                conversation_history="\n".join(
-                    [i.model_dump_json() for i in conversation_memory.history]
-                ),
+                conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 # TODO: Might want to unify conversion to string for `ToolMemory`
                 tool_history="\n\n###\n\n".join(

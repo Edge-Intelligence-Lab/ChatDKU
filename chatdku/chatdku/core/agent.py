@@ -249,7 +249,7 @@ class Agent(dspy.Module):
                     max_history_size=limits["tool_history"],
                 )
                 # if VERBOSE:
-                #     print(f"tool memory: {self.tool_memory.history}")
+                #     print(f"tool memory: {self.tool_memory.history_str()}")
 
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -337,7 +337,7 @@ class Agent(dspy.Module):
                     max_history_size=limits["tool_history"],
                 )
                 # if VERBOSE:
-                #     print(f"tool_memory.history: {self.tool_memory.history}")
+                #     print(f"tool_memory.history: {self.tool_memory.history_str()}")
 
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             self.prev_response = self.synthesizer(
