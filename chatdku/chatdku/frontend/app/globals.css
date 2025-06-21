@@ -220,7 +220,11 @@
 
 /* Markdown Content Styling */
 .markdown-content {
+<<<<<<< HEAD
   @apply text-foreground py-0 my-0;
+=======
+  @apply text-foreground;
+>>>>>>> 3f7e23b38b1580f508e26ce82b75b9b855560206
 }
 
 /* Headings */
@@ -247,6 +251,7 @@
 
 /* Lists */
 .markdown-content ul {
+<<<<<<< HEAD
   @apply list-disc pl-6 mb-0;
 }
 .markdown-content ol {
@@ -257,6 +262,18 @@
 }
 .markdown-content li > ul, .markdown-content li > ol {
   @apply mb-0 mt-0;
+=======
+  @apply list-disc pl-6 mb-1;
+}
+.markdown-content ol {
+  @apply list-decimal pl-6 mb-2;
+}
+.markdown-content li {
+  @apply mb-1;
+}
+.markdown-content li > ul, .markdown-content li > ol {
+  @apply mb-0 mt-1;
+>>>>>>> 3f7e23b38b1580f508e26ce82b75b9b855560206
 }
 
 /* Links */
@@ -266,12 +283,20 @@
 
 /* Blockquotes */
 .markdown-content blockquote {
+<<<<<<< HEAD
   @apply border-l-4 border-muted pl-4 italic my-2;
+=======
+  @apply border-l-4 border-muted pl-4 italic my-4;
+>>>>>>> 3f7e23b38b1580f508e26ce82b75b9b855560206
 }
 
 /* Tables */
 .markdown-content table {
+<<<<<<< HEAD
   @apply w-full border-collapse my-2;
+=======
+  @apply w-full border-collapse my-4;
+>>>>>>> 3f7e23b38b1580f508e26ce82b75b9b855560206
 }
 .markdown-content th {
   @apply border border-border px-4 py-2 bg-muted font-bold text-left;
@@ -282,7 +307,11 @@
 
 /* Code blocks */
 .markdown-content pre {
+<<<<<<< HEAD
   @apply bg-muted dark:bg-black p-2 rounded-md my-2 overflow-x-auto;
+=======
+  @apply bg-muted dark:bg-black p-4 rounded-md my-4 overflow-x-auto;
+>>>>>>> 3f7e23b38b1580f508e26ce82b75b9b855560206
 }
 .markdown-content code {
   @apply font-mono text-sm;

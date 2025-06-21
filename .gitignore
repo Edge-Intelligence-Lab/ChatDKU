@@ -185,6 +185,7 @@ tags
 # macOS
 __MACOSX
 .DS_Store
+.idea
 
 # Project-specific
 .venv
