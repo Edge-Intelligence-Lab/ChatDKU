@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 
 const About: React.FC = () => {
   const [termsAndCondition, setTermsAndCondition] = useState(false);
@@ -60,7 +61,7 @@ const About: React.FC = () => {
           <li className="text-sm lg:text-md font-medium">
             All A.I. systems have the potential to make an error for a variety
             of reasons. While the developers of this platform will make every effort
-            to make this platform as accurate as possible, it is the user's
+            to make this platform as accurate as possible, it is the user’s
             responsibility to double check the accuracy of any answers provided
             by the system. If a user misses a deadline or neglects to take an action
             because of an answer given by the system, the responsibility for that
@@ -76,7 +77,8 @@ const About: React.FC = () => {
           </li>
         </ol>
 
-        <p className="text-center text-sm mt-4 lg:mt-8 text-muted-foreground">
+        <Image src="/logos/edge-intelligence.png" alt="Edge Intelligence Lab logo." width={300} height={50} className="rounded-lg mt-4 lg:mt-8 mb-2" />
+        <p className="text-center text-sm text-muted-foreground">
           Developed by DKU Edge Intelligence Lab, in partnership with the IGHE
           SET Lab and Office of Undergraduate Advising.
         </p>
