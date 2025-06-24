@@ -222,7 +222,7 @@ export function PromptRecs({ onPromptSelect, onSubmit }: PromptRecsProps) {
         <Button
           key={`${prompt.text}-${index}`}
           variant="outline"
-          className="flex items-center gap-2 px-4 py-2 text-xs hover:bg-accent/50 rounded-3xl transition-colors w-full md:max-w-[280px] sm:max-w-[230px] h-auto whitespace-normal"
+          className="flex items-center cursor-pointer gap-2 px-4 py-2 text-xs hover:bg-accent/50 rounded-3xl transition-colors w-full md:max-w-[280px] sm:max-w-[230px] h-auto whitespace-normal"
           onClick={() => handlePromptClick(prompt.text)}
         >
           <span className="text-lg flex-shrink-0">{prompt.icon}</span>
