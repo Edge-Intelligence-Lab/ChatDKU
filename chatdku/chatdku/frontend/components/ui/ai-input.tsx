@@ -7,7 +7,9 @@ import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
+
 import { ComboBoxResponsive } from "./combobox";
+
 
 export function AIInput({
   id = "ai-input",

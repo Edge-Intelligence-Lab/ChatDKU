@@ -7,15 +7,22 @@ from flask import Flask, request
 from flask_cors import CORS
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from flask import Response, stream_with_context, jsonify
-
+from flask import request
+from models import Feedback
 import dspy
 
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.agent import Agent,CustomClient
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 CORS(app)
 
+db=SQLAlchemy()
+app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
+
+db.init_app(app)
 @app.route("/reset",methods=["POST"])
 def reset_agent():
     agent.reset()
@@ -55,13 +62,31 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+
+@app.route('/save_feedback', methods=['POST'])
+def save_feedback():
+    try:
+        data = request.get_json()
+        user_input = data['userInput']
+        bot_answer = data['botAnswer']
+        feedback_reason = data['feedbackReason']
+        question_id = data['chatHistoryId']
+
+        feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id)
+        db.session.add(feedback)
+        db.session.commit()
+        return jsonify({'message': 'Feedback saved successfully'})
+    except Exception as e:
+        return jsonify({"message":str(e)})
+
+
+
 if __name__ == "__main__":
     setup()
     use_phoenix()
     llama_client = CustomClient()
     dspy.settings.configure(lm=llama_client)
-    agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
+    agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
     # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=9012)
-
+    app.run(host="0.0.0.0", port=8000)

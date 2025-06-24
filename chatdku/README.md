@@ -70,7 +70,7 @@ For the sake of easy monitoring and long-term running, the commands will all be 
 
 First, we need to turn this folder into a Python server so that users can see the index.html file when they access the corresponding port.
 ```bash
-nohup python -u -m http.server 9011 -d chatdku/frontend > ./logs/python_server_logs.txt &
+nohup python -u -m http.server 9014 -d chatdku/frontend > ./logs/python_server_logs.txt &
 disown -h
 ```
 
@@ -86,7 +86,7 @@ Then start one of the following:
 
 #### Single-process (`agent_app.py`)
 
-Next, start the `agent_app.py` service. This is the agent interface.(agent_app use port 9012 now)
+Next, start the `agent_app.py` service. This is the agent interface.(agent_app use port `9015` now)
 ```bash
 nohup python -u chatdku/backend/agent_app.py > ./logs/agent_logs.txt &
 disown -h
@@ -94,17 +94,19 @@ disown -h
 
 #### Multi-process (`agent_app_parallel.py`)
 
-Port, number of workers, and timeout can be adjusted. __Use port `9012` to match frontend's setting.__
+Port, number of workers, and timeout can be adjusted. __Use port `9015` to match frontend's setting.__
+
 ```bash
-nohup python -u -m gunicorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:9012 --workers 9012 --timeout 120 > ./logs/agent_logs.txt &
+nohup python -u -m gunicorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:9015 --workers 32 --timeout 120 > ./logs/agent_logs.txt &
+
 disown -h
 ```
 
 ### Feedback Collection Backend (`save_feedback.py`)
 
-Finally, start the `save_feedback.py` service. (Using port 9013 now)
+Finally, start the `save_feedback.py` service. (Using port 9016 now)
 ```bash
-nohup python -u chatdku/backend/save_feedback.py /datapool/chatdku_feedback/feedback.csv > ./logs/save_fb_logs.txt &
+nohup python -u chatdku/backend/save_feedback.py /datapool/chatdku_student_feedback/feedback.csv > ./logs/save_fb_logs.txt &
 disown -h
 ```
 

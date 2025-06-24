@@ -53,6 +53,7 @@ CUSTOM_SYSTEM_PROMPT = (
     'This means you should not begin your response with phrases like "here is an answer" '
     'nor conclude your answer with phrases like "the above summary about...". '
     "Do not speculate or make up information. "
+    # "Only provide the true URL in the reference. If the reference is not available, do not provide the link."
 )
 
 
@@ -114,7 +115,7 @@ def setup(add_system_prompt: bool = False) -> None:
 
 
 def use_phoenix():
-    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_main"})
+    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_student_release"})
     tracer_provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(tracer_provider)
     config.tracer = trace.get_tracer(__name__)

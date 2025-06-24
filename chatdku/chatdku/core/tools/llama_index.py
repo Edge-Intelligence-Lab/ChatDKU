@@ -447,7 +447,7 @@ class KeywordRetriever(dspy.Module):
             # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
             # results = self.client.ft("idx:test").search(query_cmd, params)
 
-            retriever_top_k = 5
+            retriever_top_k = 10
             query_cmd = (
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
