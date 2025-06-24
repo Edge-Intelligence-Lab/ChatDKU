@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react";
+import { BrainCircuit, ChevronsUpDown } from "lucide-react";
 
 type Branch = {
 	chatEndpoint: string;
@@ -58,12 +58,10 @@ export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxRes
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
-					<Button variant="ghost" className="transition-colors border border-foreground/10 duration-300 w-auto rounded-4xl py-4.5 justify-start">
-						{/* {!inputValue &&
-              (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)} */}
+					<button className="flex gap-x-1">
+						<BrainCircuit />
 						{selectedStatus?.label}
-						<ChevronsUpDown className="opacity-50" />
-					</Button>
+					</button>
 				</PopoverTrigger>
 				<PopoverContent className="w-[150px] p-0" align="center">
 					<StatusList setOpen={setOpen} setSelectedStatus={setSelectedStatus} />
@@ -75,13 +73,11 @@ export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxRes
 	return (
 		<Drawer open={open} onOpenChange={setOpen}>
 			<DrawerTrigger asChild>
-				<Button
-					variant="ghost"
-					className="w-auto rounded-4xl border border-foreground/10 transition-colors duration-300 bg-transparent active:bg-foreground/10 py-4.5 justify-start"
-				>
+				<button className="flex gap-x-1">
+					{/* <ChevronsUpDown /> */}
+					<BrainCircuit className="w-5 h-5" />
 					{!inputValue && (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
-					{inputValue && <ChevronsUpDown className="text-foreground" />}
-				</Button>
+				</button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<div className="mt-4 border-t">

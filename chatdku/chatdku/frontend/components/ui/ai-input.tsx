@@ -1,13 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Brain, CornerRightUp, Mic, Paperclip, Plus } from "lucide-react";
+import { Brain, CornerRightUp, FileBox, FolderPlus, Mic, PlusCircle, Trash, Trash2, Upload, Wrench, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
 import { ComboBoxResponsive } from "./combobox";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "./badge";
 
 export function AIInput({
 	id = "ai-input",
@@ -48,8 +53,9 @@ export function AIInput({
 	const pathname = usePathname();
 	const isDevRoute = pathname === "/dev" || pathname === "/dev/";
 
-	const inputButtonStyle =
-		"flex items-center justify-around gap-1 p-2 min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer hover:bg-secondary active:bg-secondary border-none transition-all duration-200";
+	const inputButtonStyle = cn(
+		"flex items-center justify-around gap-1 p-2 text-sm min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer border-transparent hover:border-foreground/10 border-1 hover:shadow-md active:text-foreground active:bg-foreground/10 transition-all duration-200"
+	);
 
 	useEffect(() => {
 		// Check if running in browser and if media devices are supported
@@ -203,7 +209,7 @@ export function AIInput({
 			<div
 				className={cn(
 					"relative max-w-2xl w-full mx-auto",
-					"rounded-3xl p-1 backdrop-blur-md dark:bg-accent shadow-sm",
+					"rounded-3xl p-1 bg-background dark:bg-accent shadow-sm",
 					"border border-foreground/10 ring-black/20 dark:ring-white/20",
 					"overflow-y-auto resize-none",
 					"focus-visible:ring-0 focus-visible:ring-offset-0",
@@ -212,11 +218,6 @@ export function AIInput({
 					"transition-all duration-200",
 					inputValue ? "shadow-[0_0_12px_rgba(46,185,224,1)] animate-shadow-pulse" : ""
 				)}
-				style={
-					{
-						// ...existing inline styles if any...
-					}
-				}
 			>
 				<style>
 					{`
@@ -272,39 +273,87 @@ export function AIInput({
 					<div className="flex flex-row gap-x-1">
 						{/* Thinking mode toggle button */}
 						{!isDevRoute && (
-							<button
-								className={cn(
-									"flex items-center gap-1 p-2 rounded-4xl cursor-pointer",
-									"transition-all duration-200 right-8 px-2 ",
-									// "border border-foreground/10",
-									"border-none",
-									isThinking ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-secondary-foreground"
-								)}
-								onClick={toggleThinkingMode}
-							>
-								<Brain className="w-4 h-4" />
-								{/* <span className={cn("text-sm font-medium transition-all pr-1", inputValue ? "hidden" : "")}>Deep Think</span> */}
-								<span className={cn("text-sm font-medium transition-all pr-1")}>Deep Think</span>
+							<button className={cn(inputButtonStyle, isThinking && "bg-primary text-primary-foreground")} onClick={toggleThinkingMode}>
+								<Brain className="w-5 h-5" />
+								<span className={cn("")}>Deep Think</span>
 							</button>
 						)}
 
 						{isDevRoute && (
-							<div className={cn("rounded-4xl border-0 border-foreground/10 flex items-center right-8 mr-3 cursor-pointer")}>
+							<div className={inputButtonStyle}>
 								<ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />
 							</div>
 						)}
 
-						<button className={inputButtonStyle}>
-							{/* <Plus className="w-5 h-5" /> */}
-							<Paperclip className="w-4 h-4" />
-							Attach
-						</button>
+						{isDevRoute && (
+							<Sheet>
+								<SheetTrigger asChild>
+									<button className={inputButtonStyle}>
+										<FolderPlus className="w-5 h-5" />
+										Sources
+									</button>
+								</SheetTrigger>
+								<SheetContent>
+									<SheetHeader>
+										<SheetTitle>Edit Sources</SheetTitle>
+										<SheetDescription>Choose which sources ChatDKU can examine to answer your next question.</SheetDescription>
+									</SheetHeader>
+									<div className="flex flex-col gap-6 px-4">
+										<div className="flex items-center cursor-pointer gap-2">
+											<Checkbox id="dku_files" />
+											<Label htmlFor="dku_files">Search DKU files, websites, and documents</Label>
+										</div>
+										<div className="flex items-center cursor-pointer gap-2">
+											<Checkbox id="userFile1" className="cursor-pointer" />
+											<Label htmlFor="userFile1" className="flex items-center cursor-pointer break-all gap-2 ">
+												dku_library_policy_2025_final_final_edited (1).pdf
+											</Label>
+											<Button variant="destructive" className="rounded-full w-10 h-10">
+												<Trash2 className="w-4 h-4" />
+											</Button>
+										</div>
+										<div className="flex items-center cursor-pointer gap-2">
+											<Checkbox id="userFile2" className="cursor-pointer" />
+											<Label htmlFor="userFile2" className="flex items-center cursor-pointer break-all gap-2 ">
+												dku_library_policy_2025_final_final_edited_by_anar (1).docx
+											</Label>
+											<Button variant="destructive" className="rounded-full w-10 h-10">
+												<Trash2 className="w-4 h-4" />
+											</Button>
+										</div>
+										<div className="flex items-center cursor-pointer gap-2">
+											<Button className="relative w-full flex items-center gap-2 px-3 py-2">
+												<Upload className="w-5 h-5" />
+												<span>Add New Document</span>
+												<input
+													type="file"
+													name="file"
+													className="absolute inset-0 opacity-0 cursor-pointer"
+													style={{ width: "100%", height: "100%" }}
+												/>
+											</Button>
+										</div>
+										<div className="flex items-center gap-2 hover:cursor-not-allowed">
+											<Button className="w-full " variant="secondary" disabled>
+												Maximum 3 documents reached.
+											</Button>
+										</div>
+									</div>
+									<SheetFooter>
+										<Button type="submit">Save changes</Button>
+										<SheetClose asChild>
+											<Button variant="outline">Close</Button>
+										</SheetClose>
+									</SheetFooter>
+								</SheetContent>
+							</Sheet>
+						)}
 					</div>
 					<div>
 						<button
 							className={cn(
 								inputButtonStyle,
-								inputValue ? "hidden" : "opacity-100 scale-100",
+								inputValue && "hidden",
 								isRecording && "bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary"
 							)}
 							onClick={toggleRecording}
