@@ -1,11 +1,14 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
+
+import { ComboBoxResponsive } from "./combobox";
 
 
 export function AIInput({
@@ -18,6 +21,7 @@ export function AIInput({
   className,
   thinkingMode,
   onThinkingModeChange,
+  onEndpointChange,
 }: {
   id?: string;
   placeholder?: string;
@@ -28,6 +32,7 @@ export function AIInput({
   className?: string;
   thinkingMode?: boolean;
   onThinkingModeChange?: (value: boolean) => void;
+  onEndpointChange?: (endpoint: string) => void;
 }) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
@@ -42,9 +47,8 @@ export function AIInput({
   const audioChunksRef = useRef<Blob[]>([]);
   const socketRef = useRef<any>(null);
 
-
-
-
+  const pathname = usePathname();
+  const isDevRoute = pathname === "/dev" || pathname === "/dev/";
 
   useEffect(() => {
     // Check if running in browser and if media devices are supported
@@ -62,7 +66,7 @@ export function AIInput({
   }, [thinkingMode]);
 
   useEffect(() => {
-    socketRef.current = io("https://chatdku.dukekunshan.edu.cn/socket.io/", {
+    socketRef.current = io("https://chatdku.dukekunshan.edu.cn:8007", {
       transports: ["websocket"],
       secure: true,
     });
@@ -138,7 +142,6 @@ export function AIInput({
         setInputValue(data.text);
       });
 
-
       mediaRecorderRef.current.start();
       console.log("Recording started...");
     } catch (error) {
@@ -197,7 +200,7 @@ export function AIInput({
   };
 
   return (
-    <div className={cn("w-full py-4", className)}>
+    <div className={cn("w-full py-2", className)}>
       <div className="relative max-w-xl w-full mx-auto">
         <Textarea
           id={id}
@@ -240,34 +243,46 @@ export function AIInput({
         />
 
         {/* Thinking mode toggle button */}
-        <div
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
-            "transition-all duration-200 right-8 px-2 border border-foreground/10",
-            isThinking
-              ? "bg-primary text-primary-foreground"
-              : "shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
-          )}
-          onClick={toggleThinkingMode}
-        >
-          <Brain className="w-5 h-5" />
-          <span
+        {!isDevRoute && (
+          <div
             className={cn(
-              "text-sm font-medium transition-all pr-1",
-              inputValue ? "hidden" : ""
+              "absolute top-1/2 -translate-y-1/2 flex items-center gap-1 p-2 mr-3 rounded-4xl cursor-pointer",
+              "transition-all duration-200 right-8 px-2 border border-foreground/10",
+              isThinking
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary/50 text-secondary-foreground"
+            )}
+            onClick={toggleThinkingMode}
+          >
+            <Brain className="w-5 h-5" />
+            <span
+              className={cn(
+                "text-sm font-medium transition-all pr-1",
+                inputValue ? "hidden" : ""
+              )}
+            >
+              Think
+            </span>
+          </div>
+        )}
+
+        {isDevRoute && (
+          <div
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 rounded-4xl border-0 border-foreground/10 flex items-center right-8 mr-3 cursor-pointer"
             )}
           >
-            Think
-          </span>
-        </div>
+            <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />
+          </div>
+        )}
 
         <div
           className={cn(
             "absolute top-1/2 -translate-y-1/2 rounded-4xl p-2 transition-all duration-200",
             inputValue ? "hidden" : "right-1",
             isRecording
-              ? "bg-red-500 border border-foreground/10 shadow hover:shadow-lg hover:mask-bg-secondary/50 text-secondary"
-              : "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground"
+              ? "bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary"
+              : "border border-foreground/10 hover:bg-secondary/50 text-secondary-foreground"
           )}
           onClick={toggleRecording}
         >
@@ -280,7 +295,7 @@ export function AIInput({
           className={cn(
             "absolute top-1/2 -translate-y-1/2 right-1",
             "rounded-4xl p-2",
-            "border border-foreground/10 shadow hover:shadow-lg hover:bg-secondary/50 text-secondary-foreground",
+            "border border-foreground/10 hover:bg-secondary/50 text-secondary-foreground",
             "transition-all duration-200",
             inputValue
               ? "opacity-100 scale-100"
