@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getUser } from "@/lib/user";
+import { getUser } from "@/components/hooks/user";
 
 export default function WelcomeBanner() {
 	const [me, setMe] = useState<{ eppn: string; displayName: string } | null>(null);

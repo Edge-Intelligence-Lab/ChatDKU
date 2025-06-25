@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { getUser } from "@/lib/user";
+import { getUser } from "@/components/hooks/user";
 
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
