@@ -4,7 +4,6 @@ import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
-import Starter from "@/components/starter";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
@@ -86,7 +85,7 @@ export default function Home() {
 	const [isChatboxCentered, setIsChatboxCentered] = useState(true);
 	const [chatHistoryId, setChatHistoryId] = useState("");
 	const [thinkingMode, setThinkingMode] = useState(false);
-	const [inputValue, setInputValue] = useState(""); // Add state for tracking input value
+	const [inputValue, setInputValue] = useState("");
 	const router = useRouter();
 
 	// Initialize marked configuration on component mount and check for terms acceptance
@@ -102,10 +101,6 @@ export default function Home() {
 
 	const generateUniqueId = () => {
 		return Date.now() + "-" + Math.random().toString(36).substring(2, 15);
-	};
-
-	const toggleThinkingMode = () => {
-		setThinkingMode((prev) => !prev);
 	};
 
 	const handleFeedback = useCallback(
@@ -140,7 +135,7 @@ export default function Home() {
 		// For user messages or non-streamed assistant messages
 		if (isUser || !shouldStream) {
 			// Use DOMPurify to sanitize HTML content when it's from markdown
-			const sanitizedContent = role === "user" ? content : parseMarkdown(content);
+			const sanitizedContent = role === "user" ? content : parseMarkdown(content).trim();
 
 			messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
@@ -192,19 +187,21 @@ export default function Home() {
 			</header>
 
 			<main className="flex-1 w-full flex flex-col items-center pt-16">
-				<div id="chat-log" className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-32 overflow-y-auto"></div>
+				<div id="chat-log" className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-42 overflow-y-auto"></div>
 			</main>
 
 			<div
 				className={`w-full max-w-[95vw] p-2 pt-0 transition-all duration-300 ${
 					isChatboxCentered
 						? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-						: "fixed bottom-0 left-1/2 -translate-x-1/2 gradient-to-b from-0% to-100% backdrop-blur-md md:backdrop-blur-none z-10"
+						: "fixed bottom-0 left-1/2 -translate-x-1/2 rounded-t-3xl backdrop-blur-md md:backdrop-blur-none z-10"
 				}`}
 			>
 				{showStarter && (
 					<div className="w-full flex justify-center">
-						<Starter />
+						<div className="flex flex-col items-center p-4 w-4/5 md:max-w-1/2 sm:max-w-4/5">
+							<h1 className=" text-2xl lg:text-3xl">Ask ChatDKU</h1>
+						</div>
 					</div>
 				)}
 				<div>
