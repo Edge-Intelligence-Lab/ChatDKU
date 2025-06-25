@@ -117,6 +117,8 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = False,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
     ):
         """
         Args:
@@ -128,6 +130,9 @@ class Agent(dspy.Module):
                 complete response as a string.
             get_itermediate: If `True`, `forward()` would return the synthesized
                 result for each agent iteration as a generator.
+            user_id: If set anything other, means the net_id of the user
+            search_mode: 0 for searching EITHER the default corpus OR the user corpus
+                INDIVIDUALLY | 1 for searching BOTH
         """
 
         super().__init__()
@@ -136,8 +141,17 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
+        ## data uploading features
+        self.user_id = user_id
+        self.search_mode = search_mode
+
         self.planner = assert_transform_module(
-            Planner([VectorRetriever(), KeywordRetriever()]),
+            Planner(
+                [
+                    VectorRetriever(user_id=user_id, search_mode=search_mode),
+                    KeywordRetriever(),
+                ]
+            ),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
         self.conversation_memory = ConversationMemory()

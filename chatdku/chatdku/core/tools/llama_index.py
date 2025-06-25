@@ -36,6 +36,7 @@ from llama_index.core.vector_stores import (
     MetadataFilter,
     MetadataFilters,
     FilterOperator,
+    FilterCondition,
 )
 
 from redis import Redis
@@ -238,14 +239,20 @@ class VectorRetriever(dspy.Module):
         retriever_top_k: int = 10,
         use_reranker: bool = False,
         reranker_top_n: int = 5,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
         self.reranker_top_n = reranker_top_n
+        self.user_id = user_id
+        self.search_mode = search_mode
 
         db = chromadb.PersistentClient(path=config.chroma_db)
         chroma_collection = db.get_collection("dku_html_pdf")
+
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
         self.index = VectorStoreIndex.from_vector_store(vector_store)
         # self.retriever = TransformRetriever(
         #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
@@ -279,12 +286,41 @@ class VectorRetriever(dspy.Module):
                 }
             )
 
-            filters = MetadataFilters(
-                filters=[
-                    MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                    for i in exclude
-                ]
-            )
+            # Before the upgrade (just for convenience's sake)
+            # filters = MetadataFilters(
+            #     filters=[
+            #         MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+            #         for i in exclude
+            #     ]
+            # )
+
+            # if search_mode == 0 it means the user wants to search either the default corpus or their own one
+            if self.search_mode == 0:
+                filters = MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="user_id",
+                            value=self.user_id,
+                            operator=FilterOperator.EQ,
+                        ),
+                        [
+                            MetadataFilter(
+                                key="id", value=i, operator=FilterOperator.NE
+                            )
+                            for i in exclude
+                        ],
+                    ],
+                    condition=FilterCondition.AND,
+                )
+            # else search both of them
+            else:
+                filters = MetadataFilters(
+                    filters=[
+                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+                        for i in exclude
+                    ]
+                )
+
             retriever = self.index.as_retriever(
                 similarity_top_k=self.retriever_top_k, filters=filters
             )
