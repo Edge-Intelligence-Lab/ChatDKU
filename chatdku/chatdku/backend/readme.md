@@ -10,6 +10,7 @@ The main backend module can be found in `./app`
 -  `models.py`: SQL-Alchemy based ORM for ChatDKU
 -  `extentions.py`: Import references
 -   `__init__.py`: Flask app file.
+-   `utils.py`: Utility functions
 
 ## Other Flask App and python scripts
 -  `whsiper_model.py`: Whisper model
@@ -43,12 +44,12 @@ On Linux/Mac
 
 ChatDKU uses a database to store user feedback data to enhance future responses. Our database **Does Not** contain any personal information. 
 
-The first step is to create a database to store `feedback` data.
+The first step is to create a database to store `feedback, userModel, Files` data.
 ```bash
 flask db upgrade
 ```
 
-This should create a database table for you. You can access the database via `/instance/database.db` or through the admin route.
+This should create a database table for you. You can access the database via `database.db` or through the admin route.
 In order to access the database via admin, go to `<server:port>/admin`. However, make sure you have your `Flask` application running.
 
 
