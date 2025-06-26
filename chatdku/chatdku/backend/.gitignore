@@ -1,0 +1,8 @@
+**/local_cache
+.flaskenv
+nohup.out
+
+database.db
+
+**/database.db
+**/certs
