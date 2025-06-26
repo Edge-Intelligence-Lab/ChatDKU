@@ -1,4 +1,4 @@
-#Utils file for backend
+#Utils file for 
 
 from flask import request
 
@@ -12,5 +12,5 @@ def shib_attrs():
     }
 
 
-def allowed_file(filename):
+def allowed_file(filename): 
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
