@@ -10,7 +10,7 @@ import os
 from datetime import datetime,timezone,date
 from werkzeug.utils import secure_filename
 import uuid
-from utils import shib_attrs,allowed_file,ALLOWED_EXTENSIONS
+from app.utils import shib_attrs,allowed_file,ALLOWED_EXTENSIONS
 
 load_dotenv()
 
