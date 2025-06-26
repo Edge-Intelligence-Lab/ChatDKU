@@ -7,3 +7,5 @@ class Config:
     'sqlite:///'+os.path.join(basedir,'./database.db')
     SQLALCHEMY_TRACK_MODIFICATIONS=False
     SECRET_KEY=os.getenv("SECRET_KEY") or None
+
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024
