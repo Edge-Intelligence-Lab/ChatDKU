@@ -18,11 +18,6 @@ from typing import Any, Dict, List, Optional
 from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import (
-    PyPDFLoader,
-    UnstructuredWordDocumentLoader,
-)
 
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -38,26 +33,6 @@ from custom_partation import partition
 unstructured.partition.auto.partition = partition
 
 import hashlib
-
-text_splitter = RecursiveCharacterTextSplitter(
-    separators=[
-        "\n\n",
-        "\n",
-        ".",
-        ",",
-        "\u200b",  # Zero-width space
-        "\uff0c",  # Fullwidth comma
-        "\u3001",  # Ideographic comma
-        "\uff0e",  # Fullwidth full stop
-        "\u3002",  # Ideographic full stop
-        "",
-        "?",
-    ],
-    chunk_size=490,
-    chunk_overlap=20,
-    length_function=len,
-    is_separator_regex=False,
-)
 
 
 
@@ -164,8 +139,8 @@ def update_data(data_dir):
     # nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
-    documents_path = "/datapool/chat_dku_advising/New_parsed.pkl"
-
+    documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
+    documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
 
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
@@ -182,22 +157,13 @@ def update_data(data_dir):
         file_extractor={
             ".htm": reader,
             ".html": reader,
+            ".pdf": pdf_parser,
             ".csv": reader,
             ".jpg": reader,
             ".xlsx": xlsx_reader,
+
         },
     ).load_data()
-
-    # deal with pdf
-    for filename in os.listdir(data_dir):
-        file_path = os.path.join(data_dir, filename)
-        pdf_documents=[]
-        if filename.endswith(".pdf"):
-            pdf_loader = PyPDFLoader(file_path)
-            for page in pdf_loader.load():
-                entry = text_splitter.split_text(page.page_content)
-                for chunk in entry:
-                    add_chunk(chunk, filename, page.metadata.get("page", "N/A"))
 
     for doc in documents:
         if doc.metadata["file_type"] == "text/html":

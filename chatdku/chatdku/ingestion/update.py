@@ -139,7 +139,6 @@ def change_detect(data_dir):
     # Update documents
     #documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
     documents_path = config.documents_path
-    print(f"Current documents_path: {config.documents_path}")
 
     if not os.path.exists(documents_path):
         with open(documents_path, "wb") as f:
