@@ -6,7 +6,7 @@
 from flask import Flask, request
 from flask_cors import CORS
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
-from flask import Response, stream_with_context, jsonify
+from flask import Response, stream_with_context, jsonify, session
 from flask import request
 from models import Feedback
 import dspy
@@ -17,12 +17,34 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 app = Flask(__name__)
+app.secret_key = "CHANGE-ME-TO-A-RANDOM-STRING"
 CORS(app)
 
 db=SQLAlchemy()
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///./database.db"
 
 db.init_app(app)
+
+def shib_attrs():
+    """Pull attributes added by Apache ↔︎ Shibboleth."""
+    return {
+        "eppn":        request.headers.get("X-EPPN"),         # e.g. jbd123@duke.edu
+        "displayName": request.headers.get("X-DisplayName"),  # e.g. Jane BlueDevil
+    }
+
+@app.before_request
+def fill_session():
+    attrs = shib_attrs()
+    if attrs["eppn"]:                 # only if user is logged in
+        session["user"] = attrs       # now available everywhere in Flask
+
+@app.route("/api/user")
+def user_info():
+    attrs = shib_attrs()
+    if not attrs["eppn"]:
+        return jsonify({"error": "unauthenticated"}), 401
+    return jsonify(attrs)
+
 @app.route("/reset",methods=["POST"])
 def reset_agent():
     agent.reset()
@@ -89,4 +111,4 @@ if __name__ == "__main__":
     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
     # NOTE: Might want to make it easier to change the port
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=18420)
