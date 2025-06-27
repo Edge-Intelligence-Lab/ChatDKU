@@ -160,11 +160,11 @@ def load_and_index(
 
     pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
 
-    # nodes = pipeline.run(
-    #     documents=documents, num_workers=pipeline_workers, show_progress=True
-    # )
-    # pipeline.persist(pipeline_cache_path)
-    # print("nodes over")
+    nodes = pipeline.run(
+        documents=documents, num_workers=pipeline_workers, show_progress=True
+    )
+    pipeline.persist(pipeline_cache_path)
+    print("nodes over")
     #
     # docstore = SimpleDocumentStore()
     # docstore.add_documents(nodes)
