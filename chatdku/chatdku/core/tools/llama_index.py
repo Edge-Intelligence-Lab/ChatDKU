@@ -240,7 +240,7 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_collection("dku_html_pdf")
+        chroma_collection = db.get_collection("temka_testing")
 
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
@@ -294,7 +294,6 @@ class VectorRetriever(dspy.Module):
                         MetadataFilter(
                             key="user_id",
                             value="Chat_DKU",
-                            operator=FilterOperator.EQ,
                         ),
                         [
                             MetadataFilter(
@@ -312,13 +311,11 @@ class VectorRetriever(dspy.Module):
                         MetadataFilter(
                             key="user_id",
                             value=user_id,
-                            operator=FilterOperator.EQ,
                         ),
                         [
                             MetadataFilter(
                                 key="file_name",
                                 value=doc_name,
-                                operator=FilterOperator.EQ,
                             )
                             for doc_name in docs
                         ],

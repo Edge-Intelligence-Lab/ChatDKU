@@ -243,7 +243,11 @@ class Agent(dspy.Module):
                 self.planner.name_to_model.items(), self.planner.tools
             ):
                 r = tool(
-                    query=current_user_message, internal_memory=self.internal_memory
+                    query=current_user_message,
+                    internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    docs=docs,
                 )
                 first_ite_result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -411,7 +415,7 @@ def main():
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
-                    print(f"first token时间:{end_time-start_time}")
+                    print(f"first token时间:{end_time - start_time}")
                     first_token = False
                 print(r, end="")
             print()

@@ -1,25 +1,15 @@
-from llama_index.core.schema import TextNode
 from redis import Redis
 from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis import RedisVectorStore
 
-from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.core.ingestion import IngestionPipeline
 
 import pickle
 
 
 ######
-from pathlib import Path
-import pickle
-import chromadb
 from llama_index.core import Settings
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.core.ingestion import IngestionPipeline
-from typing import Any
 from chatdku.setup import setup
-from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -38,7 +28,7 @@ from chatdku.config import config
 setup(add_system_prompt=True)
 
 
-with open("/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl", "rb") as f:
+with open("/home/Ar-temis/Documents/docunent.pkl", "rb") as f:
     documents = pickle.load(f)
 
 
@@ -47,8 +37,8 @@ redis_client = Redis.from_url("redis://localhost:6379")
 custom_schema = IndexSchema.from_dict(
     {
         "index": {
-            "name": "idx:test",
-            "prefix": "test_doc",
+            "name": "idx:temka",
+            "prefix": "temka_doc",
             "key_separator": ":",
         },
         "fields": [
@@ -57,10 +47,10 @@ custom_schema = IndexSchema.from_dict(
             {"type": "tag", "name": "user_id"},
             {"type": "tag", "name": "doc_id"},
             {"type": "text", "name": "text"},
+            {"type": "tag", "name": "file_name"},
             # Custom metadata fields
             {"type": "tag", "name": "groups"},
             {"type": "tag", "name": "file_path"},
-            {"type": "tag", "name": "file_name"},
             {"type": "tag", "name": "last_modified_date"},
             # Custom vector embeddings field definition
             {
