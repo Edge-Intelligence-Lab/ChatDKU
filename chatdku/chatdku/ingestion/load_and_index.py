@@ -96,8 +96,7 @@ def load_and_index(
     # if read_only:
     #     return
 
-
-    with open(config.documents_path, 'rb') as f:
+    with open(config.documents_path, "rb") as f:
         documents = pickle.load(f)
 
     trans = []
@@ -145,7 +144,7 @@ def load_and_index(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
-    chroma_collection = db.get_or_create_collection("dku_html_pdf")
+    chroma_collection = db.get_or_create_collection("temka_testing")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
     # NOTE: Currently, LlamaIndex has bug with using both caching and docstore.

@@ -117,8 +117,6 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = False,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
     ):
         """
         Args:
@@ -130,9 +128,6 @@ class Agent(dspy.Module):
                 complete response as a string.
             get_itermediate: If `True`, `forward()` would return the synthesized
                 result for each agent iteration as a generator.
-            user_id: If set anything other, means the net_id of the user
-            search_mode: 0 for searching EITHER the default corpus OR the user corpus
-                INDIVIDUALLY | 1 for searching BOTH
         """
 
         super().__init__()
@@ -141,14 +136,10 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        ## data uploading features
-        self.user_id = user_id
-        self.search_mode = search_mode
-
         self.planner = assert_transform_module(
             Planner(
                 [
-                    VectorRetriever(user_id=user_id, search_mode=search_mode),
+                    VectorRetriever(),
                     KeywordRetriever(),
                 ]
             ),
@@ -175,7 +166,14 @@ class Agent(dspy.Module):
         self.prev_response = None
         self.conversation_memory = ConversationMemory()
 
-    def _forward_gen(self, current_user_message: str, question_id: str):
+    def _forward_gen(
+        self,
+        current_user_message: str,
+        question_id: str,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = [],
+    ):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
         # More about the issue regarding the use of `with` in generators:
@@ -369,7 +367,19 @@ class Agent(dspy.Module):
             span.end()
         yield dspy.Prediction(response=self.prev_response)
 
-    def forward(self, current_user_message: str, question_id: str = ""):
+    def forward(
+        self,
+        current_user_message: str,
+        question_id: str = "",
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+    ):
+        """
+        current_user_message: user query
+        user_id: If set anything other than Chat_DKU, means the net_id of the user
+        search_mode: 0 for searching EITHER the default corpus OR the user corpus
+            INDIVIDUALLY | 1 for searching BOTH
+        """
         gen = self._forward_gen(current_user_message, question_id)
         if self.get_intermediate:
             return gen

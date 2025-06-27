@@ -38,11 +38,7 @@ from chatdku.config import config
 setup(add_system_prompt=True)
 
 
-
-
-
-
-with open('/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl', 'rb') as f:
+with open("/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl", "rb") as f:
     documents = pickle.load(f)
 
 
@@ -58,6 +54,7 @@ custom_schema = IndexSchema.from_dict(
         "fields": [
             # Required fields for llamaindex
             {"type": "tag", "name": "id"},
+            {"type": "tag", "name": "user_id"},
             {"type": "tag", "name": "doc_id"},
             {"type": "text", "name": "text"},
             # Custom metadata fields
@@ -94,9 +91,9 @@ vector_store = RedisVectorStore(
 trans = []
 
 extractors = []
-text_spliter="sentence_splitter"
-use_recursive_directory_summarize=False
-text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20}
+text_spliter = "sentence_splitter"
+use_recursive_directory_summarize = False
+text_spliter_args = {"chunk_size": 1024, "chunk_overlap": 20}
 
 
 supported_extractors = ["title", "keyword", "questions_answered", "summary"]
