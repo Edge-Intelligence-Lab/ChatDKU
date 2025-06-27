@@ -52,9 +52,9 @@ def load_and_index(
     # please use only a single process for now.
     pipeline_workers: int = 1,
 ):
-    documents_path = os.path.join(config.data_dir, config.documents_path)
-    hash_path = os.path.join("./", "hash.pkl")
-    now_hash = hash_directory(data_dir)
+    # documents_path = os.path.join(config.data_dir, config.documents_path)
+    # hash_path = os.path.join("./", "hash.pkl")
+    # now_hash = hash_directory(data_dir)
 
     # if update:
     #     print(f"Force updating {documents_path}")
@@ -96,8 +96,7 @@ def load_and_index(
     # if read_only:
     #     return
 
-
-    with open(config.documents_path, 'rb') as f:
+    with open(config.documents_path, "rb") as f:
         documents = pickle.load(f)
 
     trans = []
@@ -145,7 +144,7 @@ def load_and_index(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
     db.reset()  # Clear previously stored data in vector database
-    chroma_collection = db.get_or_create_collection("dku_html_pdf")
+    chroma_collection = db.get_or_create_collection("temka_testing")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
     # NOTE: Currently, LlamaIndex has bug with using both caching and docstore.
@@ -158,16 +157,19 @@ def load_and_index(
     )
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
+
+    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+
     nodes = pipeline.run(
         documents=documents, num_workers=pipeline_workers, show_progress=True
     )
     pipeline.persist(pipeline_cache_path)
     print("nodes over")
-
-    docstore = SimpleDocumentStore()
-    docstore.add_documents(nodes)
-    docstore.persist(config.docstore_path)
-    print("docstore over")
+    #
+    # docstore = SimpleDocumentStore()
+    # docstore.add_documents(nodes)
+    # docstore.persist(config.docstore_path)
+    # print("docstore over")
 
 
 def main():

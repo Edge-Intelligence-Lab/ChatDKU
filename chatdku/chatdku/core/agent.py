@@ -137,7 +137,12 @@ class Agent(dspy.Module):
         self.rewrite_query = rewrite_query
 
         self.planner = assert_transform_module(
-            Planner([VectorRetriever(), KeywordRetriever()]),
+            Planner(
+                [
+                    VectorRetriever(),
+                    KeywordRetriever(),
+                ]
+            ),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
         self.conversation_memory = ConversationMemory()
@@ -161,7 +166,14 @@ class Agent(dspy.Module):
         self.prev_response = None
         self.conversation_memory = ConversationMemory()
 
-    def _forward_gen(self, current_user_message: str, question_id: str):
+    def _forward_gen(
+        self,
+        current_user_message: str,
+        question_id: str,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = [],
+    ):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
         # More about the issue regarding the use of `with` in generators:
@@ -231,7 +243,11 @@ class Agent(dspy.Module):
                 self.planner.name_to_model.items(), self.planner.tools
             ):
                 r = tool(
-                    query=current_user_message, internal_memory=self.internal_memory
+                    query=current_user_message,
+                    internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    docs=docs,
                 )
                 first_ite_result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -355,7 +371,19 @@ class Agent(dspy.Module):
             span.end()
         yield dspy.Prediction(response=self.prev_response)
 
-    def forward(self, current_user_message: str, question_id: str = ""):
+    def forward(
+        self,
+        current_user_message: str,
+        question_id: str = "",
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+    ):
+        """
+        current_user_message: user query
+        user_id: If set anything other than Chat_DKU, means the net_id of the user
+        search_mode: 0 for searching EITHER the default corpus OR the user corpus
+            INDIVIDUALLY | 1 for searching BOTH
+        """
         gen = self._forward_gen(current_user_message, question_id)
         if self.get_intermediate:
             return gen
@@ -387,7 +415,7 @@ def main():
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
-                    print(f"first token时间:{end_time-start_time}")
+                    print(f"first token时间:{end_time - start_time}")
                     first_token = False
                 print(r, end="")
             print()

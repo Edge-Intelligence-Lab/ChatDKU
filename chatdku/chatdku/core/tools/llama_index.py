@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 from enum import Enum
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterator, Mapping
 from pydantic import Field
 import os
 
@@ -24,18 +24,15 @@ from nltk.tokenize import word_tokenize
 import chromadb
 import llama_index
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core import VectorStoreIndex
-from llama_index.core.retrievers import TransformRetriever
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
 from llama_index.core.vector_stores import (
     MetadataFilter,
     MetadataFilters,
     FilterOperator,
+    FilterCondition,
 )
 
 from redis import Redis
@@ -134,7 +131,6 @@ def get_reranker(top_n: int):
 
 
 import pandas as pd
-import re
 
 df = pd.read_csv(config.url_csv_path)
 # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
@@ -244,8 +240,10 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_collection("dku_html_pdf")
+        chroma_collection = db.get_collection("temka_testing")
+
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
         self.index = VectorStoreIndex.from_vector_store(vector_store)
         # self.retriever = TransformRetriever(
         #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
@@ -262,6 +260,9 @@ class VectorRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = [],
     ):
         with (
             config.tracer.start_as_current_span("Vector Retriever")
@@ -279,12 +280,99 @@ class VectorRetriever(dspy.Module):
                 }
             )
 
-            filters = MetadataFilters(
-                filters=[
-                    MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                    for i in exclude
-                ]
-            )
+            # Before the upgrade (just for convenience's sake)
+            # filters = MetadataFilters(
+            #     filters=[
+            #         MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+            #         for i in exclude
+            #     ]
+            # )
+
+            if search_mode == 0:
+                filters = MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="user_id",
+                            value="Chat_DKU",
+                        ),
+                        [
+                            MetadataFilter(
+                                key="id", value=i, operator=FilterOperator.NE
+                            )
+                            for i in exclude
+                        ],
+                    ],
+                    condition=FilterCondition.AND,
+                )
+            # search from user's files
+            elif search_mode == 1:
+                filters = MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="user_id",
+                            value=user_id,
+                        ),
+                        [
+                            MetadataFilter(
+                                key="file_name",
+                                value=doc_name,
+                            )
+                            for doc_name in docs
+                        ],
+                        [
+                            MetadataFilter(
+                                key="id", value=i, operator=FilterOperator.NE
+                            )
+                            for i in exclude
+                        ],
+                    ],
+                    condition=FilterCondition.AND,
+                )
+            # search from both corpuses
+            elif search_mode == 3:
+                clause_user_docs = MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="user_id",
+                            value=user_id,
+                        ),
+                        [
+                            MetadataFilter(
+                                key="file_name",
+                                value=doc_name,
+                            )
+                            for doc_name in docs
+                        ],
+                    ],
+                    condition=FilterCondition.AND,
+                )
+
+                # Top-level OR clause between clause A and B
+                or_clause = MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="user_id",
+                            value="Chat_DKU",
+                        ),
+                        clause_user_docs,
+                    ],
+                    condition=FilterCondition.OR,
+                )
+
+                # Final filter includes exclusion clause
+                filters = MetadataFilters(
+                    filters=[
+                        or_clause,
+                        [
+                            MetadataFilter(
+                                key="id", value=i, operator=FilterOperator.NE
+                            )
+                            for i in exclude
+                        ],
+                    ],
+                    condition=FilterCondition.AND,
+                )
+
             retriever = self.index.as_retriever(
                 similarity_top_k=self.retriever_top_k, filters=filters
             )
@@ -361,6 +449,9 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = [],
     ):
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def escape_strs(strs: list[str]):
@@ -430,6 +521,23 @@ class KeywordRetriever(dspy.Module):
             exclude_str = " ".join([f"-@id:({e})" for e in exclude])
             if exclude_str:
                 query_str += " " + exclude_str
+
+            # Adding the user_id filter if the user wants to search for
+            if search_mode == 0:
+                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+
+            elif search_mode == 1:
+                docs_str = "|".join(f"{name}" for name in docs)
+                query_str = (
+                    query_str
+                    + f" @user_id:{{{user_id}}} "
+                    + f"@file_name:{{{docs_str}}}"
+                )
+
+            elif search_mode == 2:
+                docs_str = "|".join(f"{name}" for name in docs)
+                user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
+                query_str = query_str + f" {user_clause}"
 
             # NOTE: I think it will be better to use PARAMS for security reasons.
             # However, it appears that RediSearch has an issue using both parameters and query attributes.
