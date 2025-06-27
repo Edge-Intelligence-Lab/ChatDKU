@@ -16,8 +16,8 @@ class Config:
                 "llm_url": "http://localhost:8001/v1",
                 "context_window": 64000,
                 # about load_and_index
-                "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "data_dir": "/home/Ar-temis/Documents",
+                "documents_path": "/home/Ar-temis/Documents/document.pkl",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,

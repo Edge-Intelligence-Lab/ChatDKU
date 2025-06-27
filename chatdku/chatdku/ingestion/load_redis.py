@@ -28,7 +28,7 @@ from chatdku.config import config
 setup(add_system_prompt=True)
 
 
-with open("/home/Ar-temis/Documents/docunent.pkl", "rb") as f:
+with open("/home/Ar-temis/Documents/document.pkl", "rb") as f:
     documents = pickle.load(f)
 
 
