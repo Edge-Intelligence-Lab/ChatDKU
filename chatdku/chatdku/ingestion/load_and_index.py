@@ -143,7 +143,7 @@ def load_and_index(
     db = chromadb.PersistentClient(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
-    db.reset()  # Clear previously stored data in vector database
+    # db.reset()  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection("temka_testing")
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
