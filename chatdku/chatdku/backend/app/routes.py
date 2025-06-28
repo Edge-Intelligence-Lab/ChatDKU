@@ -23,14 +23,14 @@ def routes(app,db,socketio,logger):
         if attrs["eppn"]:                 # only if user is logged in
             session["user"] = attrs
             netid=attrs["eppn"].split("@")[0]
-            g.user=db.session.scalar(
-                db.select(UserModel).where(UserModel.netid==netid)
-            )
+            # g.user=db.session.scalar(
+            #     db.select(UserModel).where(UserModel.netid==netid)
+            # )
 
-            if not g.user:
-                g.user=UserModel(netid=netid)
-                db.session.add(g.user)
-                db.session.commit()
+            # if not g.user:
+            #     g.user=UserModel(netid=netid)
+            #     db.session.add(g.user)
+            #     db.session.commit()                # Commented because the db schema wasn't created yet
 
     @app.after_request
     def no_sniff_header(response):
@@ -43,12 +43,12 @@ def routes(app,db,socketio,logger):
             return jsonify({"message":"Unauthorized"}),401
 
 
-    @app.route("/api/user")
+    @app.route("/user")
     def user_info():
         attrs = shib_attrs()
         if not attrs["eppn"]:
             return jsonify({"error": "unauthenticated"}), 401
-        return jsonify(g.user.netid)
+        return jsonify(attrs)
 
     @app.route("/chat", methods=["POST"])
     def chat():
