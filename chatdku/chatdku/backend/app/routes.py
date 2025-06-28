@@ -1,30 +1,54 @@
-from flask import request,jsonify
+from flask import request,jsonify,session,g
 from ollama import chat, ChatResponse
 import requests
 from flask_socketio import emit
-from app.models import Feedback,Request
+from app.models import Feedback,Request,UploadedFile,UserModel
 from chatdku.core.agent import Agent
 from flask import Response, stream_with_context
 from dotenv import load_dotenv
 import os
 from datetime import datetime,timezone,date
+from werkzeug.utils import secure_filename
+import uuid
+from app.utils import shib_attrs,allowed_file,ALLOWED_EXTENSIONS
+
 load_dotenv()
 
 def routes(app,db,socketio,logger):
     WHISPER_MODEL_URI=os.getenv("WHISPER_MODEL_URI")
 
+    @app.before_request
+    def fill_session():
+        attrs = shib_attrs()
+        if attrs["eppn"]:                 # only if user is logged in
+            session["user"] = attrs
+            netid=attrs["eppn"].split("@")[0]
+            # g.user=db.session.scalar(
+            #     db.select(UserModel).where(UserModel.netid==netid)
+            # )
+
+            # if not g.user:
+            #     g.user=UserModel(netid=netid)
+            #     db.session.add(g.user)
+            #     db.session.commit()                # Commented because the db schema wasn't created yet
+
     @app.after_request
     def no_sniff_header(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
+    
+
+    def user_check():
+        if not hasattr(g,'user'):
+            return jsonify({"message":"Unauthorized"}),401
 
 
-    @app.route("/reset", methods=["POST"])
-    def reset_agent():
-        return {
-            "good": "Chat history is not supported by the backend yet. No agent has been reset for now."
-        }, 200
-
+    @app.route("/user")
+    def user_info():
+        attrs = shib_attrs()
+        if not attrs["eppn"]:
+            return jsonify({"error": "unauthenticated"}), 401
+        return jsonify(attrs)
 
     @app.route("/chat", methods=["POST"])
     def chat():
@@ -119,5 +143,36 @@ def routes(app,db,socketio,logger):
             return jsonify({'message': 'Feedback saved successfully'})
         except Exception as e:
             return jsonify({"message":str(e)})
+        
+    @app.route('/upload',methods=['POST'])
+    def upload():
+        user_check()
+        if "file" not in request.files:
+            return jsonify({"message":"Files required"})
+        data=request.files.get("file")
+        if not data or data.filename=="":
+            return jsonify({"message":"No file received"})
+        
+        if not allowed_file(data.filename):
+            return jsonify({"message": "Only PDF files are allowed"})
+        
+        filename = f"{secure_filename(g.user.netid)}_{uuid.uuid4()}.pdf"
+        folder_path=os.getenv("UPLOAD_PATH","/datapool/uploads")
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        filepath=os.path.join(folder_path,filename)
+        data.save(filepath)
+
+        uploaded_file=UploadedFile(file_name=filename)
+        db.session.add(uploaded_file)
+        db.session.commit()
+
+
+
+        
+
+
+        
+
         
     

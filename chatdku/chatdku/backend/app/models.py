@@ -54,3 +54,24 @@ class Request(db.Model):
 
         return list(date_list),list(req_list)
     
+
+class UserModel(db.Model):
+    __tablename__ = 'user_model'
+    
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    netid: so.Mapped[str] = so.mapped_column(sa.String(50), unique=True, nullable=False)
+    files: so.Mapped[list['UploadedFile']] = so.relationship(back_populates="user")
+    
+
+class UploadedFile(db.Model):
+    __tablename__ = 'uploaded_file'
+    
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    file_name: so.Mapped[str] = so.mapped_column(sa.String(200), unique=True, nullable=False)
+    uploaded_date: so.Mapped[datetime] = so.mapped_column(
+        sa.DateTime(timezone=True), 
+        default=lambda: datetime.now(timezone.utc), 
+        nullable=False
+    )
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey('user_model.id'), index=True)
+    user: so.Mapped['UserModel'] = so.relationship(back_populates="files")

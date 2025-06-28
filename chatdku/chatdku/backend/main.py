@@ -13,5 +13,5 @@ if __name__ == "__main__":
     dspy.settings.configure(lm=llama_client)
     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
 
-    socketio.run(app=app, host="0.0.0.0", port=8000,debug=True)
+    socketio.run(app=app, host="0.0.0.0", port=18420,debug=True)
 # NOTE: Might want to make it easier to change the port
