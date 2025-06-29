@@ -71,7 +71,7 @@ class UseCustomPrompt:
         return self.func(message, CUSTOM_SYSTEM_PROMPT)
 
 
-def setup(add_system_prompt: bool = False) -> None:
+def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     """Setup common resources from command line arguments."""
     # A Text Embeddings Inference server is used to serve the embedding model
     # The endpoint should be of the format [base_url]/[author]/[model_name]
@@ -99,23 +99,26 @@ def setup(add_system_prompt: bool = False) -> None:
 
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
     # with e.g. vLLM
-    Settings.llm = OpenAILike(
-        model=config.llm,
-        api_base=config.llm_url,
-        api_key="fake",  # A dummy API key is needed or else connection error would occur
-        context_window=config.context_window,
-        temperature=0.7,
-        is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
-        is_function_calling_model=False,
-        tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-        messages_to_prompt=messages_to_prompt,
-        completion_to_prompt=completion_to_prompt,
-    )
-    print("Using LLM")
+    if use_llm:
+        Settings.llm = OpenAILike(
+            model=config.llm,
+            api_base=config.llm_url,
+            api_key="fake",  # A dummy API key is needed or else connection error would occur
+            context_window=config.context_window,
+            temperature=0.7,
+            is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
+            is_function_calling_model=False,
+            tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+            messages_to_prompt=messages_to_prompt,
+            completion_to_prompt=completion_to_prompt,
+        )
+        print("Using LLM")
 
 
 def use_phoenix():
-    resource = Resource(attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_student_release"})
+    resource = Resource(
+        attributes={ResourceAttributes.PROJECT_NAME: "ChatDKU_student_release"}
+    )
     tracer_provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(tracer_provider)
     config.tracer = trace.get_tracer(__name__)

@@ -240,7 +240,7 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_collection("temka_testing")
+        chroma_collection = db.get_collection(config.chroma_collection)
 
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 

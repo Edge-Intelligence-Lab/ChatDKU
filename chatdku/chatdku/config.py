@@ -15,14 +15,17 @@ class Config:
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:8001/v1",
                 "context_window": 64000,
-                # about load_and_index
+                # about ingestion
                 "data_dir": "/home/Ar-temis/Documents",
                 "documents_path": "/home/Ar-temis/Documents/document.pkl",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
-                # about query
+                "redis_url": "redis://localhost:6379",
                 "chroma_db": "/datapool/db_chat_dku_advising",
+                "chroma_collection": "dku_html_pdf",
+                # about query
+                "index_name": "chat_dku_advising",  # TODO change name
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 # about graphrag
