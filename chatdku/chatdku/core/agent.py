@@ -313,7 +313,7 @@ class Agent(dspy.Module):
                     query = current_user_message
 
                 try:
-                    p = self.planner(
+                    planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
                         # as the memory is not always updated for every iteration.
                         # Also, the memory should concern answering the overarching
@@ -324,18 +324,21 @@ class Agent(dspy.Module):
                         max_calls=self.max_iterations - i,
                     )
                     if VERBOSE:
-                        print(f"Planner:{p}")
+                        print(f"Planner:{planner}")
                 except dspy.DSPyAssertionError:
                     if VERBOSE:
                         print("max assertion retries hit")
                     break
 
                 if VERBOSE:
-                    print(f"calls: {p.calls}")
+                    print(f"calls: {planner.calls}")
 
-                r = p.tool(
-                    **p.calls[0].params.model_dump(),
+                r = planner.tool(
+                    **planner.calls[0].params.model_dump(),
                     internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    docs=docs,
                 )
                 result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -348,7 +351,7 @@ class Agent(dspy.Module):
                 self.tool_memory(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
-                    calls=p.calls,
+                    calls=planner.calls,
                     result=result,
                     max_history_size=limits["tool_history"],
                 )
@@ -377,6 +380,7 @@ class Agent(dspy.Module):
         question_id: str = "",
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
+        docs: list = [],
     ):
         """
         current_user_message: user query
@@ -384,7 +388,14 @@ class Agent(dspy.Module):
         search_mode: 0 for searching EITHER the default corpus OR the user corpus
             INDIVIDUALLY | 1 for searching BOTH
         """
-        gen = self._forward_gen(current_user_message, question_id)
+        gen = self._forward_gen(
+            current_user_message,
+            question_id,
+            user_id=user_id,
+            search_mode=search_mode,
+            docs=docs,
+        )
+
         if self.get_intermediate:
             return gen
         else:

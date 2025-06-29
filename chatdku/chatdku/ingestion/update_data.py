@@ -1,8 +1,6 @@
 import os
 import nest_asyncio
-
-nest_asyncio.apply()
-
+import hashlib
 import pickle
 import argparse
 from llama_index.core import SimpleDirectoryReader
@@ -22,15 +20,38 @@ from openpyxl import load_workbook
 import unstructured.file_utils.filetype
 from custom_filetype_detect import custom_detect_filetype
 
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-
 # Override auto partation
 import unstructured.partition.auto
 from custom_partation import partition
 
+nest_asyncio.apply()
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+
 unstructured.partition.auto.partition = partition
 
-import hashlib
+
+def main(data_dir=None, user_id=None):
+    if data_dir is None:
+        data_dir = config.data_dir
+    if user_id is None:
+        user_id = "Chat_DKU"
+
+    update_data(data_dir, user_id)
+    hash = hash_directory(data_dir)
+    hash_path = os.path.join("./", "hash.pkl")
+    with open(hash_path, "wb") as hf:
+        pickle.dump(hash, hf)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process data directory path")
+    parser.add_argument("data_dir", type=str, help="The directory containing the data")
+    parser.add_argument(
+        "user_id", type=str, help="ID of the user. Defaults to Chat_DKU if none given."
+    )
+    args = parser.parse_args()
+
+    main(args.data_dir)
 
 
 class XlsxReader(BaseReader):
@@ -134,12 +155,13 @@ def hash_directory(directory):
     return final_hash
 
 
-def update_data(data_dir):
+def update_data(data_dir, user_id):
     # Required for UnstructuredReader
     # nltk.download("averaged_perceptron_tagger")
     reader = UnstructuredReader()
 
-    documents_path = "/home/Ar-temis/Documents/document.pkl"
+    documents_path = os.path.join(data_dir, "parsed.pkl")
+    # print(f"Current documents_path: {config.documents_path}")
 
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
@@ -171,29 +193,10 @@ def update_data(data_dir):
                 doc.text = md(html)
             except:
                 print(f"fail trans to md:{doc.metadata['file_path']}")
-        doc.metadata["user_id"] = "Chat_DKU"
+        doc.metadata["user_id"] = user_id
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
     print(f"Documents stored in {documents_path}")
     print("Length of documents:", len(documents))
     return documents
-
-
-def main(data_dir=None):
-    if data_dir is None:
-        data_dir = config.data_dir
-
-    update_data(data_dir)
-    hash = hash_directory(data_dir)
-    hash_path = os.path.join("./", "hash.pkl")
-    with open(hash_path, "wb") as hf:
-        pickle.dump(hash, hf)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process data directory path")
-    parser.add_argument("data_dir", type=str, help="The directory containing the data")
-    args = parser.parse_args()
-
-    main(args.data_dir)

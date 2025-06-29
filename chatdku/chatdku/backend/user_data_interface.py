@@ -37,6 +37,16 @@ def update(
     user_id,
     reset: bool = False,
 ):
+    """
+    Will handle embeddings of the newly added files. Use this function
+    after creating the user directory and putting in new files.
+    It can also detect newly added files to the given directory.
+
+    data_dir: The path of the user directory.
+    user_id: ID of the user
+    reset: Whether to overwrite data. Handle with care!. Will reset both
+        databases we have.
+    """
     setup(use_llm=False)
 
     result = update_documents(data_dir, user_id)
@@ -64,6 +74,13 @@ def remove(
     data_dir,
     user_id,
 ):
+    """
+    After removing the files, call this function to remove the
+    documents from the redis and chromaDB.
+
+    data_dir: The path of the user directory.
+    user_id: ID of the user
+    """
     chroma_db = chromadb.PersistentClient(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )

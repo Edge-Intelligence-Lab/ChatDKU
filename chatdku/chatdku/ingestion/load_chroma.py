@@ -3,6 +3,7 @@
 import os
 import pickle
 import chromadb
+import argparse
 from llama_index.core import Settings
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.ingestion import IngestionPipeline
@@ -23,11 +24,19 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
-def main():
+def main(documents_path=None, collection_name=None):
     setup(use_llm=False)
+
+    if documents_path is None:
+        documents = None
+    else:
+        with open(documents_path, "r") as f:
+            documents = pickle.load(f)
 
     load_chroma(
         reset=True,
+        documents=documents,
+        collection=collection_name,
         pipeline_cache_path=str(config.pipeline_cache),
         text_spliter="sentence_splitter",
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
@@ -38,7 +47,18 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Load the specified .pkl file into chroma."
+    )
+    parser.add_argument(
+        "documents_path", type=str, help="The directory containing the data"
+    )
+    parser.add_argument(
+        "collection_name", type=str, help="Name of the chroma collection."
+    )
+    args = parser.parse_args()
+
+    main(args.data_dir)
 
 
 def load_chroma(

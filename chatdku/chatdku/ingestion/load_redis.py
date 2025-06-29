@@ -6,6 +6,7 @@ from llama_index.core.ingestion import IngestionPipeline
 
 import pickle
 import os
+import argparse
 
 ######
 from llama_index.core import Settings
@@ -25,13 +26,26 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
-def main():
+def main(documents_path, index_name):
     setup(use_llm=False)
-    load_redis()
+
+    with open(documents_path, "rb") as f:
+        documents = pickle.load(f)
+
+    load_redis(documents, index_name, True)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Load the specified .pkl file into redis"
+    )
+    parser.add_argument(
+        "documents_path", type=str, help="The directory containing the data"
+    )
+    parser.add_argument("index_name", type=str, help="Name of the Redis index.")
+    args = parser.parse_args()
+
+    main(args.data_dir)
 
 
 def load_redis(
