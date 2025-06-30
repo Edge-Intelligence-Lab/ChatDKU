@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 import uuid
 import hashlib
+import os
 #helper function and class
 def generate_uuid_string():
     return str(uuid.uuid4())
@@ -88,8 +89,6 @@ class UserModel(AbstractBaseUser,PermissionsMixin):
     def exists(cls,netid):
         return cls.objects.filter(username=hash_netid(netid)).exists()
 
-    
-
 
 
 class UploadedFile(models.Model):
@@ -97,3 +96,13 @@ class UploadedFile(models.Model):
     filename=models.CharField(max_length=200,unique=True,null=False)
     uploaded_time=models.DateTimeField(default=timezone.now)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="files")
+
+
+    def delete(self,*args,**kwargs):
+        filepath=os.path.join(settings.MEDIA_ROOT,self.user.folder,self.filename)
+        print(filepath)
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        super().delete(*args,**kwargs)

@@ -35,3 +35,7 @@ class UploadedFileAdmin(admin.ModelAdmin):
     list_display = ('filename', 'uploaded_time', 'user')
     search_fields = ('filename', 'user__username') 
     list_filter = ('uploaded_time',)
+
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            obj.delete()  
