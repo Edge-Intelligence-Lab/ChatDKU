@@ -231,9 +231,9 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 10,
+        retriever_top_k: int = 5,
         use_reranker: bool = False,
-        reranker_top_n: int = 5,
+        reranker_top_n: int = 3,
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
@@ -294,13 +294,11 @@ class VectorRetriever(dspy.Module):
                         MetadataFilter(
                             key="user_id",
                             value="Chat_DKU",
-                        ),
-                        [
-                            MetadataFilter(
-                                key="id", value=i, operator=FilterOperator.NE
-                            )
-                            for i in exclude
-                        ],
+                        )
+                    ]
+                    + [
+                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+                        for i in exclude
                     ],
                     condition=FilterCondition.AND,
                 )
@@ -311,20 +309,18 @@ class VectorRetriever(dspy.Module):
                         MetadataFilter(
                             key="user_id",
                             value=user_id,
-                        ),
-                        [
-                            MetadataFilter(
-                                key="file_name",
-                                value=doc_name,
-                            )
-                            for doc_name in docs
-                        ],
-                        [
-                            MetadataFilter(
-                                key="id", value=i, operator=FilterOperator.NE
-                            )
-                            for i in exclude
-                        ],
+                        )
+                    ]
+                    + [
+                        MetadataFilter(
+                            key="file_name",
+                            value=doc_name,
+                        )
+                        for doc_name in docs
+                    ]
+                    + [
+                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+                        for i in exclude
                     ],
                     condition=FilterCondition.AND,
                 )
@@ -335,14 +331,14 @@ class VectorRetriever(dspy.Module):
                         MetadataFilter(
                             key="user_id",
                             value=user_id,
-                        ),
-                        [
-                            MetadataFilter(
-                                key="file_name",
-                                value=doc_name,
-                            )
-                            for doc_name in docs
-                        ],
+                        )
+                    ]
+                    + [
+                        MetadataFilter(
+                            key="file_name",
+                            value=doc_name,
+                        )
+                        for doc_name in docs
                     ],
                     condition=FilterCondition.AND,
                 )
@@ -361,14 +357,10 @@ class VectorRetriever(dspy.Module):
 
                 # Final filter includes exclusion clause
                 filters = MetadataFilters(
-                    filters=[
-                        or_clause,
-                        [
-                            MetadataFilter(
-                                key="id", value=i, operator=FilterOperator.NE
-                            )
-                            for i in exclude
-                        ],
+                    filters=[or_clause]
+                    + [
+                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+                        for i in exclude
                     ],
                     condition=FilterCondition.AND,
                 )
@@ -422,7 +414,11 @@ class VectorRetriever(dspy.Module):
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
+    def __init__(
+        self,
+        retriever_top_k: int = 5,
+        reranker_top_n: int = 3,
+    ):
         self.client = Redis.from_url("redis://localhost:6379")
         self.retriever_top_k = retriever_top_k
 
