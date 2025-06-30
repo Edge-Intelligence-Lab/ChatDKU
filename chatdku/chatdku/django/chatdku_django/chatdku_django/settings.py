@@ -34,6 +34,15 @@ SECRET_KEY = os.getenv("SECRET_KEY","hsafgb289yubdkbvq28yor2yq734ti14")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+
+
+
+
+
+#Media
+MEDIA_ROOT = os.getenv("MEDIA_ROOT")  # This is the absolute path where files will be saved
+MEDIA_URL = '/media/'
+
 #logging
 LOGGING_CONFIG=None
 
