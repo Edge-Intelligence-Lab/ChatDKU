@@ -198,3 +198,5 @@ backend/feedback/
 benchmarks/*.svg
 benchmarks/*.html
 benchmarks/questions.json
+
+**/nohup.out
