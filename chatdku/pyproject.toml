@@ -55,7 +55,11 @@ dependencies = [
     "eventlet~=0.39.1",
     "openai-whisper",
     "ollama~=0.4.8",
-    "plotly~=6.1.2"
+    "plotly~=6.1.2",
+    "Django~=5.2.3",
+    "djangorestframework~=3.16.0",
+    
+
 ]
 
 [tool.setuptools]

@@ -196,3 +196,4 @@ benchmarks/*.html
 benchmarks/questions.json
 
 .idea
+**/nohup.out
