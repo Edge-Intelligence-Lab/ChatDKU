@@ -178,7 +178,7 @@ def update_data(data_dir, user_id):
     return documents
 
 
-def main(data_dir=None, user_id=None):
+def main(data_dir, user_id):
     if data_dir is None:
         data_dir = config.data_dir
     if user_id is None:
@@ -193,10 +193,18 @@ def main(data_dir=None, user_id=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process data directory path")
-    parser.add_argument("data_dir", type=str, help="The directory containing the data")
     parser.add_argument(
-        "user_id", type=str, help="ID of the user. Defaults to Chat_DKU if none given."
+        "--data_dir",
+        type=str,
+        default=config.data_dir,
+        help="The directory containing the data",
+    )
+    parser.add_argument(
+        "--user_id",
+        type=str,
+        default="Chat_DKU",
+        help="ID of the user. Defaults to Chat_DKU if none given.",
     )
     args = parser.parse_args()
 
-    main(args.data_dir)
+    main(args.data_dir, args.user_id)

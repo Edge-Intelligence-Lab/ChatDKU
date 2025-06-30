@@ -157,11 +157,17 @@ if __name__ == "__main__":
         description="Load the specified .pkl file into chroma."
     )
     parser.add_argument(
-        "documents_path", type=str, help="The directory containing the data"
+        "--documents_path",
+        type=str,
+        default=config.documents_path,
+        help="The directory containing the data",
     )
     parser.add_argument(
-        "collection_name", type=str, help="Name of the chroma collection."
+        "--collection_name",
+        type=str,
+        default=config.chroma_collection,
+        help="Name of the chroma collection.",
     )
     args = parser.parse_args()
 
-    main(args.data_dir)
+    main(args.documents_path, args.collection_name)

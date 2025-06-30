@@ -164,9 +164,17 @@ if __name__ == "__main__":
         description="Load the specified .pkl file into redis"
     )
     parser.add_argument(
-        "documents_path", type=str, help="The directory containing the data"
+        "--documents_path",
+        type=str,
+        default=config.documents_path,
+        help="The directory containing the data",
     )
-    parser.add_argument("index_name", type=str, help="Name of the Redis index.")
+    parser.add_argument(
+        "--index_name",
+        type=str,
+        default=config.index_name,
+        help="Name of the Redis index.",
+    )
     args = parser.parse_args()
 
-    main(args.data_dir)
+    main(args.documents_path, args.index_name)
