@@ -191,7 +191,7 @@ __MACOSX
 
 # Project-specific
 .venv
-logs/
+**/logs
 backend/feedback/
 
 # Benchmark data and reports
@@ -200,3 +200,4 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
+**/log

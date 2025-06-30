@@ -32,7 +32,7 @@ def chat(request):
         # Create a new Agent instance per request
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
         responses_gen = agent(
-            current_user_message=message_content, question_id=question_id, search_mode=search_mode,docs=docs, netid=netid
+            current_user_message=message_content, question_id=question_id, search_mode=search_mode,docs=docs, user_id=str(netid)
         )
 
         def generate():
@@ -42,6 +42,7 @@ def chat(request):
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:
+        print(e)
         return Response({"error": str(e)}, status=500)
 
 
