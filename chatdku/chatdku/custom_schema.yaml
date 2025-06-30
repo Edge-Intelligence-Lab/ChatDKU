@@ -11,6 +11,13 @@ fields:
     separator: ','
     case_sensitive: false
     withsuffixtrie: false
+- name: user_id
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
 - name: doc_id
   type: tag
   attrs:
@@ -25,7 +32,28 @@ fields:
     weight: 1
     no_stem: false
     withsuffixtrie: false
+- name: file_name
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
 - name: groups
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: file_path
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: last_modified_date
   type: tag
   attrs:
     sortable: false

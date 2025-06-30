@@ -118,9 +118,9 @@ def load_chroma(
 
     pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
 
-    nodes = pipeline.run(
-        documents=documents, num_workers=pipeline_workers, show_progress=True
-    )
+    # nodes = pipeline.run(
+    #     documents=documents, num_workers=pipeline_workers, show_progress=True
+    # )
     pipeline.persist(pipeline_cache_path)
     print("nodes over")
     #
@@ -136,7 +136,7 @@ def main(documents_path=None, collection_name=None):
     if documents_path is None:
         documents = None
     else:
-        with open(documents_path, "r") as f:
+        with open(documents_path, "rb") as f:
             documents = pickle.load(f)
 
     load_chroma(
