@@ -380,27 +380,45 @@ class Agent(dspy.Module):
         question_id: str = "",
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        docs: list = [],
+        docs: list = None,
     ):
         """
         current_user_message: user query
         user_id: If set anything other than Chat_DKU, means the net_id of the user
-        search_mode: 0 for searching EITHER the default corpus OR the user corpus
-            INDIVIDUALLY | 1 for searching BOTH
+        search_mode: 0 for searching  the default corpus | 1 for searching the user
+            corpus | 2 for searching both
+        docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-        gen = self._forward_gen(
-            current_user_message,
-            question_id,
-            user_id=user_id,
-            search_mode=search_mode,
-            docs=docs,
-        )
+        if docs is None:
+            docs = []
 
-        if self.get_intermediate:
-            return gen
-        else:
-            for i in gen:
-                return i
+        try:
+            if not (0 <= search_mode <= 2):
+                raise ValueError(
+                    f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
+                )
+
+            if search_mode != 0 and not docs:
+                raise ValueError("`docs` must be provided when search_mode is 1 or 2.")
+
+            gen = self._forward_gen(
+                current_user_message,
+                question_id,
+                user_id=user_id,
+                search_mode=search_mode,
+                docs=docs,
+            )
+
+            if self.get_intermediate:
+                return gen
+            else:
+                for i in gen:
+                    return i
+
+        except Exception as e:
+            # Optionally log the error here with logging module
+            print(f"[Error in agent inputs]: {e}")
+            return None  # or raise if you want the exception to propagate
 
 
 def main():

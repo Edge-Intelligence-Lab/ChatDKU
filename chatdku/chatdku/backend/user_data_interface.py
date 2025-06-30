@@ -45,12 +45,15 @@ def update(
     data_dir: The path of the user directory.
     user_id: ID of the user
     reset: Whether to overwrite data. Handle with care!. Will reset both
-        databases we have.
+        databases we have. Just have it so that we may need it in the future.
+        Will be always defaulting to False even if you set it to True for now.
     """
     setup(use_llm=False)
 
     result = update_documents(data_dir, user_id)
 
+    # Just for safety
+    reset = False
     # load chromadb
     load_chroma(
         documents=result["new documents"],
