@@ -24,43 +24,6 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
-def main(documents_path=None, collection_name=None):
-    setup(use_llm=False)
-
-    if documents_path is None:
-        documents = None
-    else:
-        with open(documents_path, "r") as f:
-            documents = pickle.load(f)
-
-    load_chroma(
-        reset=True,
-        documents=documents,
-        collection=collection_name,
-        pipeline_cache_path=str(config.pipeline_cache),
-        text_spliter="sentence_splitter",
-        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
-        extractors=[],
-        use_recursive_directory_summarize=False,
-        pipeline_workers=1,
-    )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Load the specified .pkl file into chroma."
-    )
-    parser.add_argument(
-        "documents_path", type=str, help="The directory containing the data"
-    )
-    parser.add_argument(
-        "collection_name", type=str, help="Name of the chroma collection."
-    )
-    args = parser.parse_args()
-
-    main(args.data_dir)
-
-
 def load_chroma(
     pipeline_cache_path: str,
     collection: str = None,
@@ -165,3 +128,40 @@ def load_chroma(
     # docstore.add_documents(nodes)
     # docstore.persist(config.docstore_path)
     # print("docstore over")
+
+
+def main(documents_path=None, collection_name=None):
+    setup(use_llm=False)
+
+    if documents_path is None:
+        documents = None
+    else:
+        with open(documents_path, "r") as f:
+            documents = pickle.load(f)
+
+    load_chroma(
+        reset=True,
+        documents=documents,
+        collection=collection_name,
+        pipeline_cache_path=str(config.pipeline_cache),
+        text_spliter="sentence_splitter",
+        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
+        extractors=[],
+        use_recursive_directory_summarize=False,
+        pipeline_workers=1,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Load the specified .pkl file into chroma."
+    )
+    parser.add_argument(
+        "documents_path", type=str, help="The directory containing the data"
+    )
+    parser.add_argument(
+        "collection_name", type=str, help="Name of the chroma collection."
+    )
+    args = parser.parse_args()
+
+    main(args.data_dir)

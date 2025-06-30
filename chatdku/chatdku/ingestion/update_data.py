@@ -30,30 +30,6 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
-def main(data_dir=None, user_id=None):
-    if data_dir is None:
-        data_dir = config.data_dir
-    if user_id is None:
-        user_id = "Chat_DKU"
-
-    update_data(data_dir, user_id)
-    hash = hash_directory(data_dir)
-    hash_path = os.path.join("./", "hash.pkl")
-    with open(hash_path, "wb") as hf:
-        pickle.dump(hash, hf)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process data directory path")
-    parser.add_argument("data_dir", type=str, help="The directory containing the data")
-    parser.add_argument(
-        "user_id", type=str, help="ID of the user. Defaults to Chat_DKU if none given."
-    )
-    args = parser.parse_args()
-
-    main(args.data_dir)
-
-
 class XlsxReader(BaseReader):
     def __init__(
         self,
@@ -200,3 +176,27 @@ def update_data(data_dir, user_id):
     print(f"Documents stored in {documents_path}")
     print("Length of documents:", len(documents))
     return documents
+
+
+def main(data_dir=None, user_id=None):
+    if data_dir is None:
+        data_dir = config.data_dir
+    if user_id is None:
+        user_id = "Chat_DKU"
+
+    update_data(data_dir, user_id)
+    hash = hash_directory(data_dir)
+    hash_path = os.path.join("./", "hash.pkl")
+    with open(hash_path, "wb") as hf:
+        pickle.dump(hash, hf)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process data directory path")
+    parser.add_argument("data_dir", type=str, help="The directory containing the data")
+    parser.add_argument(
+        "user_id", type=str, help="ID of the user. Defaults to Chat_DKU if none given."
+    )
+    args = parser.parse_args()
+
+    main(args.data_dir)

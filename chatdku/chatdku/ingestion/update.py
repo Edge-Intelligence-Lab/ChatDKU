@@ -37,8 +37,8 @@ from llama_index.core.schema import MetadataMode
 from redisvl.redis.utils import array_to_buffer
 from llama_index.core.vector_stores.utils import node_to_metadata_dict
 
-from setup import setup
-from config import config
+from chatdku.setup import setup
+from chatdku.config import config
 
 import unstructured.file_utils.filetype
 from custom_filetype_detect import custom_detect_filetype
