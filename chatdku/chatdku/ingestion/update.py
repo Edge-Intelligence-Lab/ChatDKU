@@ -17,7 +17,6 @@ from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_parse import LlamaParse
 from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.extractors import (
     TitleExtractor,
@@ -28,7 +27,6 @@ from llama_index.core.extractors import (
 
 from redis import Redis
 from redisvl.index import SearchIndex
-from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis.schema import (
     NODE_ID_FIELD_NAME,
     DOC_ID_FIELD_NAME,
@@ -39,21 +37,21 @@ from llama_index.core.schema import MetadataMode
 from redisvl.redis.utils import array_to_buffer
 from llama_index.core.vector_stores.utils import node_to_metadata_dict
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(parent_dir)
-
 from setup import setup
 from config import config
 
 import unstructured.file_utils.filetype
 from custom_filetype_detect import custom_detect_filetype
 
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-
 
 import unstructured.partition.auto
 from custom_partation import partition
 
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
+
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
@@ -107,7 +105,6 @@ def export_changes(added, removed, modified, output_file):
 
 
 def change_detect(data_dir):
-
     output_file = os.path.join(data_dir, "changed_data.json")
     state_file = os.path.join(data_dir, "data_state.json")
 
@@ -221,7 +218,6 @@ def change_detect(data_dir):
     # 二次过滤已解析的文件
     new_files = [file for file in new_files if file not in parsed_files]
     if len(new_files) != 0:
-
         for file in new_files:
             try:
                 # Parse the file
@@ -243,6 +239,7 @@ def change_detect(data_dir):
                     # See: https://github.com/run-llama/llama_index/issues/17144
                     for doc in new_documents:
                         doc.doc_id = str(uuid.uuid4())
+                        doc.metadata["user_id"] = "Chat_DKU"
 
                     # Update documents and save
                     documents.extend(new_documents)
@@ -402,4 +399,3 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main()
-
