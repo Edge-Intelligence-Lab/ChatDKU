@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chat.models import Feedback
-from django.views.decorators.csrf import csrf_exempt
+from chatdku.backend.user_data_interface import update
 
 import logging
 logger=logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def chat(request):
         # Create a new Agent instance per request
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
         responses_gen = agent(
-            current_user_message=message_content, question_id=question_id
+            current_user_message=message_content, question_id=question_id, search_mode=search_mode,docs=docs, netid=netid
         )
 
         def generate():

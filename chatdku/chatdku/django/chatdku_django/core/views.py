@@ -8,6 +8,8 @@ from django.utils.timezone import now
 from dotenv import load_dotenv
 from core.serializers import UploadFileSerializer
 from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from chatdku.backend.user_data_interface import update
 
 import logging
 logger=logging.getLogger(__name__)
@@ -44,13 +46,13 @@ def upload(request):
         os.makedirs(user_folder_path,exist_ok=True)
         file_path = os.path.join(user_folder_path,filename)
 
-        with open(file_path, 'wb+') as destination:
-            for chunk in uploaded_file.chunks():
-                destination.write(chunk)
-
+        path=default_storage.save(file_path,ContentFile(uploaded_file.read()))
         record = UploadedFile(filename=filename, user=request.user, uploaded_time=now())
         record.save()
 
+    #Updating Chunks
+        netid=request.netid
+        update(data_dir=user_folder,user_id=str(netid))
         return Response({"message": "File uploaded successfully"}, status=201)
     except Exception as e:
         return Response({"error":str(e)})

@@ -17,16 +17,19 @@ import os,base64
 from django.utils.log import DEFAULT_LOGGING
 field_key=base64.urlsafe_b64encode(os.urandom(32)).decode()
 
+import dotenv
+dotenv.load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', field_key)
+FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', field_key)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY","hsafgb289yubdkbvq28yor2yq734ti14")
+SECRET_KEY = os.getenv("SECRET_KEY","hsafgb289yubdkbvq28yor2yq734ti14")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -36,6 +39,10 @@ LOGGING_CONFIG=None
 
 LOGLEVEL=os.environ.get('LOGLEVEL','info').upper()
 current_path=os.path.abspath(os.path.dirname(__file__))
+
+log_dir = os.path.join(current_path, 'log')
+os.makedirs(log_dir, exist_ok=True)
+
 logging.config.dictConfig({
     'version':1,
     'disable_existing_loggers':False,
@@ -54,7 +61,7 @@ logging.config.dictConfig({
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(current_path,'log','chatdku.log'),  
+            'filename': os.path.join(log_dir,'chatdku.log'),  
             'maxBytes': 5 * 1024 * 1024,  # 5 MB
             'backupCount': 5,
             'formatter': 'default',
@@ -150,11 +157,14 @@ AUTH_USER_MODEL="core.UserModel"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("NAME_DB"),
+        'USER':os.getenv("USERNAME_DB"),
+        'PASSWORD':os.getenv("PASSWORD_DB"),
+        'HOST':os.getenv('HOST_DB'),
+        'PORT':os.getenv('PORT_DB')
     }
 }
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
