@@ -35,6 +35,7 @@ unstructured.partition.auto.partition = partition
 def update(
     data_dir,
     user_id,
+    pipeline_workers: int = 1,
     reset: bool = False,
 ):
     """
@@ -64,11 +65,13 @@ def update(
         text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
         extractors=[],
         use_recursive_directory_summarize=False,
-        pipeline_workers=1,
+        pipeline_workers=pipeline_workers,
     )
 
     load_redis(
         documents=result["new documents"],
+        pipeline_workers=pipeline_workers,
+        pipeline_cache_path=str(config.pipeline_cache),
         reset=reset,
     )
 
