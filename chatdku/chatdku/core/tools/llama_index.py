@@ -274,7 +274,13 @@ class VectorRetriever(dspy.Module):
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(query=query, exclude=exclude)
+                        dict(
+                            query=query,
+                            exclude=exclude,
+                            user_id=user_id,
+                            search_mode=search_mode,
+                            docs=docs,
+                        )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
@@ -466,7 +472,13 @@ class KeywordRetriever(dspy.Module):
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(query=query, exclude=exclude)
+                        dict(
+                            query=query,
+                            exclude=exclude,
+                            user_id=user_id,
+                            search_mode=search_mode,
+                            docs=docs,
+                        )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
