@@ -14,12 +14,12 @@ from chatdku.setup import setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
+from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
 
 
 # Override auto partation
 import unstructured.partition.auto
-from custom_partation import partition
+from chatdku.ingestion.custom_partation import partition
 from chatdku.config import config
 
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
