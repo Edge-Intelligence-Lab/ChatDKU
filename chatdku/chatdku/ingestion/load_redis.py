@@ -29,6 +29,8 @@ unstructured.partition.auto.partition = partition
 def load_redis(
     documents=None,
     index_name: str = None,
+    pipeline_workers: int = 1,
+    pipeline_cache_path: str = config.pipeline_cache,
     reset: bool = False,
 ):
     """
@@ -147,7 +149,11 @@ def load_redis(
         transformations=trans,
         vector_store=vector_store,
     )
-    pipeline.run(documents=documents, num_workers=1, show_progress=True)
+
+    if os.path.exists(pipeline_cache_path):
+        pipeline.load(pipeline_cache_path)
+
+    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
 
 
 def main(documents_path, index_name):
@@ -156,7 +162,12 @@ def main(documents_path, index_name):
     with open(documents_path, "rb") as f:
         documents = pickle.load(f)
 
-    load_redis(documents, index_name, True)
+    load_redis(
+        documents=documents,
+        index_name=index_name,
+        pipeline_cache_path=str(config.pipeline_cache),
+        reset=True,
+    )
 
 
 if __name__ == "__main__":
