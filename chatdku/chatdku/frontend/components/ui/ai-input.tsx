@@ -267,7 +267,6 @@ export function AIInput({
 				/>
 				<div className="flex flex-row justify-between">
 					<div className="flex flex-row gap-x-1">
-						{/* Thinking mode toggle button */}
 						{!isDevRoute && (
 							<button className={cn(inputButtonStyle, isThinking && "bg-primary text-primary-foreground")} onClick={toggleThinkingMode}>
 								<Brain className="w-5 h-5" />
@@ -276,7 +275,6 @@ export function AIInput({
 						)}
 
 						{isDevRoute && <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />}
-
 						{isDevRoute && <UploadSheet />}
 					</div>
 					<div>

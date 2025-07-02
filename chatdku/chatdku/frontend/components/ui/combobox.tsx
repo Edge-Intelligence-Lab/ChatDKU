@@ -77,11 +77,11 @@ export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxRes
 	return (
 		<Drawer open={open} onOpenChange={setOpen}>
 			<DrawerTrigger asChild>
-				<button className="flex gap-x-1">
+				<Button variant={"inChatbox"}>
 					{/* <ChevronsUpDown /> */}
 					<BrainCircuit className="w-5 h-5" />
 					{!inputValue && (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
-				</button>
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<div className="mt-4 border-t">

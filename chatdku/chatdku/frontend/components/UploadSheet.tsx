@@ -26,7 +26,7 @@ export function UploadSheet() {
 
 		try {
 			setStatus("⏳ Uploading...");
-			const res = await fetch("https://chatdku.dukekunshan.edu.cn/api/upload/", {
+			const res = await fetch("https://chatdku.dukekunshan.edu.cn/dev/index", {
 				method: "POST",
 				body: formData,
 			});
