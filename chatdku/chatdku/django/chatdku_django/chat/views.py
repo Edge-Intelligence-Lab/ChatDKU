@@ -34,7 +34,7 @@ def chat(request):
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode,docs=docs, user_id=str(netid)
         )
-
+        print(responses_gen)
         def generate():
             for response in responses_gen.response:
                 yield response  
