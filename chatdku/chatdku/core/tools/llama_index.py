@@ -260,9 +260,9 @@ class VectorRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
-        user_id: str,
-        search_mode: int,
-        docs: list,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = None,
     ):
         with (
             config.tracer.start_as_current_span("Vector Retriever")
@@ -460,9 +460,9 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
-        user_id: str,
-        search_mode: int,
-        docs: list,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        docs: list = [],
     ):
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def escape_strs(strs: list[str]):
@@ -572,9 +572,11 @@ class KeywordRetriever(dspy.Module):
             # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
             # results = self.client.ft("idx:test").search(query_cmd, params)
 
-            retriever_top_k = 10
             query_cmd = (
-                Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
+                Query(query_str)
+                .scorer("BM25")
+                .paging(0, self.retriever_top_k)
+                .with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
             try:

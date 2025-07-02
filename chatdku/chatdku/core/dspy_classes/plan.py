@@ -124,7 +124,9 @@ class Planner(dspy.Module):
             tool_name_snake = camel_to_snake_case(tool_name_camel)
 
             Params = func_to_model(
-                tool_name_camel + "Params", tool.forward, exclude=["internal_memory"]
+                tool_name_camel + "Params",
+                tool.forward,
+                exclude=["internal_memory", "user_id", "search_mode", "docs"],
             )
             ToolModel = create_model(
                 tool_name_camel,
@@ -234,7 +236,7 @@ class Planner(dspy.Module):
                     c.name in self.name_to_model,
                     (
                         f'"{c.name}" is not a valid tool. '
-                        f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+                        f"Available tool(s) are: {', '.join(self.name_to_model)}."
                     ),
                 )
                 try:
