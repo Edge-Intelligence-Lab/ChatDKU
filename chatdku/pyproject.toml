@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ChatDKU"
-version = "1.0.0"
+version = "1.1.0"
 authors = [
     { name="Mingxi Li" },
     { name="Yuxiang Lin", email="theta.lin@yandex.com" },
     { name="Cody Qin" },
     { name="Ningyuan Yang" },
+    { name="Anar Nyambayar" },
 ]
 description = ""
 readme = ""

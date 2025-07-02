@@ -234,7 +234,7 @@ class Planner(dspy.Module):
                     c.name in self.name_to_model,
                     (
                         f'"{c.name}" is not a valid tool. '
-                        f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+                        f"Available tool(s) are: {', '.join(self.name_to_model)}."
                     ),
                 )
                 try:

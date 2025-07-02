@@ -15,6 +15,7 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 import chatdku.core.dspy_patch
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
+from chatdku.core.tools.get_user_profile import ProfileRetriever
 
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
@@ -23,6 +24,7 @@ from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.judge import Judge
+from chatdku.core.dspy_classes.user_profiler import Profiler
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -117,6 +119,7 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = False,
+        user_profile: str = "",
     ):
         """
         Args:
@@ -134,13 +137,16 @@ class Agent(dspy.Module):
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
+        self.user_profile = user_profile
         self.rewrite_query = rewrite_query
 
+        self.user_profiler = Profiler(profile_path=user_profile) if user_profile else None
         self.planner = assert_transform_module(
             Planner(
                 [
                     VectorRetriever(),
                     KeywordRetriever(),
+                    ProfileRetriever(user_profile) if user_profile else None,
                 ]
             ),
             functools.partial(backtrack_handler, max_backtracks=5),
@@ -313,6 +319,18 @@ class Agent(dspy.Module):
                     query = current_user_message
 
                 try:
+                    profiler = self.user_profiler(
+                        current_user_message=query,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                        profile=self.user_profile,
+                    )
+                    if VERBOSE:
+                        print(f"Profiler:{profiler}")
+                except dspy.DSPyAssertionError:
+                    print("User profile could not be found.")
+
+                try:
                     planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
                         # as the memory is not always updated for every iteration.
@@ -431,7 +449,12 @@ def main():
     dspy.settings.configure(lm=llama_client)
     import time
 
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
+    agent = Agent(
+        max_iterations=5,
+        streaming=True,
+        get_intermediate=False,
+        user_profile="/srv/chatdku_user_data/an301/profile",
+    )
 
     while True:
         try:
