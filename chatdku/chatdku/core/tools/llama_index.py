@@ -260,9 +260,9 @@ class VectorRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        docs: list = [],
+        user_id: str,
+        search_mode: int,
+        docs: list,
     ):
         with (
             config.tracer.start_as_current_span("Vector Retriever")
@@ -331,7 +331,7 @@ class VectorRetriever(dspy.Module):
                     condition=FilterCondition.AND,
                 )
             # search from both corpuses
-            elif search_mode == 3:
+            elif search_mode == 2:
                 clause_user_docs = MetadataFilters(
                     filters=[
                         MetadataFilter(
@@ -361,16 +361,24 @@ class VectorRetriever(dspy.Module):
                     condition=FilterCondition.OR,
                 )
 
-                # Final filter includes exclusion clause
-                filters = MetadataFilters(
-                    filters=[or_clause]
-                    + [
+                excluded = MetadataFilters(
+                    filters=[
                         MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
                         for i in exclude
                     ],
                     condition=FilterCondition.AND,
                 )
 
+                # Final filter includes exclusion clause
+                filters = MetadataFilters(
+                    filters=[
+                        or_clause,
+                        excluded,
+                    ],
+                    condition=FilterCondition.AND,
+                )
+
+            print(filters)
             retriever = self.index.as_retriever(
                 similarity_top_k=self.retriever_top_k, filters=filters
             )
@@ -405,6 +413,7 @@ class VectorRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
+            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result,
@@ -451,9 +460,9 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        docs: list = [],
+        user_id: str,
+        search_mode: int,
+        docs: list,
     ):
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def escape_strs(strs: list[str]):
@@ -602,6 +611,7 @@ class KeywordRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
+            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result, internal_result={"ids": {r.id for r in results.docs}}

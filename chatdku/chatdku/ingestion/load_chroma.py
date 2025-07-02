@@ -122,7 +122,7 @@ def load_chroma(
     #     documents=documents, num_workers=pipeline_workers, show_progress=True
     # )
     pipeline.persist(pipeline_cache_path)
-    print("nodes over")
+    print("Chroma load done!")
     #
     # docstore = SimpleDocumentStore()
     # docstore.add_documents(nodes)
