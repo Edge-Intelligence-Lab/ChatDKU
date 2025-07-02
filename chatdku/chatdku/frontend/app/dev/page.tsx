@@ -27,7 +27,7 @@ const parseMarkdown = (content: string): string => {
 	if (parsed instanceof Promise) {
 		return "";
 	}
-	return parsed;
+	return typeof parsed === "string" ? parsed : "";
 };
 
 // Simulates a streaming effect for text
