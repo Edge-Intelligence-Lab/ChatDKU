@@ -1,6 +1,7 @@
 import os
 import json
 import nest_asyncio
+import argparse
 
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -35,7 +36,7 @@ unstructured.partition.auto.partition = partition
 def update(
     data_dir,
     user_id,
-    pipeline_workers: int = 1,
+    pipeline_workers: int = 4,
     reset: bool = False,
 ):
     """
@@ -58,7 +59,6 @@ def update(
     # load chromadb
     load_chroma(
         documents=result["new documents"],
-        data_dir=data_dir,
         reset=reset,
         pipeline_cache_path=str(config.pipeline_cache),
         text_spliter="sentence_splitter",
@@ -108,8 +108,11 @@ def remove(
     result = update_documents(data_dir, user_id)
 
     for id in result["deleted documents"]:
+        print(f"Removing file: {id}")
         chroma_store.delete(id)
         redis_store.delete(id)
+
+    print("Removal done.")
 
 
 def hash_file(filename):
@@ -224,6 +227,7 @@ def update_documents(data_dir, user_id):
         if document.metadata["file_path"] in timed_files:
             deleted_docs_id.append(document.doc_id)
             documents.remove(document)
+        print(document.metadata)
 
     if len(new_files + timed_files) == 0:
         print("Nothing has changed")
@@ -341,3 +345,28 @@ def update_documents(data_dir, user_id):
     result = {"new documents": new_documents, "deleted documents": deleted_docs_id}
 
     return result
+
+
+def main(data_dir=None, user_id=None):
+    setup(use_llm=False)
+
+    update(data_dir, user_id)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Load the specified .pkl file into chroma."
+    )
+    parser.add_argument(
+        "data_dir",
+        type=str,
+        help="The directory containing the data",
+    )
+    parser.add_argument(
+        "user_id",
+        type=str,
+        help="user_id",
+    )
+    args = parser.parse_args()
+
+    main(args.data_dir, args.user_id)

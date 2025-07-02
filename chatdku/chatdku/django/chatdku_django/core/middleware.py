@@ -17,7 +17,6 @@ class NetIDMiddleware:
         display_name = request.META.get("HTTP_X_DISPLAYNAME")
         setattr(request, '_dont_enforce_csrf_checks', True)
 
-        print(netid)
 
         if not netid:
             return JsonResponse({"message": "Unauthorized"}, status=401)

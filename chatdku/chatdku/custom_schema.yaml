@@ -14,7 +14,7 @@ fields:
 - name: user_id
   type: tag
   attrs:
-    sortable: false
+    sortable: true
     separator: ','
     case_sensitive: false
     withsuffixtrie: false
@@ -35,7 +35,7 @@ fields:
 - name: file_name
   type: tag
   attrs:
-    sortable: false
+    sortable: true
     separator: ','
     case_sensitive: false
     withsuffixtrie: false

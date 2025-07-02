@@ -65,10 +65,10 @@ def load_redis(
             "fields": [
                 # Required fields for llamaindex
                 {"type": "tag", "name": "id"},
-                {"type": "tag", "name": "user_id"},
+                {"type": "tag", "name": "user_id", "attrs": {"sortable": True}},
                 {"type": "tag", "name": "doc_id"},
                 {"type": "text", "name": "text"},
-                {"type": "tag", "name": "file_name"},
+                {"type": "tag", "name": "file_name", "attrs": {"sortable": True}},
                 # Custom metadata fields
                 {"type": "tag", "name": "groups"},
                 {"type": "tag", "name": "file_path"},
@@ -154,6 +154,8 @@ def load_redis(
         pipeline.load(pipeline_cache_path)
 
     pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+
+    print("Redis load done!")
 
 
 def main(documents_path, index_name):
