@@ -463,9 +463,9 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-                user_id="te100",
-                search_mode=1,
-                docs=["syllabus.pdf"],
+                user_id="Chat_DKU",
+                search_mode=0,
+                # docs=["syllabus.pdf"],
             )
             first_token = True
             print("Response:")
