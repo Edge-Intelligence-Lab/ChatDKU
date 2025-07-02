@@ -170,9 +170,9 @@ class Agent(dspy.Module):
         self,
         current_user_message: str,
         question_id: str,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        docs: list = [],
+        user_id: str,
+        search_mode: int,
+        docs: list,
     ):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
@@ -431,14 +431,19 @@ def main():
     dspy.settings.configure(lm=llama_client)
     import time
 
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
+    agent = Agent(max_iterations=2, streaming=True, get_intermediate=False)
 
     while True:
         try:
             print("*" * 10)
             current_user_message = input("Enter your query about DKU: ")
             start_time = time.time()
-            responses_gen = agent(current_user_message=current_user_message)
+            responses_gen = agent(
+                current_user_message=current_user_message,
+                user_id="Chat_DKU",
+                search_mode=0,
+                docs=[],
+            )
             first_token = True
             print("Response:")
             for r in responses_gen.response:
