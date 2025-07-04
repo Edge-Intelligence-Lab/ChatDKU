@@ -1,372 +1,314 @@
 import os
-import json
+import mimetypes
+import datetime
 import nest_asyncio
-import argparse
-
-import chromadb
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.vector_stores.redis import RedisVectorStore
-from redis import Redis
-from redisvl.schema import IndexSchema
 import uuid
-import nltk
-import hashlib
-import pickle
+import json
+import chromadb
+from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 from llama_index.core import SimpleDirectoryReader
+from llama_index.core.schema import TextNode
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.readers.base import BaseReader
+from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from chatdku.config import config
-from markdownify import markdownify as md
-from chatdku.setup import setup
-from chatdku.ingestion.load_chroma import load_chroma
-from chatdku.ingestion.load_redis import load_redis
+from pathlib import Path
+from typing import Dict, List, Optional
+from llama_index.core.schema import Document
+import pandas as pd
+from openpyxl import load_workbook
 
-# Override auto partation
-import unstructured.partition.auto
-from chatdku.ingestion.custom_partation import partition
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
 from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
 
+# Override auto partation
+import unstructured.partition.auto
+from chatdku.ingestion.custom_partation import partition
+
 nest_asyncio.apply()
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+
 unstructured.partition.auto.partition = partition
 
 
-def update(
-    data_dir,
-    user_id,
-    pipeline_workers: int = 4,
-    reset: bool = False,
-):
-    """
-    Will handle embeddings of the newly added files. Use this function
-    after creating the user directory and putting in new files.
-    It can also detect newly added files to the given directory.
-
-    data_dir: The path of the user directory.
-    user_id: ID of the user
-    reset: Whether to overwrite data. Handle with care!. Will reset both
-        databases we have. Just have it so that we may need it in the future.
-        Will be always defaulting to False even if you set it to True for now.
-    """
-    setup(use_llm=False)
-
-    result = update_documents(data_dir, user_id)
-
-    # Just for safety
-    reset = False
-    # load chromadb
-    load_chroma(
-        documents=result["new documents"],
-        reset=reset,
-        pipeline_cache_path=str(config.pipeline_cache),
-        text_spliter="sentence_splitter",
-        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
-        extractors=[],
-        use_recursive_directory_summarize=False,
-        pipeline_workers=pipeline_workers,
-    )
-
-    load_redis(
-        documents=result["new documents"],
-        pipeline_workers=pipeline_workers,
-        pipeline_cache_path=str(config.pipeline_cache),
-        reset=reset,
-    )
-
-
-def remove(
-    data_dir,
-    user_id,
-):
-    """
-    After removing the files, call this function to remove the
-    documents from the redis and chromaDB.
-
-    data_dir: The path of the user directory.
-    user_id: ID of the user
-    """
-    chroma_db = chromadb.PersistentClient(
-        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
-    )
-
-    chroma_collection = chroma_db.get_or_create_collection(config.chroma_collection)
-    chroma_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    redis_client = Redis.from_url(config.redis_url)
-
-    schema = IndexSchema.from_yaml(
-        os.path.join(config.module_root_dir, "custom_schema.yaml")
-    )
-
-    redis_store = RedisVectorStore(
-        redis_client=redis_client,
-        schema=schema,
-    )
-
-    result = update_documents(data_dir, user_id)
-
-    for id in result["deleted documents"]:
-        print(f"Removing file: {id}")
-        chroma_store.delete(id)
-        redis_store.delete(id)
-
-    print("Removal done.")
-
-
-def hash_file(filename):
-    h = hashlib.sha256()
-    with open(filename, "rb") as file:
-        while True:
-            chunk = file.read(h.block_size)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def hash_directory(directory):
-    all_hashes = ""
-    for root, _, files in os.walk(directory):
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            file_hash = hash_file(filepath)
-            all_hashes += file_hash
-    final_hash = hashlib.sha256(all_hashes.encode("utf-8")).hexdigest()
-    return final_hash
-
-
-def calculate_sha256(file_path):
-    sha256 = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        while chunk := f.read(8192):
-            sha256.update(chunk)
-    return sha256.hexdigest()
-
-
-def record_directory_state(directory):
-    state = {}
-    for root, _, files in os.walk(directory):
-        for name in files:
-            file_path = os.path.join(root, name)
-            relative_path = os.path.relpath(file_path, directory)
-            state[relative_path] = calculate_sha256(file_path)
-    return state
-
-
-def compare_directory_state(old_state, new_state):
-    added = []
-    removed = []
-    modified = []
-
-    old_files = set(old_state.keys())
-    new_files = set(new_state.keys())
-
-    added_files = new_files - old_files
-    removed_files = old_files - new_files
-
-    for file in added_files:
-        added.append(file)
-
-    for file in removed_files:
-        removed.append(file)
-
-    for file in old_files & new_files:
-        if old_state[file] != new_state[file]:
-            modified.append(file)
-
-    return {"added": added, "removed": removed, "modified": modified}
-
-
-def update_documents(data_dir, user_id):
-    output_file = os.path.join(data_dir, "changed_data.json")
-    state_file = os.path.join(data_dir, "data_state.json")
-
-    if os.path.exists(state_file):
-        with open(state_file, "r") as f:
-            old_state = json.load(f)
-    else:
-        old_state = {}
-        with open(state_file, "w") as f:
-            json.dump(old_state, f)
-
-    if not os.path.exists(output_file):
-        with open(output_file, "w") as f:
-            json.dump({}, f)
-
-    new_state = record_directory_state(data_dir)
-
-    changed_data = compare_directory_state(old_state, new_state)
-
-    # Save changed data
-    with open(output_file, "w") as f:
-        json.dump(changed_data, f, indent=4)
-
-    new_files = changed_data["added"] + changed_data["modified"]
-    new_files = list(data_dir + "/" + new_file for new_file in new_files)
-    timed_files = changed_data["modified"] + changed_data["removed"]
-    timed_files = list(data_dir + "/" + timed_file for timed_file in timed_files)
-
-    # Update documents
-    documents_path = os.path.join(data_dir, "documents.pkl")
-    # documents_path = config.documents_path
-    # print(f"Current documents_path: {config.documents_path}")
-
-    if not os.path.exists(documents_path):
-        with open(documents_path, "wb") as f:
-            pickle.dump([], f)
-
-    with open(documents_path, "rb") as file:
-        documents = pickle.load(file)
-    print(f"Loaded documents from {documents_path}")
-
-    # Remove deleted files from the DBs and the documents
-    deleted_docs_id = []
-    for document in documents:
-        if document.metadata["file_path"] in timed_files:
-            deleted_docs_id.append(document.doc_id)
-            documents.remove(document)
-        print(document.metadata)
-
-    if len(new_files + timed_files) == 0:
-        print("Nothing has changed")
-    else:
-        print(
-            "Added",
-            len(changed_data["added"]),
-            "documents\n",
-            "Modified",
-            len(changed_data["modified"]),
-            "documents\n",
-            "Removed",
-            len(changed_data["removed"]),
-            "documents\n",
-        )
-
-    # Check and download required nltk packages
-    try:
-        nltk.data.find("taggers/averaged_perceptron_tagger_eng")
-    except LookupError:
-        nltk.download("averaged_perceptron_tagger_eng")
-
-    try:
-        nltk.data.find("taggers/averaged_perceptron_tagger")
-    except LookupError:
-        nltk.download("averaged_perceptron_tagger")
-
-    try:
-        nltk.data.find("tokenizers/punkt")
-    except LookupError:
-        nltk.download("punkt")
-
-    try:
-        # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
-        # replaces nltk tokenizers with its own version.
-        nltk.data.find("tokenizers/punkt_tab/english")
-    except LookupError:
-        nltk.download("punkt_tab")
-
-    llama_parse_api_key = "llx-dwGAqjLq7SqCXu7u9y2lBDyyIlnVvbh0pSJUed1toAsnwseQ"
-    pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key,
-        result_type="markdown",
-        verbose=True,
-    )
-
-    # 加载已解析的文件记录
-    parsed_files_record = os.path.join(data_dir, "parsed_files.pkl")
-    if os.path.exists(parsed_files_record):
-        with open(parsed_files_record, "rb") as f:
-            parsed_files = pickle.load(f)
-    else:
-        parsed_files = set()
-
-    # 二次过滤已解析的文件
-    new_files = [file for file in new_files if file not in parsed_files]
-
-    if len(new_files) != 0:
-        for file in new_files:
-            try:
-                # Parse the file
-                new_documents = SimpleDirectoryReader(
-                    input_files=[file],
-                    recursive=True,
-                    required_exts=[".pdf"],
-                    file_extractor={
-                        ".pdf": pdf_parser,
-                    },
-                ).load_data()
-
-                # FIXME: Mitigate the issue of  ,
-                # which causes collision for files with the same filename.
-                # See: https://github.com/run-llama/llama_index/issues/17144
-                for doc in new_documents:
-                    doc.doc_id = str(uuid.uuid4())
-
-                    if doc.metadata["file_type"] == "text/html":
-                        with open(doc.metadata["file_path"], "r") as f:
-                            html = f.read()
-                        try:
-                            doc.text = md(html)
-                        except:
-                            print(f"fail trans to md:{doc.metadata['file_path']}")
-                    doc.metadata["user_id"] = user_id
-
-                # Update documents and save
-                documents.extend(new_documents)
-                with open(documents_path, "wb") as f:
-                    pickle.dump(documents, f)
-
-                # Update parsed files record and save
-                parsed_files.add(file)
-                with open(parsed_files_record, "wb") as f:
-                    pickle.dump(parsed_files, f)
-            except Exception as e:
-                print(f"Error parsing {file}: {e}")
-                # Optionally log the error to a file
-                continue  # Proceed to the next file
-    else:
-        new_documents = []
-
-    documents = documents + new_documents
-
-    with open(documents_path, "wb") as f:
-        pickle.dump(documents, f)
-
-    with open(state_file, "w") as f:
-        json.dump(new_state, f, indent=4)
-    # 删除临时文件
-    if os.path.exists(parsed_files_record):
-        os.remove(parsed_files_record)
-
-    print("Document successfully update")
-
-    result = {"new documents": new_documents, "deleted documents": deleted_docs_id}
+def nodes_to_dicts(nodes: list):
+    result = {
+        "ids": [],
+        "texts": [],
+        "metadatas": [],
+    }
+    for node in nodes:
+        result["ids"].append(node.node_id)
+        result["texts"].append(node.text)
+        result["metadatas"].append(node.metadata)
 
     return result
 
 
-def main(data_dir=None, user_id=None):
-    setup(use_llm=False)
+def custom_metadata(user_id: str):
+    def _get_meta(file_path: str) -> dict:
+        stat = os.stat(file_path)
+        return {
+            "file_path": file_path,
+            "page_number": "Not given.",
+            "file_name": os.path.basename(file_path),
+            "file_type": mimetypes.guess_type(file_path)[0]
+            or "application/octet-stream",
+            "file_size": stat.st_size,
+            "creation_date": datetime.datetime.utcfromtimestamp(
+                stat.st_ctime
+            ).isoformat(),
+            "last_modified_date": datetime.datetime.utcfromtimestamp(
+                stat.st_mtime
+            ).isoformat(),
+            "last_accessed_date": datetime.datetime.utcfromtimestamp(
+                stat.st_atime
+            ).isoformat(),
+            "user_id": user_id,
+        }
 
-    update(data_dir, user_id)
+    return _get_meta
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Load the specified .pkl file into chroma."
+class XlsxReader(BaseReader):
+    def __init__(
+        self,
+    ) -> None:
+        super().__init__()
+
+    def xlsx_load(self, file: Path) -> str:
+        wb = load_workbook(file)
+        # 获取所有工作表的名称
+        sheet_names = wb.sheetnames
+
+        markdown_menu = ""
+
+        # 遍历每一个工作表
+        for sheet_name in sheet_names:
+            sub_wb = wb[sheet_name]
+            merged_cells = list(sub_wb.merged_cells.ranges)  # 转换为列表
+
+            # 遍历每一个合并单元格
+            for merged_cell in merged_cells:
+                min_row, max_row = merged_cell.min_row, merged_cell.max_row
+                min_col, max_col = merged_cell.min_col, merged_cell.max_col
+
+                # 获取合并单元格的值
+                cell_value = sub_wb.cell(row=min_row, column=min_col).value
+
+                # 解除合并单元格
+                sub_wb.unmerge_cells(
+                    start_row=min_row,
+                    start_column=min_col,
+                    end_row=max_row,
+                    end_column=max_col,
+                )
+
+                # 将值填充到之前合并单元格的所有单元格中
+                for col in range(min_col, max_col + 1):
+                    for row in range(min_row, max_row + 1):
+                        sub_wb.cell(row=row, column=col, value=cell_value)
+
+            data = wb[sheet_name].values
+            columns = next(data)[0:]  # 获取第一行作为列名
+            df = pd.DataFrame(data, columns=columns)
+
+            # 处理 DataFrame 中的回车符
+            df = df.applymap(
+                lambda x: str(x).replace("\n", " ") if isinstance(x, str) else x
+            )
+
+            # 去掉全为空值的行和列
+            df.dropna(how="all", inplace=True)
+            df.dropna(axis=1, how="all", inplace=True)
+
+            # 去掉全为 None 的行和列
+            df = df.applymap(lambda x: None if x == "None" else x)
+            df.dropna(how="all", inplace=True)
+            df.dropna(axis=1, how="all", inplace=True)
+
+            # 将 DataFrame 转换为 Markdown 格式
+            markdown_output = df.to_markdown(index=False)
+            markdown_menu += sheet_name + "菜单：\n"
+            markdown_menu += markdown_output
+            markdown_menu += "\n\n\n\n"
+
+        return markdown_menu
+
+    def load_data(
+        self, file: Path, extra_info: Optional[Dict] = None
+    ) -> List[Document]:
+        docs = []
+        metadata = {
+            "file_name": file.name,
+            "file_path": str(file),
+        }
+        if extra_info is not None:
+            metadata.update(extra_info)
+
+        return [Document(text=self.xlsx_load(file), metadata=metadata or {})]
+
+
+def write_changes(data_dir: str, new_files: list[str], removed_files: list[str]):
+    log_path = os.path.join(data_dir, "log.json")
+
+    with open(log_path, "r") as file:
+        log = json.load(file)
+
+    for file in log["file_paths"][:]:
+        if file in removed_files:
+            log["file_paths"].remove(file)
+
+    log["file_paths"].extend(new_files)
+
+    with open(log_path, "w") as file:
+        json.dump(log, file)
+
+
+def read_changes(data_dir: str):
+    log_path = os.path.join(data_dir, "log.json")
+
+    if os.path.exists(log_path):
+        with open(log_path, "r") as file:
+            log = json.load(file)
+            previous_files = log.get("file_paths", [])
+    else:
+        previous_files = []
+        with open(log_path, "w") as file:
+            json.dump({"file_paths": []}, file)
+
+    current_files = []
+    for file_name in os.listdir(data_dir):
+        if file_name == "log.json":
+            continue
+        file_path = os.path.join(data_dir, file_name)
+        current_files.append(file_path)
+
+    removed_files = list(set(previous_files) - set(current_files))
+
+    added_files = list(set(current_files) - set(previous_files))
+
+    return added_files, removed_files
+
+
+# For large files doing one collection.add seems to break stuff.
+def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
+    for file_path in file_paths:
+        print(f"Reading: {file_path}")  # Debugging output
+        if not os.path.exists(file_path):
+            print(f"Error: The directory '{file_path}' does not exist.")
+        pdf_loader = pdf_reader.parse(file_path)
+        nodes_buffer = []
+
+        for i, page in enumerate(pdf_loader.pages):
+            metadata = custom_metadata(user_id)(file_path)
+            # Adding page number
+            metadata["page_number"] = page.page
+
+            chunks = parser.split_text(page.md)
+            for chunk in chunks:
+                node = TextNode(
+                    text=chunk,
+                    id_=str(uuid.uuid4()),
+                    metadata=metadata,
+                )
+                nodes_buffer.append(node)
+
+            # for every 25 pages we upload them to chroma
+            if i % 25 == 0:
+                nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+                collection.add(
+                    ids=nodes_buffer_dict["ids"],
+                    documents=nodes_buffer_dict["texts"],
+                    metadatas=nodes_buffer_dict["metadatas"],
+                )
+                nodes_buffer = []
+
+        nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+        collection.add(
+            ids=nodes_buffer_dict["ids"],
+            documents=nodes_buffer_dict["texts"],
+            metadatas=nodes_buffer_dict["metadatas"],
+        )
+
+        print(f"Finished loading {file_path}.")
+
+
+def update(data_dir, user_id):
+    added_files, removed_files = read_changes(data_dir)
+
+    chroma_db = chromadb.PersistentClient(
+        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
-    parser.add_argument(
-        "data_dir",
-        type=str,
-        help="The directory containing the data",
-    )
-    parser.add_argument(
-        "user_id",
-        type=str,
-        help="user_id",
-    )
-    args = parser.parse_args()
 
-    main(args.data_dir, args.user_id)
+    collection = chroma_db.get_or_create_collection(
+        name=config.user_uploads_collection,
+        embedding_function=HuggingFaceEmbeddingServer(
+            url=config.tei_url + "/" + config.embedding + "/embed"
+        ),
+        metadata={
+            "hnsw:batch_size": 1024,
+            "hnsw:sync_threshold": 2048,
+        },
+    )
+
+    if len(removed_files) > 0:
+        for file in removed_files:
+            print(f"Removing: {file}")
+            collection.delete(where={"file_path": file})
+        print("Removal done.")
+
+    if len(added_files) > 0:
+        reader = UnstructuredReader()
+        xlsx_reader = XlsxReader()
+        llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
+
+        pdf_reader = LlamaParse(
+            api_key=llama_parse_api_key,
+            result_type="json",
+            verbose=True,
+        )
+
+        pdf_files = [file for file in added_files if file.endswith(".pdf")]
+
+        non_pdf_files = list(set(added_files) - set(pdf_files))
+
+        parser = SentenceSplitter(
+            chunk_size=1024,
+            chunk_overlap=20,
+        )
+
+        if len(non_pdf_files) > 0:
+            non_pdf_documents = SimpleDirectoryReader(
+                input_files=non_pdf_files,
+                filename_as_id=True,
+                file_metadata=custom_metadata(user_id),
+                required_exts=[".csv", ".jpg", ".xlsx"],
+                file_extractor={
+                    ".csv": reader,
+                    ".jpg": reader,
+                    ".xlsx": xlsx_reader,
+                },
+            ).load_data(show_progress=True)
+            non_pdf_nodes = parser.get_nodes_from_documents(non_pdf_documents)
+            non_pdf_nodes = nodes_to_dicts(non_pdf_nodes)
+
+            collection.add(
+                ids=non_pdf_nodes["ids"],
+                documents=non_pdf_nodes["texts"],
+                metadatas=non_pdf_nodes["metadatas"],
+            )
+
+        if len(pdf_files) > 0:
+            embed_pdf(pdf_files, pdf_reader, parser, user_id, collection)
+
+        print("Chroma load Done!")
+        # print("Example:")
+        # print(
+        #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"
+        # )
+        #
+    write_changes(data_dir, added_files, removed_files)
