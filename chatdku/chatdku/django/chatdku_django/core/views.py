@@ -13,6 +13,7 @@ from chatdku.backend.user_data_interface import update
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 import json
+from django.utils.text import slugify
 
 
 import logging
@@ -41,7 +42,7 @@ def upload(request):
         uploaded_file=serializer.validated_data["file_"]
 
     
-        filename = f"{uuid.uuid4()}.pdf"
+        filename = f"{slugify(os.path.splitext(uploaded_file.name)[0])}.pdf"
 
         user_folder=request.user.folder
 
@@ -64,7 +65,7 @@ def upload(request):
         if not os.path.exists(json_path):
             with open(json_path, "w") as f:
                 json.dump({}, f)
-
+        print("----updating----")
         update(data_dir=user_folder_path_json,user_id=str(netid))
 
         return Response({"message": "File uploaded successfully"}, status=201)
