@@ -54,7 +54,8 @@ def upload(request):
         os.makedirs(full_user_folder_path, exist_ok=True)
 
         path=default_storage.save(file_path,ContentFile(uploaded_file.read()))
-        record = UploadedFile(filename=filename, user=request.user, uploaded_time=now())
+        saved_name=os.path.basename(path)
+        record = UploadedFile(filename=saved_name, user=request.user, uploaded_time=now())
         record.save()
 
     #Updating Chunks
