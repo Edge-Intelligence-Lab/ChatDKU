@@ -24,6 +24,7 @@ class Config:
                 "redis_url": "redis://localhost:6379",
                 "chroma_db": "/datapool/db_chat_dku_advising",
                 "chroma_collection": "dku_html_pdf",
+                "user_uploads_collection": "user_uploads",
                 # about query
                 "index_name": "chat_dku_advising",  # TODO change name
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
