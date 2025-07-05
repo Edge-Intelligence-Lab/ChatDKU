@@ -261,7 +261,7 @@ def update(data_dir, user_id):
             collection.delete(where={"file_path": file})
         print("Removal done.")
 
-    if len(added_files) > 0:
+    elif len(added_files) > 0:
         reader = UnstructuredReader()
         xlsx_reader = XlsxReader()
         llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
@@ -311,4 +311,6 @@ def update(data_dir, user_id):
         #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"
         # )
         #
+    else:
+        print("No changes to be done.")
     write_changes(data_dir, added_files, removed_files)
