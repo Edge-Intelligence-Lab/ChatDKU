@@ -68,6 +68,7 @@ def custom_metadata(user_id: str):
                 stat.st_atime
             ).isoformat(),
             "user_id": user_id,
+            "chunk_id": "Not given",
         }
 
     return _get_meta
@@ -210,9 +211,13 @@ def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
 
             chunks = parser.split_text(page.md)
             for chunk in chunks:
+                chunk_id = str(uuid.uuid4())
+
+                metadata["chunk_id"] = chunk_id
+
                 node = TextNode(
                     text=chunk,
-                    id_=str(uuid.uuid4()),
+                    id_= chunk_id,
                     metadata=metadata,
                 )
                 nodes_buffer.append(node)
@@ -294,6 +299,11 @@ def update(data_dir, user_id):
                 },
             ).load_data(show_progress=True)
             non_pdf_nodes = parser.get_nodes_from_documents(non_pdf_documents)
+
+            for node in non_pdf_nodes:
+                node.node_id = str(uuid.uuid4())
+                node.metadata["chunk_id"] = node.node_id
+
             non_pdf_nodes = nodes_to_dicts(non_pdf_nodes)
 
             collection.add(
