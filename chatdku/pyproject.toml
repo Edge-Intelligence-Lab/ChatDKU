@@ -1,16 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = [
+    "setuptools>=61.0",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ChatDKU"
 version = "1.1.0"
 authors = [
-    { name="Mingxi Li" },
-    { name="Yuxiang Lin", email="theta.lin@yandex.com" },
-    { name="Cody Qin" },
-    { name="Ningyuan Yang" },
-    { name="Anar Nyambayar" },
+    { name = "Mingxi Li" },
+    { name = "Yuxiang Lin", email = "theta.lin@yandex.com" },
+    { name = "Cody Qin" },
+    { name = "Ningyuan Yang" },
+    { name = "Anar Nyambayar" },
 ]
 description = ""
 readme = ""
@@ -19,45 +21,47 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-
 dependencies = [
     # core
     "pydantic==2.10.5",
-    "llama-index~=0.11.9",
-    "llama-index-storage-docstore-redis~=0.2.0",
-    "llama-index-vector-stores-redis~=0.3.2",
-    "llama-index-vector-stores-chroma~=0.2.0",
-    "llama-index-embeddings-text-embeddings-inference~=0.2.0",
-    "llama-index-llms-openai-like~=0.2.0",
-    "llama-index-llms-llama-cpp~=0.2.2",
-    "llama-index-retrievers-bm25~=0.3.0",
-    "llama-index-postprocessor-cohere-rerank~=0.2.0",
-    "llama-index-postprocessor-colbert-rerank~=0.2.1",
+    "llama-index==0.11.23",
+    "llama-index-storage-docstore-redis==0.2.0",
+    "llama-index-vector-stores-redis==0.3.4",
+    "llama-index-vector-stores-chroma==0.2.2",
+    "llama-index-embeddings-text-embeddings-inference==0.2.0",
+    "llama-index-llms-openai-like==0.2.0",
+    "llama-index-llms-llama-cpp==0.2.3",
+    "llama-index-retrievers-bm25==0.3.1",
+    "llama-index-postprocessor-cohere-rerank==0.2.1",
+    "llama-index-postprocessor-colbert-rerank==0.2.1",
     "unstructured[pdf]~=0.14.7",
-    "chromadb==0.5.5",
-    "arize-phoenix~=5.5.2",
-    "opentelemetry-api~=1.27.0",
-    "opentelemetry-sdk~=1.27.0",
-    "openinference-semantic-conventions~=0.1.10",
-    "dspy-ai~=2.4.10",
-    "magicattr~=0.1.6", # FIXME: For patching DSPy's set_attribute_by_name()
+    "chromadb==1.0.15",
+    "arize-phoenix==5.5.2",
+    "opentelemetry-api==1.27.0",
+    "opentelemetry-sdk==1.27.0",
+    "openinference-semantic-conventions==0.1.17",
+    "dspy-ai==2.4.17",
+    "magicattr==0.1.6", # FIXME: For patching DSPy's set_attribute_by_name() 
+    "pdfminersix==20231228"
 
     # backend
-    "Flask~=3.0.3",
-    "Flask-Cors~=4.0.1",
-    "gunicorn~=23.0.0",
-    "whisper~=1.1.10",
-    "Flask-SocketIO~=5.5.1",
-    "pydub~=0.25.1",
-    "python-ffmpeg~=2.0.12",
-    "Flask-SQLAlchemy~=3.1.1",
-    "Flask-Migrate~=4.1.0",
-    "Flask-Admin~=1.6.1",
-    "eventlet~=0.39.1",
+    "Flask==3.0.3",
+    "Flask-Cors==4.0.2",
+    "gunicorn==23.0.0",
+    "whisper==1.1.10",
+    "Flask-SocketIO==5.5.1",
+    "pydub==0.25.1",
+    "python-ffmpeg==2.0.12",
+    "Flask-SQLAlchemy==3.1.1",
+    "Flask-Migrate==4.1.0",
+    "Flask-Admin==1.6.1",
+    "eventlet==0.39.1",
     "openai-whisper",
-    "ollama~=0.4.8",
-    "plotly~=6.1.2"
+    "ollama==0.4.9",
+    "plotly==6.1.2",
 ]
 
 [tool.setuptools]
-packages = ["chatdku"]
+packages = [
+    "chatdku",
+]
