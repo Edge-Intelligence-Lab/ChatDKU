@@ -101,7 +101,7 @@ def load_chroma(
     )
 
     if reset:
-        db.reset()  # Clear previously stored data in vector database
+        db.delete_collection(collection)  # Clear previously stored data in vector database
     chroma_collection = db.get_or_create_collection(collection)
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 

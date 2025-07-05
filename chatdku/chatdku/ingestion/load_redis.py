@@ -119,8 +119,6 @@ def load_redis(
         from llama_index.core.node_parser import SentenceSplitter
 
         trans.append(SentenceSplitter(**text_spliter_args))
-    else:
-        raise ValueError(f"Unsupported text_splitter: {text_spliter}")
 
     if use_recursive_directory_summarize:
         from recursive_directory_summarize import RecursiveDirectorySummarize
