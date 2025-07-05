@@ -28,6 +28,7 @@ unstructured.partition.auto.partition = partition
 
 def load_redis(
     documents=None,
+    nodes: list = None,
     index_name: str = None,
     pipeline_workers: int = 1,
     pipeline_cache_path: str = config.pipeline_cache,
@@ -46,9 +47,12 @@ def load_redis(
     reset: Whether to overwrite the data on the existing DB.
     """
 
+    setup(use_llm=False)
+
     if documents is None:
-        with open(config.documents_path, "rb") as f:
-            documents = pickle.load(f)
+        if nodes is None:
+            with open(config.documents_path, "rb") as f:
+                documents = pickle.load(f)
 
     if index_name is None:
         index_name = config.index_name
@@ -111,12 +115,7 @@ def load_redis(
         if e not in supported_extractors:
             raise ValueError(f"Unsupported extractor: {e}")
 
-    if "title" in extractors:
-        from llama_index.core.extractors import TitleExtractor
-
-        trans.append(TitleExtractor())
-
-    if text_spliter == "sentence_splitter":
+    if text_spliter == "sentence_splitter" and not nodes:
         from llama_index.core.node_parser import SentenceSplitter
 
         trans.append(SentenceSplitter(**text_spliter_args))
@@ -127,6 +126,11 @@ def load_redis(
         from recursive_directory_summarize import RecursiveDirectorySummarize
 
         trans.append(RecursiveDirectorySummarize())
+
+    if "title" in extractors:
+        from llama_index.core.extractors import TitleExtractor
+
+        trans.append(TitleExtractor())
 
     if "keyword" in extractors:
         from llama_index.core.extractors import KeywordExtractor
@@ -145,6 +149,8 @@ def load_redis(
 
     trans.append(Settings.embed_model)
 
+    print(trans)
+
     pipeline = IngestionPipeline(
         transformations=trans,
         vector_store=vector_store,
@@ -153,14 +159,17 @@ def load_redis(
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
 
-    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    if nodes:
+        pipeline.run(nodes=nodes, num_workers=pipeline_workers, show_progress=True)
+    else:
+        pipeline.run(
+            documents=documents, num_workers=pipeline_workers, show_progress=True
+        )
 
     print("Redis load done!")
 
 
 def main(documents_path, index_name):
-    setup(use_llm=False)
-
     with open(documents_path, "rb") as f:
         documents = pickle.load(f)
 
