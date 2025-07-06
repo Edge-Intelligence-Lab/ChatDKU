@@ -59,7 +59,17 @@ dependencies = [
     "openai-whisper",
     "ollama==0.4.9",
     "plotly==6.1.2",
-]
+
+    #Django backend
+    "Django~=5.2.3"
+    "django-appconf~=1.1.0"
+    "django-cors-headers~=4.7.0"
+    "django-cryptography~=1.1"
+    "django-encrypted-model-fields~=0.6.5"
+    "django-fernet-fields~=0.6"
+    "django-import-export~=4.3.8"
+    "djangorestframework~=3.16.0"
+    ]
 
 [tool.setuptools]
 packages = [
