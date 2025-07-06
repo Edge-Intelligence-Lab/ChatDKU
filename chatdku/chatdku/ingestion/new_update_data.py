@@ -204,6 +204,7 @@ def read_changes(data_dir: str):
 
     return added_files, removed_files
 
+
 # For large files doing one collection.add seems to break stuff.
 def embed_pdf(file_paths: list[str], user_id, collection):
     total_nodes = []
@@ -240,7 +241,7 @@ def embed_pdf(file_paths: list[str], user_id, collection):
 
                 node = TextNode(
                     text=chunk,
-                    id_= chunk_id,
+                    id_=chunk_id,
                     metadata=metadata,
                 )
                 nodes_buffer.append(node)
@@ -265,7 +266,7 @@ def embed_pdf(file_paths: list[str], user_id, collection):
                                 documents=node_dict["texts"],
                                 metadatas=node_dict["metadatas"],
                             )
-                            
+
                         except Exception as e:
                             raise e
                 nodes_buffer = []
@@ -288,13 +289,14 @@ def embed_pdf(file_paths: list[str], user_id, collection):
                             documents=node_dict["texts"],
                             metadatas=node_dict["metadatas"],
                         )
-                        
+
                     except Exception as e:
                         raise e
 
         print(f"Finished loading {file_path}.")
 
     return total_nodes
+
 
 def embed_non_pdf(files: list, user_id, collection):
     reader = UnstructuredReader()
@@ -325,7 +327,7 @@ def embed_non_pdf(files: list, user_id, collection):
         files_buffer.append(file)
         if i % 25 == 0:
             non_pdf_nodes = pipeline.run(documents=files_buffer, show_progress=True)
-            
+
             for node in non_pdf_nodes:
                 node.node_id = str(uuid.uuid4())
                 node.metadata["chunk_id"] = node.node_id
@@ -352,13 +354,13 @@ def embed_non_pdf(files: list, user_id, collection):
                         )
                 except Exception as e:
                     raise e
-            
+
             total_nodes += non_pdf_nodes
             files_buffer = []
 
     if files_buffer:
         non_pdf_nodes = pipeline.run(documents=files_buffer, show_progress=True)
-        
+
         for node in non_pdf_nodes:
             node.node_id = str(uuid.uuid4())
             node.metadata["chunk_id"] = node.node_id
@@ -424,7 +426,6 @@ def update(data_dir, user_id):
 
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
-
         total_nodes = []
 
         if len(non_pdf_files) > 0:
@@ -432,13 +433,12 @@ def update(data_dir, user_id):
 
             total_nodes += non_pdf_nodes
 
-
         if len(pdf_files) > 0:
             pdf_nodes = embed_pdf(pdf_files, user_id, collection)
 
             total_nodes += pdf_nodes
 
-        load_redis(nodes=total_nodes)
+        load_redis(nodes=total_nodes, index_name="user_uploads", reset=True)
         print("Chroma load Done!")
         # print("Example:")
         # print(
@@ -450,7 +450,6 @@ def update(data_dir, user_id):
     write_changes(data_dir, added_files, removed_files)
 
 
-
 def main(data_dir, user_id):
     if data_dir is None:
         data_dir = config.data_dir
@@ -458,6 +457,7 @@ def main(data_dir, user_id):
         user_id = "Chat_DKU"
 
     update(data_dir, user_id)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process data directory path")

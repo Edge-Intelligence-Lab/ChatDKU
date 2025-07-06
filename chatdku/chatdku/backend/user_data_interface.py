@@ -6,9 +6,10 @@ import uuid
 import json
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader, Settings
 from llama_index.core.schema import TextNode
 from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.readers.base import BaseReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
@@ -38,11 +39,13 @@ def nodes_to_dicts(nodes: list):
     result = {
         "ids": [],
         "texts": [],
+        "embeddings": [],
         "metadatas": [],
     }
     for node in nodes:
         result["ids"].append(node.node_id)
         result["texts"].append(node.text)
+        result["embeddings"].append(node.embedding)
         result["metadatas"].append(node.metadata)
 
     return result
@@ -298,16 +301,27 @@ def update(data_dir, user_id):
                     ".xlsx": xlsx_reader,
                 },
             ).load_data(show_progress=True)
-            non_pdf_nodes = parser.get_nodes_from_documents(non_pdf_documents)
+
+            pipeline = IngestionPipeline(
+                transformations=[
+                    SentenceSplitter(chunk_size=1024, chunk_overlap=20),
+                    Settings.embed_model,
+                ]
+            )
+
+            non_pdf_nodes = pipeline.run(documents=non_pdf_documents)
+
 
             for node in non_pdf_nodes:
                 node.node_id = str(uuid.uuid4())
                 node.metadata["chunk_id"] = node.node_id
 
+
             non_pdf_nodes = nodes_to_dicts(non_pdf_nodes)
 
             collection.add(
                 ids=non_pdf_nodes["ids"],
+                embeddings=non_pdf_nodes["embeddings"],
                 documents=non_pdf_nodes["texts"],
                 metadatas=non_pdf_nodes["metadatas"],
             )
