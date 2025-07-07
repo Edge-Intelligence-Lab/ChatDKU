@@ -1,0 +1,79 @@
+from core.models import UploadedFile, UserModel
+from celery import shared_task
+from django.db import transaction
+
+import os
+import dotenv
+import shutil
+import logging
+
+from chatdku.backend.user_data_interface import update
+
+logger=logging.getLogger(__name__)
+
+dotenv.load_dotenv()
+
+FOLDER_PATH=os.environ.get("MEDIA_ROOT")
+
+
+
+def remove_from_db(filename):
+    try:
+        with transaction.atomic():
+            UploadedFile.objects.filter(filename=filename).delete()
+
+    except Exception as e:
+        logger.error(f"Failed to remove {filename} from DB: {e}")
+
+
+
+@shared_task
+def remove_files():
+    db_filenames=set(UploadedFile.objects.values_list('filename',flat=True))
+
+    for item in os.listdir(FOLDER_PATH):
+        user_path=os.path.join(FOLDER_PATH,item)
+
+        if os.path.isdir(user_path):
+
+            for filename in os.listdir(user_path):
+                file_path=os.path.join(user_path,filename)
+                try:
+                    if os.path.isfile(file_path):
+                        if filename in db_filenames:
+                            os.remove(file_path)
+                            remove_from_db(filename)
+
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    logger.warning(f'Failed to delete {file_path}: {e}')
+
+@shared_task
+def update_user_embedding():
+    try:
+        query=UserModel.objects.values_list('username','folder')
+        if not query:
+            return "No User Found"
+        user_names,user_folders=zip(*query)
+
+        for name,folder in zip(user_names,user_folders):
+            if str(name).startswith('admin'):
+                continue
+            else:
+                try:
+                    data_dir=os.path.join(FOLDER_PATH,folder)
+                    update(user_id=str(name), data_dir=str(data_dir))
+                except Exception as e:
+                    logger.error(f"Failed to update user {name} with folder {folder}: {e}")
+        return "Finished Updating"
+    
+    except Exception as e:
+        logger.error(f"Failed to update, Error occured: {e}")
+
+                
+
+
+    
+
+
