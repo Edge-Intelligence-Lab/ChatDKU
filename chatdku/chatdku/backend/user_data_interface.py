@@ -209,6 +209,7 @@ def embed_pdf(file_paths: list[str], user_id, collection):
         api_key=llama_parse_api_key,
         result_type="json",
         verbose=True,
+        disable_image_extraction=True,
     )
     for file_path in file_paths:
         print(f"Reading: {file_path}")  # Debugging output
