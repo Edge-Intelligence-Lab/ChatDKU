@@ -3,6 +3,7 @@ from celery import Celery
 from celery.schedules import crontab
 from dotenv import load_dotenv
 
+from redis import Redis
 
 # Django Default Setting for celery
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -10,8 +11,13 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE','chatdku_django.settings')
 
 app=Celery('chatdku_django')
-
 app.config_from_object('django.conf:settings',namespace='CELERY')
+
+redis_url=os.getenv("REDIS_URL")
+
+#set up redis
+redis_client=Redis.from_url(redis_url)
+
 
 #schedule apps
 app.conf.beat_schedule={
