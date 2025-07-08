@@ -4,6 +4,7 @@ from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chat.models import Feedback
 from chatdku.backend.user_data_interface import update
+from chatdku_django.celery import redis_client
 
 import logging
 logger=logging.getLogger(__name__)
@@ -21,7 +22,12 @@ def chat(request):
     search_mode=request.data.get("search_mode",0)
     netid=request.netid 
     user_id=netid if search_mode !=0 else "Chat_DKU"
+    lock_key=f"user_lock:{netid}"
+
     if search_mode==1 or search_mode==2:
+        if redis_client.get(lock_key):
+            return Response({"error","The file is uploading"},status=423)
+
         docs=list(request.user.files.values_list("filename",flat=True))
     else:
         docs=None
