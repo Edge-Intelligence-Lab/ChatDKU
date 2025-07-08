@@ -308,7 +308,7 @@ def embed_non_pdf(files: list, user_id, collection):
 def update(data_dir, user_id):
     added_files, removed_files = read_changes(data_dir)
 
-    chroma_db = chromadb.HttpClient(host="localhost", port=8000)
+    chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
     collection = chroma_db.get_or_create_collection(
         name=config.user_uploads_collection,
@@ -316,8 +316,8 @@ def update(data_dir, user_id):
             url=config.tei_url + "/" + config.embedding + "/embed"
         ),
         metadata={
-            "hnsw:batch_size": 1024,
-            "hnsw:sync_threshold": 2048,
+            "hnsw:batch_size": 512,
+            "hnsw:sync_threshold": 1024,
         },
     )
 
@@ -347,3 +347,6 @@ def update(data_dir, user_id):
     else:
         print("No changes to be done.")
     write_changes(data_dir, added_files, removed_files)
+
+
+update("/home/Ar-temis/Documents", "te100")

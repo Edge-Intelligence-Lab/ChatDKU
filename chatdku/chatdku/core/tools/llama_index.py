@@ -265,7 +265,7 @@ class VectorRetriever(dspy.Module):
         self.use_reranker = use_reranker
         self.reranker_top_n = reranker_top_n
 
-        db = chromadb.HttpClient(host="localhost", port=8000)
+        db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
         # self.chatdku_collection = db.get_collection(
         #     name=config.chroma_collection,
         #     embedding_function=HuggingFaceEmbeddingServer(
