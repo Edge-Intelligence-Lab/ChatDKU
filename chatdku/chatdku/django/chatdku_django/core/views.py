@@ -66,7 +66,6 @@ def upload(request):
         if not os.path.exists(json_path):
             with open(json_path, "w") as f:
                 json.dump({}, f)
-        print("----updating----")
         update(data_dir=user_folder_path_json,user_id=str(netid))
 
         return Response({"message": "File uploaded successfully"}, status=201)

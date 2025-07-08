@@ -20,10 +20,10 @@ field_key = base64.urlsafe_b64encode(os.urandom(32)).decode()
 
 import dotenv
 
-dotenv.load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 FIELD_ENCRYPTION_KEY = os.getenv("FIELD_ENCRYPTION_KEY", field_key)
 
@@ -116,6 +116,8 @@ INSTALLED_APPS = [
     "import_export",
     "corsheaders",
     "chat",
+    "django_celery_results",
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -235,3 +237,9 @@ STATIC_ROOT = os.path.join("/var/www/chatdku/", "django_staticfiles")
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+#Celery Settings
+CELERY_BROKER_URL='redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND='django-db'
+CELERY_TIMEZONE='UTC'
+CELERY_BEAT_SCHEDULER='django_celery_beat.schedulers.DatabaseScheduler'
