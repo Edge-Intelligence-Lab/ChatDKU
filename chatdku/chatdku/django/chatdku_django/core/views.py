@@ -3,16 +3,16 @@ from rest_framework.response import Response
 from core.models import UploadedFile
 from django.contrib.auth import get_user_model
 import os
-import uuid
+
 from django.utils.timezone import now
 from dotenv import load_dotenv
 from core.serializers import UploadFileSerializer
 from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from chatdku.backend.user_data_interface import update
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
-import json
+
+
+from core.tasks import update_user_chroma
 from .utils import slugify
 
 import logging
@@ -60,17 +60,23 @@ def upload(request):
 
     # Updating Chunks
         netid=request.netid
-        print(netid)
         user_folder_path_json=os.path.join(settings.MEDIA_ROOT, user_folder)
-        json_path = os.path.join(user_folder_path_json, "data_state.json")
-        os.makedirs(user_folder_path, exist_ok=True)
-        if not os.path.exists(json_path):
-            with open(json_path, "w") as f:
-                json.dump({}, f)
-        print("uploading")
-        update(data_dir=user_folder_path_json,user_id=str(netid))
-        print("uploaded")
+        update_user_chroma.delay(user_folder_path_json=user_folder_path_json,user_folder_path=user_folder_path,netid=netid)
+        logger.info(f"Chunks successfully updated for user: {netid}")
 
         return Response({"message": "File uploaded successfully"}, status=201)
     except Exception as e:
         return Response({"error":str(e)})
+
+
+@api_view(['GET'])
+def get_user_files(request):
+    try:
+        docs=list(request.user.files.values_list("filename",flat=True))
+        netid=request.netid
+        return Response({
+            "netid":netid,
+            "document":docs
+        },status=200)
+    except Exception as e:
+        return Response({"error":{str(e)}},status=500)
