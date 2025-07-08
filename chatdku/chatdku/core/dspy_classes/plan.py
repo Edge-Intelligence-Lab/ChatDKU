@@ -126,7 +126,7 @@ class Planner(dspy.Module):
             Params = func_to_model(
                 tool_name_camel + "Params",
                 tool.forward,
-                exclude=["internal_memory", "user_id", "search_mode", "docs"],
+                exclude=["internal_memory", "user_id", "search_mode", "files"],
             )
             ToolModel = create_model(
                 tool_name_camel,

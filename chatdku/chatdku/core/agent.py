@@ -15,7 +15,6 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 import chatdku.core.dspy_patch
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
-from chatdku.core.tools.get_user_profile import ProfileRetriever
 
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
@@ -24,7 +23,6 @@ from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.judge import Judge
-from chatdku.core.dspy_classes.user_profiler import Profiler
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -119,7 +117,6 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = False,
-        user_profile: str = "",
     ):
         """
         Args:
@@ -137,16 +134,13 @@ class Agent(dspy.Module):
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
-        self.user_profile = user_profile
         self.rewrite_query = rewrite_query
 
-        self.user_profiler = Profiler(profile_path=user_profile) if user_profile else None
         self.planner = assert_transform_module(
             Planner(
                 [
                     VectorRetriever(),
-                    KeywordRetriever(),
-                    ProfileRetriever(user_profile) if user_profile else None,
+                    # KeywordRetriever(),
                 ]
             ),
             functools.partial(backtrack_handler, max_backtracks=5),
@@ -178,7 +172,7 @@ class Agent(dspy.Module):
         question_id: str,
         user_id: str,
         search_mode: int,
-        docs: list,
+        files: list,
     ):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
@@ -253,7 +247,7 @@ class Agent(dspy.Module):
                     internal_memory=self.internal_memory,
                     user_id=user_id,
                     search_mode=search_mode,
-                    docs=docs,
+                    files=files,
                 )
                 first_ite_result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -319,18 +313,6 @@ class Agent(dspy.Module):
                     query = current_user_message
 
                 try:
-                    profiler = self.user_profiler(
-                        current_user_message=query,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                        profile=self.user_profile,
-                    )
-                    if VERBOSE:
-                        print(f"Profiler:{profiler}")
-                except dspy.DSPyAssertionError:
-                    print("User profile could not be found.")
-
-                try:
                     planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
                         # as the memory is not always updated for every iteration.
@@ -356,7 +338,7 @@ class Agent(dspy.Module):
                     internal_memory=self.internal_memory,
                     user_id=user_id,
                     search_mode=search_mode,
-                    docs=docs,
+                    files=files,
                 )
                 result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -398,7 +380,7 @@ class Agent(dspy.Module):
         question_id: str = "",
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        docs: list = None,
+        files: list = None,
     ):
         """
         current_user_message: user query
@@ -407,36 +389,30 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-        if docs is None:
-            docs = []
+        if files is None:
+            files = []
 
-        try:
-            if not (0 <= search_mode <= 2):
-                raise ValueError(
-                    f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
-                )
-
-            if search_mode != 0 and not docs:
-                raise ValueError("`docs` must be provided when search_mode is 1 or 2.")
-
-            gen = self._forward_gen(
-                current_user_message,
-                question_id,
-                user_id=user_id,
-                search_mode=search_mode,
-                docs=docs,
+        if not (0 <= search_mode <= 2):
+            raise ValueError(
+                f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
             )
 
-            if self.get_intermediate:
-                return gen
-            else:
-                for i in gen:
-                    return i
+        if search_mode != 0 and not files:
+            raise ValueError("`docs` must be provided when search_mode is 1 or 2.")
 
-        except Exception as e:
-            # Optionally log the error here with logging module
-            print(f"[Error in agent inputs]: {e}")
-            return None  # or raise if you want the exception to propagate
+        gen = self._forward_gen(
+            current_user_message,
+            question_id,
+            user_id=user_id,
+            search_mode=search_mode,
+            files=files,
+        )
+
+        if self.get_intermediate:
+            return gen
+        else:
+            for i in gen:
+                return i
 
 
 def main():
@@ -453,7 +429,6 @@ def main():
         max_iterations=2,
         streaming=True,
         get_intermediate=False,
-        user_profile="/srv/chatdku_user_data/an301/profile",
     )
 
     while True:
@@ -463,9 +438,9 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-                user_id="Chat_DKU",
-                search_mode=0,
-                # docs=["syllabus.pdf"],
+                user_id="te100",
+                search_mode=2,
+                files=["cs306_syllabus.pdf"],
             )
             first_token = True
             print("Response:")

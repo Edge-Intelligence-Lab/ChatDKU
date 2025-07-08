@@ -4,10 +4,8 @@ import datetime
 import nest_asyncio
 import uuid
 import json
-import chromadb
 import argparse
-from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-from llama_index.core import SimpleDirectoryReader, Settings
+from llama_index.core import SimpleDirectoryReader
 from llama_index.core.schema import TextNode
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline
@@ -15,8 +13,6 @@ from llama_index.core.readers.base import BaseReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from chatdku.config import config
-from chatdku.setup import setup
-from chatdku.ingestion.load_redis import load_redis
 from pathlib import Path
 from typing import Dict, List, Optional
 from llama_index.core.schema import Document
@@ -42,13 +38,11 @@ def nodes_to_dicts(nodes: list):
     result = {
         "ids": [],
         "texts": [],
-        "embeddings": [],
         "metadatas": [],
     }
     for node in nodes:
         result["ids"].append(node.node_id)
         result["texts"].append(node.text)
-        result["embeddings"].append(node.embedding)
         result["metadatas"].append(node.metadata)
 
     return result
@@ -194,7 +188,11 @@ def read_changes(data_dir: str):
         for file_name in files:
             file_path = os.path.join(root, file_name)
             # Skip log.json itself
-            if os.path.abspath(file_path) == os.path.abspath(log_path):
+            if (
+                os.path.abspath(file_path) == os.path.abspath(log_path)
+                or file_name.endswith(".json")
+                or file_name.endswith(".pkl")
+            ):
                 continue
             current_files.append(os.path.abspath(file_path))
 
@@ -205,8 +203,7 @@ def read_changes(data_dir: str):
     return added_files, removed_files
 
 
-# For large files doing one collection.add seems to break stuff.
-def embed_pdf(file_paths: list[str], user_id, collection):
+def read_pdf(file_paths: list[str], user_id):
     total_nodes = []
     llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
 
@@ -226,7 +223,6 @@ def embed_pdf(file_paths: list[str], user_id, collection):
         if file_path == "/datapool/chat_dku_advising/student_handbook_2023-08-16.pdf":
             continue
         pdf_loader = pdf_reader.parse(file_path)
-        nodes_buffer = []
 
         for i, page in enumerate(pdf_loader.pages):
             metadata = custom_metadata(user_id)(file_path)
@@ -244,61 +240,15 @@ def embed_pdf(file_paths: list[str], user_id, collection):
                     id_=chunk_id,
                     metadata=metadata,
                 )
-                nodes_buffer.append(node)
+                if node.text == "":
+                    continue
                 total_nodes.append(node)
-
-            # for every 25 pages we upload them to chroma
-            if i % 25 == 0:
-                nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
-                try:
-                    collection.add(
-                        ids=nodes_buffer_dict["ids"],
-                        documents=nodes_buffer_dict["texts"],
-                        metadatas=nodes_buffer_dict["metadatas"],
-                    )
-                except Exception as e:
-                    raise e
-                    for node in nodes_buffer:
-                        node_dict = nodes_to_dicts(node)
-                        try:
-                            collection.add(
-                                ids=node_dict["ids"],
-                                documents=node_dict["texts"],
-                                metadatas=node_dict["metadatas"],
-                            )
-
-                        except Exception as e:
-                            raise e
-                nodes_buffer = []
-
-        if nodes_buffer:
-            nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
-            try:
-                collection.add(
-                    ids=nodes_buffer_dict["ids"],
-                    documents=nodes_buffer_dict["texts"],
-                    metadatas=nodes_buffer_dict["metadatas"],
-                )
-            except Exception as e:
-                raise e
-                for node in nodes_buffer:
-                    node_dict = nodes_to_dicts(node)
-                    try:
-                        collection.add(
-                            ids=node_dict["ids"],
-                            documents=node_dict["texts"],
-                            metadatas=node_dict["metadatas"],
-                        )
-
-                    except Exception as e:
-                        raise e
-
         print(f"Finished loading {file_path}.")
 
     return total_nodes
 
 
-def embed_non_pdf(files: list, user_id, collection):
+def read_non_pdf(files: list, user_id):
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     non_pdf_documents = SimpleDirectoryReader(
@@ -317,110 +267,24 @@ def embed_non_pdf(files: list, user_id, collection):
     pipeline = IngestionPipeline(
         transformations=[
             SentenceSplitter(chunk_size=1024, chunk_overlap=20),
-            Settings.embed_model,
         ]
     )
 
-    files_buffer = []
-    total_nodes = []
-    for i, file in enumerate(non_pdf_documents):
-        files_buffer.append(file)
-        if i % 25 == 0:
-            non_pdf_nodes = pipeline.run(documents=files_buffer, show_progress=True)
+    non_pdf_nodes = pipeline.run(documents=non_pdf_documents, show_progress=True)
 
-            for node in non_pdf_nodes:
-                node.node_id = str(uuid.uuid4())
-                node.metadata["chunk_id"] = node.node_id
+    for node in non_pdf_nodes:
+        if node.text == "":
+            continue
+        node.node_id = str(uuid.uuid4())
+        node.metadata["chunk_id"] = node.node_id
 
-            non_pdf_nodes_dicts = nodes_to_dicts(non_pdf_nodes)
-
-            try:
-                collection.add(
-                    ids=non_pdf_nodes_dicts["ids"],
-                    embeddings=non_pdf_nodes_dicts["embeddings"],
-                    documents=non_pdf_nodes_dicts["texts"],
-                    metadatas=non_pdf_nodes_dicts["metadatas"],
-                )
-            except Exception as e:
-                raise e
-                try:
-                    for node in non_pdf_nodes:
-                        node_dict = nodes_to_dicts(node)
-                        collection.add(
-                            ids=node_dict["ids"],
-                            embeddings=node_dict["embeddings"],
-                            documents=node_dict["texts"],
-                            metadatas=node_dict["metadatas"],
-                        )
-                except Exception as e:
-                    raise e
-
-            total_nodes += non_pdf_nodes
-            files_buffer = []
-
-    if files_buffer:
-        non_pdf_nodes = pipeline.run(documents=files_buffer, show_progress=True)
-
-        for node in non_pdf_nodes:
-            node.node_id = str(uuid.uuid4())
-            node.metadata["chunk_id"] = node.node_id
-
-        non_pdf_nodes_dicts = nodes_to_dicts(non_pdf_nodes)
-
-        try:
-            collection.add(
-                ids=non_pdf_nodes_dicts["ids"],
-                embeddings=non_pdf_nodes_dicts["embeddings"],
-                documents=non_pdf_nodes_dicts["texts"],
-                metadatas=non_pdf_nodes_dicts["metadatas"],
-            )
-        except Exception as e:
-            raise e
-            try:
-                for node in non_pdf_nodes:
-                    node_dict = nodes_to_dicts(node)
-                    collection.add(
-                        ids=node_dict["ids"],
-                        embeddings=node_dict["embeddings"],
-                        documents=node_dict["texts"],
-                        metadatas=node_dict["metadatas"],
-                    )
-            except Exception as e:
-                raise e
-
-        total_nodes += non_pdf_nodes
-
-    return total_nodes
+    return non_pdf_nodes
 
 
 def update(data_dir, user_id):
-    setup(use_llm=False)
     added_files, removed_files = read_changes(data_dir)
 
-    chroma_db = chromadb.PersistentClient(
-        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
-    )
-
-    chroma_db.delete_collection(config.user_uploads_collection)
-
-    collection = chroma_db.get_or_create_collection(
-        name=config.user_uploads_collection,
-        embedding_function=HuggingFaceEmbeddingServer(
-            url=config.tei_url + "/" + config.embedding + "/embed"
-        ),
-        metadata={
-            "hnsw:batch_size": 1024,
-            "hnsw:sync_threshold": 2048,
-        },
-    )
-
-    if len(removed_files) > 0:
-        for file in removed_files:
-            print(f"Removing: {file}")
-            collection.delete(where={"file_path": file})
-        print("Removal done.")
-
-    elif len(added_files) > 0:
+    if len(added_files) > 0:
 
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
 
@@ -429,17 +293,19 @@ def update(data_dir, user_id):
         total_nodes = []
 
         if len(non_pdf_files) > 0:
-            non_pdf_nodes = embed_non_pdf(non_pdf_files, user_id, collection)
+            non_pdf_nodes = read_non_pdf(non_pdf_files, user_id)
 
             total_nodes += non_pdf_nodes
 
         if len(pdf_files) > 0:
-            pdf_nodes = embed_pdf(pdf_files, user_id, collection)
+            pdf_nodes = read_pdf(pdf_files, user_id)
 
             total_nodes += pdf_nodes
+        nodes_dicts = [node.to_dict() for node in total_nodes]
+        with open(config.nodes_path, "w") as f:
+            json.dump(nodes_dicts, f)
 
-        load_redis(nodes=total_nodes, index_name="user_uploads", reset=True)
-        print("Chroma load Done!")
+        print("Documents load Done!")
         # print("Example:")
         # print(
         #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"

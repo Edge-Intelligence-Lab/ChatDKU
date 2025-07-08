@@ -20,6 +20,7 @@ from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
 
+from chatdku.ingestion.load_redis import load_redis
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
@@ -39,13 +40,11 @@ def nodes_to_dicts(nodes: list):
     result = {
         "ids": [],
         "texts": [],
-        "embeddings": [],
         "metadatas": [],
     }
     for node in nodes:
         result["ids"].append(node.node_id)
         result["texts"].append(node.text)
-        result["embeddings"].append(node.embedding)
         result["metadatas"].append(node.metadata)
 
     return result
@@ -186,7 +185,7 @@ def read_changes(data_dir: str):
 
     current_files = []
     for file_name in os.listdir(data_dir):
-        if file_name == "log.json":
+        if file_name.endswith(".json"):
             continue
         file_path = os.path.join(data_dir, file_name)
         current_files.append(file_path)
@@ -199,7 +198,18 @@ def read_changes(data_dir: str):
 
 
 # For large files doing one collection.add seems to break stuff.
-def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
+def embed_pdf(file_paths: list[str], user_id, collection):
+    total_nodes = []
+    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
+    parser = SentenceSplitter(
+        chunk_size=1024,
+        chunk_overlap=20,
+    )
+    pdf_reader = LlamaParse(
+        api_key=llama_parse_api_key,
+        result_type="json",
+        verbose=True,
+    )
     for file_path in file_paths:
         print(f"Reading: {file_path}")  # Debugging output
         if not os.path.exists(file_path):
@@ -220,10 +230,11 @@ def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
 
                 node = TextNode(
                     text=chunk,
-                    id_= chunk_id,
+                    id_=chunk_id,
                     metadata=metadata,
                 )
                 nodes_buffer.append(node)
+                total_nodes.append(node)
 
             # for every 25 pages we upload them to chroma
             if i % 25 == 0:
@@ -235,6 +246,55 @@ def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
                 )
                 nodes_buffer = []
 
+        if nodes_buffer:
+            nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+            collection.add(
+                ids=nodes_buffer_dict["ids"],
+                documents=nodes_buffer_dict["texts"],
+                metadatas=nodes_buffer_dict["metadatas"],
+            )
+
+        print(f"Finished loading {file_path}.")
+
+
+def embed_non_pdf(files: list, user_id, collection):
+    reader = UnstructuredReader()
+    xlsx_reader = XlsxReader()
+    non_pdf_documents = SimpleDirectoryReader(
+        input_files=files,
+        file_metadata=custom_metadata(user_id),
+        required_exts=[".csv", ".jpg", ".xlsx"],
+        file_extractor={
+            ".csv": reader,
+            ".jpg": reader,
+            ".xlsx": xlsx_reader,
+        },
+    ).load_data(show_progress=True)
+
+    pipeline = IngestionPipeline(
+        transformations=[
+            SentenceSplitter(chunk_size=1024, chunk_overlap=20),
+        ]
+    )
+
+    non_pdf_nodes = pipeline.run(documents=non_pdf_documents)
+
+    nodes_buffer = []
+    for i, node in enumerate(non_pdf_nodes):
+        node.node_id = str(uuid.uuid4())
+        node.metadata["chunk_id"] = node.node_id
+
+        nodes_buffer.append(node)
+        if i % 25 == 0:
+            nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+            collection.add(
+                ids=nodes_buffer_dict["ids"],
+                documents=nodes_buffer_dict["texts"],
+                metadatas=nodes_buffer_dict["metadatas"],
+            )
+            nodes_buffer = []
+
+    if nodes_buffer:
         nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
         collection.add(
             ids=nodes_buffer_dict["ids"],
@@ -242,7 +302,7 @@ def embed_pdf(file_paths: list[str], pdf_reader, parser, user_id, collection):
             metadatas=nodes_buffer_dict["metadatas"],
         )
 
-        print(f"Finished loading {file_path}.")
+    return non_pdf_nodes
 
 
 def update(data_dir, user_id):
@@ -264,77 +324,28 @@ def update(data_dir, user_id):
     )
 
     if len(removed_files) > 0:
+        # TODO: create redis removal
         for file in removed_files:
             print(f"Removing: {file}")
             collection.delete(where={"file_path": file})
         print("Removal done.")
 
     elif len(added_files) > 0:
-        reader = UnstructuredReader()
-        xlsx_reader = XlsxReader()
-        llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
-
-        pdf_reader = LlamaParse(
-            api_key=llama_parse_api_key,
-            result_type="json",
-            verbose=True,
-        )
 
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
 
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
-        parser = SentenceSplitter(
-            chunk_size=1024,
-            chunk_overlap=20,
-        )
-
         if len(non_pdf_files) > 0:
-            non_pdf_documents = SimpleDirectoryReader(
-                input_files=non_pdf_files,
-                filename_as_id=True,
-                file_metadata=custom_metadata(user_id),
-                required_exts=[".csv", ".jpg", ".xlsx"],
-                file_extractor={
-                    ".csv": reader,
-                    ".jpg": reader,
-                    ".xlsx": xlsx_reader,
-                },
-            ).load_data(show_progress=True)
-
-            pipeline = IngestionPipeline(
-                transformations=[
-                    SentenceSplitter(chunk_size=1024, chunk_overlap=20),
-                    Settings.embed_model,
-                ]
-            )
-
-            non_pdf_nodes = pipeline.run(documents=non_pdf_documents)
-
-
-            for node in non_pdf_nodes:
-                node.node_id = str(uuid.uuid4())
-                node.metadata["chunk_id"] = node.node_id
-
-
-            non_pdf_nodes = nodes_to_dicts(non_pdf_nodes)
-
-            collection.add(
-                ids=non_pdf_nodes["ids"],
-                embeddings=non_pdf_nodes["embeddings"],
-                documents=non_pdf_nodes["texts"],
-                metadatas=non_pdf_nodes["metadatas"],
-            )
+            non_pdf_nodes = embed_non_pdf(non_pdf_files, user_id, collection)
 
         if len(pdf_files) > 0:
-            embed_pdf(pdf_files, pdf_reader, parser, user_id, collection)
+            pdf_nodes = embed_pdf(pdf_files, user_id, collection)
 
         print("Chroma load Done!")
-        # print("Example:")
-        # print(
-        #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"
-        # )
-        #
+        total_nodes = non_pdf_nodes + pdf_nodes
+        # TODO: change index name
+        load_redis(nodes=total_nodes, index_name="temka_testing")
     else:
         print("No changes to be done.")
     write_changes(data_dir, added_files, removed_files)

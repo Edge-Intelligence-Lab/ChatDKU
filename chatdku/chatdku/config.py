@@ -18,6 +18,7 @@ class Config:
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,

@@ -3,10 +3,12 @@ from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis import RedisVectorStore
 
 from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import TextNode
 
 import pickle
 import os
 import argparse
+import json
 
 ######
 from llama_index.core import Settings
@@ -26,9 +28,13 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
+def clean_file_name(file_name: str) -> str:
+    return os.path.splitext(file_name)[0]
+
+
 def load_redis(
-    documents=None,
-    nodes: list = None,
+    nodes: list[TextNode] = None,
+    nodes_path: list = None,
     index_name: str = None,
     pipeline_workers: int = 1,
     pipeline_cache_path: str = config.pipeline_cache,
@@ -49,10 +55,18 @@ def load_redis(
 
     setup(use_llm=False)
 
-    if documents is None:
-        if nodes is None:
-            with open(config.documents_path, "rb") as f:
-                documents = pickle.load(f)
+    if nodes is None:
+        if nodes_path is None:
+            nodes_path = config.nodes_path
+        print("Nodes path:", nodes_path)
+
+        with open(nodes_path, "r") as f:
+            datas = json.load(f)
+        nodes = [TextNode.from_dict(data) for data in datas]
+
+    for node in nodes:
+        file_name = node.metadata["file_name"]
+        node.metadata["file_name"] = clean_file_name(file_name)
 
     if index_name is None:
         index_name = config.index_name
@@ -73,9 +87,10 @@ def load_redis(
                 {"type": "tag", "name": "doc_id"},
                 {"type": "text", "name": "text"},
                 {"type": "tag", "name": "file_name", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "page_number"},
                 # Custom metadata fields
                 {"type": "tag", "name": "groups"},
-                {"type": "tag", "name": "file_path"},
+                {"type": "tag", "name": "file_path", "attrs": {"sortable": True}},
                 {"type": "tag", "name": "last_modified_date"},
                 # Custom vector embeddings field definition
                 {
@@ -103,90 +118,79 @@ def load_redis(
     #     base_url="http://localhost:18080/BAAI/bge-m3",
     # )
 
-    trans = []
-
-    extractors = []
-    text_spliter = "sentence_splitter"
-    use_recursive_directory_summarize = False
-    text_spliter_args = {"chunk_size": 1024, "chunk_overlap": 20}
-
-    supported_extractors = ["title", "keyword", "questions_answered", "summary"]
-    for e in extractors:
-        if e not in supported_extractors:
-            raise ValueError(f"Unsupported extractor: {e}")
-
-    if text_spliter == "sentence_splitter" and not nodes:
-        from llama_index.core.node_parser import SentenceSplitter
-
-        trans.append(SentenceSplitter(**text_spliter_args))
-
-    if use_recursive_directory_summarize:
-        from recursive_directory_summarize import RecursiveDirectorySummarize
-
-        trans.append(RecursiveDirectorySummarize())
-
-    if "title" in extractors:
-        from llama_index.core.extractors import TitleExtractor
-
-        trans.append(TitleExtractor())
-
-    if "keyword" in extractors:
-        from llama_index.core.extractors import KeywordExtractor
-
-        trans.append(KeywordExtractor())
-
-    if "questions_answered" in extractors:
-        from llama_index.core.extractors import QuestionsAnsweredExtractor
-
-        trans.append(QuestionsAnsweredExtractor())
-
-    if "summary" in extractors:
-        from llama_index.core.extractors import SummaryExtractor
-
-        trans.append(SummaryExtractor())
-
-    trans.append(Settings.embed_model)
-
-    print(trans)
-
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-
+    # trans = []
+    #
+    # extractors = []
+    # text_spliter = "sentence_splitter"
+    # use_recursive_directory_summarize = False
+    # text_spliter_args = {"chunk_size": 1024, "chunk_overlap": 20}
+    #
+    # supported_extractors = ["title", "keyword", "questions_answered", "summary"]
+    # for e in extractors:
+    #     if e not in supported_extractors:
+    #         raise ValueError(f"Unsupported extractor: {e}")
+    #
+    # if text_spliter == "sentence_splitter":
+    #     from llama_index.core.node_parser import SentenceSplitter
+    #
+    #     trans.append(SentenceSplitter(**text_spliter_args))
+    #
+    # if use_recursive_directory_summarize:
+    #     from recursive_directory_summarize import RecursiveDirectorySummarize
+    #
+    #     trans.append(RecursiveDirectorySummarize())
+    #
+    # if "title" in extractors:
+    #     from llama_index.core.extractors import TitleExtractor
+    #
+    #     trans.append(TitleExtractor())
+    #
+    # if "keyword" in extractors:
+    #     from llama_index.core.extractors import KeywordExtractor
+    #
+    #     trans.append(KeywordExtractor())
+    #
+    # if "questions_answered" in extractors:
+    #     from llama_index.core.extractors import QuestionsAnsweredExtractor
+    #
+    #     trans.append(QuestionsAnsweredExtractor())
+    #
+    # if "summary" in extractors:
+    #     from llama_index.core.extractors import SummaryExtractor
+    #
+    #     trans.append(SummaryExtractor())
+    #
+    # trans.append(Settings.embed_model)
+    #
+    # print(trans)
+    pipeline = IngestionPipeline(vector_store=vector_store)
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
-
-    if nodes:
-        pipeline.run(nodes=nodes, num_workers=pipeline_workers, show_progress=True)
-    else:
-        pipeline.run(
-            documents=documents, num_workers=pipeline_workers, show_progress=True
-        )
+    pipeline.run(nodes=nodes, num_workers=pipeline_workers, show_progress=True)
 
     print("Redis load done!")
 
 
-def main(documents_path, index_name):
-    with open(documents_path, "rb") as f:
-        documents = pickle.load(f)
+def main(nodes_path, index_name, reset):
+    # with open(nodes_path, "rb") as f:
+    #     documents = pickle.load(f)
 
     load_redis(
-        documents=documents,
+        nodes_path=nodes_path,
         index_name=index_name,
         pipeline_cache_path=str(config.pipeline_cache),
-        reset=True,
+        reset=reset,
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Load the specified .pkl file into redis"
+        description="Load the specified nodes.json file into redis"
     )
     parser.add_argument(
-        "--documents_path",
+        "--nodes_path",
         type=str,
-        default=config.documents_path,
+        default=config.nodes_path,
         help="The directory containing the data",
     )
     parser.add_argument(
@@ -195,6 +199,12 @@ if __name__ == "__main__":
         default=config.index_name,
         help="Name of the Redis index.",
     )
+    parser.add_argument(
+        "--reset",
+        type=str,
+        default=False,
+        help="Overwrite existing data?",
+    )
     args = parser.parse_args()
 
-    main(args.documents_path, args.index_name)
+    main(args.nodes_path, args.index_name, args.reset)

@@ -19,21 +19,26 @@ from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
 from chatdku.core.dspy_common import custom_cot_rationale
-import nltk
+
+# import nltk
 from nltk.tokenize import word_tokenize
 import chromadb
-import llama_index
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core import VectorStoreIndex
-from llama_index.postprocessor.colbert_rerank import ColbertRerank
+from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
+
+# import llama_index
+
+# from llama_index.vector_stores.chroma import ChromaVectorStore
+# from llama_index.core import VectorStoreIndex
+from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
-from llama_index.core.vector_stores import (
-    MetadataFilter,
-    MetadataFilters,
-    FilterOperator,
-    FilterCondition,
-)
+
+# from llama_index.core.vector_stores import (
+#     MetadataFilter,
+#     MetadataFilters,
+#     FilterOperator,
+#     FilterCondition,
+# )
 
 from redis import Redis
 from redis.commands.search.query import Query
@@ -45,15 +50,6 @@ from itertools import combinations
 
 from chatdku.config import config
 
-
-def mydeepcopy(self, memo):
-    return self
-
-
-# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
-# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
-# See: https://github.com/run-llama/llama_index/issues/14570
-llama_index.vector_stores.chroma.ChromaVectorStore.__deepcopy__ = mydeepcopy
 
 # --- Summarizer ---
 # TODO: Summarizer is currently not used as it is too slow when compared to just
@@ -122,11 +118,11 @@ class DocumentSummarizer(dspy.Module):
 
 
 def get_reranker(top_n: int):
-    return ColbertRerank(
+    return SentenceTransformerRerank(
         top_n=top_n,
-        model="colbert-ir/colbertv2.0",
-        tokenizer="colbert-ir/colbertv2.0",
+        model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
+        device="gpu",
     )
 
 
@@ -137,7 +133,7 @@ df = pd.read_csv(config.url_csv_path)
 df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
 
-def get_url(metadata):
+def get_url(metadata: dict):
     try:
         try:
             path = metadata["file_path"]
@@ -162,17 +158,47 @@ def get_url(metadata):
         return f"no url, error: {str(e)}"
 
 
+def get_page_number(metadata: dict):
+    # There is no need for try statement because page_number will either
+    # be a number or "Not given."
+    return metadata["page_number"]
+
+
 def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     return [
         NodeWithScore(
             node=TextNode(
                 node_id=node.node_id,
                 text=node.text,
-                metadata={"url": get_url(node.metadata)},
+                metadata={
+                    "url": get_url(node.metadata),
+                },
             ),
             score=node.score,
         )
         for node in nodes
+    ]
+
+
+def chroma_result_to_nodes(result: dict) -> NodeWithScore:
+    ids = result["ids"][0]
+    texts = result["documents"][0]
+    metadatas = result["metadatas"][0]
+    scores = result["distances"][0]
+
+    return [
+        NodeWithScore(
+            node=TextNode(
+                node_id=ids[i],
+                text=texts[i],
+                metadata={
+                    "url": get_url(metadatas[i]),
+                    "page_number": get_page_number(metadatas[i]),
+                },
+            ),
+            score=scores[i],
+        )
+        for i in range(len(ids))
     ]
 
 
@@ -240,11 +266,22 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_collection(config.chroma_collection)
+        self.chatdku_collection = db.get_collection(
+            name=config.chroma_collection,
+            embedding_function=HuggingFaceEmbeddingServer(
+                url=config.tei_url + "/" + config.embedding + "/embed"
+            ),
+        )
+        self.user_uploads_collection = db.get_collection(
+            name=config.user_uploads_collection,
+            embedding_function=HuggingFaceEmbeddingServer(
+                url=config.tei_url + "/" + config.embedding + "/embed"
+            ),
+        )
 
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        # vector_store = ChromaVectorStore(chroma_collection=chatdku_collection)
 
-        self.index = VectorStoreIndex.from_vector_store(vector_store)
+        # self.index = VectorStoreIndex.from_vector_store(vector_store)
         # self.retriever = TransformRetriever(
         #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
         #     query_transform=HyDEQueryTransform(include_original=True),
@@ -262,7 +299,7 @@ class VectorRetriever(dspy.Module):
         internal_memory: dict,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        docs: list = None,
+        files: list = None,
     ):
         with (
             config.tracer.start_as_current_span("Vector Retriever")
@@ -279,7 +316,7 @@ class VectorRetriever(dspy.Module):
                             exclude=exclude,
                             user_id=user_id,
                             search_mode=search_mode,
-                            docs=docs,
+                            files=files,
                         )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
@@ -294,102 +331,70 @@ class VectorRetriever(dspy.Module):
             #     ]
             # )
 
+            # See https://docs.trychroma.com/docs/querying-collections/metadata-filtering
+            # to understand the logic of the filters
             if search_mode == 0:
-                filters = MetadataFilters(
-                    filters=[
-                        MetadataFilter(
-                            key="user_id",
-                            value="Chat_DKU",
-                        )
-                    ]
-                    + [
-                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                        for i in exclude
-                    ],
-                    condition=FilterCondition.AND,
-                )
+                filters = {"user_id": user_id}
+                if exclude:
+                    filters = {
+                        "$and": [
+                            {"user_id": user_id},
+                            {"chunk_id": {"$nin": exclude}},
+                        ]
+                    }
+
             # search from user's files
             elif search_mode == 1:
-                filters = MetadataFilters(
-                    filters=[
-                        MetadataFilter(
-                            key="user_id",
-                            value=user_id,
-                        )
-                    ]
-                    + [
-                        MetadataFilter(
-                            key="file_name",
-                            value=doc_name,
-                        )
-                        for doc_name in docs
-                    ]
-                    + [
-                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                        for i in exclude
+                filters = {
+                    "$and": [
+                        {"user_id": user_id},
+                        {"file_name": {"$in": files}},
                     ],
-                    condition=FilterCondition.AND,
-                )
-            # search from both corpuses
+                }
+
+                if exclude:
+                    filters["$and"].append({"chunk_id": {"$nin": exclude}})
             elif search_mode == 2:
-                clause_user_docs = MetadataFilters(
-                    filters=[
-                        MetadataFilter(
-                            key="user_id",
-                            value=user_id,
-                        )
-                    ]
-                    + [
-                        MetadataFilter(
-                            key="file_name",
-                            value=doc_name,
-                        )
-                        for doc_name in docs
+                filters = {
+                    "$or": [
+                        {
+                            "$and": [
+                                {"user_id": user_id},
+                                {"file_name": {"$in": files}},
+                            ],
+                        },
+                        {"user_id": "Chat_DKU"},
                     ],
-                    condition=FilterCondition.AND,
-                )
+                }
+                if exclude:
+                    filters = {
+                        "$and": [
+                            {
+                                "$or": [
+                                    {
+                                        "$and": [
+                                            {"user_id": user_id},
+                                            {"file_name": {"$in": files}},
+                                        ]
+                                    },
+                                    {"user_id": "Chat_DKU"},
+                                ]
+                            },
+                            {"chunk_id": {"$nin": exclude}},
+                        ]
+                    }
 
-                # Top-level OR clause between clause A and B
-                or_clause = MetadataFilters(
-                    filters=[
-                        MetadataFilter(
-                            key="user_id",
-                            value="Chat_DKU",
-                        ),
-                        clause_user_docs,
-                    ],
-                    condition=FilterCondition.OR,
-                )
-
-                excluded = MetadataFilters(
-                    filters=[
-                        MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                        for i in exclude
-                    ],
-                    condition=FilterCondition.AND,
-                )
-
-                # Final filter includes exclusion clause
-                filters = MetadataFilters(
-                    filters=[
-                        or_clause,
-                        excluded,
-                    ],
-                    condition=FilterCondition.AND,
-                )
-
-            print(filters)
-            retriever = self.index.as_retriever(
-                similarity_top_k=self.retriever_top_k, filters=filters
-            )
-            # TODO: Might need to display `retrieved_nodes` in Phoenix
-            retrieved_nodes = retriever.retrieve(
+            query_result = self.user_uploads_collection.query(
                 # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
                 # what would happen if that is exceeded. Also, we should use it tokenizer
                 # to get the accurate token count. This is just a temporary safety
                 # measure for now.
-                truncate_tokens(query, 7000)
+                query_texts=truncate_tokens(query, 7000),
+                n_results=self.retriever_top_k,
+                where=filters,
             )
+
+            retrieved_nodes = chroma_result_to_nodes(query_result)
 
             if self.use_reranker:
                 reranker = get_reranker(self.reranker_top_n)
@@ -403,7 +408,7 @@ class VectorRetriever(dspy.Module):
             else:
                 nodes = retrieved_nodes
 
-            nodes = simplify_nodes(nodes)
+            # nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -462,7 +467,7 @@ class KeywordRetriever(dspy.Module):
         internal_memory: dict,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        docs: list = [],
+        files: list = [],
     ):
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def escape_strs(strs: list[str]):
@@ -486,19 +491,19 @@ class KeywordRetriever(dspy.Module):
                             exclude=exclude,
                             user_id=user_id,
                             search_mode=search_mode,
-                            docs=docs,
+                            files=files,
                         )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
-            try:
-                # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
-                # replaces nltk tokenizers with its own version.
-                nltk.data.find("tokenizers/punkt_tab/english")
-            except LookupError:
-                nltk.download("punkt_tab")
+            # try:
+            #     # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
+            #     # replaces nltk tokenizers with its own version.
+            #     nltk.data.find("tokenizers/punkt_tab/english")
+            # except LookupError:
+            #     nltk.download("punkt_tab")
             # Break down the query into tokens
             tokens = word_tokenize(query)
             # Remove tokens that are PURELY punctuations
@@ -544,7 +549,7 @@ class KeywordRetriever(dspy.Module):
                 query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
 
             elif search_mode == 1:
-                docs_str = "|".join(f"{name}" for name in docs)
+                docs_str = "|".join(f"{name}" for name in files)
                 query_str = (
                     query_str
                     + f" @user_id:{{{user_id}}} "
@@ -552,7 +557,7 @@ class KeywordRetriever(dspy.Module):
                 )
 
             elif search_mode == 2:
-                docs_str = "|".join(f"{name}" for name in docs)
+                docs_str = "|".join(f"{name}" for name in files)
                 user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
                 query_str = query_str + f" {user_clause}"
 

@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
-import os
-import pickle
+# import os
+import json
 import chromadb
 import argparse
-from llama_index.core import Settings
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.ingestion import IngestionPipeline
-from typing import Any
-from chatdku.setup import setup
+from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
+
+# from llama_index.core import Settings
+# from llama_index.vector_stores.chroma import ChromaVectorStore
+# from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import TextNode
+
+# from chatdku.setup import setup
 from chatdku.config import config
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -24,18 +27,27 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
 
 
+def nodes_to_dicts(nodes: list):
+    result = {
+        "ids": [],
+        "texts": [],
+        "metadatas": [],
+    }
+    for node in nodes:
+        if node.text == "":
+            continue
+        result["ids"].append(node.node_id)
+        result["texts"].append(node.text)
+        result["metadatas"].append(node.metadata)
+
+    return result
+
+
 def load_chroma(
-    pipeline_cache_path: str,
     collection: str = None,
-    documents=None,
+    nodes_path=None,
     reset: bool = False,
-    text_spliter: str = "sentence_splitter",
-    text_spliter_args: dict[str, Any] = {},
-    extractors: list[str] = [],
-    use_recursive_directory_summarize: bool = False,
-    # NOTE: Multiprocessing appears to have issues with HuggingFaceEmbedding and LlamaCPP,
-    # please use only a single process for now.
-    pipeline_workers: int = 1,
+    buffer_size: int = 25,
 ):
     """
     Populate the ChromaDB. If you run this from the terminal it will re-populate
@@ -49,79 +61,144 @@ def load_chroma(
         for Redis.
     reset: Whether to overwrite the data already on the DB.
     """
-    if documents is None:
-        with open(config.documents_path, "rb") as f:
-            documents = pickle.load(f)
+    if nodes_path is None:
+        nodes_path = config.nodes_path
+
+    print("Nodes path:", nodes_path)
+    with open(nodes_path, "r") as f:
+        datas = json.load(f)
+    nodes = [TextNode.from_dict(data) for data in datas]
     if collection is None:
-        collection = config.chroma_collection
+        collection = config.user_uploads_collection
+    print("Collection: ", collection)
+    # trans = []
+    #
+    # supported_extractors = ["title", "keyword", "questions_answered", "summary"]
+    # for e in extractors:
+    #     if e not in supported_extractors:
+    #         raise ValueError(f"Unsupported extractor: {e}")
+    #
+    # if "title" in extractors:
+    #     from llama_index.core.extractors import TitleExtractor
+    #
+    #     trans.append(TitleExtractor())
+    #
+    # if text_spliter == "sentence_splitter":
+    #     from llama_index.core.node_parser import SentenceSplitter
+    #
+    #     trans.append(SentenceSplitter(**text_spliter_args))
+    # else:
+    #     raise ValueError(f"Unsupported text_splitter: {text_spliter}")
+    #
+    # if use_recursive_directory_summarize:
+    #     from recursive_directory_summarize import RecursiveDirectorySummarize
+    #
+    #     trans.append(RecursiveDirectorySummarize())
+    #
+    # if "keyword" in extractors:
+    #     from llama_index.core.extractors import KeywordExtractor
+    #
+    #     trans.append(KeywordExtractor())
+    #
+    # if "questions_answered" in extractors:
+    #     from llama_index.core.extractors import QuestionsAnsweredExtractor
+    #
+    #     trans.append(QuestionsAnsweredExtractor())
+    #
+    # if "summary" in extractors:
+    #     from llama_index.core.extractors import SummaryExtractor
+    #
+    #     trans.append(SummaryExtractor())
+    #
+    # trans.append(Settings.embed_model)
 
-    trans = []
-
-    supported_extractors = ["title", "keyword", "questions_answered", "summary"]
-    for e in extractors:
-        if e not in supported_extractors:
-            raise ValueError(f"Unsupported extractor: {e}")
-
-    if "title" in extractors:
-        from llama_index.core.extractors import TitleExtractor
-
-        trans.append(TitleExtractor())
-
-    if text_spliter == "sentence_splitter":
-        from llama_index.core.node_parser import SentenceSplitter
-
-        trans.append(SentenceSplitter(**text_spliter_args))
-    else:
-        raise ValueError(f"Unsupported text_splitter: {text_spliter}")
-
-    if use_recursive_directory_summarize:
-        from recursive_directory_summarize import RecursiveDirectorySummarize
-
-        trans.append(RecursiveDirectorySummarize())
-
-    if "keyword" in extractors:
-        from llama_index.core.extractors import KeywordExtractor
-
-        trans.append(KeywordExtractor())
-
-    if "questions_answered" in extractors:
-        from llama_index.core.extractors import QuestionsAnsweredExtractor
-
-        trans.append(QuestionsAnsweredExtractor())
-
-    if "summary" in extractors:
-        from llama_index.core.extractors import SummaryExtractor
-
-        trans.append(SummaryExtractor())
-
-    trans.append(Settings.embed_model)
-
-    db = chromadb.PersistentClient(
+    chroma_db = chromadb.PersistentClient(
         path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
     )
 
     if reset:
-        db.delete_collection(collection)  # Clear previously stored data in vector database
-    chroma_collection = db.get_or_create_collection(collection)
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+        chroma_db.delete_collection(
+            collection
+        )  # Clear previously stored data in vector database
+
+    collection = chroma_db.get_or_create_collection(
+        name=collection,
+        embedding_function=HuggingFaceEmbeddingServer(
+            url=config.tei_url + "/" + config.embedding + "/embed"
+        ),
+        metadata={
+            "hnsw:batch_size": 1024,
+            "hnsw:sync_threshold": 2048,
+        },
+    )
+    # vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
+    nodes_buffer = []
+    for i, node in enumerate(nodes):
+        nodes_buffer.append(node)
+
+        if i % buffer_size == 0:
+            nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+            try:
+                collection.add(
+                    ids=nodes_buffer_dict["ids"],
+                    documents=nodes_buffer_dict["texts"],
+                    metadatas=nodes_buffer_dict["metadatas"],
+                )
+            except Exception as e:
+                raise e
+                for node in nodes_buffer:
+                    node_dict = nodes_to_dicts(node)
+                    try:
+                        collection.add(
+                            ids=node_dict["ids"],
+                            documents=node_dict["texts"],
+                            metadatas=node_dict["metadatas"],
+                        )
+
+                    except Exception as e:
+                        raise e
+            nodes_buffer = []
+
+    if nodes_buffer:
+        nodes_buffer_dict = nodes_to_dicts(nodes_buffer)
+        try:
+            collection.add(
+                ids=nodes_buffer_dict["ids"],
+                documents=nodes_buffer_dict["texts"],
+                metadatas=nodes_buffer_dict["metadatas"],
+            )
+        except Exception as e:
+            raise e
+            for node in nodes_buffer:
+                node_dict = nodes_to_dicts(node)
+                try:
+                    collection.add(
+                        ids=node_dict["ids"],
+                        documents=node_dict["texts"],
+                        metadatas=node_dict["metadatas"],
+                    )
+
+                except Exception as e:
+                    raise e
 
     # NOTE: Currently, LlamaIndex has bug with using both caching and docstore.
     # I am using only caching here and there is not much need for attaching a
     # docstore for deduplication anyways.
     # See https://github.com/run-llama/llama_index/issues/14068 for details.
-    pipeline = IngestionPipeline(
-        transformations=trans,
-        vector_store=vector_store,
-    )
-    if os.path.exists(pipeline_cache_path):
-        pipeline.load(pipeline_cache_path)
-
-    pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
-
+    # pipeline = IngestionPipeline(
+    #     transformations=trans,
+    #     vector_store=vector_store,
+    # )
+    # if os.path.exists(pipeline_cache_path):
+    #     pipeline.load(pipeline_cache_path)
+    #
+    # pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    #
     # nodes = pipeline.run(
     #     documents=documents, num_workers=pipeline_workers, show_progress=True
     # )
-    pipeline.persist(pipeline_cache_path)
+    # pipeline.persist(pipeline_cache_path)
     print("Chroma load done!")
     #
     # docstore = SimpleDocumentStore()
@@ -130,25 +207,11 @@ def load_chroma(
     # print("docstore over")
 
 
-def main(documents_path=None, collection_name=None):
-    setup(use_llm=False)
-
-    if documents_path is None:
-        documents = None
-    else:
-        with open(documents_path, "rb") as f:
-            documents = pickle.load(f)
-
+def main(nodes_path=None, collection_name=None):
     load_chroma(
         reset=True,
-        documents=documents,
+        nodes_path=nodes_path,
         collection=collection_name,
-        pipeline_cache_path=str(config.pipeline_cache),
-        text_spliter="sentence_splitter",
-        text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20},
-        extractors=[],
-        use_recursive_directory_summarize=False,
-        pipeline_workers=1,
     )
 
 
@@ -157,17 +220,17 @@ if __name__ == "__main__":
         description="Load the specified .pkl file into chroma."
     )
     parser.add_argument(
-        "--documents_path",
+        "--nodes_path",
         type=str,
-        default=config.documents_path,
+        default=config.nodes_path,
         help="The directory containing the data",
     )
     parser.add_argument(
         "--collection_name",
         type=str,
-        default=config.chroma_collection,
+        default=config.user_uploads_collection,
         help="Name of the chroma collection.",
     )
     args = parser.parse_args()
 
-    main(args.documents_path, args.collection_name)
+    main(args.nodes_path, args.collection_name)
