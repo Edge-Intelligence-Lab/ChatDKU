@@ -308,9 +308,7 @@ def embed_non_pdf(files: list, user_id, collection):
 def update(data_dir, user_id):
     added_files, removed_files = read_changes(data_dir)
 
-    chroma_db = chromadb.PersistentClient(
-        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
-    )
+    chroma_db = chromadb.HttpClient(host="localhost", port=8000)
 
     collection = chroma_db.get_or_create_collection(
         name=config.user_uploads_collection,

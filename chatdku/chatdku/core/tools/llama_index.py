@@ -265,13 +265,13 @@ class VectorRetriever(dspy.Module):
         self.use_reranker = use_reranker
         self.reranker_top_n = reranker_top_n
 
-        db = chromadb.PersistentClient(path=config.chroma_db)
-        self.chatdku_collection = db.get_collection(
-            name=config.chroma_collection,
-            embedding_function=HuggingFaceEmbeddingServer(
-                url=config.tei_url + "/" + config.embedding + "/embed"
-            ),
-        )
+        db = chromadb.HttpClient(host="localhost", port=8000)
+        # self.chatdku_collection = db.get_collection(
+        #     name=config.chroma_collection,
+        #     embedding_function=HuggingFaceEmbeddingServer(
+        #         url=config.tei_url + "/" + config.embedding + "/embed"
+        #     ),
+        # )
         self.user_uploads_collection = db.get_collection(
             name=config.user_uploads_collection,
             embedding_function=HuggingFaceEmbeddingServer(
