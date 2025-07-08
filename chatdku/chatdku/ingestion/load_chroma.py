@@ -112,9 +112,7 @@ def load_chroma(
     #
     # trans.append(Settings.embed_model)
 
-    chroma_db = chromadb.PersistentClient(
-        path=config.chroma_db, settings=chromadb.Settings(allow_reset=True)
-    )
+    chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
     if reset:
         chroma_db.delete_collection(
@@ -124,11 +122,11 @@ def load_chroma(
     collection = chroma_db.get_or_create_collection(
         name=collection,
         embedding_function=HuggingFaceEmbeddingServer(
-            url=config.tei_url + "/" + config.embedding + "/embed"
+            url=f"{config.tei_url}/{config.embedding}/embed"
         ),
         metadata={
-            "hnsw:batch_size": 1024,
-            "hnsw:sync_threshold": 2048,
+            "hnsw:batch_size": 512,
+            "hnsw:sync_threshold": 1024,
         },
     )
     # vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -228,7 +226,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--collection_name",
         type=str,
-        default=config.user_uploads_collection,
+        default=config.chroma_collection,
         help="Name of the chroma collection.",
     )
     args = parser.parse_args()

@@ -23,7 +23,7 @@ class Config:
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_url": "redis://localhost:6379",
-                "chroma_db": "/datapool/db_chat_dku_advising",
+                "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
                 # about query
