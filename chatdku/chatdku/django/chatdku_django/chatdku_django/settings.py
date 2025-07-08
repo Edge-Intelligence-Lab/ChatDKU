@@ -239,7 +239,7 @@ STATIC_ROOT = os.path.join("/var/www/chatdku/", "django_staticfiles")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 #Celery Settings
-CELERY_BROKER_URL='redis://127.0.0.1:6379/0'
+CELERY_BROKER_URL=os.getenv("REDIS_URL")
 CELERY_RESULT_BACKEND='django-db'
 CELERY_TIMEZONE='UTC'
 CELERY_BEAT_SCHEDULER='django_celery_beat.schedulers.DatabaseScheduler'
