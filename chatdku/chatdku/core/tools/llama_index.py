@@ -549,7 +549,13 @@ class KeywordRetriever(dspy.Module):
                 query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
 
             elif search_mode == 1:
-                docs_str = "|".join(f"{name}" for name in files)
+                if len(files) == 0:
+                    docs_str = os.path.splitext(files[0])[0]
+                else:
+                    docs_str = "|".join(
+                        f"{os.path.splitext(name)[0]}" for name in files
+                    )
+
                 query_str = (
                     query_str
                     + f" @user_id:{{{user_id}}} "
@@ -557,9 +563,14 @@ class KeywordRetriever(dspy.Module):
                 )
 
             elif search_mode == 2:
-                docs_str = "|".join(f"{name}" for name in files)
-                user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
-                query_str = query_str + f" {user_clause}"
+                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+                # if len(files) == 0:
+                #     docs_str = os.path.splitext(files[0])[0]
+                # else:
+                #     docs_str = "|".join(f"{os.path.splitext(name)[0]}" for name in files)
+                #
+                # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
+                # query_str = query_str + f" {user_clause}"
 
             # NOTE: I think it will be better to use PARAMS for security reasons.
             # However, it appears that RediSearch has an issue using both parameters and query attributes.

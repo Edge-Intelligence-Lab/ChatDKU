@@ -140,7 +140,7 @@ class Agent(dspy.Module):
             Planner(
                 [
                     VectorRetriever(),
-                    # KeywordRetriever(),
+                    KeywordRetriever(),
                 ]
             ),
             functools.partial(backtrack_handler, max_backtracks=5),
@@ -431,6 +431,8 @@ def main():
         get_intermediate=False,
     )
 
+    user_id = input("Input your user id (Chat_DKU for default): ")
+    search_mode = int(input("Search mode (0 for default): "))
     while True:
         try:
             print("*" * 10)
@@ -438,8 +440,8 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-                user_id="te100",
-                search_mode=2,
+                user_id=user_id,
+                search_mode=search_mode,
                 files=["cs306_syllabus.pdf"],
             )
             first_token = True
