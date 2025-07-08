@@ -19,11 +19,13 @@ def chat(request):
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
     search_mode=request.data.get("search_mode",0)
-    netid=request.netid
+    netid=request.netid 
+    user_id=netid if search_mode !=0 else "Chat_DKU"
     if search_mode==1 or search_mode==2:
-        docs=request.user.files.values_list("filename",flat=True)
+        docs=list(request.user.files.values_list("filename",flat=True))
     else:
         docs=None
+        
     if not messages:
         return Response({"error": "No message provided"}, status=400)
 
@@ -32,7 +34,7 @@ def chat(request):
         # Create a new Agent instance per request
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
         responses_gen = agent(
-            current_user_message=message_content, question_id=question_id, search_mode=search_mode,docs=docs, user_id=str(netid)
+            current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
         print(responses_gen)
         def generate():
