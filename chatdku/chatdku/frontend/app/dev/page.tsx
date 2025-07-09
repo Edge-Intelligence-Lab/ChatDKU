@@ -1,7 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
-import { getUser } from "@/components/hooks/user";
-
+import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -88,6 +86,7 @@ export default function Home() {
 	const [isChatboxCentered, setIsChatboxCentered] = useState(true);
 	const [chatHistoryId, setChatHistoryId] = useState("");
 	const [thinkingMode, setThinkingMode] = useState(false);
+	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
 	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/dev/chat");
 	const router = useRouter();
@@ -214,6 +213,8 @@ export default function Home() {
 					<AIInput
 						thinkingMode={thinkingMode}
 						onThinkingModeChange={(value) => setThinkingMode(value)}
+						searchMode={searchMode}
+						onSearchModeChange={(value: SetStateAction<string>) => setSearchMode(value)}
 						onInputChange={(value) => setInputValue(value)}
 						onEndpointChange={setApiEndpoint}
 						onSubmit={async (value) => {
@@ -241,6 +242,7 @@ export default function Home() {
 										messages: [{ role: "user", content: value }],
 										chatHistoryId: newChatHistoryId,
 										mode: thinkingMode ? "agent" : "",
+										searchMode: searchMode,
 									}),
 								});
 

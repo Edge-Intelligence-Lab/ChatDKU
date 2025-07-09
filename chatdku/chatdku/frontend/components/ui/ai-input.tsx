@@ -30,14 +30,15 @@ export function AIInput({
 	onSubmit?: (value: string) => void;
 	className?: string;
 	thinkingMode?: boolean;
+	searchMode?: string;
 	onThinkingModeChange?: (value: boolean) => void;
 	onEndpointChange?: (endpoint: string) => void;
+	onSearchModeChange?: (value: string) => void;
 }) {
 	const { textareaRef, adjustHeight } = useAutoResizeTextarea({
 		minHeight,
 		maxHeight,
 	});
-	const [isAgentic] = useState(false);
 	const [inputValue, setInputValue] = useState("");
 	const [isRecording, setIsRecording] = useState(false);
 	const [isThinking, setIsThinking] = useState(thinkingMode || false);
@@ -267,13 +268,10 @@ export function AIInput({
 				/>
 				<div className="flex flex-row justify-between">
 					<div className="flex flex-row gap-x-1">
-						{!isDevRoute && (
-							<button className={cn(inputButtonStyle, isThinking && "bg-primary text-primary-foreground")} onClick={toggleThinkingMode}>
-								<Brain className="w-5 h-5" />
-								<span className={cn("")}>Deep Think</span>
-							</button>
-						)}
-
+						<button className={cn(inputButtonStyle, isThinking && "bg-primary text-primary-foreground")} onClick={toggleThinkingMode}>
+							<Brain className="w-4 h-4" />
+							<span className={cn("")}>Deep Think</span>
+						</button>
 						{isDevRoute && <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />}
 						{isDevRoute && <UploadSheet />}
 					</div>

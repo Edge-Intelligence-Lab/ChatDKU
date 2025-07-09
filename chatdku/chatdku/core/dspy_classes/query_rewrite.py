@@ -15,12 +15,14 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
+    EXISTING_USER_PROFILE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
     ROLE_PROMPT,
 )
+
 
 from chatdku.config import config
 
@@ -30,17 +32,18 @@ def make_query_rewrite_signature():
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
         "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
         "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
+        "user_profile": (str, EXISTING_USER_PROFILE_FIELD),
         "tool_history": (str, TOOL_HISTORY_FIELD),
         "tool_summary": (str, TOOL_SUMMARY_FIELD),
         "rewritten_query": (
             str,
-            dspy.OutputField(desc="The thought you generated."),
+            dspy.OutputField(desc="The new, more specific query that you've written."),
         ),
     }
 
     instruction = (
         # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
-        "You goal is to answer the Current User Message. "
+        "You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information and ultimately answers the user's question precisely and accurately. "
         "Please understand the information gap between the currently known information and the target problem. "
         "Your task is to generate one thought in the form of question for next retrieval step directly. "
         "DON\’T generate the whole thoughts at once!\n DON\’T generate thought which has been retrieved. "
@@ -63,6 +66,7 @@ class QueryRewrite(dspy.Module):
         )
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
+            "user_profile": 1 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
             "tool_history": 5 / 15,
@@ -78,6 +82,7 @@ class QueryRewrite(dspy.Module):
         self,
         current_user_message: str,
         conversation_memory: ConversationMemory,
+        user_profile: str,
         tool_memory: ToolMemory,
     ):
         with (
@@ -92,6 +97,7 @@ class QueryRewrite(dspy.Module):
 
             rewrite_inputs = dict(
                 current_user_message=current_user_message,
+                user_profile=user_profile,
                 conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 tool_history=tool_memory.history_str(),

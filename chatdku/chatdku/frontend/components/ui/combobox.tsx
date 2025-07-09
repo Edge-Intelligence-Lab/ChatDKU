@@ -20,10 +20,6 @@ const branches: Branch[] = [
 		label: "Standard",
 	},
 	{
-		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/think/chat",
-		label: "Deep Think",
-	},
-	{
 		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/qwen/chat",
 		label: "Qwen",
 	},
