@@ -273,7 +273,8 @@ class VectorRetriever(dspy.Module):
         #     ),
         # )
         self.user_uploads_collection = db.get_collection(
-            name=config.user_uploads_collection,
+            # name=config.user_uploads_collection,
+            name=config.chroma_collection,
             embedding_function=HuggingFaceEmbeddingServer(
                 url=config.tei_url + "/" + config.embedding + "/embed"
             ),

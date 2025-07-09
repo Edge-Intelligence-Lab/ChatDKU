@@ -14,8 +14,9 @@ CONVERSATION_HISTORY_FIELD = dspy.InputField(
 )
 EXISTING_USER_PROFILE_FIELD = dspy.InputField(
     desc=(
-        "Existing user profile description in JSON Lines format. "
+        "A long term storage, with existing user profile descriptors in JSON Lines format. "
         "Each line specifies a characteristic of the user that would help better understand the user's problem. "
+        "You must tailor your response to the user's unique situation and characteristics. "
         "It would be empty if there is no existing user profile."
     ),
     format=lambda x: x,

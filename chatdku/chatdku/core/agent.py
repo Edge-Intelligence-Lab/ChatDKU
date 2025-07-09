@@ -23,6 +23,7 @@ from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.judge import Judge
+from chatdku.core.dspy_classes.user_profiler import Profiler, get_user_profile
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -116,7 +117,9 @@ class Agent(dspy.Module):
         max_iterations: int = 5,
         streaming: bool = False,
         get_intermediate: bool = False,
-        rewrite_query: bool = False,
+        rewrite_query: bool = True,
+        use_profiler: bool = True,
+        profile_path: str = "",
     ):
         """
         Args:
@@ -131,17 +134,19 @@ class Agent(dspy.Module):
         """
 
         super().__init__()
+        self.profile_path = profile_path
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
+        self.use_profiler = use_profiler
         self.planner = assert_transform_module(
             Planner(
                 [
                     VectorRetriever(),
                     KeywordRetriever(),
-                ]
+                ],
             ),
             functools.partial(backtrack_handler, max_backtracks=5),
         )
@@ -159,6 +164,7 @@ class Agent(dspy.Module):
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
         self.queryrewriter = QueryRewrite()
+        self.profiler = Profiler(profile_path=self.profile_path)
 
         self.prev_response = None
 
@@ -306,11 +312,25 @@ class Agent(dspy.Module):
                         current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
+                        user_profile=get_user_profile(path=self.profile_path),
                     ).rewritten_query
                     if VERBOSE:
                         print(f"rewritten query:{query}")
                 else:
                     query = current_user_message
+
+                if self.use_profiler:
+                    try:
+                        new_profile = self.profiler(
+                            current_user_message=query,
+                            conversation_memory=self.conversation_memory,
+                            tool_memory=self.tool_memory,
+                            profile_path=self.profile_path,
+                        )
+                        if VERBOSE:
+                            print(f"Profiler:{new_profile}")
+                    except dspy.DSPyAssertionError:
+                        print("User profile could not be found.")
 
                 try:
                     planner = self.planner(
@@ -319,6 +339,7 @@ class Agent(dspy.Module):
                         # Also, the memory should concern answering the overarching
                         # user question, while the planner can focus more on the current iteration.
                         current_user_message=query,
+                        user_profile=get_user_profile(path=self.profile_path),
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
                         max_calls=self.max_iterations - i,
@@ -429,6 +450,7 @@ def main():
         max_iterations=2,
         streaming=True,
         get_intermediate=False,
+        profile_path="/srv/chatdku_user_data/an301/profile",
     )
 
     user_id = input("Input your user id (Chat_DKU for default): ")
