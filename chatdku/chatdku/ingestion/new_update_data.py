@@ -302,7 +302,7 @@ def update(data_dir, user_id):
 
             total_nodes += pdf_nodes
         nodes_dicts = [node.to_dict() for node in total_nodes]
-        with open(config.nodes_path, "w") as f:
+        with open(os.path.join(data_dir, "nodes.json"), "w") as f:
             json.dump(nodes_dicts, f)
 
         print("Documents load Done!")

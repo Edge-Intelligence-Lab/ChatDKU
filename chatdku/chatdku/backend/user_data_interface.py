@@ -351,6 +351,3 @@ def update(data_dir, user_id):
     else:
         print("No changes to be done.")
     write_changes(data_dir, added_files, removed_files)
-
-
-update("/home/Ar-temis/Documents", "te100")

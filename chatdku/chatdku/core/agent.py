@@ -442,7 +442,7 @@ def main():
                 current_user_message=current_user_message,
                 user_id=user_id,
                 search_mode=search_mode,
-                files=["cs306_syllabus.pdf"],
+                files=[],
             )
             first_token = True
             print("Response:")

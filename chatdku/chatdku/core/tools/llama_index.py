@@ -164,6 +164,10 @@ def get_page_number(metadata: dict):
     return metadata["page_number"]
 
 
+def get_file_name(metadata: dict):
+    return metadata["file_name"]
+
+
 def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     return [
         NodeWithScore(
@@ -171,6 +175,7 @@ def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
                 node_id=node.node_id,
                 text=node.text,
                 metadata={
+                    "filename": get_file_name(node.metadata),
                     "url": get_url(node.metadata),
                 },
             ),
@@ -192,6 +197,7 @@ def chroma_result_to_nodes(result: dict) -> NodeWithScore:
                 node_id=ids[i],
                 text=texts[i],
                 metadata={
+                    "filename": get_file_name(metadatas[i]),
                     "url": get_url(metadatas[i]),
                     "page_number": get_page_number(metadatas[i]),
                 },
@@ -266,18 +272,18 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-        # self.chatdku_collection = db.get_collection(
-        #     name=config.chroma_collection,
-        #     embedding_function=HuggingFaceEmbeddingServer(
-        #         url=config.tei_url + "/" + config.embedding + "/embed"
-        #     ),
-        # )
         self.user_uploads_collection = db.get_collection(
-            name=config.user_uploads_collection,
+            name=config.chroma_collection,
             embedding_function=HuggingFaceEmbeddingServer(
                 url=config.tei_url + "/" + config.embedding + "/embed"
             ),
         )
+        # self.user_uploads_collection = db.get_collection(
+        #     name=config.user_uploads_collection,
+        #     embedding_function=HuggingFaceEmbeddingServer(
+        #         url=config.tei_url + "/" + config.embedding + "/embed"
+        #     ),
+        # )
 
         # vector_store = ChromaVectorStore(chroma_collection=chatdku_collection)
 
@@ -599,7 +605,12 @@ class KeywordRetriever(dspy.Module):
                 nodes = [
                     NodeWithScore(
                         node=TextNode(
-                            id=r.id, text=r.text, metadata={"file_path": r.file_path}
+                            id=r.id,
+                            text=r.text,
+                            metadata={
+                                "file_path": r.file_path,
+                                "file_name": os.path.basename(r.file_path),
+                            },
                         ),
                         score=r.score,
                     )
