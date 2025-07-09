@@ -272,7 +272,7 @@ class VectorRetriever(dspy.Module):
         self.reranker_top_n = reranker_top_n
 
         db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-        self.user_uploads_collection = db.get_collection(
+        self.collection = db.get_collection(
             name=config.user_uploads_collection,
             # name=config.chroma_collection,
             embedding_function=HuggingFaceEmbeddingServer(
@@ -385,7 +385,7 @@ class VectorRetriever(dspy.Module):
                         ]
                     }
 
-            query_result = self.user_uploads_collection.query(
+            query_result = self.collection.query(
                 # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
                 # what would happen if that is exceeded. Also, we should use it tokenizer
                 # to get the accurate token count. This is just a temporary safety
