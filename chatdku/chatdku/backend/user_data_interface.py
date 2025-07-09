@@ -209,6 +209,7 @@ def embed_pdf(file_paths: list[str], user_id, collection):
         api_key=llama_parse_api_key,
         result_type="json",
         verbose=True,
+        disable_image_extraction=True,
     )
     for file_path in file_paths:
         print(f"Reading: {file_path}")  # Debugging output
@@ -329,6 +330,7 @@ def update(data_dir, user_id):
         print("Removal done.")
 
     elif len(added_files) > 0:
+        total_nodes = []
 
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
 
@@ -336,12 +338,14 @@ def update(data_dir, user_id):
 
         if len(non_pdf_files) > 0:
             non_pdf_nodes = embed_non_pdf(non_pdf_files, user_id, collection)
+            total_nodes.extend(non_pdf_nodes)
 
         if len(pdf_files) > 0:
             pdf_nodes = embed_pdf(pdf_files, user_id, collection)
+            total_nodes.extend(pdf_nodes)
 
         print("Chroma load Done!")
-        total_nodes = non_pdf_nodes + pdf_nodes
+
         # TODO: change index name
         load_redis(nodes=total_nodes, index_name="temka_testing")
     else:

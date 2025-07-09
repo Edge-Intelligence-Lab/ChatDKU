@@ -1,11 +1,17 @@
 from core.models import UploadedFile, UserModel
 from celery import shared_task
 from django.db import transaction
+from chatdku.backend.user_data_interface import update
+from core.set_lock import redis_lock
+from django.conf import settings
+
+import json
 
 import os
 import dotenv
 import shutil
 import logging
+
 
 from chatdku.backend.user_data_interface import update
 
@@ -70,6 +76,25 @@ def update_user_embedding():
     
     except Exception as e:
         logger.error(f"Failed to update, Error occured: {e}")
+
+
+@shared_task
+def update_user_chroma(user_folder_path_json,user_folder_path,netid):
+        lock_key=f"user_lock:{netid}"
+        try:
+            with redis_lock(lockkey=lock_key):
+                json_path = os.path.join(user_folder_path_json, "data_state.json")
+                os.makedirs(user_folder_path, exist_ok=True)
+                if not os.path.exists(json_path):
+                    with open(json_path, "w") as f:
+                        json.dump({}, f)
+                print("uploading")
+                update(data_dir=user_folder_path_json,user_id=str(netid))
+                print("uploaded")
+
+        except RuntimeError:
+            logger.error(f'User: {netid} is currently locked. Please try again later')
+
 
                 
 
