@@ -5,7 +5,7 @@ from django.core.files.storage import default_storage
 
 
 @contextmanager
-def redis_lock(lockkey, expire= 120):
+def redis_lock(lockkey, expire= 600):
     lock=redis_client.lock(name=lockkey,timeout=expire)
     acquired=lock.acquire(blocking=False)
     try:

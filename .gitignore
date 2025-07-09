@@ -4,6 +4,7 @@ pipeline_cache
 __pycache__/
 *.py[cod]
 *$py.class
+**/custom_schema.yaml
 
 # C extensions
 *.so
@@ -200,4 +201,4 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
-**/log
+**/logchatdku/chatdku/custom_schema.yaml

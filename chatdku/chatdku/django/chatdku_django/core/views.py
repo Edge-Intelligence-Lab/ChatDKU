@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from core.models import UploadedFile
 from django.contrib.auth import get_user_model
 import os
+from chatdku_django.celery import redis_client
 
 from django.utils.timezone import now
 from dotenv import load_dotenv

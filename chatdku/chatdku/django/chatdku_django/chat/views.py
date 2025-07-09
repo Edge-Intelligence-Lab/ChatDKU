@@ -5,6 +5,7 @@ from django.http import StreamingHttpResponse
 from chat.models import Feedback
 from chatdku.backend.user_data_interface import update
 from chatdku_django.celery import redis_client
+from chat.serializer import SourceSerializer
 
 import logging
 logger=logging.getLogger(__name__)
@@ -19,18 +20,19 @@ def chat(request):
     question_id = request.data.get("chatHistoryId")
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
-    search_mode=request.data.get("search_mode",0)
+    serializer=SourceSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    docs=request.data.get("sources",['ChatDKU'])
+    search_mode=serializer.validated_data['search_mode']
     netid=request.netid 
     user_id=netid if search_mode !=0 else "Chat_DKU"
     lock_key=f"user_lock:{netid}"
+ 
 
     if search_mode==1 or search_mode==2:
         if redis_client.get(lock_key):
             return Response({"error","The file is uploading"},status=423)
-
-        docs=list(request.user.files.values_list("filename",flat=True))
-    else:
-        docs=None
+        
         
     if not messages:
         return Response({"error": "No message provided"}, status=400)
@@ -42,7 +44,6 @@ def chat(request):
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
-        print(responses_gen)
         def generate():
             for response in responses_gen.response:
                 yield response  
@@ -50,7 +51,7 @@ def chat(request):
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:
-        print(e)
+        logger.error(f"Error Occured in chat: {str(e)}")
         return Response({"error": str(e)}, status=500)
 
 
@@ -72,14 +73,5 @@ def save_feedback(request):
         feedback.save()
         return Response({'message': 'Feedback saved successfully'}, status=201)
     except Exception as e:
+        logger.error(f"Error occured in Feedback {str(e)}")
         return Response({'message': str(e)}, status=500)
-
-@api_view(['GET'])
-def index(request):
-
-    data = {
-        "netid": request.session.get('netid'),
-        "display_name": request.session.get('display_name'),
-    }
-
-    return Response(data)
