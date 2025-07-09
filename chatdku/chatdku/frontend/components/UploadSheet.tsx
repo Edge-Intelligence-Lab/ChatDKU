@@ -5,7 +5,7 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetFooter, SheetTitle
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { FolderPlus, Upload } from "lucide-react";
 
 export function UploadSheet() {
 	const [file, setFile] = useState<File | null>(null);
@@ -47,12 +47,12 @@ export function UploadSheet() {
 		<Sheet open={open} onOpenChange={setOpen}>
 			<SheetTrigger asChild>
 				<Button variant="inChatbox">
-					<Upload /> Upload
+					<FolderPlus /> Upload
 				</Button>
 			</SheetTrigger>
 			<SheetContent>
 				<SheetHeader>
-					<SheetTitle>Upload documents</SheetTitle>
+					<SheetTitle>Choose sources</SheetTitle>
 					<SheetDescription>Add a .pdf file for ChatDKU to use as an extra source.</SheetDescription>
 				</SheetHeader>
 
