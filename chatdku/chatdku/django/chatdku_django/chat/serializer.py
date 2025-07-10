@@ -10,14 +10,19 @@ class SourceSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        docs = data.get('sources', ['ChatDKU'])
+        docs = data.get('sources') or ['ChatDKU']
+        try:
 
-        if len(docs) == 1:
-            search_mode = 1 if docs[0] != 'ChatDKU' else 0
-        elif len(docs) > 1 and docs[0] == 'ChatDKU':
-            search_mode = 2
-        else:
-            search_mode = 1
+            if len(docs) == 1:
+                search_mode = 1 if docs[0] != 'ChatDKU' else 0
+            elif len(docs) > 1 and docs[0] == 'ChatDKU':
+                search_mode = 2
+            else:
+                search_mode = 1
+
+        except Exception as e:
+            search_mode=0
         
         data['search_mode'] = search_mode
+        data['docs']=docs
         return data

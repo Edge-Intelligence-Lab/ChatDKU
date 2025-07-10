@@ -22,13 +22,13 @@ def chat(request):
     max_iteration = 2 if mode == "agent" else 1
     serializer=SourceSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    docs=request.data.get("sources",['ChatDKU'])
-    search_mode=serializer.validated_data['search_mode']
+    search_mode,docs=serializer.validated_data['search_mode'],serializer.validated_data['docs']
     netid=request.netid 
     user_id=netid if search_mode !=0 else "Chat_DKU"
     lock_key=f"user_lock:{netid}"
- 
 
+    print(search_mode,docs)
+ 
     if search_mode==1 or search_mode==2:
         if redis_client.get(lock_key):
             return Response({"error","The file is uploading"},status=423)

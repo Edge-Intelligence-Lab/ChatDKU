@@ -23,11 +23,11 @@ redis_client=Redis.from_url(redis_url)
 app.conf.beat_schedule={
     "remove-files-every-1day":{
         "task":"core.tasks.remove_files",
-        "schedule":crontab(minute=0,hour=0)
+        "schedule":crontab(minute=0,hour=16) #12 a.m ocal time 
     },
     "update-user-log-every-1day":{
         "task":"core.tasks.update_user_embedding",
-        "schedule":crontab(minute=0,hour=0)
+        "schedule":crontab(minute=20,hour=16) #12:20 local time
     }
 }
 

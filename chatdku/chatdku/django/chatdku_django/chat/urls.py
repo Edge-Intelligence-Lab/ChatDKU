@@ -4,5 +4,4 @@ from . import views
 urlpatterns=[
     path('chat',views.chat,name="chat"),
     path("feedback",views.save_feedback,name="feedback"),
-    path("index",views.index,name="index")
 ]
