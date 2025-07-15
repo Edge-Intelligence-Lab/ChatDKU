@@ -3,8 +3,7 @@ from rest_framework.response import Response
 from core.models import UploadedFile
 from django.contrib.auth import get_user_model
 import os
-from chatdku_django.celery import redis_client
-
+from core.set_enqueue import enqueue_user_task
 from django.utils.timezone import now
 from dotenv import load_dotenv
 from core.serializers import UploadFileSerializer
@@ -35,39 +34,35 @@ def allowed_file(filename):
 def upload(request):
     try:
         serializer = UploadFileSerializer(data=request.data)
-
         if not serializer.is_valid():
-            return Response(serializer.errors,status=400)
+            return Response(serializer.errors, status=400)
 
-        uploaded_file=serializer.validated_data["file_"]
-
-    
+        uploaded_file = serializer.validated_data["file_"]
         filename = f"{slugify(os.path.splitext(uploaded_file.name)[0])}.pdf"
-        print(filename)
 
-        user_folder=request.user.folder
+        user_folder = request.user.folder
+        relative_path = os.path.join(user_folder, filename)  # Relative path for default_storage
+        full_user_folder_path = os.path.join(settings.MEDIA_ROOT, user_folder)  # Absolute path
 
-        user_folder_path = os.path.join(settings.MEDIA_ROOT, user_folder)
-        os.makedirs(user_folder_path, exist_ok=True)
-        file_path = os.path.join(user_folder, filename)  # relative path only
-
-        full_user_folder_path = os.path.join(settings.MEDIA_ROOT, user_folder)
         os.makedirs(full_user_folder_path, exist_ok=True)
+        saved_path = default_storage.save(relative_path, uploaded_file)
+        saved_name = os.path.basename(saved_path)
 
-        path=default_storage.save(file_path,uploaded_file)
-        saved_name=os.path.basename(path)
-        record = UploadedFile(filename=saved_name, user=request.user, uploaded_time=now())
-        record.save()
+        UploadedFile.objects.create(
+            filename=saved_name,
+            user=request.user,
+            uploaded_time=now()
+        )
 
-    # Updating Chunks
-        netid=request.netid
-        user_folder_path_json=os.path.join(settings.MEDIA_ROOT, user_folder)
-        update_user_chroma.delay(user_folder_path_json=user_folder_path_json,user_folder_path=user_folder_path,netid=netid)
-        logger.info(f"Chunks successfully updated for user: {netid}")
+        # File upload queue with Redis and celery
+        netid = request.netid
+        enqueue_user_task(netid, user_folder_path=full_user_folder_path)
+        logger.info(f"Enqueued task for user: {netid}")
 
         return Response({"message": "File uploaded successfully"}, status=201)
+
     except Exception as e:
-        return Response({"error":str(e)})
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(['GET'])

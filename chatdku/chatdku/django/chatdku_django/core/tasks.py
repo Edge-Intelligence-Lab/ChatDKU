@@ -3,7 +3,8 @@ from celery import shared_task
 from django.db import transaction
 from chatdku.backend.user_data_interface import update
 from core.set_lock import redis_lock
-from django.conf import settings
+from chatdku_django.celery import redis_client
+
 
 import json
 
@@ -77,23 +78,43 @@ def update_user_embedding():
     except Exception as e:
         logger.error(f"Failed to update, Error occured: {e}")
 
+#Redis queue for user upload
 
-@shared_task
-def update_user_chroma(user_folder_path_json,user_folder_path,netid):
-        lock_key=f"user_lock:{netid}"
-        try:
-            with redis_lock(lockkey=lock_key):
-                json_path = os.path.join(user_folder_path_json, "data_state.json")
-                os.makedirs(user_folder_path, exist_ok=True)
-                if not os.path.exists(json_path):
-                    with open(json_path, "w") as f:
-                        json.dump({}, f)
-                print("uploading")
-                update(data_dir=user_folder_path_json,user_id=str(netid))
-                print("uploaded")
+@shared_task(bind=True, max_retries=5)
+def update_user_chroma(self, netid):
+    try:
+        while True:
+            metadata = redis_client.lpop(f"queue_key:{netid}")
+            if not metadata:
+                break
 
-        except RuntimeError:
-            logger.error(f'User: {netid} is currently locked. Please try again later')
+            metadata_info = json.loads(metadata.decode("utf-8"))
+            lock_key = metadata_info["lock_key"]
+
+            full_data = redis_client.hgetall(f"task:{metadata_info['id']}")
+            args = json.loads(full_data.get(b"args", b"[]").decode("utf-8"))
+            kwargs = json.loads(full_data.get(b"kwargs", b"{}").decode("utf-8"))
+
+            try:
+                with redis_lock(lockkey=lock_key):
+                    folder = kwargs["user_folder_path"]
+                    json_path = os.path.join(folder, "data_state.json")
+                    os.makedirs(folder, exist_ok=True)
+                    if not os.path.exists(json_path):
+                        with open(json_path, "w") as f:
+                            json.dump({}, f)
+
+                    redis_client.hset(f"task:{metadata_info['id']}", "status", "running")
+                    update(user_id=str(netid), data_dir=folder)
+                    redis_client.hset(f"task:{metadata_info['id']}", "status", "completed")
+
+            except Exception as e:
+                logger.error(f"User {netid} locked or errored: {e}")
+                self.retry(exc=e, countdown=5)
+
+    finally:
+        
+        redis_client.delete(f"processing:{netid}")  
 
 
                 

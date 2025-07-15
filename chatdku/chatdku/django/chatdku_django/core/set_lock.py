@@ -1,8 +1,8 @@
 from contextlib import contextmanager
-import time
 from chatdku_django.celery import redis_client
-from django.core.files.storage import default_storage
+import logging
 
+logger=logging.getLogger(__name__)
 
 @contextmanager
 def redis_lock(lockkey, expire= 600):
