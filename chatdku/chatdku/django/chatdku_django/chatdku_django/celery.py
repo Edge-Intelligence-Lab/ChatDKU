@@ -33,6 +33,10 @@ app.conf.beat_schedule={
         "task":"chat.tasks.chat_load_test_weekly",
         "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 4:20 local time
     },
+    "delete-load-test-logs-every-sunday":{
+        "task":"chat.tasks.delete_locust_logs",
+        "schedule":crontab(minute=20, hour=19,day_of_week=0) #Every Sunday 3:20 local time
+    },
     # "email-load-test-every-sunday":{
     #     "task":"chat.tasks.email_weekly_load",
     #     "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 5:20 local time

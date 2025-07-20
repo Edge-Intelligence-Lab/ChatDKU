@@ -82,6 +82,20 @@ def chat_load_test_daily():
 
 
 
+#Delete Logs
+@shared_task
+def delete_locust_logs():
+    base_dir="../locust_log"
+
+    try:
+        for item in os.listdir(base_dir):
+            file_path=os.path.join(base_dir,item)
+            os.remove(file_path)
+
+    except Exception as e:
+        logger.error(f"Error in deleting locust logs: {str(e)}")
+
+
 
 
 
