@@ -243,3 +243,12 @@ CELERY_BROKER_URL=os.getenv("REDIS_URL")
 CELERY_RESULT_BACKEND='django-db'
 CELERY_TIMEZONE='UTC'
 CELERY_BEAT_SCHEDULER='django_celery_beat.schedulers.DatabaseScheduler'
+
+
+#email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST=os.getenv("EMAIL_HOST")
+EMAIL_PORT=os.getenv("EMAIL_PORT")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
+EMAIL_HOST_USER=os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD=os.getenv("EMAIL_HOST_PASSWORD")

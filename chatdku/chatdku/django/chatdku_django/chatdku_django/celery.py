@@ -27,7 +27,19 @@ app.conf.beat_schedule={
     },
     "update-user-log-every-1day":{
         "task":"core.tasks.update_user_embedding",
-        "schedule":crontab(minute=20,hour=16) #12:20 local time
+        "schedule":crontab(minute=20,hour=16) #12:20 am local time
+    },
+    "chat-load-test-every-sunday":{
+        "task":"chat.tasks.chat_load_test_weekly",
+        "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 4:20 local time
+    },
+    # "email-load-test-every-sunday":{
+    #     "task":"chat.tasks.email_weekly_load",
+    #     "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 5:20 local time
+    # },
+    "chat-test-every-day":{
+        "task":"chat.tasks.chat_load_test_daily",
+        "schedule":crontab(minute=00, hour=22) # 6:00 am local time
     }
 }
 

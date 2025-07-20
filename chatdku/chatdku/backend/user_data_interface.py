@@ -337,12 +337,18 @@ def update(data_dir, user_id):
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
         if len(non_pdf_files) > 0:
-            non_pdf_nodes = embed_non_pdf(non_pdf_files, user_id, collection)
-            total_nodes.extend(non_pdf_nodes)
+            try:
+                non_pdf_nodes = embed_non_pdf(non_pdf_files, user_id, collection)
+                total_nodes.extend(non_pdf_nodes)
+            except:
+                pass
 
         if len(pdf_files) > 0:
-            pdf_nodes = embed_pdf(pdf_files, user_id, collection)
-            total_nodes.extend(pdf_nodes)
+            try:
+                pdf_nodes = embed_pdf(pdf_files, user_id, collection)
+                total_nodes.extend(pdf_nodes)
+            except:
+                pass
 
         print("Chroma load Done!")
 
