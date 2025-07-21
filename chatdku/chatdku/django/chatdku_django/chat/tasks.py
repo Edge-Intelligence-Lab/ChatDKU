@@ -20,7 +20,7 @@ logger=logging.getLogger(__name__)
 @shared_task
 def chat_load_test_weekly():
     try:
-        file_conf="../locust_weekly.conf"
+        file_conf=os.path.join(settings.BASE_DIR,"locust_weekly.conf")
         runner=subprocess.run(["locust","--config",file_conf],check=True)
         logger.info("Load Test Successful")
 
@@ -63,13 +63,14 @@ def email_weekly_load():
 @shared_task
 def chat_load_test_daily():
     try:
-        file_conf="../locust_daily.conf"
-        runner=subprocess.run(["locust","--config",file_conf],check=True)
+        file_conf=os.path.join(settings.BASE_DIR,"locust_daily.conf")
+        locust_path=os.getenv("LOCUST_PATH")
+        runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
         logger.info("Daily Chat Test Successful")
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"ErrorCode: {str(runner.returncode)}")
-        logger.error(f"ErrorOutput: {str(runner.stderr)}")
+        logger.error(f"ErrorCode: {str(e.returncode)}")
+        logger.error(f"ErrorOutput: {str(e.stderr)}")
         from_email=os.getenv("EMAIL_HOST_USER")
         to_email=os.getenv("EMAIL_TO")
         subject="Error in ChatDKU"
@@ -85,7 +86,7 @@ def chat_load_test_daily():
 #Delete Logs
 @shared_task
 def delete_locust_logs():
-    base_dir="../locust_log"
+    base_dir=os.path.join(settings.BASE_DIR,"locust_log")
 
     try:
         for item in os.listdir(base_dir):

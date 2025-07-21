@@ -26,10 +26,13 @@ The current version of ChatDKU uses the following packages for Django Backend. Y
 chatdku_django/
 ├── chat/
 │   ├── migrations/
+│   ├── templates/email/
 │   ├── admin.py
 │   ├── apps.py
+│   ├── mail.py
 │   ├── models.py
 │   ├── tests.py
+│   ├── tasks.py
 │   ├── urls.py
 │   └── views.py
 ├── chatdku_django/
@@ -52,6 +55,7 @@ chatdku_django/
 │   ├── urls.py
 │   └── views.py
 ├── manage.py
+├── locustfile.py
 
 ```
 - `chat/` is the chatapp for query and feedback.
@@ -61,7 +65,10 @@ user.
 - `*/middleware.py` checks for netid in the header.
 - `*/models.py` model for each app.
 - `*/admin.py` handles admin for the respective app
-- `chatdku_django/celery.py` uses `celery` to automate file deletion and metadata update. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
+- `chatdku_django/celery.py` uses `celery` for automation. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
+- `*/tasks.py` contains celery tasks for each app.
+- `locustfile.py` contains load test script for the app.
+- `chat/mail.py` contains mailing feature for app. Currently it is configured to send email per error and weekly email for load test results.
  
 > You can check `chatdku_django/urls.py` for all the routes used in this project. 
 
@@ -99,7 +106,10 @@ This will run the server in port `<port>`. The default port for django is `8000`
 Once you run the sever, you can view it via `<server ip>:<port>`. Go to `/admin` route to check the **admin dashboard**.
 
 ### Running Celery
-All the Celery Configurations are already set up in the project itself in [`celery.py`](./chatdku_django/chatdku_django/celery.py) and [`settings.py`](./chatdku_django/chatdku_django/settings.py). The project uses Celery to automate fileupload removal.
+All the Celery Configurations are already set up in the project itself in [`celery.py`](./chatdku_django/chatdku_django/celery.py) and [`settings.py`](./chatdku_django/chatdku_django/settings.py). The project uses Celery to:
+- Schedule file and embedding cleaning
+- Schedule daily and weekly load test
+- Schedule weekly loadtest email / error emails
 
 To run celery for development, run
 ```bash
@@ -112,6 +122,9 @@ Since we are running redis via docker, you can check it's status using
 ```bash
 sudo docker ps | grep redis
 ```
+ChatDKU backend uses Redis to:
+- Queue User File Upload
+- Lock file chat during user upload
 
 ## Production
 
@@ -119,11 +132,12 @@ sudo docker ps | grep redis
 Chatdku uses gunicorn in addition to apache to run the backend server. To run gunicorn server use
 
 ```bash
-nohup gunicorn -b <server ip>:<port> chatdku_django.wsgi:application --timeout 500 --preload &
+nohup gunicorn -b <server ip>:<port> chatdku_django.wsgi:application --timeout <timeout> --workers <workers> --threads <threads> --preload &
 
 ```
 The current apache configuration supports `8009` as the port.
-- `--timeout` defines the timeout time for the server
+- `--timeout` defines the timeout time for the server.
+- `--workers` define the number of worker for the backend.
 - `--nohup`: logs are saved in `nohup.out` file. To inspect it, run
 ```bash
 tail -f nohup.out
@@ -145,6 +159,12 @@ To stop it, run:
 ```bash
 sudo systemctl stop chatdku_celery
 ```
+You can view `Celery` logs via
+```bash
+
+sudo journalctl -u chatdku_celery -f
+```
+
 ----
 ## Additional Information
 - ChatDKU is using `PostgreSQL` to track files and users. We `DO NOT` store raw `netid` in the database. Instead, they are hashed using `SHA-256`. To view database port, run
