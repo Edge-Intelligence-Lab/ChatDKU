@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 
-from typing import Any
 import traceback
 
-from llama_index.core import Settings
-from llama_index.core.base.llms.types import CompletionResponse
 
 import functools
-from dsp import LM
+from openai import OpenAI
 import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-
-# FIXME: Stop using these patches whenever the issues were addressed by DSPy.
-import chatdku.core.dspy_patch
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
@@ -37,16 +31,16 @@ from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
 
 
-class CustomClient(LM):
+class CustomClient(dspy.BaseLM):
     def __init__(self) -> None:
         self.provider = "default"
         self.history = []
         self.kwargs = {
-            "temperature": Settings.llm.temperature,
+            "temperature": config.llm_temperature,
             "max_tokens": config.context_window,
         }
 
-    def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
+    def forward(self, prompt: str, messages=None, **kwargs):
         with (
             config.tracer.start_as_current_span("LLM")
             if hasattr(config, "tracer")
@@ -61,18 +55,24 @@ class CustomClient(LM):
                 }
             )
 
-            response = Settings.llm.complete(prompt, **kwargs)
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
+            client = OpenAI(api_key="None", base_url=config.llm_url)
+            completion = client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **self.kwargs,
+            )
+            span.set_attribute(
+                SpanAttributes.OUTPUT_VALUE, completion.choices[0].message.content
+            )
             self.history.append(
                 {
                     "prompt": prompt,
-                    "response": response,
+                    "response": completion.choices[0].message.content,
                     "kwargs": kwargs,
                 }
             )
-
             span.set_status(Status(StatusCode.OK))
-            return response
+            return completion
 
     def inspect_history(self, n: int = 1, skip: int = 0) -> str:
         last_prompt = None
@@ -99,15 +99,6 @@ class CustomClient(LM):
 
         print(printing_value)
         return printing_value
-
-    def __call__(
-        self,
-        prompt: str,
-        only_completed: bool = True,
-        return_sorted: bool = False,
-        **kwargs: Any,
-    ) -> list[str]:
-        return [self.request(prompt, **kwargs).text]
 
 
 class Agent(dspy.Module):
@@ -370,8 +361,8 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    llama_client = CustomClient()
-    dspy.settings.configure(lm=llama_client)
+    lm = CustomClient(config.llm)
+    dspy.settings.configure(lm=lm)
     import time
 
     agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
