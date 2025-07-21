@@ -97,13 +97,15 @@ def make_planner_signature():
     }
 
     instruction = (
-        "Your current task is to answer the Current User Message using the tools given below. "
-        "Please generate a step-by-step plan of the tools you want to use and their respective parameters. "
+        "You are an agent that answers users' question. "
+        "Your current task is to answer the Current User Message using the right tool from the given tools. "
         "All tool parameters are required."
     )
 
     return dspy.make_signature(
-        fields, ROLE_PROMPT + "\n\n" + instruction, "PlannerSignature"
+        signature=fields,
+        instructions=(ROLE_PROMPT + "\n\n" + instruction),
+        signature_name="PlannerSignature",
     )
 
 
@@ -111,7 +113,7 @@ PlannerSignature = make_planner_signature()
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools: list[dspy.Module]):
+    def __init__(self, tools: list):
         super().__init__()
 
         self.tools = tools
@@ -138,8 +140,11 @@ class Planner(dspy.Module):
             )
             self.name_to_model[tool_name_snake] = ToolModel
 
-        self.planner = dspy.ChainOfThought(
-            PlannerSignature, rationale_type=custom_cot_rationale
+        self.planner = dspy.ReAct(
+            PlannerSignature,
+            max_iters=5,
+            num_results=3,
+            tools=tools,
         )
 
         self.token_ratios: dict[str, float] = {
