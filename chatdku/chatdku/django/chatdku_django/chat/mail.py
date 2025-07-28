@@ -1,9 +1,10 @@
 from django.core.mail import BadHeaderError, EmailMultiAlternatives
 import logging
-
+import json
 logger=logging.getLogger(__name__)
 class EmailUtil:
     """Util Class for sending emails"""
+
 
     @staticmethod
     def send_mail(from_email:str,to_email:list,subject:str,content_text:str,content_html=None):
@@ -22,7 +23,7 @@ class EmailUtil:
                 subject=subject,
                 body=content_text,
                 from_email=from_email,
-                to=to_email
+                to=json.loads(to_email)
             )
 
             email.attach_alternative(content_html,mimetype='text/html')
@@ -34,3 +35,5 @@ class EmailUtil:
                 
         except Exception as e:
             logger.error(f"Error in Sending Email: {str(e)}")
+
+    

@@ -3,7 +3,7 @@ from celery import shared_task
 import logging
 import dotenv
 import subprocess
-from chat.utils import load_weekly_data
+from chat.utils import load_weekly_data,feedback_summary
 import datetime
 from django.template.loader import render_to_string
 from chat.mail import EmailUtil
@@ -21,7 +21,7 @@ logger=logging.getLogger(__name__)
 def chat_load_test_weekly():
     try:
         file_conf=os.path.join(settings.BASE_DIR,"locust_weekly.conf")
-        runner=subprocess.run(["locust","--config",file_conf],check=True)
+        runner=subprocess.run(["locust","--config",file_conf],check=True,capture_output=True,text=True)
         logger.info("Load Test Successful")
 
     except subprocess.CalledProcessError as e:
@@ -39,17 +39,17 @@ def chat_load_test_weekly():
 def email_weekly_load():
     data={
             "date":str(datetime.datetime.now().date()),
-            "locust_data":load_weekly_data()
+            "locust_data":load_weekly_data(),
+            "feedback_report":feedback_summary()
         }
-    html_content=render_to_string("email/monthly_load_test.html",data)
+    html_content=render_to_string("email/weekly_report.html",data)
     from_email=os.getenv("EMAIL_HOST_USER")
     to_email=os.getenv("EMAIL_TO")
-    subject="Weekly ChatDKU Load Test Result"
+    subject="Weekly ChatDKU Test Result"
     body_content="ChatDKU Weekly Load Test\n"
 
     for item in data['locust_data']:
         body_content+=f"Type: {item['type']}\nName:{item['name']}\nRequest Count: {item['request_count']}\nFailure Count: {item['failure_count']}\nAverage Response Time: {item['average_response_time']}\nFailure Percentage: {item['failure_percentage']}\n\n"
-
 
     try:
         EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content)
@@ -75,7 +75,6 @@ def chat_load_test_daily():
         to_email=os.getenv("EMAIL_TO")
         subject="Error in ChatDKU"
         body=f"Error Occured When completing Daily Load Test at {datetime.datetime.now()}"
-
         EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body)
 
     except Exception as e:

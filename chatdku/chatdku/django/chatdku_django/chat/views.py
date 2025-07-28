@@ -12,6 +12,7 @@ logger=logging.getLogger(__name__)
 
 
 
+
 # Create your views here.
 @api_view(['POST'])
 def chat(request):
@@ -59,7 +60,7 @@ def chat(request):
 def save_feedback(request):
     try:
         data=request.data
-        user_input=data["UserInput"]
+        user_input=data["userInput"]
         bot_answer = data['botAnswer']
         feedback_reason = data['feedbackReason']
         question_id = data['chatHistoryId']
@@ -67,7 +68,7 @@ def save_feedback(request):
             user_input=user_input,
             gen_answer=bot_answer, 
             feedback_reason=feedback_reason,
-            question_id=question_id,
+            question_id=str(question_id),
         )
 
         feedback.save()

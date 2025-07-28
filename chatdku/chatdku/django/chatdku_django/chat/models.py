@@ -7,5 +7,5 @@ class Feedback(models.Model):
     user_input=models.TextField(null=False,blank=False)
     gen_answer=models.TextField(null=False)
     feedback_reason=models.TextField("Feedback reason")
-    question_id=models.IntegerField("Question ID")
+    question_id=models.TextField("Question ID")
     time=models.DateTimeField(default=timezone.now)
