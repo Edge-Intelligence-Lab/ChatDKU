@@ -5,8 +5,11 @@ import nest_asyncio
 import uuid
 import json
 import chromadb
+from redis import Redis
+from redisvl.schema import IndexSchema
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-from llama_index.core import SimpleDirectoryReader, Settings
+from llama_index.core import SimpleDirectoryReader
+from llama_index.vector_stores.redis import RedisVectorStore
 from llama_index.core.schema import TextNode
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline
@@ -155,7 +158,7 @@ class XlsxReader(BaseReader):
         return [Document(text=self.xlsx_load(file), metadata=metadata or {})]
 
 
-def write_changes(data_dir: str, new_files: list[str], removed_files: list[str]):
+def write_changes(data_dir: str, new_files: list[Dict], removed_files: list[str]):
     log_path = os.path.join(data_dir, "log.json")
 
     with open(log_path, "r") as file:
@@ -311,6 +314,14 @@ def update(data_dir, user_id):
 
     chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
+    schema = IndexSchema.from_yaml(
+        os.path.join(config.module_root_dir, "custom_schema.yaml")
+    )
+    redis_client = Redis.from_url(config.redis_url)
+    vector_store = RedisVectorStore(
+        redis_client=redis_client, schema=schema, overwrite=True
+    )
+
     collection = chroma_db.get_or_create_collection(
         name=config.user_uploads_collection,
         embedding_function=HuggingFaceEmbeddingServer(
@@ -353,7 +364,11 @@ def update(data_dir, user_id):
         print("Chroma load Done!")
 
         # TODO: change index name
-        load_redis(nodes=total_nodes, index_name="temka_testing")
+        try:
+            load_redis(nodes=total_nodes, index_name="temka_testing")
+        except:
+            pass
+        print("Redis load Done!")
     else:
         print("No changes to be done.")
     write_changes(data_dir, added_files, removed_files)

@@ -112,58 +112,9 @@ def load_redis(
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=reset
     )
-
-    # embed_model = TextEmbeddingsInference(
-    #     model_name="BAAI/bge-m3",
-    #     base_url="http://localhost:18080/BAAI/bge-m3",
-    # )
-
-    # trans = []
-    #
-    # extractors = []
-    # text_spliter = "sentence_splitter"
-    # use_recursive_directory_summarize = False
-    # text_spliter_args = {"chunk_size": 1024, "chunk_overlap": 20}
-    #
-    # supported_extractors = ["title", "keyword", "questions_answered", "summary"]
-    # for e in extractors:
-    #     if e not in supported_extractors:
-    #         raise ValueError(f"Unsupported extractor: {e}")
-    #
-    # if text_spliter == "sentence_splitter":
-    #     from llama_index.core.node_parser import SentenceSplitter
-    #
-    #     trans.append(SentenceSplitter(**text_spliter_args))
-    #
-    # if use_recursive_directory_summarize:
-    #     from recursive_directory_summarize import RecursiveDirectorySummarize
-    #
-    #     trans.append(RecursiveDirectorySummarize())
-    #
-    # if "title" in extractors:
-    #     from llama_index.core.extractors import TitleExtractor
-    #
-    #     trans.append(TitleExtractor())
-    #
-    # if "keyword" in extractors:
-    #     from llama_index.core.extractors import KeywordExtractor
-    #
-    #     trans.append(KeywordExtractor())
-    #
-    # if "questions_answered" in extractors:
-    #     from llama_index.core.extractors import QuestionsAnsweredExtractor
-    #
-    #     trans.append(QuestionsAnsweredExtractor())
-    #
-    # if "summary" in extractors:
-    #     from llama_index.core.extractors import SummaryExtractor
-    #
-    #     trans.append(SummaryExtractor())
-    #
-    # trans.append(Settings.embed_model)
-    #
-    # print(trans)
-    pipeline = IngestionPipeline(vector_store=vector_store)
+    pipeline = IngestionPipeline(
+        vector_store=vector_store, transformations=[Settings.embed_model]
+    )
     if os.path.exists(pipeline_cache_path):
         pipeline.load(pipeline_cache_path)
     pipeline.run(nodes=nodes, num_workers=pipeline_workers, show_progress=True)
