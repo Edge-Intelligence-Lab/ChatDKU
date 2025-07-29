@@ -71,46 +71,6 @@ def load_chroma(
     if collection is None:
         collection = config.user_uploads_collection
     print("Collection: ", collection)
-    # trans = []
-    #
-    # supported_extractors = ["title", "keyword", "questions_answered", "summary"]
-    # for e in extractors:
-    #     if e not in supported_extractors:
-    #         raise ValueError(f"Unsupported extractor: {e}")
-    #
-    # if "title" in extractors:
-    #     from llama_index.core.extractors import TitleExtractor
-    #
-    #     trans.append(TitleExtractor())
-    #
-    # if text_spliter == "sentence_splitter":
-    #     from llama_index.core.node_parser import SentenceSplitter
-    #
-    #     trans.append(SentenceSplitter(**text_spliter_args))
-    # else:
-    #     raise ValueError(f"Unsupported text_splitter: {text_spliter}")
-    #
-    # if use_recursive_directory_summarize:
-    #     from recursive_directory_summarize import RecursiveDirectorySummarize
-    #
-    #     trans.append(RecursiveDirectorySummarize())
-    #
-    # if "keyword" in extractors:
-    #     from llama_index.core.extractors import KeywordExtractor
-    #
-    #     trans.append(KeywordExtractor())
-    #
-    # if "questions_answered" in extractors:
-    #     from llama_index.core.extractors import QuestionsAnsweredExtractor
-    #
-    #     trans.append(QuestionsAnsweredExtractor())
-    #
-    # if "summary" in extractors:
-    #     from llama_index.core.extractors import SummaryExtractor
-    #
-    #     trans.append(SummaryExtractor())
-    #
-    # trans.append(Settings.embed_model)
 
     chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
@@ -129,8 +89,6 @@ def load_chroma(
             "hnsw:sync_threshold": 1024,
         },
     )
-    # vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
     nodes_buffer = []
     for i, node in enumerate(nodes):
         nodes_buffer.append(node)
