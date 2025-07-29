@@ -19,6 +19,8 @@ from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
 from chatdku.core.dspy_common import custom_cot_rationale
+import torch
+from transformers import AutoTokenizer
 
 # import nltk
 from nltk.tokenize import word_tokenize
@@ -122,7 +124,7 @@ def get_reranker(top_n: int):
         top_n=top_n,
         model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
-        device="gpu",
+        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     )
 
 
@@ -263,9 +265,9 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 5,
-        use_reranker: bool = False,
-        reranker_top_n: int = 3,
+        retriever_top_k: int = 10,
+        use_reranker: bool = True,
+        reranker_top_n: int = 5,
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
@@ -399,11 +401,13 @@ class VectorRetriever(dspy.Module):
 
             if self.use_reranker:
                 reranker = get_reranker(self.reranker_top_n)
+                tokenizer=AutoTokenizer.from_pretrained("cross-encoder/ms-marco-MiniLM-L6-v2")
+
                 nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
                     query_str=truncate_tokens(
-                        query, 500, tokenizer=reranker._tokenizer
+                        query, 500, tokenizer=tokenizer
                     ),
                 )
             else:

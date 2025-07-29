@@ -29,7 +29,7 @@ urlpatterns=[
 
 urlpatterns += i18n_patterns(
 
-    path('admin/', admin.site.urls),
+    path('adminnotforchatdku/', admin.site.urls),
 
 )
 urlpatterns+=[
