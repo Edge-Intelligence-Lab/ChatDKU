@@ -97,8 +97,8 @@ def make_planner_signature():
     }
 
     instruction = (
-        "You are an agent that answers users' question. "
-        "Your current task is to answer the Current User Message using the right tool from the given tools. "
+        "You are a tool planner for an AI chatbot. "
+        "Your current task is to plan the correct tool plans to answer the Current User Message. "
         "All tool parameters are required."
     )
 
@@ -140,11 +140,8 @@ class Planner(dspy.Module):
             )
             self.name_to_model[tool_name_snake] = ToolModel
 
-        self.planner = dspy.ReAct(
-            PlannerSignature,
-            max_iters=5,
-            num_results=3,
-            tools=tools,
+        self.planner = dspy.ChainOfThought(
+            signature=PlannerSignature, rationale_type=custom_cot_rationale
         )
 
         self.token_ratios: dict[str, float] = {
@@ -218,12 +215,17 @@ class Planner(dspy.Module):
 
             # Parse tool plan response
 
-            plan_strs = plan_str_all.strip().split("\n")
-            plan_strs = [s.strip() for s in plan_strs]
-            dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
-            dspy.Assert(
-                len(plan_strs) <= max_calls,
-                f"The number of tool calls in your plan must be no more than {max_calls}.",
+            def _check_length(args, pred: dspy.Prediction) -> float:
+                plan_str_all = pred.current_tool_plan
+                plan_strs = plan_str_all.strip().split("\n")
+                plan_strs = [s.strip() for s in plan_strs]
+                if 5 > plan_strs >= 1:
+                    return 1.0
+                else:
+                    return 0.0
+
+            refined_planner = dspy.Refine(
+                self.planner, N=3, reward_fn=_check_length, threshold=1.0
             )
 
             calls_unvalidated = []
@@ -239,7 +241,7 @@ class Planner(dspy.Module):
                     c.name in self.name_to_model,
                     (
                         f'"{c.name}" is not a valid tool. '
-                        f'Available tool(s) are: {", ".join(self.name_to_model)}.'
+                        f"Available tool(s) are: {', '.join(self.name_to_model)}."
                     ),
                 )
                 try:
