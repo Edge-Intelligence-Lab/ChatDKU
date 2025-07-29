@@ -173,7 +173,10 @@ sudo ss -tulnp | grep postgres
 ```
 - The User folders are random.
 
+### **Admin User**
+**Username**: chatdku_admin
 
+**Password**: 82f7570deb18dc2334e255085f090a07af3aad4e56c0c64d034f276ec7f77b24
 
 
 
