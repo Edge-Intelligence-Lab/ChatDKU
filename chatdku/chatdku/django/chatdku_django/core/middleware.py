@@ -10,7 +10,7 @@ class NetIDMiddleware:
 
     def __call__(self, request):
         path_parts = request.path.strip('/').split('/')
-        if len(path_parts) > 1 and path_parts[1] == "adminnotforchatdku":
+        if  "admin" in path_parts:
             return self.get_response(request)
 
         netid = request.META.get("HTTP_UID") or request.session.get("netid")
