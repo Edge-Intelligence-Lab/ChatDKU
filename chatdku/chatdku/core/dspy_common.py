@@ -1,5 +1,5 @@
 import dspy
-from dspy.signatures.signature import ensure_signature, signature_to_template
+from dspy.signatures.signature import ensure_signature
 
 
 def get_template(predict_module: dspy.Module, **kwargs) -> str:
@@ -8,13 +8,11 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     """
     # FIXME: This might not be an elegant way to access the predict module.
     # This is due to that `ChainOfThought` stores the predict module in `_predict` attribute.
-    if hasattr(predict_module, "_predict"):
-        predict_module = predict_module._predict
+    if hasattr(predict_module, "predict"):
+        predict_module = predict_module.predict
 
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)
-    # Switch to legacy format for dsp.generate
-    template = signature_to_template(signature)
 
     if hasattr(predict_module, "demos"):
         demos = predict_module.demos
@@ -24,7 +22,14 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # That is, they are input variables for the bottom most generation, so
     # we place them inside the input - x - together with the demos.
     x = dspy.Example(demos=demos, **kwargs)
-    return template(x)
+
+    print(
+        dspy.ChatAdapter().format(signature=signature, demos=demos, inputs=x.inputs())
+    )
+
+    return dspy.ChatAdapter().format(
+        signature=signature, demos=demos, inputs=x.inputs()
+    )
 
 
 custom_cot_rationale = dspy.OutputField(
