@@ -362,7 +362,7 @@ def main():
     use_phoenix()
 
     lm = CustomClient(config.llm)
-    dspy.settings.configure(lm=lm)
+    dspy.configure(lm=lm)
     import time
 
     agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
@@ -378,7 +378,7 @@ def main():
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
-                    print(f"first token时间:{end_time-start_time}")
+                    print(f"first token时间:{end_time - start_time}")
                     first_token = False
                 print(r, end="")
             print()

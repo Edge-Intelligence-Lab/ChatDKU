@@ -216,13 +216,12 @@ class Planner(dspy.Module):
             # Parse tool plan response
 
             def _check_length(args, pred: dspy.Prediction) -> float:
+                score = 0
                 plan_str_all = pred.current_tool_plan
                 plan_strs = plan_str_all.strip().split("\n")
                 plan_strs = [s.strip() for s in plan_strs]
-                if 5 > plan_strs >= 1:
-                    return 1.0
-                else:
-                    return 0.0
+                if 5 > len(plan_strs) >= 1:
+                    score += 0.3
 
             refined_planner = dspy.Refine(
                 self.planner, N=3, reward_fn=_check_length, threshold=1.0
