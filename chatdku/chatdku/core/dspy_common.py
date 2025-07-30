@@ -1,4 +1,3 @@
-import dsp
 import dspy
 from dspy.signatures.signature import ensure_signature, signature_to_template
 
@@ -24,7 +23,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # All of the other kwargs are presumed to fit a prefix of the signature.
     # That is, they are input variables for the bottom most generation, so
     # we place them inside the input - x - together with the demos.
-    x = dsp.Example(demos=demos, **kwargs)
+    x = dspy.Example(demos=demos, **kwargs)
     return template(x)
 
 
