@@ -6,7 +6,6 @@ import traceback
 import functools
 from openai import OpenAI
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
@@ -127,10 +126,8 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.planner = assert_transform_module(
-            Planner([VectorRetriever(), KeywordRetriever()]),
-            functools.partial(backtrack_handler, max_backtracks=5),
-        )
+        self.planner = Planner([VectorRetriever(), KeywordRetriever()])
+
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
 
@@ -141,9 +138,7 @@ class Agent(dspy.Module):
         # but mixing them appears to not cause any issues.
         self.internal_memory = {}
         self.synthesizer = Synthesizer()
-        self.judge = assert_transform_module(
-            Judge(), functools.partial(backtrack_handler, max_backtracks=5)
-        )
+        self.judge = Judge()
         self.queryrewriter = QueryRewrite()
 
         self.prev_response = None
@@ -203,45 +198,6 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
-            # FIXME: Pre-calling tools.
-            # Currently, it calls ALL tools as the first iteration.
-            # However, it has two issues:
-            # 1. The API of the tools might differ in the future
-            #    (having something other than `query` in parameters).
-            # 2. It has issues with DSPy assertions.
-            # 3. The zipping of the `name_to_model` and `tools` might be problematic.
-            if VERBOSE:
-                print("pre-calling tools")
-
-            # Deal with DSPy assertions
-            # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
-            with dspy.settings.lock:
-                dspy.settings.backtrack_to = None
-
-            for (name, model), tool in zip(
-                self.planner.name_to_model.items(), self.planner.tools
-            ):
-                r = tool(
-                    query=current_user_message, internal_memory=self.internal_memory
-                )
-                first_ite_result, internal_result = r.result, r.internal_result
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
-                    )
-                # if VERBOSE:
-                #     print(f"result: {first_ite_result}")
-
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    calls=[model(name=name, params={"query": current_user_message})],
-                    result=first_ite_result,
-                    max_history_size=limits["tool_history"],
-                )
-                # if VERBOSE:
-                #     print(f"tool memory: {self.tool_memory.history_str()}")
-
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -250,7 +206,7 @@ class Agent(dspy.Module):
             )
 
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations - 1):
+        for i in range(self.max_iterations):
             # TODO: Could feed the intermediate response to judge
             # TODO: Could also try to make this async/threaded, so the output
             # with the user would be done simultaneous with the execution of the

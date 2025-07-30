@@ -205,7 +205,43 @@ class Planner(dspy.Module):
                 }
             )
 
-            plan_str_all = self.planner(
+            # Parse tool plan response
+            def _check_errors(args, pred: dspy.Prediction) -> float:
+                score = 1.0
+                plan_str_all = pred.current_tool_plan
+                plan_strs = plan_str_all.strip().split("\n")
+                plan_strs = [s.strip() for s in plan_strs]
+                if 5 > len(plan_strs) >= 1:
+                    calls_unvalidated = []
+                    for i, s in enumerate(plan_strs, 1):
+                        try:
+                            calls_unvalidated.append(NameParams.model_validate_json(s))
+                        except ValidationError as e:
+                            print(f"ValidationError on tool call line {i}: {e}")
+                            score -= 0.1
+                    calls = []
+                    for i, c in enumerate(calls_unvalidated, 1):
+                        if c.name not in self.name_to_model:
+                            print(
+                                f'"{c.name}" is not a valid tool. Available tool(s) are: {", ".join(self.name_to_model)}.'
+                            )
+                            score -= 0.1
+                        try:
+                            calls.append(
+                                self.name_to_model[c.name](name=c.name, params=c.params)
+                            )
+                        except ValidationError as e:
+                            print(f"ValidationError on tool call line {i}: {e}")
+                            score -= 0.1
+                    return score
+                else:
+                    return 0.0
+
+            refined_planner = dspy.Refine(
+                self.planner, N=3, reward_fn=_check_errors, threshold=1.0
+            )
+
+            plan_str_all = refined_planner(
                 available_tools="\n".join(
                     [str(m.model_json_schema()) for m in self.name_to_model.values()]
                 ),
@@ -213,42 +249,14 @@ class Planner(dspy.Module):
                 **planner_inputs,
             ).current_tool_plan
 
-            # Parse tool plan response
-
-            def _check_length(args, pred: dspy.Prediction) -> float:
-                score = 0
-                plan_str_all = pred.current_tool_plan
-                plan_strs = plan_str_all.strip().split("\n")
-                plan_strs = [s.strip() for s in plan_strs]
-                if 5 > len(plan_strs) >= 1:
-                    score += 0.3
-
-            refined_planner = dspy.Refine(
-                self.planner, N=3, reward_fn=_check_length, threshold=1.0
-            )
-
-            calls_unvalidated = []
-            for i, s in enumerate(plan_strs, 1):
-                try:
-                    calls_unvalidated.append(NameParams.model_validate_json(s))
-                except ValidationError as e:
-                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+            plan_strs = plan_str_all.strip().split("\n")
+            plan_strs = [s.strip() for s in plan_strs]
 
             calls = []
-            for i, c in enumerate(calls_unvalidated, 1):
-                dspy.Assert(
-                    c.name in self.name_to_model,
-                    (
-                        f'"{c.name}" is not a valid tool. '
-                        f"Available tool(s) are: {', '.join(self.name_to_model)}."
-                    ),
-                )
-                try:
-                    calls.append(
-                        self.name_to_model[c.name](name=c.name, params=c.params)
-                    )
-                except ValidationError as e:
-                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+
+            for i, c in enumerate(plan_strs, 1):
+                calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
+
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(calls),
