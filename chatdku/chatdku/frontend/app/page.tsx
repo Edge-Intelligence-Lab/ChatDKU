@@ -21,10 +21,10 @@ const configureMarked = () => {
 const parseMarkdown = (content: string): string => {
 	const parsed = marked.parse(content);
 	// If it's a promise, return empty string initially (will be updated later)
-	if (parsed instanceof Promise) {
+	if (typeof (parsed as any)?.then === "function") {
 		return "";
 	}
-	return parsed;
+	return typeof parsed === "string" ? parsed : "";
 };
 
 // Simulates a streaming effect for text
@@ -146,7 +146,9 @@ export default function Home() {
 					: '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
 			}
             <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
-              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""}">${sanitizedContent}</div>
+              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${
+					!isUser ? "text-[0.9375rem]" : ""
+				}">${sanitizedContent}</div>
             </div>
           </div>
         </div>

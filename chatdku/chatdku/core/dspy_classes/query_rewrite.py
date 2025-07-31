@@ -22,6 +22,7 @@ from chatdku.core.dspy_classes.prompt_settings import (
     ROLE_PROMPT,
 )
 
+
 from chatdku.config import config
 
 
@@ -34,13 +35,13 @@ def make_query_rewrite_signature():
         "tool_summary": (str, TOOL_SUMMARY_FIELD),
         "rewritten_query": (
             str,
-            dspy.OutputField(desc="The thought you generated."),
+            dspy.OutputField(desc="The new, more specific query that you've written."),
         ),
     }
 
     instruction = (
         # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
-        "You goal is to answer the Current User Message. "
+        "You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information and ultimately answers the user's question precisely and accurately. "
         "Please understand the information gap between the currently known information and the target problem. "
         "Your task is to generate one thought in the form of question for next retrieval step directly. "
         "DON\’T generate the whole thoughts at once!\n DON\’T generate thought which has been retrieved. "

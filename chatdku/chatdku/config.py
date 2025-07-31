@@ -1,6 +1,10 @@
 import os
+import dotenv
+from urllib.parse import quote
 
-
+dotenv.load_dotenv()
+redis_host=os.getenv("REDIS_HOST")
+redis_password=os.getenv("REDIS_PASSWORD")
 class Config:
     _instance = None
 
@@ -15,14 +19,20 @@ class Config:
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:8001/v1",
                 "context_window": 64000,
-                # about load_and_index
+                # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
+                "redis_host": redis_host,
+                "redis_password":redis_password,
+                "chroma_db_port": 12400,
+                "chroma_collection": "dku_html_pdf",
+                "user_uploads_collection": "user_uploads",
                 # about query
-                "chroma_db": "/datapool/db_chat_dku_advising",
+                "index_name": "chat_dku_advising",  # TODO change name
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 # about graphrag

@@ -13,7 +13,7 @@ class Feedback(db.Model):
     user_input=db.Column(db.String,nullable=False)
     bot_answer=db.Column(db.String)
     feedback_reason=db.Column(db.String)
-    question_id=db.Column(db.Integer)
+    question_id=db.Column(db.String)
     time=db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(timezone.utc))
 
 

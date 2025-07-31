@@ -1,5 +1,4 @@
 {
-    "cSpell.words": [
-        "Kunshan"
-    ]
+	"cSpell.words": ["Kunshan"],
+	"python.pythonPath": "/home/pomegranar/miniforge3/envs/chatdku/bin/python"
 }

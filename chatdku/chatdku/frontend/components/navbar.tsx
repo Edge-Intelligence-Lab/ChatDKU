@@ -22,6 +22,10 @@ export function Navbar() {
 							// <span className="font-inter text-xs md:text-sm lg:text-sm italic text-primary/20">dev</span>
 							<Badge variant="default">Dev</Badge>
 						)}
+						{!isDevRoute && (
+							// <span className="font-inter text-xs md:text-sm lg:text-sm italic text-primary/20">dev</span>
+							<Badge variant="default">Advising</Badge>
+						)}
 					</h2>
 				</div>
 				<TooltipProvider>

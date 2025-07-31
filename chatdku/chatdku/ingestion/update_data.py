@@ -1,20 +1,20 @@
 import os
-import nltk
+import mimetypes
+import datetime
 import nest_asyncio
-
-nest_asyncio.apply()
-
-import pickle
+import uuid
+import json
 import argparse
 from llama_index.core import SimpleDirectoryReader
+from llama_index.core.schema import TextNode
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.readers.base import BaseReader
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from chatdku.config import config
-from markdownify import markdownify as md
-from tqdm import tqdm
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
@@ -22,18 +22,56 @@ from openpyxl import load_workbook
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
-
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
 
 # Override auto partation
 import unstructured.partition.auto
-from custom_partation import partition
+from chatdku.ingestion.custom_partation import partition
+
+nest_asyncio.apply()
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
 unstructured.partition.auto.partition = partition
 
-import hashlib
 
+def nodes_to_dicts(nodes: list):
+    result = {
+        "ids": [],
+        "texts": [],
+        "metadatas": [],
+    }
+    for node in nodes:
+        result["ids"].append(node.node_id)
+        result["texts"].append(node.text)
+        result["metadatas"].append(node.metadata)
+
+    return result
+
+
+def custom_metadata(user_id: str):
+    def _get_meta(file_path: str) -> dict:
+        stat = os.stat(file_path)
+        return {
+            "file_path": file_path,
+            "page_number": "Not given.",
+            "file_name": os.path.basename(file_path),
+            "file_type": mimetypes.guess_type(file_path)[0]
+            or "application/octet-stream",
+            "file_size": stat.st_size,
+            "creation_date": datetime.datetime.utcfromtimestamp(
+                stat.st_ctime
+            ).isoformat(),
+            "last_modified_date": datetime.datetime.utcfromtimestamp(
+                stat.st_mtime
+            ).isoformat(),
+            "last_accessed_date": datetime.datetime.utcfromtimestamp(
+                stat.st_atime
+            ).isoformat(),
+            "user_id": user_id,
+            "chunk_id": "Not given",
+        }
+
+    return _get_meta
 
 
 class XlsxReader(BaseReader):
@@ -42,8 +80,7 @@ class XlsxReader(BaseReader):
     ) -> None:
         super().__init__()
 
-    
-    def xlsx_load(self,file: Path) -> str:
+    def xlsx_load(self, file: Path) -> str:
         wb = load_workbook(file)
         # 获取所有工作表的名称
         sheet_names = wb.sheetnames
@@ -54,18 +91,23 @@ class XlsxReader(BaseReader):
         for sheet_name in sheet_names:
             sub_wb = wb[sheet_name]
             merged_cells = list(sub_wb.merged_cells.ranges)  # 转换为列表
-            
+
             # 遍历每一个合并单元格
             for merged_cell in merged_cells:
                 min_row, max_row = merged_cell.min_row, merged_cell.max_row
                 min_col, max_col = merged_cell.min_col, merged_cell.max_col
-                
+
                 # 获取合并单元格的值
                 cell_value = sub_wb.cell(row=min_row, column=min_col).value
-                
+
                 # 解除合并单元格
-                sub_wb.unmerge_cells(start_row=min_row, start_column=min_col, end_row=max_row, end_column=max_col)
-                
+                sub_wb.unmerge_cells(
+                    start_row=min_row,
+                    start_column=min_col,
+                    end_row=max_row,
+                    end_column=max_col,
+                )
+
                 # 将值填充到之前合并单元格的所有单元格中
                 for col in range(min_col, max_col + 1):
                     for row in range(min_row, max_row + 1):
@@ -74,18 +116,20 @@ class XlsxReader(BaseReader):
             data = wb[sheet_name].values
             columns = next(data)[0:]  # 获取第一行作为列名
             df = pd.DataFrame(data, columns=columns)
-            
+
             # 处理 DataFrame 中的回车符
-            df = df.applymap(lambda x: str(x).replace('\n', ' ') if isinstance(x, str) else x)
-            
+            df = df.applymap(
+                lambda x: str(x).replace("\n", " ") if isinstance(x, str) else x
+            )
+
             # 去掉全为空值的行和列
-            df.dropna(how='all', inplace=True)
-            df.dropna(axis=1, how='all', inplace=True)
+            df.dropna(how="all", inplace=True)
+            df.dropna(axis=1, how="all", inplace=True)
 
             # 去掉全为 None 的行和列
-            df = df.applymap(lambda x: None if x == 'None' else x)
-            df.dropna(how='all', inplace=True)
-            df.dropna(axis=1, how='all', inplace=True)
+            df = df.applymap(lambda x: None if x == "None" else x)
+            df.dropna(how="all", inplace=True)
+            df.dropna(axis=1, how="all", inplace=True)
 
             # 将 DataFrame 转换为 Markdown 格式
             markdown_output = df.to_markdown(index=False)
@@ -94,7 +138,6 @@ class XlsxReader(BaseReader):
             markdown_menu += "\n\n\n\n"
 
         return markdown_menu
-
 
     def load_data(
         self, file: Path, extra_info: Optional[Dict] = None
@@ -110,155 +153,191 @@ class XlsxReader(BaseReader):
         return [Document(text=self.xlsx_load(file), metadata=metadata or {})]
 
 
+def write_changes(data_dir: str, new_files: list[str], removed_files: list[str]):
+    log_path = os.path.join(data_dir, "log.json")
+
+    with open(log_path, "r") as file:
+        log = json.load(file)
+
+    for file in log["file_paths"][:]:
+        if file in removed_files:
+            log["file_paths"].remove(file)
+
+    log["file_paths"].extend(new_files)
+
+    with open(log_path, "w") as file:
+        json.dump(log, file)
 
 
-def hash_file(filename):
-    h = hashlib.sha256()
-    with open(filename, "rb") as file:
-        while True:
-            chunk = file.read(h.block_size)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
+def read_changes(data_dir: str):
+    log_path = os.path.join(data_dir, "log.json")
+
+    # Load previous file paths from log
+    if os.path.exists(log_path):
+        with open(log_path, "r") as file:
+            log = json.load(file)
+            previous_files = log.get("file_paths", [])
+    else:
+        previous_files = []
+        with open(log_path, "w") as file:
+            json.dump({"file_paths": []}, file)
+
+    # Recursively get current file paths
+    current_files = []
+    for root, _, files in os.walk(data_dir):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            # Skip log.json itself
+            if (
+                os.path.abspath(file_path) == os.path.abspath(log_path)
+                or file_name.endswith(".json")
+                or file_name.endswith(".pkl")
+            ):
+                continue
+            current_files.append(os.path.abspath(file_path))
+
+    # Compute added and removed files
+    added_files = list(set(current_files) - set(previous_files))
+    removed_files = list(set(previous_files) - set(current_files))
+
+    return added_files, removed_files
 
 
-def hash_directory(directory):
-    all_hashes = ""
-    for root, _, files in os.walk(directory):
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            file_hash = hash_file(filepath)
-            all_hashes += file_hash
-    final_hash = hashlib.sha256(all_hashes.encode("utf-8")).hexdigest()
-    return final_hash
+def read_pdf(file_paths: list[str], user_id):
+    total_nodes = []
+    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
+
+    parser = SentenceSplitter(
+        chunk_size=1024,
+        chunk_overlap=20,
+    )
+    pdf_reader = LlamaParse(
+        api_key=llama_parse_api_key,
+        result_type="json",
+        verbose=True,
+        disable_image_extraction=True,
+    )
+    for file_path in file_paths:
+        print(f"Reading: {file_path}")  # Debugging output
+        if not os.path.exists(file_path):
+            print(f"Error: The directory '{file_path}' does not exist.")
+        pdf_loader = pdf_reader.parse(file_path)
+
+        for i, page in enumerate(pdf_loader.pages):
+            metadata = custom_metadata(user_id)(file_path)
+            # Adding page number
+            metadata["page_number"] = page.page
+
+            chunks = parser.split_text(page.md)
+            for chunk in chunks:
+                chunk_id = str(uuid.uuid4())
+
+                metadata["chunk_id"] = chunk_id
+
+                node = TextNode(
+                    text=chunk,
+                    id_=chunk_id,
+                    metadata=metadata,
+                )
+                if node.text == "":
+                    continue
+                total_nodes.append(node)
+        print(f"Finished loading {file_path}.")
+
+    return total_nodes
 
 
-def update_data(data_dir):
-    # Required for UnstructuredReader
-    # nltk.download("averaged_perceptron_tagger")
-    reader = UnstructuredReader()
-
-    documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
-    documents_path = "/home/Glitterccc/ChatDKU/documents/menu_document.pkl"
-
+def read_non_pdf(files: list, user_id):
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
-    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
-    pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key,
-        result_type="markdown",
-        verbose=True,
-    )
-    documents = SimpleDirectoryReader(
-        data_dir,
-        recursive=True,
-        required_exts=[".html", ".htm", ".pdf", ".csv", ".jpg", ".xlsx"],
+    non_pdf_documents = SimpleDirectoryReader(
+        input_files=files,
+        file_metadata=custom_metadata(user_id),
+        required_exts=[".htm", ".html", ".csv", ".jpg", ".xlsx"],
         file_extractor={
             ".htm": reader,
             ".html": reader,
-            ".pdf": pdf_parser,
             ".csv": reader,
             ".jpg": reader,
             ".xlsx": xlsx_reader,
-
         },
-    ).load_data()
+    ).load_data(show_progress=True)
 
-    for doc in documents:
-        if doc.metadata["file_type"] == "text/html":
-            with open(doc.metadata["file_path"], "r") as f:
-                html = f.read()
-            try:
-                doc.text = md(html)
-            except:
-                print(f"fail trans to md:{doc.metadata['file_path']}")
-
-    with open(documents_path, "wb") as f:
-        pickle.dump(documents, f)
-    print(f"Documents stored in {documents_path}")
-    print("Length of documents:", len(documents))
-    return documents
-
-# def update_sub_data():
-    reader = UnstructuredReader()
-
-    documents_path = "sub_documents.pkl"  # 这里可以根据需要修改路径
-
-    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
-    pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key,
-        result_type="markdown",
-        verbose=True,
+    pipeline = IngestionPipeline(
+        transformations=[
+            SentenceSplitter(chunk_size=1024, chunk_overlap=20),
+        ]
     )
 
-    with open('/home/Glitterccc/ChatDKU/RAG/sub_data_list.pkl', 'rb') as f:
-        file_paths = pickle.load(f)
+    non_pdf_nodes = pipeline.run(documents=non_pdf_documents, show_progress=True)
 
-    documents = []
-
-    num = 0
-    for file_path in tqdm(file_paths):
-        try:
-            # 检查文件扩展名并处理
-            num += 1
-            if file_path.endswith((".html", ".htm", ".pdf", ".csv",".jpg",".jpeg",".png",".docx",".doc")):
-                if file_path.endswith((".htm", ".html")):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".pdf"):
-                    doc = pdf_parser.parse(file_path)
-                elif file_path.endswith(".csv"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".jpg"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".jpeg"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".png"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith((".docx",".doc")):
-                    doc = reader.load_data(file_path)
-                if len(doc) != 1:
-                    print('-------Wrong----')
-                    print(doc)
-                doc = doc[0]
-                # 处理文档
-                if doc.metadata["filetype"] == "text/html":
-                    with open(file_path, "r") as f:
-                        html = f.read()
-                    try:
-                        doc.text = md(html)
-                    except Exception as e:
-                        print(f"Failed to convert to markdown: {file_path}, Error: {e}")
-
-                documents.append(doc)
-        except:
+    for node in non_pdf_nodes:
+        if node.text == "":
             continue
+        node.node_id = str(uuid.uuid4())
+        node.metadata["chunk_id"] = node.node_id
 
-        with open(documents_path, "wb") as f:
-            pickle.dump(documents, f)
-
-    with open(documents_path, "wb") as f:
-        pickle.dump(documents, f)
-
-    print(f"Documents stored in {documents_path}")
-    print("Length of documents:", len(documents))
-    return documents
+    return non_pdf_nodes
 
 
-def main(data_dir=None):
+def update(data_dir, user_id):
+    added_files, removed_files = read_changes(data_dir)
+
+    if len(added_files) > 0:
+
+        pdf_files = [file for file in added_files if file.endswith(".pdf")]
+
+        non_pdf_files = list(set(added_files) - set(pdf_files))
+
+        total_nodes = []
+
+        if len(non_pdf_files) > 0:
+            non_pdf_nodes = read_non_pdf(non_pdf_files, user_id)
+
+            total_nodes += non_pdf_nodes
+
+        if len(pdf_files) > 0:
+            pdf_nodes = read_pdf(pdf_files, user_id)
+
+            total_nodes += pdf_nodes
+        nodes_dicts = [node.to_dict() for node in total_nodes]
+        with open(os.path.join(data_dir, "nodes.json"), "w") as f:
+            json.dump(nodes_dicts, f)
+
+        print("Documents load Done!")
+        # print("Example:")
+        # print(
+        #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"
+        # )
+        #
+    else:
+        print("No changes to be done.")
+    write_changes(data_dir, added_files, removed_files)
+
+
+def main(data_dir, user_id):
     if data_dir is None:
         data_dir = config.data_dir
+    if user_id is None:
+        user_id = "Chat_DKU"
 
-    update_data(data_dir)
-    hash = hash_directory(data_dir)
-    hash_path = os.path.join("./", "hash.pkl")
-    with open(hash_path, "wb") as hf:
-        pickle.dump(hash, hf)
+    update(data_dir, user_id)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process data directory path")
-    parser.add_argument("data_dir", type=str, help="The directory containing the data")
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        default=config.data_dir,
+        help="The directory containing the data",
+    )
+    parser.add_argument(
+        "--user_id",
+        type=str,
+        default="Chat_DKU",
+        help="ID of the user. Defaults to Chat_DKU if none given.",
+    )
     args = parser.parse_args()
 
-    main(args.data_dir)
+    main(args.data_dir, args.user_id)
