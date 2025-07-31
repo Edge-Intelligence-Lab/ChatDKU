@@ -21,10 +21,10 @@ const configureMarked = () => {
 const parseMarkdown = (content: string): string => {
 	const parsed = marked.parse(content);
 	// If it's a promise, return empty string initially (will be updated later)
-	if (parsed instanceof Promise) {
+	if (typeof (parsed as any)?.then === "function") {
 		return "";
 	}
-	return parsed;
+	return typeof parsed === "string" ? parsed : "";
 };
 
 // Simulates a streaming effect for text
