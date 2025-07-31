@@ -72,7 +72,7 @@ def load_redis(
     if index_name is None:
         index_name = config.index_name
 
-    redis_client = Redis.from_url(config.redis_url)
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
 
     custom_schema = IndexSchema.from_dict(
         {

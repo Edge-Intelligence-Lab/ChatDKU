@@ -186,6 +186,7 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+**/local_cache
 
 # macOS
 __MACOSX

@@ -266,7 +266,7 @@ class VectorRetriever(dspy.Module):
     def __init__(
         self,
         retriever_top_k: int = 10,
-        use_reranker: bool = True,
+        use_reranker: bool = False,
         reranker_top_n: int = 5,
     ):
         self.retriever_top_k = retriever_top_k
@@ -444,7 +444,7 @@ class KeywordRetriever(dspy.Module):
         retriever_top_k: int = 5,
         reranker_top_n: int = 3,
     ):
-        self.client = Redis.from_url("redis://localhost:6379")
+        self.client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password,db=0)
         self.retriever_top_k = retriever_top_k
 
         schema = IndexSchema.from_yaml(

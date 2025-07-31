@@ -5,18 +5,23 @@ from dotenv import load_dotenv
 
 from redis import Redis
 
+
 # Django Default Setting for celery
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE','chatdku_django.settings')
 
+redis_password=os.getenv("REDIS_PASSWORD")
+redis_host=os.getenv("REDIS_HOST")
+
 app=Celery('chatdku_django')
 app.config_from_object('django.conf:settings',namespace='CELERY')
+app.conf.broker_url = f"redis://:{redis_password}@{redis_host}:6379/0"
 
-redis_url=os.getenv("REDIS_URL")
+
 
 #set up redis
-redis_client=Redis.from_url(redis_url)
+redis_client=Redis(host=redis_host,port=6379,username="default",password=redis_password,db=0)
 
 
 #schedule apps

@@ -1,6 +1,10 @@
 import os
+import dotenv
+from urllib.parse import quote
 
-
+dotenv.load_dotenv()
+redis_host=os.getenv("REDIS_HOST")
+redis_password=os.getenv("REDIS_PASSWORD")
 class Config:
     _instance = None
 
@@ -22,7 +26,8 @@ class Config:
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
-                "redis_url": "redis://localhost:6379",
+                "redis_host": redis_host,
+                "redis_password":redis_password,
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
