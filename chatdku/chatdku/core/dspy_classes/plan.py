@@ -26,7 +26,6 @@ from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
-    EXISTING_USER_PROFILE_FIELD,
     CONVERSATION_SUMMARY_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
@@ -39,7 +38,6 @@ from chatdku.config import config
 def make_planner_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
-        "user_profile": (str, EXISTING_USER_PROFILE_FIELD),
         "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
         "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
         "available_tools": (
@@ -117,7 +115,6 @@ class Planner(dspy.Module):
         super().__init__()
 
         self.tools = tools
-        # self.user_profile = user_profile
 
         self.name_to_model = {}
         for tool in tools:
@@ -149,7 +146,6 @@ class Planner(dspy.Module):
 
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
-            "user_profile": 3 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
             "tool_history": 5 / 15,
@@ -172,7 +168,6 @@ class Planner(dspy.Module):
     def forward(
         self,
         current_user_message: str,
-        user_profile: str,
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
         max_calls: int = 5,
@@ -192,7 +187,6 @@ class Planner(dspy.Module):
 
             planner_inputs = dict(
                 current_user_message=current_user_message,
-                user_profile=user_profile,
                 conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 tool_history=tool_memory.history_str(),

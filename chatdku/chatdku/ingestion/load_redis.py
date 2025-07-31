@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from redis import Redis
 from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis import RedisVectorStore
@@ -5,7 +7,6 @@ from llama_index.vector_stores.redis import RedisVectorStore
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import TextNode
 
-import pickle
 import os
 import argparse
 import json
