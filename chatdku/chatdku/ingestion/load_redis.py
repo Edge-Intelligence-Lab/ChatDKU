@@ -1,145 +1,162 @@
-from llama_index.core.schema import TextNode
+#!/usr/bin/env python3
+
 from redis import Redis
 from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis import RedisVectorStore
 
-from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import TextNode
 
-import pickle
-
+import os
+import argparse
+import json
 
 ######
-from pathlib import Path
-import pickle
-import chromadb
 from llama_index.core import Settings
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.core.ingestion import IngestionPipeline
-from typing import Any
 from chatdku.setup import setup
-from update_data import update_data, hash_directory
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
+from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
 
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
 # Override auto partation
 import unstructured.partition.auto
-from custom_partation import partition
-
-unstructured.partition.auto.partition = partition
-
+from chatdku.ingestion.custom_partation import partition
 from chatdku.config import config
 
-setup(add_system_prompt=True)
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
+unstructured.partition.auto.partition = partition
 
 
+def clean_file_name(file_name: str) -> str:
+    return os.path.splitext(file_name)[0]
 
 
+def load_redis(
+    nodes: list[TextNode] = None,
+    nodes_path: list = None,
+    index_name: str = None,
+    pipeline_workers: int = 1,
+    pipeline_cache_path: str = config.pipeline_cache,
+    reset: bool = False,
+):
+    """
+    Populate the Redis. If you run this from the terminal it will re-populate
+    the Redis from the start. If you import the function load_redis(), you can
+    add documents without resetting Redis.
 
+    documents: It will accept Llamaindex documents (files ending with .pkl).
+        If you leave it out, it will take documents from config.documents_path.
+        You can fill this in to add documents to redis.
+    index_name: You can set this to any other name to act as if creating
+        another collection in chromaDB but for Redis.
+    reset: Whether to overwrite the data on the existing DB.
+    """
 
-with open('/home/Glitterccc/ChatDKU/documents/chatdku_documents_2.pkl', 'rb') as f:
-    documents = pickle.load(f)
+    setup(use_llm=False)
 
+    if nodes is None:
+        if nodes_path is None:
+            nodes_path = config.nodes_path
+        print("Nodes path:", nodes_path)
 
-redis_client = Redis.from_url("redis://localhost:6379")
+        with open(nodes_path, "r") as f:
+            datas = json.load(f)
+        nodes = [TextNode.from_dict(data) for data in datas]
 
-custom_schema = IndexSchema.from_dict(
-    {
-        "index": {
-            "name": "idx:test",
-            "prefix": "test_doc",
-            "key_separator": ":",
-        },
-        "fields": [
-            # Required fields for llamaindex
-            {"type": "tag", "name": "id"},
-            {"type": "tag", "name": "doc_id"},
-            {"type": "text", "name": "text"},
-            # Custom metadata fields
-            {"type": "tag", "name": "groups"},
-            {"type": "tag", "name": "file_path"},
-            {"type": "tag", "name": "file_name"},
-            {"type": "tag", "name": "last_modified_date"},
-            # Custom vector embeddings field definition
-            {
-                "type": "vector",
-                "name": "vector",
-                "attrs": {
-                    # NOTE: This should match the size of the vector embeddings
-                    "dims": 1024,
-                    "algorithm": "hnsw",
-                    "distance_metric": "cosine",
-                },
+    for node in nodes:
+        file_name = node.metadata["file_name"]
+        node.metadata["file_name"] = clean_file_name(file_name)
+
+    if index_name is None:
+        index_name = config.index_name
+
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
+
+    custom_schema = IndexSchema.from_dict(
+        {
+            "index": {
+                "name": f"idx:{index_name}",
+                "prefix": f"{index_name}_doc",
+                "key_separator": ":",
             },
-        ],
-    }
-)
-custom_schema.to_yaml("custom_schema.yaml")
+            "fields": [
+                # Required fields for llamaindex
+                {"type": "tag", "name": "id"},
+                {"type": "tag", "name": "user_id", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "doc_id"},
+                {"type": "text", "name": "text"},
+                {"type": "tag", "name": "file_name", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "page_number"},
+                # Custom metadata fields
+                {"type": "tag", "name": "groups"},
+                {"type": "tag", "name": "file_path", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "last_modified_date"},
+                # Custom vector embeddings field definition
+                {
+                    "type": "vector",
+                    "name": "vector",
+                    "attrs": {
+                        # NOTE: This should match the size of the vector embeddings
+                        "dims": 1024,
+                        "algorithm": "hnsw",
+                        "distance_metric": "cosine",
+                    },
+                },
+            ],
+        }
+    )
 
-vector_store = RedisVectorStore(
-    redis_client=redis_client, schema=custom_schema, overwrite=True
-)
+    custom_schema.to_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
 
-# embed_model = TextEmbeddingsInference(
-#     model_name="BAAI/bge-m3",
-#     base_url="http://localhost:18080/BAAI/bge-m3",
-# )
+    vector_store = RedisVectorStore(
+        redis_client=redis_client, schema=custom_schema, overwrite=reset
+    )
+    pipeline = IngestionPipeline(
+        vector_store=vector_store, transformations=[Settings.embed_model]
+    )
+    if os.path.exists(pipeline_cache_path):
+        pipeline.load(pipeline_cache_path)
+    pipeline.run(nodes=nodes, num_workers=pipeline_workers, show_progress=True)
 
-
-trans = []
-
-extractors = []
-text_spliter="sentence_splitter"
-use_recursive_directory_summarize=False
-text_spliter_args={"chunk_size": 1024, "chunk_overlap": 20}
+    print("Redis load done!")
 
 
-supported_extractors = ["title", "keyword", "questions_answered", "summary"]
-for e in extractors:
-    if e not in supported_extractors:
-        raise ValueError(f"Unsupported extractor: {e}")
+def main(nodes_path, index_name, reset):
+    # with open(nodes_path, "rb") as f:
+    #     documents = pickle.load(f)
 
-if "title" in extractors:
-    from llama_index.core.extractors import TitleExtractor
+    load_redis(
+        nodes_path=nodes_path,
+        index_name=index_name,
+        pipeline_cache_path=str(config.pipeline_cache),
+        reset=reset,
+    )
 
-    trans.append(TitleExtractor())
 
-if text_spliter == "sentence_splitter":
-    from llama_index.core.node_parser import SentenceSplitter
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Load the specified nodes.json file into redis"
+    )
+    parser.add_argument(
+        "--nodes_path",
+        type=str,
+        default=config.nodes_path,
+        help="The directory containing the data",
+    )
+    parser.add_argument(
+        "--index_name",
+        type=str,
+        default=config.index_name,
+        help="Name of the Redis index.",
+    )
+    parser.add_argument(
+        "--reset",
+        type=str,
+        default=False,
+        help="Overwrite existing data?",
+    )
+    args = parser.parse_args()
 
-    trans.append(SentenceSplitter(**text_spliter_args))
-else:
-    raise ValueError(f"Unsupported text_splitter: {text_spliter}")
-
-if use_recursive_directory_summarize:
-    from recursive_directory_summarize import RecursiveDirectorySummarize
-
-    trans.append(RecursiveDirectorySummarize())
-
-if "keyword" in extractors:
-    from llama_index.core.extractors import KeywordExtractor
-
-    trans.append(KeywordExtractor())
-
-if "questions_answered" in extractors:
-    from llama_index.core.extractors import QuestionsAnsweredExtractor
-
-    trans.append(QuestionsAnsweredExtractor())
-
-if "summary" in extractors:
-    from llama_index.core.extractors import SummaryExtractor
-
-    trans.append(SummaryExtractor())
-
-trans.append(Settings.embed_model)
-
-pipeline = IngestionPipeline(
-    transformations=trans,
-    vector_store=vector_store,
-)
-nodes = pipeline.run(documents=documents, num_workers=1, show_progress=True)
+    main(args.nodes_path, args.index_name, args.reset)

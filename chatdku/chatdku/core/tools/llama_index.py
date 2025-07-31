@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 from enum import Enum
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterator, Mapping
 from pydantic import Field
 import os
 
@@ -19,24 +19,28 @@ from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
 from chatdku.core.dspy_common import custom_cot_rationale
-import nltk
+import torch
+from transformers import AutoTokenizer
+
+# import nltk
 from nltk.tokenize import word_tokenize
 import chromadb
-import llama_index
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core.indices.query.query_transform import HyDEQueryTransform
-from llama_index.core import VectorStoreIndex
-from llama_index.core.retrievers import TransformRetriever
-from llama_index.postprocessor.colbert_rerank import ColbertRerank
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.retrievers.bm25 import BM25Retriever
+from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
+
+# import llama_index
+
+# from llama_index.vector_stores.chroma import ChromaVectorStore
+# from llama_index.core import VectorStoreIndex
+from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
-from llama_index.core.vector_stores import (
-    MetadataFilter,
-    MetadataFilters,
-    FilterOperator,
-)
+
+# from llama_index.core.vector_stores import (
+#     MetadataFilter,
+#     MetadataFilters,
+#     FilterOperator,
+#     FilterCondition,
+# )
 
 from redis import Redis
 from redis.commands.search.query import Query
@@ -48,15 +52,6 @@ from itertools import combinations
 
 from chatdku.config import config
 
-
-def mydeepcopy(self, memo):
-    return self
-
-
-# FIXME: Ugly hack for the issue that DSPy's use of `deepcopy()` cannot copy
-# certain attributes (probably due to the being Pydantic `PrivateAttr()`?)
-# See: https://github.com/run-llama/llama_index/issues/14570
-llama_index.vector_stores.chroma.ChromaVectorStore.__deepcopy__ = mydeepcopy
 
 # --- Summarizer ---
 # TODO: Summarizer is currently not used as it is too slow when compared to just
@@ -125,23 +120,22 @@ class DocumentSummarizer(dspy.Module):
 
 
 def get_reranker(top_n: int):
-    return ColbertRerank(
+    return SentenceTransformerRerank(
         top_n=top_n,
-        model="colbert-ir/colbertv2.0",
-        tokenizer="colbert-ir/colbertv2.0",
+        model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
+        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     )
 
 
 import pandas as pd
-import re
 
 df = pd.read_csv(config.url_csv_path)
 # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
 df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
 
-def get_url(metadata):
+def get_url(metadata: dict):
     try:
         try:
             path = metadata["file_path"]
@@ -166,17 +160,53 @@ def get_url(metadata):
         return f"no url, error: {str(e)}"
 
 
+def get_page_number(metadata: dict):
+    # There is no need for try statement because page_number will either
+    # be a number or "Not given."
+    return metadata["page_number"]
+
+
+def get_file_name(metadata: dict):
+    return metadata["file_name"]
+
+
 def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
     return [
         NodeWithScore(
             node=TextNode(
                 node_id=node.node_id,
                 text=node.text,
-                metadata={"url": get_url(node.metadata)},
+                metadata={
+                    "filename": get_file_name(node.metadata),
+                    "url": get_url(node.metadata),
+                },
             ),
             score=node.score,
         )
         for node in nodes
+    ]
+
+
+def chroma_result_to_nodes(result: dict) -> NodeWithScore:
+    ids = result["ids"][0]
+    texts = result["documents"][0]
+    metadatas = result["metadatas"][0]
+    scores = result["distances"][0]
+
+    return [
+        NodeWithScore(
+            node=TextNode(
+                node_id=ids[i],
+                text=texts[i],
+                metadata={
+                    "filename": get_file_name(metadatas[i]),
+                    "url": get_url(metadatas[i]),
+                    "page_number": get_page_number(metadatas[i]),
+                },
+            ),
+            score=scores[i],
+        )
+        for i in range(len(ids))
     ]
 
 
@@ -243,10 +273,18 @@ class VectorRetriever(dspy.Module):
         self.use_reranker = use_reranker
         self.reranker_top_n = reranker_top_n
 
-        db = chromadb.PersistentClient(path=config.chroma_db)
-        chroma_collection = db.get_collection("dku_html_pdf")
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        self.index = VectorStoreIndex.from_vector_store(vector_store)
+        db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
+        self.collection = db.get_collection(
+            name=config.user_uploads_collection,
+            # name=config.chroma_collection,
+            embedding_function=HuggingFaceEmbeddingServer(
+                url=config.tei_url + "/" + config.embedding + "/embed"
+            ),
+        )
+
+        # vector_store = ChromaVectorStore(chroma_collection=chatdku_collection)
+
+        # self.index = VectorStoreIndex.from_vector_store(vector_store)
         # self.retriever = TransformRetriever(
         #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
         #     query_transform=HyDEQueryTransform(include_original=True),
@@ -262,6 +300,9 @@ class VectorRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        files: list = None,
     ):
         with (
             config.tracer.start_as_current_span("Vector Retriever")
@@ -273,43 +314,106 @@ class VectorRetriever(dspy.Module):
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(query=query, exclude=exclude)
+                        dict(
+                            query=query,
+                            exclude=exclude,
+                            user_id=user_id,
+                            search_mode=search_mode,
+                            files=files,
+                        )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
-            filters = MetadataFilters(
-                filters=[
-                    MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-                    for i in exclude
-                ]
-            )
-            retriever = self.index.as_retriever(
-                similarity_top_k=self.retriever_top_k, filters=filters
-            )
-            # TODO: Might need to display `retrieved_nodes` in Phoenix
-            retrieved_nodes = retriever.retrieve(
+            # Before the upgrade (just for convenience's sake)
+            # filters = MetadataFilters(
+            #     filters=[
+            #         MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
+            #         for i in exclude
+            #     ]
+            # )
+
+            # See https://docs.trychroma.com/docs/querying-collections/metadata-filtering
+            # to understand the logic of the filters
+            if search_mode == 0:
+                filters = {"user_id": user_id}
+                if exclude:
+                    filters = {
+                        "$and": [
+                            {"user_id": user_id},
+                            {"chunk_id": {"$nin": exclude}},
+                        ]
+                    }
+
+            # search from user's files
+            elif search_mode == 1:
+                filters = {
+                    "$and": [
+                        {"user_id": user_id},
+                        {"file_name": {"$in": files}},
+                    ],
+                }
+
+                if exclude:
+                    filters["$and"].append({"chunk_id": {"$nin": exclude}})
+            elif search_mode == 2:
+                filters = {
+                    "$or": [
+                        {
+                            "$and": [
+                                {"user_id": user_id},
+                                {"file_name": {"$in": files}},
+                            ],
+                        },
+                        {"user_id": "Chat_DKU"},
+                    ],
+                }
+                if exclude:
+                    filters = {
+                        "$and": [
+                            {
+                                "$or": [
+                                    {
+                                        "$and": [
+                                            {"user_id": user_id},
+                                            {"file_name": {"$in": files}},
+                                        ]
+                                    },
+                                    {"user_id": "Chat_DKU"},
+                                ]
+                            },
+                            {"chunk_id": {"$nin": exclude}},
+                        ]
+                    }
+
+            query_result = self.collection.query(
                 # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
                 # what would happen if that is exceeded. Also, we should use it tokenizer
                 # to get the accurate token count. This is just a temporary safety
                 # measure for now.
-                truncate_tokens(query, 7000)
+                query_texts=truncate_tokens(query, 7000),
+                n_results=self.retriever_top_k,
+                where=filters,
             )
+
+            retrieved_nodes = chroma_result_to_nodes(query_result)
 
             if self.use_reranker:
                 reranker = get_reranker(self.reranker_top_n)
+                tokenizer=AutoTokenizer.from_pretrained("cross-encoder/ms-marco-MiniLM-L6-v2")
+
                 nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
                     query_str=truncate_tokens(
-                        query, 500, tokenizer=reranker._tokenizer
+                        query, 500, tokenizer=tokenizer
                     ),
                 )
             else:
                 nodes = retrieved_nodes
 
-            nodes = simplify_nodes(nodes)
+            # nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -319,6 +423,7 @@ class VectorRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
+            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result,
@@ -334,8 +439,12 @@ class VectorRetriever(dspy.Module):
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
 
-    def __init__(self, retriever_top_k: int = 10, reranker_top_n: int = 3):
-        self.client = Redis.from_url("redis://localhost:6379")
+    def __init__(
+        self,
+        retriever_top_k: int = 5,
+        reranker_top_n: int = 3,
+    ):
+        self.client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password,db=0)
         self.retriever_top_k = retriever_top_k
 
         schema = IndexSchema.from_yaml(
@@ -361,6 +470,9 @@ class KeywordRetriever(dspy.Module):
             ),
         ],
         internal_memory: dict,
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        files: list = [],
     ):
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def escape_strs(strs: list[str]):
@@ -379,18 +491,24 @@ class KeywordRetriever(dspy.Module):
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(query=query, exclude=exclude)
+                        dict(
+                            query=query,
+                            exclude=exclude,
+                            user_id=user_id,
+                            search_mode=search_mode,
+                            files=files,
+                        )
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
-            try:
-                # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
-                # replaces nltk tokenizers with its own version.
-                nltk.data.find("tokenizers/punkt_tab/english")
-            except LookupError:
-                nltk.download("punkt_tab")
+            # try:
+            #     # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")` won't work as LlamaIndex
+            #     # replaces nltk tokenizers with its own version.
+            #     nltk.data.find("tokenizers/punkt_tab/english")
+            # except LookupError:
+            #     nltk.download("punkt_tab")
             # Break down the query into tokens
             tokens = word_tokenize(query)
             # Remove tokens that are PURELY punctuations
@@ -431,6 +549,34 @@ class KeywordRetriever(dspy.Module):
             if exclude_str:
                 query_str += " " + exclude_str
 
+            # Adding the user_id filter if the user wants to search for
+            if search_mode == 0:
+                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+
+            elif search_mode == 1:
+                if len(files) == 0:
+                    docs_str = os.path.splitext(files[0])[0]
+                else:
+                    docs_str = "|".join(
+                        f"{os.path.splitext(name)[0]}" for name in files
+                    )
+
+                query_str = (
+                    query_str
+                    + f" @user_id:{{{user_id}}} "
+                    + f"@file_name:{{{docs_str}}}"
+                )
+
+            elif search_mode == 2:
+                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+                # if len(files) == 0:
+                #     docs_str = os.path.splitext(files[0])[0]
+                # else:
+                #     docs_str = "|".join(f"{os.path.splitext(name)[0]}" for name in files)
+                #
+                # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
+                # query_str = query_str + f" {user_clause}"
+
             # NOTE: I think it will be better to use PARAMS for security reasons.
             # However, it appears that RediSearch has an issue using both parameters and query attributes.
             #
@@ -447,16 +593,23 @@ class KeywordRetriever(dspy.Module):
             # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
             # results = self.client.ft("idx:test").search(query_cmd, params)
 
-            retriever_top_k = 10
             query_cmd = (
-                Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
+                Query(query_str)
+                .scorer("BM25")
+                .paging(0, self.retriever_top_k)
+                .with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
             try:
                 nodes = [
                     NodeWithScore(
                         node=TextNode(
-                            id=r.id, text=r.text, metadata={"file_path": r.file_path}
+                            id=r.id,
+                            text=r.text,
+                            metadata={
+                                "file_path": r.file_path,
+                                "file_name": os.path.basename(r.file_path),
+                            },
                         ),
                         score=r.score,
                     )
@@ -486,6 +639,7 @@ class KeywordRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
+            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result, internal_result={"ids": {r.id for r in results.docs}}

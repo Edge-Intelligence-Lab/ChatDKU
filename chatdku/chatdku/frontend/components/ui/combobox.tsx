@@ -20,10 +20,6 @@ const branches: Branch[] = [
 		label: "Standard",
 	},
 	{
-		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/think/chat",
-		label: "Deep Think",
-	},
-	{
 		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/qwen/chat",
 		label: "Qwen",
 	},
@@ -34,6 +30,10 @@ const branches: Branch[] = [
 	{
 		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/ant/chat",
 		label: "Anar testing",
+	},
+	{
+		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/django/chat",
+		label: "Django backend",
 	},
 ];
 
@@ -58,10 +58,10 @@ export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxRes
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
-					<button className="flex gap-x-1">
+					<Button variant={"inChatbox"}>
 						<BrainCircuit />
 						{selectedStatus?.label}
-					</button>
+					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-[150px] p-0" align="center">
 					<StatusList setOpen={setOpen} setSelectedStatus={setSelectedStatus} />
@@ -73,11 +73,11 @@ export function ComboBoxResponsive({ inputValue, onEndpointChange }: ComboBoxRes
 	return (
 		<Drawer open={open} onOpenChange={setOpen}>
 			<DrawerTrigger asChild>
-				<button className="flex gap-x-1">
+				<Button variant={"inChatbox"}>
 					{/* <ChevronsUpDown /> */}
 					<BrainCircuit className="w-5 h-5" />
 					{!inputValue && (selectedStatus ? <>{selectedStatus.label}</> : <>Def</>)}
-				</button>
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<div className="mt-4 border-t">

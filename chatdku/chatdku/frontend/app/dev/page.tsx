@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
+import WelcomeBanner from "@/components/WelcomeBanner";
 
 // Configure marked options
 const configureMarked = () => {
@@ -24,7 +25,7 @@ const parseMarkdown = (content: string): string => {
 	if (parsed instanceof Promise) {
 		return "";
 	}
-	return parsed;
+	return typeof parsed === "string" ? parsed : "";
 };
 
 // Simulates a streaming effect for text
@@ -85,6 +86,7 @@ export default function Home() {
 	const [isChatboxCentered, setIsChatboxCentered] = useState(true);
 	const [chatHistoryId, setChatHistoryId] = useState("");
 	const [thinkingMode, setThinkingMode] = useState(false);
+	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
 	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/dev/chat");
 	const router = useRouter();
@@ -147,7 +149,9 @@ export default function Home() {
 					: '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
 			}
             <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
-              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""}">${sanitizedContent}</div>
+              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${
+					!isUser ? "text-[0.9375rem]" : ""
+				}">${sanitizedContent}</div>
             </div>
           </div>
         </div>
@@ -201,7 +205,7 @@ export default function Home() {
 				{showStarter && (
 					<div className="w-full flex justify-center">
 						<div className="flex flex-col items-center p-4 w-4/5 md:max-w-1/2 sm:max-w-4/5">
-							<h1 className=" text-2xl lg:text-3xl">Test ChatDKU</h1>
+							<WelcomeBanner />
 						</div>
 					</div>
 				)}
@@ -209,6 +213,8 @@ export default function Home() {
 					<AIInput
 						thinkingMode={thinkingMode}
 						onThinkingModeChange={(value) => setThinkingMode(value)}
+						searchMode={searchMode}
+						onSearchModeChange={(value: SetStateAction<string>) => setSearchMode(value)}
 						onInputChange={(value) => setInputValue(value)}
 						onEndpointChange={setApiEndpoint}
 						onSubmit={async (value) => {
@@ -236,6 +242,7 @@ export default function Home() {
 										messages: [{ role: "user", content: value }],
 										chatHistoryId: newChatHistoryId,
 										mode: thinkingMode ? "agent" : "",
+										searchMode: searchMode,
 									}),
 								});
 

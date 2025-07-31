@@ -17,7 +17,6 @@ from llama_index.readers.file import UnstructuredReader
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_parse import LlamaParse
 from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.extractors import (
     TitleExtractor,
@@ -28,7 +27,6 @@ from llama_index.core.extractors import (
 
 from redis import Redis
 from redisvl.index import SearchIndex
-from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis.schema import (
     NODE_ID_FIELD_NAME,
     DOC_ID_FIELD_NAME,
@@ -39,22 +37,26 @@ from llama_index.core.schema import MetadataMode
 from redisvl.redis.utils import array_to_buffer
 from llama_index.core.vector_stores.utils import node_to_metadata_dict
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
-
-from setup import setup
-from config import config
+from chatdku.setup import setup
+from chatdku.config import config
 
 import unstructured.file_utils.filetype
 from custom_filetype_detect import custom_detect_filetype
 
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-
 
 import unstructured.partition.auto
 from custom_partation import partition
+from chatdku.config import config
 
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
+
+unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
+
+
 def calculate_sha256(file_path):
     sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
@@ -105,7 +107,6 @@ def export_changes(added, removed, modified, output_file):
 
 
 def change_detect(data_dir):
-
     output_file = os.path.join(data_dir, "changed_data.json")
     state_file = os.path.join(data_dir, "data_state.json")
 
@@ -116,7 +117,7 @@ def change_detect(data_dir):
         old_state = {}
         with open(state_file, "w") as f:
             json.dump(old_state, f)
-        
+
     if not os.path.exists(output_file):
         with open(output_file, "w") as f:
             json.dump({}, f)
@@ -137,7 +138,7 @@ def change_detect(data_dir):
     timed_files = list(data_dir + "/" + timed_file for timed_file in timed_files)
 
     # Update documents
-    #documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
+    # documents_path = os.path.join(data_dir, "new_parser_documents.pkl")
     documents_path = config.documents_path
     print(f"Current documents_path: {config.documents_path}")
 
@@ -153,10 +154,8 @@ def change_detect(data_dir):
         if document.metadata["file_path"] in timed_files:
             documents.remove(document)
 
-
-
     if len(new_files + timed_files) == 0:
-        print("Nothing has changed")   
+        print("Nothing has changed")
     else:
         print(
             "Added",
@@ -200,7 +199,7 @@ def change_detect(data_dir):
         result_type="markdown",
         verbose=True,
     )
-    
+
     # 加载已解析的文件记录
     parsed_files_record = os.path.join(data_dir, "parsed_files.pkl")
     if os.path.exists(parsed_files_record):
@@ -213,11 +212,14 @@ def change_detect(data_dir):
     valid_extensions = {".htm", ".html", ".pdf", ".csv"}
 
     # 过滤掉不符合要求的文件
-    new_files = [file for file in new_files if os.path.splitext(file)[1].lower() in valid_extensions]
+    new_files = [
+        file
+        for file in new_files
+        if os.path.splitext(file)[1].lower() in valid_extensions
+    ]
     # 二次过滤已解析的文件
     new_files = [file for file in new_files if file not in parsed_files]
-    if(len(new_files)!=0):    
-
+    if len(new_files) != 0:
         for file in new_files:
             try:
                 # Parse the file
@@ -239,7 +241,8 @@ def change_detect(data_dir):
                     # See: https://github.com/run-llama/llama_index/issues/17144
                     for doc in new_documents:
                         doc.doc_id = str(uuid.uuid4())
-                    
+                        doc.metadata["user_id"] = "Chat_DKU"
+
                     # Update documents and save
                     documents.extend(new_documents)
                     with open(documents_path, "wb") as f:
@@ -256,14 +259,13 @@ def change_detect(data_dir):
                 # Optionally log the error to a file
                 continue  # Proceed to the next file
     else:
-        new_documents=[]
+        new_documents = []
 
     documents = documents + new_documents
 
-
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
-    
+
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
     # 删除临时文件
@@ -273,11 +275,13 @@ def change_detect(data_dir):
     print("Document successfully update")
     return new_documents
 
+
 def set_state(data_dir):
     state_file = "data_state.json"
     new_state = record_directory_state(data_dir)
     with open(state_file, "w") as f:
         json.dump(new_state, f, indent=4)
+
 
 def load_and_index(
     text_spliter: str = "sentence_splitter",
@@ -288,41 +292,44 @@ def load_and_index(
 ):
     documents_path = config.documents_path
 
-    with open(documents_path, 'rb') as f:
+    with open(documents_path, "rb") as f:
         documents = pickle.load(f)
-    
+
     trans = []
-    
+
     supported_extractors = ["title", "keyword", "questions_answered", "summary"]
     for e in extractors:
         if e not in supported_extractors:
             raise ValueError(f"Unsupported extractor: {e}")
-    
+
     if "title" in extractors:
         trans.append(TitleExtractor())
-    
+
     if text_spliter == "sentence_splitter":
         trans.append(SentenceSplitter(**text_spliter_args))
     else:
         raise ValueError(f"Unsupported text_spliter: {text_spliter}")
-    
+
     if use_recursive_directory_summarize:
         from recursive_directory_summarize import RecursiveDirectorySummarize
+
         trans.append(RecursiveDirectorySummarize())
-    
+
     if "keyword" in extractors:
         trans.append(KeywordExtractor())
-    
+
     if "questions_answered" in extractors:
         trans.append(QuestionsAnsweredExtractor())
-    
+
     if "summary" in extractors:
         trans.append(SummaryExtractor())
 
     trans.append(Settings.embed_model)
 
     pipeline = IngestionPipeline(transformations=trans)
-    nodes = pipeline.run(documents=documents, num_workers=pipeline_workers, show_progress=True)
+    nodes = pipeline.run(
+        documents=documents, num_workers=pipeline_workers, show_progress=True
+    )
 
     # Load nodes into ChromaDB
     # FIXME: This loading process is not atomic
@@ -358,8 +365,10 @@ def load_and_index(
         )
         data.append({**record, **additional_metadata})
 
-    index = SearchIndex.from_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
-    redis_client = Redis.from_url("redis://localhost:6379")
+    index = SearchIndex.from_yaml(
+        os.path.join(config.module_root_dir, "custom_schema.yaml")
+    )
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
     index.set_client(redis_client)
 
     # Within a Redis transaction, (re)create the index and load data
@@ -367,8 +376,8 @@ def load_and_index(
     index.create(overwrite=True, drop=True)
     index.load(data, id_field=NODE_ID_FIELD_NAME)
     redis_client.execute_command("EXEC")
-    
-    
+
+
 def main():
     setup(add_system_prompt=True)
     change_detect(config.data_dir)
@@ -381,12 +390,14 @@ def main():
             pipeline_workers=1,
         )
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-l", "--load",
+        "-l",
+        "--load",
         action="store_true",
-        help="Call the load_and_index function if this option is set."
+        help="Call the load_and_index function if this option is set.",
     )
     args = parser.parse_args()
     main()

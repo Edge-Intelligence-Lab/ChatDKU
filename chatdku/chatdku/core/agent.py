@@ -106,7 +106,7 @@ class Agent(dspy.Module):
         max_iterations: int = 5,
         streaming: bool = False,
         get_intermediate: bool = False,
-        rewrite_query: bool = False,
+        rewrite_query: bool = True,
     ):
         """
         Args:
@@ -147,7 +147,14 @@ class Agent(dspy.Module):
         self.prev_response = None
         self.conversation_memory = ConversationMemory()
 
-    def _forward_gen(self, current_user_message: str, question_id: str):
+    def _forward_gen(
+        self,
+        current_user_message: str,
+        question_id: str,
+        user_id: str,
+        search_mode: int,
+        files: list,
+    ):
         # I cannot use the span as a context manager that wraps around the entire function
         # due to that this is a generator.
         # More about the issue regarding the use of `with` in generators:
@@ -244,7 +251,7 @@ class Agent(dspy.Module):
                     query = current_user_message
 
                 try:
-                    p = self.planner(
+                    planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
                         # as the memory is not always updated for every iteration.
                         # Also, the memory should concern answering the overarching
@@ -255,18 +262,21 @@ class Agent(dspy.Module):
                         max_calls=self.max_iterations - i,
                     )
                     if VERBOSE:
-                        print(f"Planner:{p}")
+                        print(f"Planner:{planner}")
                 except dspy.DSPyAssertionError:
                     if VERBOSE:
                         print("max assertion retries hit")
                     break
 
                 if VERBOSE:
-                    print(f"calls: {p.calls}")
+                    print(f"calls: {planner.calls}")
 
-                r = p.tool(
-                    **p.calls[0].params.model_dump(),
+                r = planner.tool(
+                    **planner.calls[0].params.model_dump(),
                     internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
                 )
                 result, internal_result = r.result, r.internal_result
                 if "ids" in internal_result:
@@ -279,7 +289,7 @@ class Agent(dspy.Module):
                 self.tool_memory(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
-                    calls=p.calls,
+                    calls=planner.calls,
                     result=result,
                     max_history_size=limits["tool_history"],
                 )
@@ -302,8 +312,40 @@ class Agent(dspy.Module):
             span.end()
         yield dspy.Prediction(response=self.prev_response)
 
-    def forward(self, current_user_message: str, question_id: str = ""):
-        gen = self._forward_gen(current_user_message, question_id)
+    def forward(
+        self,
+        current_user_message: str,
+        question_id: str = "",
+        user_id: str = "Chat_DKU",
+        search_mode: int = 0,
+        files: list = None,
+    ):
+        """
+        current_user_message: user query
+        user_id: If set anything other than Chat_DKU, means the net_id of the user
+        search_mode: 0 for searching  the default corpus | 1 for searching the user
+            corpus | 2 for searching both
+        docs: Names of documents searching. Required for search_mode 1 or 2.
+        """
+        if files is None:
+            files = []
+
+        if not (0 <= search_mode <= 2):
+            raise ValueError(
+                f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
+            )
+
+        if search_mode != 0 and not files:
+            raise ValueError("`docs` must be provided when search_mode is 1 or 2.")
+
+        gen = self._forward_gen(
+            current_user_message,
+            question_id,
+            user_id=user_id,
+            search_mode=search_mode,
+            files=files,
+        )
+
         if self.get_intermediate:
             return gen
         else:
@@ -321,14 +363,25 @@ def main():
     dspy.configure(lm=lm)
     import time
 
-    agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
+    agent = Agent(
+        max_iterations=2,
+        streaming=True,
+        get_intermediate=False,
+    )
 
+    user_id = input("Input your user id (Chat_DKU for default): ")
+    search_mode = int(input("Search mode (0 for default): "))
     while True:
         try:
             print("*" * 10)
             current_user_message = input("Enter your query about DKU: ")
             start_time = time.time()
-            responses_gen = agent(current_user_message=current_user_message)
+            responses_gen = agent(
+                current_user_message=current_user_message,
+                user_id=user_id,
+                search_mode=search_mode,
+                files=[],
+            )
             first_token = True
             print("Response:")
             for r in responses_gen.response:

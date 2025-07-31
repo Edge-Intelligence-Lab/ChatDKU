@@ -126,7 +126,9 @@ class Planner(dspy.Module):
             tool_name_snake = camel_to_snake_case(tool_name_camel)
 
             Params = func_to_model(
-                tool_name_camel + "Params", tool.forward, exclude=["internal_memory"]
+                tool_name_camel + "Params",
+                tool.forward,
+                exclude=["internal_memory", "user_id", "search_mode", "files"],
             )
             ToolModel = create_model(
                 tool_name_camel,
@@ -256,7 +258,7 @@ class Planner(dspy.Module):
 
             for i, c in enumerate(plan_strs, 1):
                 calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
-
+                
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(calls),

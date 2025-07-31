@@ -67,7 +67,7 @@ def make_synthesizer_signature():
         "       - If you used the documents to articulate your answer, there has be a reference list at the end of the answer.\n"
         "       - However, if you did not use any documents, you don't have to include a reference list.\n"
         "   - **Always select** the relevant sources from the following sources to form a reference list and use their URL:\n"
-        # "   - **Tool Memory Sources** :\n"
+        # # "   - **Tool Memory Sources** :\n"
         "       - '2024-2025 Undergraduate Bulletin: <https://duke.box.com/s/4k5inm13nturhgugabk935aumx8g9liq>'\n"
         "       - 'DKU Definitions: <https://academic-advising.dukekunshan.edu.cn/dkudefinitions/>'\n"
         "       - 'Faculty Directory: <https://faculty.dukekunshan.edu.cn/>'\n"
@@ -82,7 +82,7 @@ def make_synthesizer_signature():
         "   - **Reference using the format below**:\n"
         "     \n"
         "     Reference:\n"
-        "     - {Insert the source document name here}: {Present the URL here}\n"
+        "     - {Insert the source document name here}: {Present the URL here} {Follow up the URL with page number}\n"
         "     - {Insert the source document name here}: {Say 'No URL' if there is none}\n"
         "     \n"
         "   - Remember to add the URL if the source has an URL.\n"
@@ -102,7 +102,7 @@ def make_synthesizer_signature():
         "   - When listing the majors at DKU, return a markdown table with the numbered list of majors.\n"
         "7. **Never mention internal tools**:\n"
         "   - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).\n"
-        "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool') when answering user query.\n"
+        "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.\n"
         "---\n\n"
     )
 
@@ -249,7 +249,6 @@ class Synthesizer(dspy.Module):
                 tool_history="\n\n###\n\n".join(
                     [i.model_dump_json() for i in tool_memory.history]
                 ),
-
                 tool_summary=tool_memory.summary,
             )
             synthesizer_args = truncate_tokens_all(
