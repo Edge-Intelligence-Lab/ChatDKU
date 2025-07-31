@@ -120,12 +120,23 @@ class Judge(dspy.Module):
                 }
             )
 
-            judgement_str = self.judge(**judge_inputs).judgement
+            def _check_judge(args, pred: dspy.Prediction) -> float:
+                answer = pred.judgement
 
-            dspy.Suggest(
-                judgement_str in ["Yes", "No"],
-                'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).',
+                if answer in ["Yes", "No"]:
+                    return 1.0
+                else:
+                    print(
+                        'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).'
+                    )
+                    return 0.0
+
+            refined_judge = dspy.Refine(
+                module=self.judge, N=5, reward_fn=_check_judge, threshold=1.0
             )
+
+            judgement_str = refined_judge(**judge_inputs).judgement
+
             if judgement_str not in ["Yes", "No"]:
                 if VERBOSE:
                     print(

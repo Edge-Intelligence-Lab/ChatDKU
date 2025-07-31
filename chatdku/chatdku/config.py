@@ -13,11 +13,12 @@ class Config:
             cls._instance = super().__new__(cls)
             cls._instance._config = {
                 # about settings.py
-                "embedding": "BAAI/bge-m3",
                 "llm": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+                "llm_url": "http://localhost:8001/v1",
+                "llm_temperature": 0.7,
+                "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct",
                 "tei_url": "http://localhost:18080",
-                "llm_url": "http://localhost:8001/v1",
                 "context_window": 64000,
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
