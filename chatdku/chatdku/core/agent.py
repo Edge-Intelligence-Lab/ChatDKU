@@ -3,7 +3,6 @@
 import traceback
 
 
-import functools
 from openai import OpenAI
 import dspy
 
@@ -31,7 +30,8 @@ from chatdku.setup import setup, use_phoenix
 
 
 class CustomClient(dspy.BaseLM):
-    def __init__(self) -> None:
+    def __init__(self, model):
+        self.model = model
         self.provider = "default"
         self.history = []
         self.kwargs = {
