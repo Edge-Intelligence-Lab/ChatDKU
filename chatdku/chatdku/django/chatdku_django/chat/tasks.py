@@ -74,8 +74,10 @@ def chat_load_test_daily():
         from_email=os.getenv("EMAIL_HOST_USER")
         to_email=os.getenv("EMAIL_TO")
         subject="Error in ChatDKU"
-        body=f"Error Occured When completing Daily Load Test at {datetime.datetime.now()}"
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body)
+        body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>"
+        body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+
+        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
