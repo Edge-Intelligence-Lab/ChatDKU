@@ -12,6 +12,7 @@ from openinference.semconv.trace import (
     OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
 )
+import re
 
 from chatdku.core.dspy_common import get_template, custom_cot_rationale
 from chatdku.core.utils import (
@@ -33,6 +34,15 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
+
+
+def plan_filter(plans:list):
+    """Filter Plan from a series of reasoning"""
+    pattern=r'\{'
+    filtered_plan=[plan for plan in plans if re.search(pattern,plan)]
+
+    return filtered_plan
+
 
 
 def make_planner_signature():
@@ -84,6 +94,7 @@ def make_planner_signature():
                     "parameters in JSON Lines format. "
                     "Each tool call should be a JSON object printed on a singled line. "
                     "Each tool call should be on its own line. "
+                    "Each tool call should be followed by a comma to sepearate itself."
                     "Strictly follow the output format specification. "
                     "Do not output in a numbered list. "
                     "Do not add explanations.\n"
@@ -214,11 +225,11 @@ class Planner(dspy.Module):
             ).current_tool_plan
 
             # Parse tool plan response
-            print("----Running Planner----")
             plan_strs = plan_str_all.strip().split("\n")
-            plan_strs = list(set([s.strip() for s in plan_strs]))[3:]
-        
-            print(plan_strs)
+            plan_strs = list(set([s.strip() for s in plan_strs]))
+            plan_strs=plan_filter(plan_strs)
+
+            print(plan_filter(plan_strs))
             dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
             dspy.Assert(
                 len(plan_strs) <= max_calls,

@@ -30,6 +30,5 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
 
 custom_cot_rationale = dspy.OutputField(
     prefix="<think>",
-    desc="The step-by-step rationale of how you derive the response.",
-    suffix="</think>"
+    desc="The step-by-step rationale of how you derive the response."+"</think>",
 )

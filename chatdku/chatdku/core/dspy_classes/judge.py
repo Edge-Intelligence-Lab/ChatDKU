@@ -24,6 +24,16 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
+import re
+
+def filter_judge(judge_str:str):
+    """Filter reasoning from Judge"""
+    pattern=r"<think>.*?</think>"
+    cleaned_text=re.sub(pattern,"",judge_str,flags=re.DOTALL)
+    cleaned_text=cleaned_text.replace(".","").strip()
+    return cleaned_text
+
+
 
 
 def make_judge_signature():
@@ -121,6 +131,8 @@ class Judge(dspy.Module):
             )
 
             judgement_str = self.judge(**judge_inputs).judgement
+            judgement_str=filter_judge(judgement_str)
+
 
             dspy.Suggest(
                 judgement_str in ["Yes", "No"],

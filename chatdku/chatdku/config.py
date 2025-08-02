@@ -14,7 +14,7 @@ class Config:
             cls._instance._config = {
                 # about settings.py
                 "embedding": "BAAI/bge-m3",
-                "llm": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
+                "llm": "Qwen/Qwen3-8B",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:18082/v1",
