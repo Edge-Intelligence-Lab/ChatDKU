@@ -14,10 +14,10 @@ class Config:
             cls._instance._config = {
                 # about settings.py
                 "embedding": "BAAI/bge-m3",
-                "llm": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-                "tokenizer": "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct",
+                "llm": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
+                "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
-                "llm_url": "http://localhost:8001/v1",
+                "llm_url": "http://localhost:18082/v1",
                 "context_window": 64000,
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",

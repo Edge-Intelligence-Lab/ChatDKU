@@ -98,9 +98,9 @@ def make_planner_signature():
 
     instruction = (
         "Your current task is to answer the Current User Message using the tools given below. "
-        "Please generate a step-by-step plan of the tools you want to use and their respective parameters. "
-        "All tool parameters are required."
+        "Generate a step-by-step plan including each tool and all its parameters. "
     )
+
 
     return dspy.make_signature(
         fields, ROLE_PROMPT + "\n\n" + instruction, "PlannerSignature"
@@ -214,9 +214,11 @@ class Planner(dspy.Module):
             ).current_tool_plan
 
             # Parse tool plan response
-
+            print("----Running Planner----")
             plan_strs = plan_str_all.strip().split("\n")
-            plan_strs = [s.strip() for s in plan_strs]
+            plan_strs = list(set([s.strip() for s in plan_strs]))[3:]
+        
+            print(plan_strs)
             dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
             dspy.Assert(
                 len(plan_strs) <= max_calls,
@@ -263,6 +265,7 @@ class Planner(dspy.Module):
                 name_to_tool[tool_name_snake] = tool
 
             span.set_status(Status(StatusCode.OK))
+            print("----Planner END----")
             return dspy.Prediction(
                 calls=calls,
                 tool=name_to_tool[calls[0].name],

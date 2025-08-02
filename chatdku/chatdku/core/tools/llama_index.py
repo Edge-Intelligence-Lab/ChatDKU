@@ -181,7 +181,7 @@ def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
                     "url": get_url(node.metadata),
                 },
             ),
-            score=node.score,
+            score=float(node.score),
         )
         for node in nodes
     ]
@@ -204,7 +204,7 @@ def chroma_result_to_nodes(result: dict) -> NodeWithScore:
                     "page_number": get_page_number(metadatas[i]),
                 },
             ),
-            score=scores[i],
+            score=float(scores[i]),
         )
         for i in range(len(ids))
     ]
@@ -241,7 +241,7 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
                 SpanAttributes.RETRIEVAL_DOCUMENTS: [
                     {
                         DocumentAttributes.DOCUMENT_ID: node.node_id,
-                        DocumentAttributes.DOCUMENT_SCORE: node.score,
+                        DocumentAttributes.DOCUMENT_SCORE: float(node.score),
                         DocumentAttributes.DOCUMENT_CONTENT: node.text,
                         **(
                             {
@@ -266,7 +266,7 @@ class VectorRetriever(dspy.Module):
     def __init__(
         self,
         retriever_top_k: int = 10,
-        use_reranker: bool = False,
+        use_reranker: bool = True,
         reranker_top_n: int = 5,
     ):
         self.retriever_top_k = retriever_top_k
@@ -423,7 +423,6 @@ class VectorRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
-            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result,
@@ -611,13 +610,13 @@ class KeywordRetriever(dspy.Module):
                                 "file_name": os.path.basename(r.file_path),
                             },
                         ),
-                        score=r.score,
+                        score=float(r.score),
                     )
                     for r in results.docs
                 ]
             except:
                 nodes = [
-                    NodeWithScore(node=TextNode(id=r.id, text=r.text), score=r.score)
+                    NodeWithScore(node=TextNode(id=r.id, text=r.text), score=float(r.score))
                     for r in results.docs
                 ]
 
@@ -639,7 +638,6 @@ class KeywordRetriever(dspy.Module):
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
-            print(result)
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
                 result=result, internal_result={"ids": {r.id for r in results.docs}}
