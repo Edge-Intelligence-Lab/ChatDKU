@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from redis import Redis
 from redisvl.schema import IndexSchema
 from llama_index.vector_stores.redis import RedisVectorStore
@@ -5,7 +7,6 @@ from llama_index.vector_stores.redis import RedisVectorStore
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.schema import TextNode
 
-import pickle
 import os
 import argparse
 import json
@@ -71,7 +72,7 @@ def load_redis(
     if index_name is None:
         index_name = config.index_name
 
-    redis_client = Redis.from_url(config.redis_url)
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
 
     custom_schema = IndexSchema.from_dict(
         {

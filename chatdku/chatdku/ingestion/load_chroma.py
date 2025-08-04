@@ -165,7 +165,7 @@ def load_chroma(
 
 def main(nodes_path=None, collection_name=None):
     load_chroma(
-        reset=True,
+        reset=False,
         nodes_path=nodes_path,
         collection=collection_name,
     )

@@ -215,13 +215,12 @@ def read_pdf(file_paths: list[str], user_id):
         api_key=llama_parse_api_key,
         result_type="json",
         verbose=True,
+        disable_image_extraction=True,
     )
     for file_path in file_paths:
         print(f"Reading: {file_path}")  # Debugging output
         if not os.path.exists(file_path):
             print(f"Error: The directory '{file_path}' does not exist.")
-        if file_path == "/datapool/chat_dku_advising/student_handbook_2023-08-16.pdf":
-            continue
         pdf_loader = pdf_reader.parse(file_path)
 
         for i, page in enumerate(pdf_loader.pages):

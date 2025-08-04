@@ -23,8 +23,17 @@ class FeedbackSignature(dspy.Signature):
 
     feedback_text:str=dspy.InputField(desc="A corpus of feedback dating from last 30 days")
 
-    summary:str=dspy.OutputField(desc="A summary of all the Feedback, including the most frequently occuring")
-    evidence:dict[str,list[str]]=dspy.OutputField(desc="Evidence for frequently occuring feedback")
+    summary:str=dspy.OutputField(desc="A summary of all the Feedback, including the most frequently occuring, beginning with <answer> and ending with </answer>")
+    evidence:dict[str,list[str]]=dspy.OutputField(desc="Evidence for frequently occuring feedback beginning with <reason> and ending with </reason>")
+
+class FeedbackSummarizer(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.predictor=dspy.Predict(FeedbackSignature)
+
+    def forward(self,feedback_text):
+        return self.predictor(feedback_text=feedback_text)
+    
 
 class FeedbackSummarizer(dspy.Module):
     def __init__(self):
@@ -59,16 +68,27 @@ def feedback_summary():
         feedback_text+=f"(feedback {idx}):\nUser Question: {item.user_input}\nGeneration: {item.gen_answer}\nReason: {item.feedback_reason}\n"
 
     summarizer = FeedbackSummarizer()
-    setup()
-    client=CustomClient()
-
-    dspy.settings.configure(
-        lm=client
+    new_lm = dspy.OpenAI(
+        model="Qwen/Qwen3-8B",
+        api_base="http://127.0.0.1:18082/v1/",
+        api_key="dummy",
+        model_type="chat",
+        max_tokens=50000,
+        stop=["<|im_end|>"]
     )
+    dspy.configure(lm=new_lm)
+
 
     summary=summarizer(feedback_text)
+    text=summary.summary
+    import re
+    answer=re.findall(r'<answer>(.*?)</answer>',text,re.DOTALL)[-1]
+    reason=re.findall(r'<reason>(.*?)</reason>',text,re.DOTALL)
+    answer_text=''.join([a for a in answer])
+    reason_text=''.join([b for b in reason])
+    email_text=answer_text+'\n'+reason_text
 
-    return summary.summary
+    return email_text
     
 
 

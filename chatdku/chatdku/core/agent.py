@@ -11,9 +11,6 @@ from dsp import LM
 import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
-# FIXME: Stop using these patches whenever the issues were addressed by DSPy.
-import chatdku.core.dspy_patch
-
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
 from chatdku.core.dspy_classes.plan import Planner
@@ -23,7 +20,6 @@ from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.judge import Judge
-from chatdku.core.dspy_classes.user_profiler import Profiler, get_user_profile
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -48,32 +44,36 @@ class CustomClient(LM):
         }
 
     def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        with (
-            config.tracer.start_as_current_span("LLM")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
-                    SpanAttributes.INPUT_VALUE: prompt,
-                    SpanAttributes.LLM_MODEL_NAME: config.llm,
-                    SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
-                }
-            )
+        try:
 
-            response = Settings.llm.complete(prompt, **kwargs)
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
-            self.history.append(
-                {
-                    "prompt": prompt,
-                    "response": response,
-                    "kwargs": kwargs,
-                }
-            )
+            with (
+                config.tracer.start_as_current_span("LLM")
+                if hasattr(config, "tracer")
+                else nullcontext()
+            ) as span:
+                span.set_attributes(
+                    {
+                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
+                        SpanAttributes.INPUT_VALUE: prompt,
+                        SpanAttributes.LLM_MODEL_NAME: config.llm,
+                        SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
+                    }
+                )
 
-            span.set_status(Status(StatusCode.OK))
-            return response
+                response = Settings.llm.complete(prompt, **kwargs)
+                span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
+                self.history.append(
+                    {
+                        "prompt": prompt,
+                        "response": response,
+                        "kwargs": kwargs,
+                    }
+                )
+
+                span.set_status(Status(StatusCode.OK))
+                return response
+        except Exception as e:
+            print(f"Exception at basec_request: {e}")
 
     def inspect_history(self, n: int = 1, skip: int = 0) -> str:
         last_prompt = None
@@ -111,6 +111,7 @@ class CustomClient(LM):
         return [self.request(prompt, **kwargs).text]
 
 
+
 class Agent(dspy.Module):
     def __init__(
         self,
@@ -118,8 +119,6 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
-        use_profiler: bool = True,
-        profile_path: str = "",
     ):
         """
         Args:
@@ -134,13 +133,11 @@ class Agent(dspy.Module):
         """
 
         super().__init__()
-        self.profile_path = profile_path
         self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.use_profiler = use_profiler
         self.planner = assert_transform_module(
             Planner(
                 [
@@ -164,7 +161,6 @@ class Agent(dspy.Module):
             Judge(), functools.partial(backtrack_handler, max_backtracks=5)
         )
         self.queryrewriter = QueryRewrite()
-        self.profiler = Profiler(profile_path=self.profile_path)
 
         self.prev_response = None
 
@@ -260,8 +256,8 @@ class Agent(dspy.Module):
                     self.internal_memory["ids"] = (
                         self.internal_memory.get("ids", set()) | internal_result["ids"]
                     )
-                # if VERBOSE:
-                #     print(f"result: {first_ite_result}")
+                if VERBOSE:
+                    print(f"result: {first_ite_result}")
 
                 self.tool_memory(
                     current_user_message=current_user_message,
@@ -270,8 +266,8 @@ class Agent(dspy.Module):
                     result=first_ite_result,
                     max_history_size=limits["tool_history"],
                 )
-                # if VERBOSE:
-                #     print(f"tool memory: {self.tool_memory.history_str()}")
+                if VERBOSE:
+                    print(f"tool memory: {self.tool_memory.history_str()}")
 
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -312,25 +308,11 @@ class Agent(dspy.Module):
                         current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
-                        user_profile=get_user_profile(path=self.profile_path),
                     ).rewritten_query
                     if VERBOSE:
                         print(f"rewritten query:{query}")
                 else:
                     query = current_user_message
-
-                if self.use_profiler:
-                    try:
-                        new_profile = self.profiler(
-                            current_user_message=query,
-                            conversation_memory=self.conversation_memory,
-                            tool_memory=self.tool_memory,
-                            profile_path=self.profile_path,
-                        )
-                        if VERBOSE:
-                            print(f"Profiler:{new_profile}")
-                    except dspy.DSPyAssertionError:
-                        print("User profile could not be found.")
 
                 try:
                     planner = self.planner(
@@ -339,7 +321,6 @@ class Agent(dspy.Module):
                         # Also, the memory should concern answering the overarching
                         # user question, while the planner can focus more on the current iteration.
                         current_user_message=query,
-                        user_profile=get_user_profile(path=self.profile_path),
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
                         max_calls=self.max_iterations - i,
@@ -442,15 +423,22 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    llama_client = CustomClient()
-    dspy.settings.configure(lm=llama_client)
+    new_lm = dspy.OpenAI(
+        model="Qwen/Qwen3-8B",
+        api_base="http://127.0.0.1:18082/v1/",
+        api_key="dummy",
+        model_type="chat",
+        max_tokens=50000,
+        stop=["<|im_end|>"]
+    )
+    dspy.configure(lm=new_lm)
+
     import time
 
     agent = Agent(
         max_iterations=2,
         streaming=True,
         get_intermediate=False,
-        profile_path="/srv/chatdku_user_data/an301/profile",
     )
 
     user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
@@ -471,6 +459,7 @@ def main():
             )
             first_token = True
             print("Response:")
+            print(responses_gen)
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()

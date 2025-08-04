@@ -23,6 +23,7 @@ from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
 
+
 from chatdku.ingestion.load_redis import load_redis
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -313,11 +314,11 @@ def update(data_dir, user_id):
     added_files, removed_files = read_changes(data_dir)
 
     chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-
+    print("Chroma Setup done!")
     schema = IndexSchema.from_yaml(
         os.path.join(config.module_root_dir, "custom_schema.yaml")
     )
-    redis_client = Redis.from_url(config.redis_url)
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password,db=0)
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=schema, overwrite=True
     )

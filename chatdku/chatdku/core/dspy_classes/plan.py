@@ -12,6 +12,7 @@ from openinference.semconv.trace import (
     OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
 )
+import re
 
 from chatdku.core.dspy_common import get_template, custom_cot_rationale
 from chatdku.core.utils import (
@@ -26,7 +27,6 @@ from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
-    EXISTING_USER_PROFILE_FIELD,
     CONVERSATION_SUMMARY_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
@@ -34,12 +34,23 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
+import re
+
+# Heuristic regex method to filter out reasoning and make into proper format for processing (For Qwen3)
+#TODO: Make the Model follow proper instruction via prompting or SFT
+def plan_filter(plans:list):
+    """Filter Plan from a series of reasoning"""
+
+    pattern=r'\{'
+    filtered_plan=[plan for plan in plans if re.search(pattern,plan)]
+    objects = [obj for plan in filtered_plan for obj in re.findall(r'\{.*?\}(?=\s*\{|\s*$)', plan)]
+    return objects
+
 
 
 def make_planner_signature():
     fields = {
         "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
-        "user_profile": (str, EXISTING_USER_PROFILE_FIELD),
         "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
         "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
         "available_tools": (
@@ -100,9 +111,9 @@ def make_planner_signature():
 
     instruction = (
         "Your current task is to answer the Current User Message using the tools given below. "
-        "Please generate a step-by-step plan of the tools you want to use and their respective parameters. "
-        "All tool parameters are required."
+        "Generate a step-by-step plan including each tool and all its parameters. "
     )
+
 
     return dspy.make_signature(
         fields, ROLE_PROMPT + "\n\n" + instruction, "PlannerSignature"
@@ -117,7 +128,6 @@ class Planner(dspy.Module):
         super().__init__()
 
         self.tools = tools
-        # self.user_profile = user_profile
 
         self.name_to_model = {}
         for tool in tools:
@@ -149,7 +159,6 @@ class Planner(dspy.Module):
 
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
-            "user_profile": 3 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
             "tool_history": 5 / 15,
@@ -172,7 +181,6 @@ class Planner(dspy.Module):
     def forward(
         self,
         current_user_message: str,
-        user_profile: str,
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
         max_calls: int = 5,
@@ -192,7 +200,6 @@ class Planner(dspy.Module):
 
             planner_inputs = dict(
                 current_user_message=current_user_message,
-                user_profile=user_profile,
                 conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 tool_history=tool_memory.history_str(),
@@ -220,9 +227,11 @@ class Planner(dspy.Module):
             ).current_tool_plan
 
             # Parse tool plan response
-
             plan_strs = plan_str_all.strip().split("\n")
-            plan_strs = [s.strip() for s in plan_strs]
+            plan_strs = list(set([s.strip() for s in plan_strs]))
+            plan_strs=plan_filter(plan_strs)
+            print(plan_strs)
+
             dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
             dspy.Assert(
                 len(plan_strs) <= max_calls,
@@ -269,6 +278,7 @@ class Planner(dspy.Module):
                 name_to_tool[tool_name_snake] = tool
 
             span.set_status(Status(StatusCode.OK))
+            print("----Planner END----")
             return dspy.Prediction(
                 calls=calls,
                 tool=name_to_tool[calls[0].name],

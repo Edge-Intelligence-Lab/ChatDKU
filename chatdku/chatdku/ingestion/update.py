@@ -46,6 +46,8 @@ from custom_filetype_detect import custom_detect_filetype
 
 import unstructured.partition.auto
 from custom_partation import partition
+from chatdku.config import config
+
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
@@ -366,7 +368,7 @@ def load_and_index(
     index = SearchIndex.from_yaml(
         os.path.join(config.module_root_dir, "custom_schema.yaml")
     )
-    redis_client = Redis.from_url("redis://localhost:6379")
+    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
     index.set_client(redis_client)
 
     # Within a Redis transaction, (re)create the index and load data
