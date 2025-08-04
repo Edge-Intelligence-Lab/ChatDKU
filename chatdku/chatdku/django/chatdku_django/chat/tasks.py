@@ -21,12 +21,14 @@ logger=logging.getLogger(__name__)
 def chat_load_test_weekly():
     try:
         file_conf=os.path.join(settings.BASE_DIR,"locust_weekly.conf")
-        runner=subprocess.run(["locust","--config",file_conf],check=True,capture_output=True,text=True)
+        locust_path=os.getenv("LOCUST_PATH")
+
+        runner=subprocess.run([locust_path,"--config",file_conf],check=True,capture_output=True,text=True)
         logger.info("Load Test Successful")
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"ErrorCode: {str(runner.returncode)}")
-        logger.error(f"ErrorOutput: {str(runner.stderr)}")
+        logger.error(f"ErrorCode: {str(e.returncode)}")
+        logger.error(f"ErrorOutput: {str(e.stderr)}")
 
     except Exception as e:
         logger.error(f'Chat loader error: {str(e)}')
@@ -74,8 +76,8 @@ def chat_load_test_daily():
         from_email=os.getenv("EMAIL_HOST_USER")
         to_email=os.getenv("EMAIL_TO")
         subject="Error in ChatDKU"
-        body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>"
-        body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+        body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>"
+        body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}"
 
         EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
 
