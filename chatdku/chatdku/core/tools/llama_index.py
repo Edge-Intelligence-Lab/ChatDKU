@@ -124,7 +124,7 @@ def get_reranker(top_n: int):
         top_n=top_n,
         model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
-        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
     )
 
 
@@ -401,14 +401,14 @@ class VectorRetriever(dspy.Module):
 
             if self.use_reranker:
                 reranker = get_reranker(self.reranker_top_n)
-                tokenizer=AutoTokenizer.from_pretrained("cross-encoder/ms-marco-MiniLM-L6-v2")
+                tokenizer = AutoTokenizer.from_pretrained(
+                    "cross-encoder/ms-marco-MiniLM-L6-v2"
+                )
 
                 nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
-                    query_str=truncate_tokens(
-                        query, 500, tokenizer=tokenizer
-                    ),
+                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
                 )
             else:
                 nodes = retrieved_nodes
