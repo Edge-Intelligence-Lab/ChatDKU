@@ -59,7 +59,7 @@ def email_weekly_load():
     except Exception as e:
         logger.error(f"Error sending Weekly Load Report: {str(e)}")
 
-
+FAILURE_THRESHOLD=6
 
 #For daily task
 @shared_task
@@ -69,17 +69,23 @@ def chat_load_test_daily():
         locust_path=os.getenv("LOCUST_PATH")
         runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
         logger.info("Daily Chat Test Successful")
+        cnt=0
+        
 
     except subprocess.CalledProcessError as e:
+        cnt+=1
+
         logger.error(f"ErrorCode: {str(e.returncode)}")
         logger.error(f"ErrorOutput: {str(e.stderr)}")
-        from_email=os.getenv("EMAIL_HOST_USER")
-        to_email=os.getenv("EMAIL_TO")
-        subject="Error in ChatDKU"
-        body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>"
-        body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}"
+        if cnt>=FAILURE_THRESHOLD: #Prevent unnecessary emails
+            from_email=os.getenv("EMAIL_HOST_USER")
+            to_email=os.getenv("EMAIL_TO")
+            subject="Error in ChatDKU"
+            body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
+            body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
 
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+            EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+            cnt=0
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
@@ -98,11 +104,3 @@ def delete_locust_logs():
 
     except Exception as e:
         logger.error(f"Error in deleting locust logs: {str(e)}")
-
-
-
-
-
-
-
-
