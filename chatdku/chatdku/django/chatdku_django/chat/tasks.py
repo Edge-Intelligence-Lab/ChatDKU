@@ -8,6 +8,8 @@ import datetime
 from django.template.loader import render_to_string
 from chat.mail import EmailUtil
 import os
+from django.core.cache import cache
+
 
 dotenv.load_dotenv()
 
@@ -60,6 +62,8 @@ def email_weekly_load():
         logger.error(f"Error sending Weekly Load Report: {str(e)}")
 
 FAILURE_THRESHOLD=6
+COUNTER_KEY = "chat_load_test_daily:failures"
+
 
 #For daily task
 @shared_task
@@ -69,15 +73,18 @@ def chat_load_test_daily():
         locust_path=os.getenv("LOCUST_PATH")
         runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
         logger.info("Daily Chat Test Successful")
-        cnt=0
         
 
     except subprocess.CalledProcessError as e:
-        cnt+=1
+        failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
+
+        if failures==1:
+            cache.set(COUNTER_KEY,1,timeout=60*60) #1hr
+
 
         logger.error(f"ErrorCode: {str(e.returncode)}")
         logger.error(f"ErrorOutput: {str(e.stderr)}")
-        if cnt>=FAILURE_THRESHOLD: #Prevent unnecessary emails
+        if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
             from_email=os.getenv("EMAIL_HOST_USER")
             to_email=os.getenv("EMAIL_TO")
             subject="Error in ChatDKU"
@@ -85,7 +92,9 @@ def chat_load_test_daily():
             body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
 
             EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
-            cnt=0
+
+            logger.info("Email sent on: ",datetime.datetime.now())
+            cache.delete(COUNTER_KEY)
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')

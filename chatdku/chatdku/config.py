@@ -18,7 +18,7 @@ class Config:
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
                 "llm_url": "http://localhost:18082/v1",
-                "context_window": 64000,
+                "context_window": 40900,
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
