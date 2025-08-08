@@ -3,8 +3,10 @@ import dotenv
 from urllib.parse import quote
 
 dotenv.load_dotenv()
-redis_host=os.getenv("REDIS_HOST")
-redis_password=os.getenv("REDIS_PASSWORD")
+redis_host = os.getenv("REDIS_HOST")
+redis_password = os.getenv("REDIS_PASSWORD")
+
+
 class Config:
     _instance = None
 
@@ -13,8 +15,8 @@ class Config:
             cls._instance = super().__new__(cls)
             cls._instance._config = {
                 # about settings.py
-                "llm": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-                "llm_url": "http://localhost:8001/v1",
+                "llm": "Qwen/Qwen3-8B",
+                "llm_url": "http://localhost:18082/v1",
                 "llm_temperature": 0.7,
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/tokenizers/Meta-Llama-3.1-8B-Instruct",
@@ -28,7 +30,7 @@ class Config:
                 "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_host": redis_host,
-                "redis_password":redis_password,
+                "redis_password": redis_password,
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
