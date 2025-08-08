@@ -11,6 +11,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     if hasattr(predict_module, "predict"):
         predict_module = predict_module.predict
 
+    inputs = predict_module.parameters()
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)
 
@@ -21,14 +22,14 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # All of the other kwargs are presumed to fit a prefix of the signature.
     # That is, they are input variables for the bottom most generation, so
     # we place them inside the input - x - together with the demos.
-    x = dspy.Example(demos=demos, **kwargs).with_inputs(**kwargs)
+    x = dspy.Example(demos=demos, **kwargs)
 
     print(
-        dspy.ChatAdapter().format(signature=signature, demos=demos, inputs=x.inputs())
+        dspy.ChatAdapter().format(signature=signature, demos=demos, inputs=inputs)
     )
 
     return dspy.ChatAdapter().format(
-        signature=signature, demos=demos, inputs=x.inputs()
+        signature=signature, demos=demos, inputs=inputs
     )
 
 
