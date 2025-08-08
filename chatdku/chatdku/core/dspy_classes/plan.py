@@ -146,7 +146,8 @@ class Planner(dspy.Module):
             signature=PlannerSignature, rationale_type=custom_cot_rationale
         )
 
-        print(PlannerSignature.__format__())
+
+        PlannerSignature.__format__(self)
 
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
