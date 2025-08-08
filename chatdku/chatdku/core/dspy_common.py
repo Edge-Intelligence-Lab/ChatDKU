@@ -7,7 +7,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     Adapted from https://github.com/stanfordnlp/dspy/blob/55510eec1b83fa77f368e191a363c150df8c5b02/dspy/predict/llamaindex.py#L22-L36
     """
     # FIXME: This might not be an elegant way to access the predict module.
-    # This is due to that `ChainOfThought` stores the predict module in `_predict` attribute.
+    # This is due to that `ChainOfThought` stores the predict module in `predict` attribute.
     if hasattr(predict_module, "predict"):
         predict_module = predict_module.predict
 
@@ -21,7 +21,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # All of the other kwargs are presumed to fit a prefix of the signature.
     # That is, they are input variables for the bottom most generation, so
     # we place them inside the input - x - together with the demos.
-    x = dspy.Example(demos=demos, **kwargs)
+    x = dspy.Example(demos=demos, **kwargs).with_inputs(**kwargs)
 
     print(
         dspy.ChatAdapter().format(signature=signature, demos=demos, inputs=x.inputs())
