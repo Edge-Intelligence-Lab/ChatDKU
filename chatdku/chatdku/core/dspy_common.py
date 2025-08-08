@@ -11,10 +11,10 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     if hasattr(predict_module, "predict"):
         predict_module = predict_module.predict
 
-    inputs = predict_module.parameters()
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)
 
+    inputs = {k: f"{{{k}}}" for k in signature.input_fields}
     if hasattr(predict_module, "demos"):
         demos = predict_module.demos
     else:
@@ -24,13 +24,12 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # we place them inside the input - x - together with the demos.
     x = dspy.Example(demos=demos, **kwargs)
 
-    print(
-        dspy.ChatAdapter().format(signature=signature, demos=demos, inputs=inputs)
-    )
-
-    return dspy.ChatAdapter().format(
+    template = dspy.ChatAdapter().format(
         signature=signature, demos=demos, inputs=inputs
     )
+    print(template)
+
+    return template
 
 
 custom_cot_rationale = dspy.OutputField(

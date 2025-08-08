@@ -146,9 +146,6 @@ class Planner(dspy.Module):
             signature=PlannerSignature, rationale_type=custom_cot_rationale
         )
 
-
-        PlannerSignature.__format__(self)
-
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
@@ -261,7 +258,7 @@ class Planner(dspy.Module):
 
             for i, c in enumerate(plan_strs, 1):
                 calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
-                
+
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(calls),
