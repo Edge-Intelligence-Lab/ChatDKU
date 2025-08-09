@@ -32,6 +32,19 @@
       "type": "string",
       "description": "Detailed course description"
     },
+    {"attributes": {
+      "type": "string",
+      "enum": ["two-credit-writing", 
+        "ah-foundations", 
+        "chinese-student-requirements",
+        "common-core",
+        "language",
+        "ns-foundations",
+        "quantitative-reasoning",
+        "ss-foundations",
+        "signature-projects"
+],
+    }},
     "learning_outcomes": {
       "type": "array",
       "items": {
@@ -57,23 +70,23 @@
     "instructor_email": {
       "type": "string",
       "format": "email",
-      "description": "Instructor's email address"
+      "description": "Instructor’s email address"
     },
     "instructor_name": {
       "type": "string",
-      "description": "Full name of the instructor"
+      "description": "Full name of the instructor, no title nor honorifics"
     },
     "office_location": {
       "type": "string",
-      "description": "Instructor's office location"
+      "description": "Instructor’s office location"
     },
     "office_hours": {
       "type": "string",
-      "description": "Instructor's office hours"
+      "description": "Instructor’s office hours"
     },
     "biography": {
       "type": "string",
-      "description": "Instructor's biography"
+      "description": "Instructor’s biography"
     },
     "year": {
       "type": "integer",

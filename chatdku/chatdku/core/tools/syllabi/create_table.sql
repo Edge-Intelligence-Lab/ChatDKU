@@ -3,7 +3,18 @@ DROP TYPE IF EXISTS season;
 DROP TYPE IF EXISTS first_or_second;
 
 CREATE TYPE season AS ENUM('spring', 'summer', 'fall', 'mini-term');
-CREATE TYPE first_or_second as ENUM('first', 'second');
+CREATE TYPE first_or_second AS ENUM('first', 'second');
+CREATE TYPE attribute AS ENUM(
+        'two-credit-writing', 
+        'ah-foundations', 
+        'chinese-student-requirements',
+        'common-core',
+        'language',
+        'ns-foundations',
+        'quantitative-reasoning',
+        'ss-foundations',
+        'signature-projects'
+);
 
 CREATE TABLE classes (
     class_id SERIAL PRIMARY KEY,
@@ -13,6 +24,7 @@ CREATE TABLE classes (
     course_format TEXT,
     prerequisites TEXT,
     description TEXT,
+    curriculum_attribute attribute,
     learning_outcomes TEXT[],
     required_textbook TEXT,
     optional_textbooks TEXT[],
