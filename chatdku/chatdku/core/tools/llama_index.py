@@ -124,7 +124,7 @@ def get_reranker(top_n: int):
         top_n=top_n,
         model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
-        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
+        device=str(torch.device("cuda" if torch.cuda.is_available() else "cpu")),
     )
 
 
@@ -265,9 +265,9 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 10,
-        use_reranker: bool = True,
-        reranker_top_n: int = 5,
+        retriever_top_k: int = 5,
+        use_reranker: bool = False,
+        reranker_top_n: int = 3,
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
