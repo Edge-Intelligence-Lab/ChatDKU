@@ -26,14 +26,7 @@ class FeedbackSignature(dspy.Signature):
     summary:str=dspy.OutputField(desc="A summary of all the Feedback, including the most frequently occuring, beginning with <answer> and ending with </answer>")
     evidence:dict[str,list[str]]=dspy.OutputField(desc="Evidence for frequently occuring feedback beginning with <reason> and ending with </reason>")
 
-class FeedbackSummarizer(dspy.Module):
-    def __init__(self):
-        super().__init__()
-        self.predictor=dspy.Predict(FeedbackSignature)
 
-    def forward(self,feedback_text):
-        return self.predictor(feedback_text=feedback_text)
-    
 
 class FeedbackSummarizer(dspy.Module):
     def __init__(self):
