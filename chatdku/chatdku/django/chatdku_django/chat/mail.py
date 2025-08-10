@@ -1,14 +1,20 @@
 from django.core.mail import BadHeaderError, EmailMultiAlternatives
 import logging
 import json
+from  email.mime.image import MIMEImage
+from django.conf import settings
+import os
+
+
 logger=logging.getLogger(__name__)
+
 
 class EmailUtil:
     """Util Class for sending emails"""
 
 
     @staticmethod
-    def send_mail(from_email:str,to_email:list,subject:str,content_text:str,content_html=None,mimetype='text/html'):
+    def send_mail(from_email:str,to_email:list,subject:str,content_text:str,content_html=None,mimetype='text/html',add_logo=False):
         '''Send Weekly Load Email
          Args:
             from_email: Email Sender
@@ -28,6 +34,16 @@ class EmailUtil:
             )
 
             email.attach_alternative(content_html,mimetype=mimetype)
+            
+            if add_logo:
+            #Add the logo for every email as an attachment
+                logo_path = os.path.join(settings.BASE_DIR, "chat", "templates", "images", "edge-intelligence.png")
+
+                with open(logo_path,'rb') as f:
+                    logo=MIMEImage(f.read())
+                    logo.add_header("Content-ID","<lablogo>")
+                    logo.add_header("Content-Disposition","inline",filename="edge-intelligence.png")
+                    email.attach(logo)
             try:
                 email.send()
 
@@ -36,5 +52,6 @@ class EmailUtil:
                 
         except Exception as e:
             logger.error(f"Error in Sending Email: {str(e)}")
+
 
     

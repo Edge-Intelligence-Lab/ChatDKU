@@ -52,11 +52,15 @@ def email_weekly_load():
     subject="Weekly ChatDKU Test Result"
     body_content="ChatDKU Weekly Load Test\n"
 
+
+
+
+
     for item in data['locust_data']:
         body_content+=f"Type: {item['type']}\nName:{item['name']}\nRequest Count: {item['request_count']}\nFailure Count: {item['failure_count']}\nAverage Response Time: {item['average_response_time']}\nFailure Percentage: {item['failure_percentage']}\n\n"
 
     try:
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content)
+        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content,add_logo=True)
 
     except Exception as e:
         logger.error(f"Error sending Weekly Load Report: {str(e)}")
