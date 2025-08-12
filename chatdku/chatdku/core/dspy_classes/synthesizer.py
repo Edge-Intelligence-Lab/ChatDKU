@@ -274,12 +274,21 @@ class Synthesizer(dspy.Module):
                 synthesizer_template = get_template(
                     self.synthesizer, **synthesizer_args
                 )
+                synthesizer_streamer = dspy.streamify(
+                    program=self.synthesizer,
+                    stream_listeners=[
+                        dspy.streaming.StreamListener(signature_field_name="response")
+                    ],
+                    async_streaming=False,
+                )
                 if hasattr(config, "tracer"):
-                    response_gen = ResponseGen(
-                        synthesizer_template, span, parent_span if final else None
-                    )
+                    # response_gen = ResponseGen(
+                    #     synthesizer_template, span, parent_span if final else None
+                    # )
+                    response_gen = synthesizer_streamer(**synthesizer_args)
                 else:
-                    response_gen = ResponseGen(synthesizer_template)
+                    # response_gen = ResponseGen(synthesizer_template)
+                    response_gen = synthesizer_streamer(**synthesizer_args)
                 return dspy.Prediction(response=response_gen)
 
         else:
