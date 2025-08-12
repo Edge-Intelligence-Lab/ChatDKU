@@ -241,6 +241,7 @@ class Planner(dspy.Module):
                 self.planner, N=3, reward_fn=_check_errors, threshold=1.0
             )
 
+            print("PLANNING:")
             plan_str_all = refined_planner(
                 available_tools="\n".join(
                     [str(m.model_json_schema()) for m in self.name_to_model.values()]
@@ -248,6 +249,8 @@ class Planner(dspy.Module):
                 max_calls=str(max_calls),
                 **planner_inputs,
             ).current_tool_plan
+
+            print("PLANNED:", plan_str_all)
 
             plan_strs = plan_str_all.strip().split("\n")
             plan_strs = [s.strip() for s in plan_strs]

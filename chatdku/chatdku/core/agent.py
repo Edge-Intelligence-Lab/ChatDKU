@@ -271,9 +271,9 @@ class Agent(dspy.Module):
                     )
                     if VERBOSE:
                         print(f"Planner:{planner}")
-                except dspy.DSPyAssertionError:
+                except Exception as e:
                     if VERBOSE:
-                        print("max assertion retries hit")
+                        print(e)
                     break
 
                 if VERBOSE:
