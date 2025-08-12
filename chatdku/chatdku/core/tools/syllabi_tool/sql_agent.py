@@ -79,23 +79,23 @@ class Text2SQLSignature(dspy.Signature):
     sql = dspy.OutputField(desc="Pure, valid PostgreSQL query ending with semicolon")
 
 
-class StepByStepSQLModule(dspy.Module):
+class GenerateSQL(dspy.Module):
     def __init__(self):
         super().__init__()
         self.table_selector = dspy.Predict(TableSelectionSignature)
         self.column_selector = dspy.Predict(ColumnSelectionSignature)
         self.sql_generator = dspy.Predict(Text2SQLSignature)
 
-    def forward(self, question, db_schema: str):
+    def forward(self, query, db_schema: str):
         # print("Selecting table...")
         table_result = self.table_selector(
-            natural_language_query=question, db_schema=db_schema
+            natural_language_query=query, db_schema=db_schema
         )
         # print("Selecting columns...")
         column_result = self.column_selector(
             selected_tables=table_result.selected_tables,
             selection_reason=table_result.reasoning,
-            natural_language_query=question,
+            natural_language_query=query,
             db_schema=db_schema,
         )
         # print("Columns selected. Building context.")
@@ -104,7 +104,7 @@ class StepByStepSQLModule(dspy.Module):
         }\nReasoning: {table_result.reasoning}"
         # print("Context taken. Building SQL query. ")
         sql_result = self.sql_generator(
-            natural_language_query=question, sql_context=context
+            natural_language_query=query, sql_context=context
         )
         # print(sql_result.sql)
         return sanitize_sql(extract_sql_regex(sql_result.sql))

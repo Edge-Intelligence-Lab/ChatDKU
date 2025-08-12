@@ -19,13 +19,13 @@ CREATE TYPE attribute AS ENUM(
 
 CREATE TABLE classes (
     class_id SERIAL PRIMARY KEY,
-    course_code VARCHAR(15) NOT NULL,
+    course_code VARCHAR(20) NOT NULL,
     course_title TEXT,
     credit_hours NUMERIC(3,1),
     course_format TEXT,
     prerequisites TEXT,
     description TEXT,
-    curriculum_attribute attribute,
+    attributes attribute,
     learning_outcomes TEXT[],
     required_textbook TEXT,
     optional_textbooks TEXT[],

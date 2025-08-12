@@ -26,8 +26,7 @@ import pdfplumber  # Alternative PDF parser for complex layouts
 from docx import Document  # python-docx for DOCX parsing
 import requests
 from jsonschema import validate, ValidationError
-from openai import OpenAI  # SGLang uses OpenAI-compatible API
-
+import dspy
 
 def remove_think_section(text: str) -> str:
     """
@@ -111,11 +110,17 @@ class DocumentIngestor:
     def setup_sglang_client(self):
         """Setup SGLang client for Qwen3 model"""
         # SGLang serves models via OpenAI-compatible API
-        self.sglang_client = OpenAI(
-            # model="Qwen/Qwen3-8B",
-            base_url=self.args.sglang_url,
+        new_lm = dspy.OpenAI(
+            model="Qwen/Qwen3-8B",
+            api_base=self.args.sglang_url,
             api_key="dummy",
+            model_type="chat",
+            max_tokens=40960,
+            stop=["<|im_end|>"],
+            temperature=0.1,
+            system_prompt="You must extract structured data from documents based on provided JSON schema, adhering strictly to the schema without adding or omitting required fields.",
         )
+        dspy.configure(lm=new_lm)
         self.logger.info(f"SGLang client configured for: {self.args.sglang_url}")
 
     def load_schema(self):
@@ -228,31 +233,22 @@ class DocumentIngestor:
         # Create prompt for structured extraction based on schema
         schema_description = json.dumps(self.schema, indent=2)
 
-        prompt = f"""Extract structured data from the following document content according to this JSON schema:
-
-{schema_description}
-
-Document content:
-{content[:4000]}  # Limit content to avoid token limits
-
-Please return a valid JSON object that matches the schema exactly. Only include the JSON response, no additional text."""
-
         try:
-            response = self.sglang_client.chat.completions.create(
-                model=self.args.model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a precise data extraction assistant. Extract data according to the given schema and return only valid JSON.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.1,  # Low temperature for consistency
-                max_tokens=2000,
-            )
+            # response = dspy.Predict("json_schema, parsed_content -> extracted_json")(
+            #     json_schema=schema_description, parsed_content=content
+            # ).extracted_json
 
-            # Extract JSON from response
-            json_text: str = str(response.choices[0].message.content)
+            class Extractor(dspy.Signature):
+                """json_schema, parsed_content -> extracted_json"""
+                parsed_content: str = dspy.InputField(desc="A parsed plaintext representation of a Duke Kunshan University syllabus.")
+                json_schema: str = dspy.InputField(desc="A v7 json-schema description of the structured data required for syllabus information extraction.")
+                extracted_json: str = dspy.OutputField(desc="A non-markdown, pure JSON reproduction of the syllabus data.")
+
+            extractor = dspy.Predict(Extractor)
+            json_text = extractor(
+                parsed_content=content,
+                json_schema=schema_description,
+                ).extracted_json
 
             json_text = remove_think_section(json_text)
             # Clean up response (remove markdown formatting if present)
@@ -262,6 +258,7 @@ Please return a valid JSON object that matches the schema exactly. Only include 
                 json_text = json_text[:-3]
 
             # Parse and validate JSON
+            self.logger.info(f"LLM response for {file_name}:\n{json_text}")
             extracted_data = json.loads(json_text.strip())
 
             # Validate against schema

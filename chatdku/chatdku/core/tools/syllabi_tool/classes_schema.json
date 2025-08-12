@@ -6,8 +6,8 @@
   "properties": {
     "course_code": {
       "type": "string",
-      "maxLength": 15,
-      "description": "Course identifier code (e.g., CS101, MATH201)"
+      "maxLength": 20,
+      "description": "Course identifier code (e.g., COMPSCI 101, MATH 201)"
     },
     "course_title": {
       "type": "string",
@@ -138,7 +138,7 @@
       "type": "string",
       "description": "Time for laboratory sessions"
     },
-    "lac_location": {
+    "lab_location": {
       "type": "string",
       "description": "Location for laboratory sessions"
     },
