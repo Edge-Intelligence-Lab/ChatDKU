@@ -248,7 +248,7 @@ class Agent(dspy.Module):
             )
 
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations):
+        for i in range(self.max_iterations - 1):
             # TODO: Could feed the intermediate response to judge
             # TODO: Could also try to make this async/threaded, so the output
             # with the user would be done simultaneous with the execution of the

@@ -132,7 +132,7 @@ class Planner(dspy.Module):
             )
             ToolModel = create_model(
                 tool_name_camel,
-                model_config=ConfigDict(extra="forbid"),
+                __config__=ConfigDict(extra="forbid"),
                 name=(
                     Literal[tool_name_snake],
                     Field(..., description=tool_description),
