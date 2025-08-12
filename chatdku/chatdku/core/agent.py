@@ -28,76 +28,83 @@ from openinference.semconv.trace import (
 from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
 
-
-class CustomClient(dspy.BaseLM):
-    def __init__(self, model):
-        self.model = model
-        self.provider = "default"
-        self.history = []
-        self.kwargs = {
-            "temperature": config.llm_temperature,
-            "max_tokens": config.context_window,
-        }
-
-    def forward(self, prompt: str, messages=None, **kwargs):
-        with (
-            config.tracer.start_as_current_span("LLM")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
-                    SpanAttributes.INPUT_VALUE: prompt,
-                    SpanAttributes.LLM_MODEL_NAME: config.llm,
-                    SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
-                }
-            )
-
-            client = OpenAI(api_key="None", base_url=config.llm_url)
-            completion = client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                **self.kwargs,
-            )
-            span.set_attribute(
-                SpanAttributes.OUTPUT_VALUE, completion.choices[0].message.content
-            )
-            self.history.append(
-                {
-                    "prompt": prompt,
-                    "response": completion.choices[0].message.content,
-                    "kwargs": kwargs,
-                }
-            )
-            span.set_status(Status(StatusCode.OK))
-            return completion
-
-    def inspect_history(self, n: int = 1, skip: int = 0) -> str:
-        last_prompt = None
-        printed = []
-        n = n + skip
-
-        for x in reversed(self.history[-100:]):
-            prompt = x["prompt"]
-            if prompt != last_prompt:
-                printed.append((prompt, x["response"].text))
-            last_prompt = prompt
-            if len(printed) >= n:
-                break
-
-        printing_value = ""
-        for idx, (prompt, text) in enumerate(reversed(printed)):
-            # skip the first `skip` prompts
-            if (n - idx - 1) < skip:
-                continue
-            printing_value += "\n\n\n"
-            printing_value += prompt
-            printing_value += self.print_green(text, end="")
-            printing_value += "\n\n\n"
-
-        print(printing_value)
-        return printing_value
+#
+# class CustomClient(dspy.BaseLM):
+#     def __init__(self, model):
+#         self.model = model
+#         self.provider = "default"
+#         self.history = []
+#         self.kwargs = {
+#             "temperature": config.llm_temperature,
+#             "max_tokens": config.context_window,
+#         }
+#
+#     def forward(self, prompt: str, messages=None, **kwargs):
+#         with (
+#             config.tracer.start_as_current_span("LLM")
+#             if hasattr(config, "tracer")
+#             else nullcontext()
+#         ) as span:
+#             span.set_attributes(
+#                 {
+#                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
+#                     SpanAttributes.INPUT_VALUE: prompt,
+#                     SpanAttributes.LLM_MODEL_NAME: config.llm,
+#                     SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
+#                 }
+#             )
+#
+#             client = dspy.LM(
+#                 model="Qwen/Qwen3-8B",
+#                 api_base="http://127.0.0.1:18082/v1/",
+#                 api_key="dummy",
+#                 model_type="chat",
+#                 max_tokens=30000,
+#                 stop=["<|im_end|>"],
+#             )
+#             completion = client.chat.completions.create(
+#                 model=self.model,
+#                 messages=[{"role": "user", "content": prompt}],
+#                 **self.kwargs,
+#             )
+#             span.set_attribute(
+#                 SpanAttributes.OUTPUT_VALUE, completion.choices[0].message.content
+#             )
+#             self.history.append(
+#                 {
+#                     "prompt": prompt,
+#                     "response": completion.choices[0].message.content,
+#                     "kwargs": kwargs,
+#                 }
+#             )
+#             span.set_status(Status(StatusCode.OK))
+#             return completion
+#
+#     def inspect_history(self, n: int = 1, skip: int = 0) -> str:
+#         last_prompt = None
+#         printed = []
+#         n = n + skip
+#
+#         for x in reversed(self.history[-100:]):
+#             prompt = x["prompt"]
+#             if prompt != last_prompt:
+#                 printed.append((prompt, x["response"].text))
+#             last_prompt = prompt
+#             if len(printed) >= n:
+#                 break
+#
+#         printing_value = ""
+#         for idx, (prompt, text) in enumerate(reversed(printed)):
+#             # skip the first `skip` prompts
+#             if (n - idx - 1) < skip:
+#                 continue
+#             printing_value += "\n\n\n"
+#             printing_value += prompt
+#             printing_value += self.print_green(text, end="")
+#             printing_value += "\n\n\n"
+#
+#         print(printing_value)
+#         return printing_value
 
 
 class Agent(dspy.Module):
@@ -359,7 +366,15 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    lm = CustomClient(config.llm)
+    lm = dspy.LM(
+        model=config.llm,
+        api_base=config.llm_url,
+        api_key="dummy",
+        model_type="chat",
+        max_tokens=config.context_window,
+        stop=["<|im_end|>"],
+    )
+
     dspy.configure(lm=lm)
     import time
 
