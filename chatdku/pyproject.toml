@@ -21,25 +21,20 @@ classifiers = [
 
 dependencies = [
     # core
-    "pydantic==2.10.5",
-    "llama-index~=0.11.9",
-    "llama-index-storage-docstore-redis~=0.2.0",
-    "llama-index-vector-stores-redis~=0.3.2",
-    # "llama-index-vector-stores-chroma~=0.2.0",
-    "llama-index-embeddings-text-embeddings-inference~=0.2.0",
-    "llama-index-llms-openai-like~=0.2.0",
-    "llama-index-llms-llama-cpp~=0.2.2",
-    "llama-index-retrievers-bm25~=0.3.0",
-    "llama-index-postprocessor-cohere-rerank~=0.2.0",
-    "llama-index-postprocessor-colbert-rerank~=0.2.1",
+    "llama-index",
+    "llama-index-storage-docstore-redis",
+    "llama-index-vector-stores-redis",
+    "llama-index-embeddings-text-embeddings-inference",
+    "llama-index-llms-openai-like",
+    "llama-index-llms-llama-cpp",
+    "llama-index-retrievers-bm25",
     "unstructured[pdf]~=0.14.7",
-    "chromadb==1.0.15",
+    "chromadb~=1.0.15",
     "arize-phoenix~=5.5.2",
     "opentelemetry-api~=1.27.0",
     "opentelemetry-sdk~=1.27.0",
     "openinference-semantic-conventions~=0.1.10",
-    "dspy-ai~=2.4.10",
-    "magicattr~=0.1.6", # FIXME: For patching DSPy's set_attribute_by_name()
+    "dspy",
 
     # backend
     "Flask~=3.0.3",
