@@ -19,7 +19,10 @@ The current version of ChatDKU uses the following packages for Django Backend. Y
     "djangorestframework~=3.16.0",
     "django-celery-beat~=2.8.1",
     "django_celery_results~=2.6.0",
-    "celery~=5.5.3"
+    "celery~=5.5.3",
+    "django-redis~=6.0.0",
+    "pandas~=2.2.3",
+    "redis~=5.2.1"
 ```
 ## Project Structure
 ```
@@ -68,12 +71,56 @@ user.
 - `chatdku_django/celery.py` uses `celery` for automation. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
 - `*/tasks.py` contains celery tasks for each app.
 - `locustfile.py` contains load test script for the app.
-- `chat/mail.py` contains mailing feature for app. Currently it is configured to send email per error and weekly email for load test results.
+- `chat/mail.py` contains mailing feature for app. Currently it is configured to send email per error and weekly email for load test results and feedback.
  
 > You can check `chatdku_django/urls.py` for all the routes used in this project. 
 
 ## Running the Project
 When running the project, make sure you are in the same dir as `manage.py`.
+
+### Setting up Environment Variables
+To run the backend, make sure you have `.env` file in the same directory as `manage.py`
+```bash
+    chatdku_django/
+    ├── manage.py
+    ├── .env     
+```
+Make sure your `.env` file contains the following:
+
+```bash
+SECRET_KEY= <secret key>
+FIELD_ENCRYPTION_KEY= <encryption key> # Has not been used 
+UPLOAD_PATH=<doc upload path>
+WHISPER_MODEL_URI="http://10.200.14.82:8002"
+
+#DB
+USERNAME_DB="chatdku_user"
+NAME_DB="chatdku_db"
+PASSWORD_DB= <dbpassword>
+HOST_DB="localhost"
+PORT_DB="5432"
+
+MEDIA_ROOT= <Media Root>
+
+#Redis
+REDIS_PASSWORD= <password>
+REDIS_HOST="127.0.0.1"
+
+#Locust
+UID=<testing netid>
+DISPLAY_NAME= <testing Display Name>
+HOST= <host>
+LOCUST_PATH= <.venv_path/locust>
+
+#Email
+EMAIL_HOST= <duke smtp>
+EMAIL_PORT= <email port>
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER= <host email>
+# Sender Email should be a string of lists. Eg: '["abc.xyz.com","abc.example.com"]' 
+EMAIL_TO= <sender email> 
+```
+
 
 ### Step 1: Check for migrations
 
@@ -147,22 +194,27 @@ Besides, logs are also saved in `log/chatdku.log` file.
 ### Running Celery
 Celery worker and beats is run using system service.You can check it via
 ```bash
-/etc/systemd/system/chatdku_celery.service
+/etc/systemd/system/chatdku_celery_beats.service
 ```
+and
+```bash
+/etc/systemd/system/chatdku_celery_worker.service
+```
+
 To run it simply run:
 
 ```bash
-sudo systemctl start chatdku_celery
+sudo systemctl start chatdku_celery.target
 ```
 To stop it, run:
 
 ```bash
-sudo systemctl stop chatdku_celery
+sudo systemctl stop chatdku_celery.target
 ```
 You can view `Celery` logs via
 ```bash
 
-sudo journalctl -u chatdku_celery -f
+sudo journalctl -u chatdku_celery_worker -f
 ```
 
 ----

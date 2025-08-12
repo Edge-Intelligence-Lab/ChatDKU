@@ -82,7 +82,7 @@ class MyUser(HttpUser):
         try:
             payload = self.generate_chat()
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
-            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response}")
+            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}\n")
         except Exception as e:
             logger.error(f'Chat Error: {str(e)}')
 

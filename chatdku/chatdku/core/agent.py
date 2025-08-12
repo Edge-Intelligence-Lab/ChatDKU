@@ -44,32 +44,36 @@ class CustomClient(LM):
         }
 
     def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        with (
-            config.tracer.start_as_current_span("LLM")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
-                    SpanAttributes.INPUT_VALUE: prompt,
-                    SpanAttributes.LLM_MODEL_NAME: config.llm,
-                    SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
-                }
-            )
+        try:
 
-            response = Settings.llm.complete(prompt, **kwargs)
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
-            self.history.append(
-                {
-                    "prompt": prompt,
-                    "response": response,
-                    "kwargs": kwargs,
-                }
-            )
+            with (
+                config.tracer.start_as_current_span("LLM")
+                if hasattr(config, "tracer")
+                else nullcontext()
+            ) as span:
+                span.set_attributes(
+                    {
+                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
+                        SpanAttributes.INPUT_VALUE: prompt,
+                        SpanAttributes.LLM_MODEL_NAME: config.llm,
+                        SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
+                    }
+                )
 
-            span.set_status(Status(StatusCode.OK))
-            return response
+                response = Settings.llm.complete(prompt, **kwargs)
+                span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
+                self.history.append(
+                    {
+                        "prompt": prompt,
+                        "response": response,
+                        "kwargs": kwargs,
+                    }
+                )
+
+                span.set_status(Status(StatusCode.OK))
+                return response
+        except Exception as e:
+            print(f"Exception at basec_request: {e}")
 
     def inspect_history(self, n: int = 1, skip: int = 0) -> str:
         last_prompt = None
@@ -105,6 +109,7 @@ class CustomClient(LM):
         **kwargs: Any,
     ) -> list[str]:
         return [self.request(prompt, **kwargs).text]
+
 
 
 class Agent(dspy.Module):
@@ -251,8 +256,8 @@ class Agent(dspy.Module):
                     self.internal_memory["ids"] = (
                         self.internal_memory.get("ids", set()) | internal_result["ids"]
                     )
-                # if VERBOSE:
-                #     print(f"result: {first_ite_result}")
+                if VERBOSE:
+                    print(f"result: {first_ite_result}")
 
                 self.tool_memory(
                     current_user_message=current_user_message,
@@ -261,8 +266,8 @@ class Agent(dspy.Module):
                     result=first_ite_result,
                     max_history_size=limits["tool_history"],
                 )
-                # if VERBOSE:
-                #     print(f"tool memory: {self.tool_memory.history_str()}")
+                if VERBOSE:
+                    print(f"tool memory: {self.tool_memory.history_str()}")
 
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -418,8 +423,16 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    llama_client = CustomClient()
-    dspy.settings.configure(lm=llama_client)
+    new_lm = dspy.OpenAI(
+        model="Qwen/Qwen3-8B",
+        api_base="http://127.0.0.1:18082/v1/",
+        api_key="dummy",
+        model_type="chat",
+        max_tokens=50000,
+        stop=["<|im_end|>"]
+    )
+    dspy.configure(lm=new_lm)
+
     import time
 
     agent = Agent(
@@ -428,8 +441,11 @@ def main():
         get_intermediate=False,
     )
 
-    user_id = input("Input your user id (Chat_DKU for default): ")
-    search_mode = int(input("Search mode (0 for default): "))
+    user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
+
+    search_mode_input = input("Search mode (0 for default): ")
+    search_mode = int(search_mode_input) if search_mode_input else 0
+
     while True:
         try:
             print("*" * 10)
@@ -443,6 +459,7 @@ def main():
             )
             first_token = True
             print("Response:")
+            print(responses_gen)
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
