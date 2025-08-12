@@ -5,7 +5,6 @@ import traceback
 
 from openai import OpenAI
 import dspy
-import litellm
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
@@ -395,7 +394,6 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    litellm.set_verbose = True
     lm = dspy.LM(
         model="openai/" + config.llm,
         api_base=config.llm_url,
@@ -404,14 +402,12 @@ def main():
         max_tokens=30000,
     )
 
-    lm("say this is a test!", temperature=0.7)
-
     dspy.configure(lm=lm)
     import time
 
     agent = Agent(
         max_iterations=2,
-        streaming=True,
+        streaming=False,
         get_intermediate=False,
     )
 
