@@ -267,7 +267,7 @@ class Agent(dspy.Module):
             span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.prev_response)
             span.set_status(Status(StatusCode.OK))
             span.end()
-        return dspy.Prediction(response=self.prev_response)
+        yield dspy.Prediction(response=self.prev_response)
 
     def forward(
         self,
@@ -303,7 +303,11 @@ class Agent(dspy.Module):
             files=files,
         )
 
-        return gen.response
+        if self.get_intermediate:
+            return gen
+        else:
+            for i in gen:
+                return i
 
 
 def main():
@@ -325,7 +329,7 @@ def main():
 
     agent = Agent(
         max_iterations=2,
-        streaming=True,
+        streaming=False,
         get_intermediate=False,
     )
 
@@ -344,13 +348,12 @@ def main():
             )
             first_token = True
             print("Response:")
-            for r in responses_gen:
+            for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
                     print(f"first token时间:{end_time - start_time}")
                     first_token = False
-                if isinstance(r, dspy.streaming.StreamResponse):
-                    print(r.chunk, end="")
+                print(r, end="")
             print()
 
             # for i, r in enumerate(responses_gen):
