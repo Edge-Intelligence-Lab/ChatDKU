@@ -13,7 +13,7 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
     NameParams,
     func_to_model,
@@ -142,9 +142,7 @@ class Planner(dspy.Module):
             )
             self.name_to_model[tool_name_snake] = ToolModel
 
-        self.planner = dspy.ChainOfThought(
-            signature=PlannerSignature, rationale_type=custom_cot_rationale
-        )
+        self.planner = dspy.ChainOfThought(PlannerSignature)
 
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,

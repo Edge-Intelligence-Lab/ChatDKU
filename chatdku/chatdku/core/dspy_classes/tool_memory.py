@@ -12,7 +12,7 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
     NameParams,
     strs_fit_max_tokens_reverse,
@@ -98,9 +98,7 @@ class ToolMemory(dspy.Module):
 
     def __init__(self):
         super().__init__()
-        self.compressor = dspy.ChainOfThought(
-            CompressToolMemorySignature, rationale_type=custom_cot_rationale
-        )
+        self.compressor = dspy.ChainOfThought(CompressToolMemorySignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 14,
             "conversation_history": 2 / 14,

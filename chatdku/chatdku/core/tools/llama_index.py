@@ -18,7 +18,6 @@ from openinference.semconv.trace import (
 from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
-from chatdku.core.dspy_common import custom_cot_rationale
 import torch
 from transformers import AutoTokenizer
 
@@ -86,9 +85,7 @@ class DocumentSummarizer(dspy.Module):
 
     def __init__(self):
         super().__init__()
-        self.summarizer = dspy.ChainOfThought(
-            DocumentSummarizerSignature, rationale_type=custom_cot_rationale
-        )
+        self.summarizer = dspy.ChainOfThought(DocumentSummarizerSignature)
         self.text_splitter = TokenTextSplitter(
             chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP
         )
@@ -124,7 +121,7 @@ def get_reranker(top_n: int):
         top_n=top_n,
         model="cross-encoder/ms-marco-MiniLM-L6-v2",
         keep_retrieval_score=True,
-        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
     )
 
 
@@ -401,14 +398,14 @@ class VectorRetriever(dspy.Module):
 
             if self.use_reranker:
                 reranker = get_reranker(self.reranker_top_n)
-                tokenizer=AutoTokenizer.from_pretrained("cross-encoder/ms-marco-MiniLM-L6-v2")
+                tokenizer = AutoTokenizer.from_pretrained(
+                    "cross-encoder/ms-marco-MiniLM-L6-v2"
+                )
 
                 nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
-                    query_str=truncate_tokens(
-                        query, 500, tokenizer=tokenizer
-                    ),
+                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
                 )
             else:
                 nodes = retrieved_nodes
@@ -444,7 +441,13 @@ class KeywordRetriever(dspy.Module):
         retriever_top_k: int = 5,
         reranker_top_n: int = 3,
     ):
-        self.client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password,db=0)
+        self.client = Redis(
+            host=config.redis_host,
+            port=6379,
+            username="default",
+            password=config.redis_password,
+            db=0,
+        )
         self.retriever_top_k = retriever_top_k
 
         schema = IndexSchema.from_yaml(
@@ -617,7 +620,9 @@ class KeywordRetriever(dspy.Module):
                 ]
             except:
                 nodes = [
-                    NodeWithScore(node=TextNode(id=r.id, text=r.text), score=r.score)
+                    NodeWithScore(
+                        node=TextNode(id=r.id, text=r.text), score=float(r.score)
+                    )
                     for r in results.docs
                 ]
 

@@ -22,7 +22,7 @@ from openinference.semconv.trace import (
 )
 
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import custom_cot_rationale, get_template
+from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
@@ -209,9 +209,7 @@ class ResponseGen:
 class Synthesizer(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.synthesizer = dspy.ChainOfThought(
-            SynthesizerSignature, rationale_type=custom_cot_rationale
-        )
+        self.synthesizer = dspy.ChainOfThought(SynthesizerSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,

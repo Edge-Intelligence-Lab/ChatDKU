@@ -10,7 +10,7 @@ from openinference.semconv.trace import (
 )
 
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
@@ -73,9 +73,7 @@ JudgeSignature = make_judge_signature()
 class Judge(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.judge = dspy.ChainOfThought(
-            JudgeSignature, rationale_type=custom_cot_rationale
-        )
+        self.judge = dspy.ChainOfThought(JudgeSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,

@@ -6,7 +6,7 @@ from chatdku.core.utils import (
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.prompt_settings import ROLE_PROMPT
 import dspy
 
@@ -76,9 +76,7 @@ CompressConversationMemorySignature = make_compress_conversation_memory_signatur
 class ConversationMemory(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.compressor = dspy.ChainOfThought(
-            CompressConversationMemorySignature, rationale_type=custom_cot_rationale
-        )
+        self.compressor = dspy.ChainOfThought(CompressConversationMemorySignature)
         self.history: list[ConversationMemoryEntry] = []
         self.summary: str = ""
         self.token_ratios: dict[str, float] = {
