@@ -213,6 +213,34 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
+            for (name, model), tool in zip(
+                self.planner.name_to_model.items(), self.planner.tools
+            ):
+                r = tool(
+                    query=current_user_message,
+                    internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                )
+                first_ite_result, internal_result = r.result, r.internal_result
+                if "ids" in internal_result:
+                    self.internal_memory["ids"] = (
+                        self.internal_memory.get("ids", set()) | internal_result["ids"]
+                    )
+                if VERBOSE:
+                    print(f"result: {first_ite_result}")
+
+                self.tool_memory(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    calls=[model(name=name, params={"query": current_user_message})],
+                    result=first_ite_result,
+                    max_history_size=limits["tool_history"],
+                )
+                if VERBOSE:
+                    print(f"tool memory: {self.tool_memory.history_str()}")
+
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
