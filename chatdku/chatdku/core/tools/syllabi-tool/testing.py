@@ -1,7 +1,8 @@
 import dspy
 from sql_agent import StepByStepSQLModule
 import psycopg2
-import getpass
+
+# import getpass
 from os import getenv
 import re
 

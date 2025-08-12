@@ -32,10 +32,11 @@
       "type": "string",
       "description": "Detailed course description"
     },
-    {"attributes": {
+    "attributes": {
       "type": "string",
-      "enum": ["two-credit-writing", 
-        "ah-foundations", 
+      "enum": [
+        "two-credit-writing",
+        "ah-foundations",
         "chinese-student-requirements",
         "common-core",
         "language",
@@ -43,8 +44,8 @@
         "quantitative-reasoning",
         "ss-foundations",
         "signature-projects"
-],
-    }},
+      ]
+    },
     "learning_outcomes": {
       "type": "array",
       "items": {
@@ -96,13 +97,13 @@
     },
     "semester": {
       "type": "string",
-      "enum": ["spring", "summer", "fall", "mini-term"],
+      "enum": ["spring", "summer", "fall"],
       "description": "Semester when the course is offered"
     },
     "semester_session": {
       "type": "string",
-      "enum": ["first", "second"],
-      "description": "Whether this is first or second session of the semester"
+      "enum": ["first", "second", "third", "fourth", "mini-term"],
+      "description": "Whether this is the first, second, third, or fourth seven-week session of the academic year, or a spring mini-term class."
     },
     "schedule_days": {
       "type": "array",

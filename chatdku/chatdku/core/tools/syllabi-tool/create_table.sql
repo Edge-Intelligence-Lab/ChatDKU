@@ -1,9 +1,10 @@
 DROP TABLE IF EXISTS classes CASCADE;
 DROP TYPE IF EXISTS season;
 DROP TYPE IF EXISTS first_or_second;
+DROP TYPE IF EXISTS attribute;
 
-CREATE TYPE season AS ENUM('spring', 'summer', 'fall', 'mini-term');
-CREATE TYPE first_or_second AS ENUM('first', 'second');
+CREATE TYPE season AS ENUM('spring', 'summer', 'fall');
+CREATE TYPE first_or_second AS ENUM('first', 'second', 'third', 'fourth', 'mini-term');
 CREATE TYPE attribute AS ENUM(
         'two-credit-writing', 
         'ah-foundations', 
@@ -44,7 +45,7 @@ CREATE TABLE classes (
     recitation_time TEXT,
     recitation_location TEXT,
     lab_time TEXT,
-    lac_location TEXT,
+    lab_location TEXT,
     grading_policy TEXT,
     grade_scale TEXT,
     assignment_policy TEXT,
