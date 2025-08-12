@@ -14,7 +14,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)
 
-    inputs = {k: f"{{{k}}}" for k in signature.input_fields}
+    inputs = kwargs
     if hasattr(predict_module, "demos"):
         demos = predict_module.demos
     else:
