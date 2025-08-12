@@ -19,15 +19,14 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
         demos = predict_module.demos
     else:
         demos = []
-    # All of the other kwargs are presumed to fit a prefix of the signature.
-    # That is, they are input variables for the bottom most generation, so
-    # we place them inside the input - x - together with the demos.
-    x = dspy.Example(demos=demos, **kwargs)
 
+    ## template was an old dspy primitive
+    ## I assume it was to get the final prompt to the llm
+    ## changes made by: Temuulen
+    ## Adapted from: https://github.com/stanfordnlp/dspy/issues/8259
     template = dspy.ChatAdapter().format(
         signature=signature, demos=demos, inputs=inputs
     )
-    print(template)
 
     return template
 

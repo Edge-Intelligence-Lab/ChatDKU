@@ -395,12 +395,11 @@ def main():
     use_phoenix()
 
     lm = dspy.LM(
-        model=config.llm,
+        model="openai/" + config.llm,
         api_base=config.llm_url,
         api_key="dummy",
         model_type="chat",
-        max_tokens=config.context_window,
-        stop=["<|im_end|>"],
+        max_tokens=30000,
     )
 
     dspy.configure(lm=lm)
@@ -408,7 +407,7 @@ def main():
 
     agent = Agent(
         max_iterations=2,
-        streaming=True,
+        streaming=False,
         get_intermediate=False,
     )
 
