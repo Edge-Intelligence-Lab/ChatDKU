@@ -36,8 +36,8 @@ def fetch_schema(conn):
     # print(schema)
     return str(schema)
 
-class QueryCurriculum(dspy.Module):
-    """A query about DKU course or class or instructor -> natural language answer from db"""
+class QueryCurriculumDB(dspy.Module):
+    """Use SQL to query anything about DKU courses classes or instructors -> natural language answer from db"""
     def __init__(
         self,
     ):
