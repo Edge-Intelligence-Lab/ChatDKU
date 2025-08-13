@@ -66,7 +66,7 @@ def routes(app, db, socketio, logger):
 
             # Create a new Agent instance per request
             agent = Agent(
-                max_iterations=max_iteration, streaming=True, get_intermediate=False
+                max_iterations=max_iteration, streaming=False, get_intermediate=False
             )
             responses_gen = agent(
                 current_user_message=message_content, question_id=question_id

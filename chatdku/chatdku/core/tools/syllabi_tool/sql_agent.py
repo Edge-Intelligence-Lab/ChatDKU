@@ -46,6 +46,7 @@ class TableSelectionSignature(dspy.Signature):
     """
     Select relevant tables for a query, with reasoning.
     Be sure to differentiate courses and classes as one course can have many classes.
+    The column course_code may or may not have a space between the course id name and level, meaning ‘MATH 101’ could also be ‘MATH101’.
     Don't take the request too literally, try to give as much info for the user as possible.
     """
 

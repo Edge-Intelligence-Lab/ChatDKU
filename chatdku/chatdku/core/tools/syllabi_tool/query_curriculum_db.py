@@ -8,12 +8,14 @@ import psycopg2
 # import getpass
 from os import getenv
 
+
 def remove_think_section(text: str) -> str:
     """
     Removes the first <think>...</think> section (including the tags) from the string.
     Works across multiple lines.
     """
     return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
 
 def fetch_schema(conn):
     # print("Fetching schema...")
@@ -36,8 +38,10 @@ def fetch_schema(conn):
     # print(schema)
     return str(schema)
 
+
 class QueryCurriculumDB(dspy.Module):
     """Use SQL to query anything about DKU courses classes or instructors -> natural language answer from db"""
+
     def __init__(
         self,
     ):
@@ -51,13 +55,13 @@ class QueryCurriculumDB(dspy.Module):
         )
 
         self.cursor = self.connection.cursor()
-    
+
     def forward(
         self,
         query: Annotated[
             str,
             Field(
-                description="A natural language question to ask a relational database of class+course data using SQL."
+                description="A natural language question to ask a relational database of class and course data using SQL."
             ),
         ],
         internal_memory: dict,
@@ -65,7 +69,7 @@ class QueryCurriculumDB(dspy.Module):
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
     ):
-        try:    
+        try:
             self.cursor.execute("SELECT version();")
             record = self.cursor.fetchone()
             print("You are connected to -", record)
@@ -83,8 +87,9 @@ class QueryCurriculumDB(dspy.Module):
             sql_agent = GenerateSQL()
             print("Executing agent...")
 
-        
-            final_sql = sql_agent(query=query, db_schema=fetch_schema(conn=self.connection))
+            final_sql = sql_agent(
+                query=query, db_schema=fetch_schema(conn=self.connection)
+            )
             print("\033[34mFinal SQL:", final_sql, "\033[0m")
             try:
                 self.cursor.execute(final_sql)
@@ -93,14 +98,12 @@ class QueryCurriculumDB(dspy.Module):
                 print("Improper query:", e)
                 tool_out = str(e)
             res = dspy.Predict("question, tool_output -> result, internal_result")(
-                    question=query, tool_output=tool_out
-                )
+                question=query, tool_output=tool_out
+            )
             res.result = remove_think_section(res.result)
             res.internal_result = {res.internal_result}
             print(res)
             return res
-            
-
 
         except Exception as e:
             print("Exception while testing: ", e)
