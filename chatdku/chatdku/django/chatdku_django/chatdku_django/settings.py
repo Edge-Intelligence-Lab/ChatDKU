@@ -230,7 +230,7 @@ LOCALE_PATHS = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = "https://chatdku.dukekunshan.edu.cn/django_static/"
-STATIC_ROOT = os.path.join("/var/www/chatdku/", "django_staticfiles")
+STATIC_ROOT = os.path.join("/var/www/chatdku_backend/", "django_staticfiles")
 
 
 # Default primary key field type

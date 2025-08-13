@@ -205,4 +205,3 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
-**/logchatdku/chatdku/custom_schema.yaml
