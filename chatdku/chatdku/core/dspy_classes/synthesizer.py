@@ -120,9 +120,13 @@ class ResponseGen:
     """
 
     def __init__(
-        self, prompt: str, synthesizer_span: Span = None, agent_span: Span = None
+        self,
+        prompt: str,
+        streamer,
+        synthesizer_span: Span = None,
+        agent_span: Span = None,
     ):
-        self.llm_completion_gen = Settings.llm.stream_complete(prompt)
+        self.llm_completion_gen = streamer
         if hasattr(config, "tracer"):
             self.span = config.tracer.start_span(
                 "LLM", context=set_span_in_context(synthesizer_span)
@@ -153,34 +157,28 @@ class ResponseGen:
 
         field = "Response:"
         before_response = ""
-        for r in self.llm_completion_gen:
-            before_response += r.delta
-            offset = before_response.find(field)
-            if offset != -1:
-                s = before_response[offset + len(field) :]
-                if s.strip():
-                    self.full_response += s.strip()
+        for chunk in self.llm_completion_gen:
+            if isinstance(chunk, dspy.streaming.StreamResponse):
+                if hasattr(config, "tracer"):
+                    context.detach(ctx_token)
+                yield chunk.chunk
+                if hasattr(config, "tracer"):
+                    ctx_token = context.attach(ctx)
+                break
+            if isinstance(chunk, dspy.Prediction):
+                self.full_response = chunk.response
 
-                    if hasattr(config, "tracer"):
-                        context.detach(ctx_token)
-                    yield s.strip()
-                    if hasattr(config, "tracer"):
-                        ctx_token = context.attach(ctx)
-
-                    prev_whitespace = rstripped(s)
-                    break
-
-        for r in self.llm_completion_gen:
-            s = r.delta
-            self.full_response += prev_whitespace + s.rstrip()
-
-            if hasattr(config, "tracer"):
-                context.detach(ctx_token)
-            yield prev_whitespace + s.rstrip()
-            if hasattr(config, "tracer"):
-                ctx_token = context.attach(ctx)
-
-            prev_whitespace = rstripped(s)
+        # for chunk in self.llm_completion_gen:
+        #     s = chunk.delta
+        #     self.full_response += prev_whitespace + s.rstrip()
+        #
+        #     if hasattr(config, "tracer"):
+        #         context.detach(ctx_token)
+        #     yield prev_whitespace + s.rstrip()
+        #     if hasattr(config, "tracer"):
+        #         ctx_token = context.attach(ctx)
+        #
+        #     prev_whitespace = rstripped(s)
 
         if hasattr(config, "tracer"):
             context.detach(ctx_token)
@@ -201,8 +199,6 @@ class ResponseGen:
 
     def get_full_response(self) -> str:
         # Make sure the entire response is read
-        for _ in self:
-            pass
         return self.full_response
 
 
@@ -285,10 +281,16 @@ class Synthesizer(dspy.Module):
                     # response_gen = ResponseGen(
                     #     synthesizer_template, span, parent_span if final else None
                     # )
-                    response_gen = synthesizer_streamer(**synthesizer_args)
+                    response_gen = ResponseGen(
+                        synthesizer_template,
+                        synthesizer_streamer(**synthesizer_args),
+                        span,
+                        parent_span if final else None,
+                    )
                 else:
-                    # response_gen = ResponseGen(synthesizer_template)
-                    response_gen = synthesizer_streamer(**synthesizer_args)
+                    response_gen = ResponseGen(
+                        synthesizer_template, synthesizer_streamer(**synthesizer_args)
+                    )
                 return dspy.Prediction(response=response_gen)
 
         else:
