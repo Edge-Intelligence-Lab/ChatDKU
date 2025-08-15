@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 
-from typing import Any
 import traceback
 
-from llama_index.core import Settings
-from llama_index.core.base.llms.types import CompletionResponse
 
-import functools
-from dsp import LM
+from openai import OpenAI
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
 
@@ -32,84 +27,6 @@ from openinference.semconv.trace import (
 
 from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
-
-
-class CustomClient(LM):
-    def __init__(self) -> None:
-        self.provider = "default"
-        self.history = []
-        self.kwargs = {
-            "temperature": Settings.llm.temperature,
-            "max_tokens": config.context_window,
-        }
-
-    def basic_request(self, prompt: str, **kwargs: Any) -> CompletionResponse:
-        try:
-
-            with (
-                config.tracer.start_as_current_span("LLM")
-                if hasattr(config, "tracer")
-                else nullcontext()
-            ) as span:
-                span.set_attributes(
-                    {
-                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.LLM.value,
-                        SpanAttributes.INPUT_VALUE: prompt,
-                        SpanAttributes.LLM_MODEL_NAME: config.llm,
-                        SpanAttributes.LLM_INVOCATION_PARAMETERS: safe_json_dumps(kwargs),
-                    }
-                )
-
-                response = Settings.llm.complete(prompt, **kwargs)
-                span.set_attribute(SpanAttributes.OUTPUT_VALUE, response.text)
-                self.history.append(
-                    {
-                        "prompt": prompt,
-                        "response": response,
-                        "kwargs": kwargs,
-                    }
-                )
-
-                span.set_status(Status(StatusCode.OK))
-                return response
-        except Exception as e:
-            print(f"Exception at basec_request: {e}")
-
-    def inspect_history(self, n: int = 1, skip: int = 0) -> str:
-        last_prompt = None
-        printed = []
-        n = n + skip
-
-        for x in reversed(self.history[-100:]):
-            prompt = x["prompt"]
-            if prompt != last_prompt:
-                printed.append((prompt, x["response"].text))
-            last_prompt = prompt
-            if len(printed) >= n:
-                break
-
-        printing_value = ""
-        for idx, (prompt, text) in enumerate(reversed(printed)):
-            # skip the first `skip` prompts
-            if (n - idx - 1) < skip:
-                continue
-            printing_value += "\n\n\n"
-            printing_value += prompt
-            printing_value += self.print_green(text, end="")
-            printing_value += "\n\n\n"
-
-        print(printing_value)
-        return printing_value
-
-    def __call__(
-        self,
-        prompt: str,
-        only_completed: bool = True,
-        return_sorted: bool = False,
-        **kwargs: Any,
-    ) -> list[str]:
-        return [self.request(prompt, **kwargs).text]
-
 
 
 class Agent(dspy.Module):
@@ -138,15 +55,8 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.planner = assert_transform_module(
-            Planner(
-                [
-                    VectorRetriever(),
-                    KeywordRetriever(),
-                ],
-            ),
-            functools.partial(backtrack_handler, max_backtracks=5),
-        )
+        self.planner = Planner([VectorRetriever(), KeywordRetriever()])
+
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
 
@@ -157,9 +67,7 @@ class Agent(dspy.Module):
         # but mixing them appears to not cause any issues.
         self.internal_memory = {}
         self.synthesizer = Synthesizer()
-        self.judge = assert_transform_module(
-            Judge(), functools.partial(backtrack_handler, max_backtracks=5)
-        )
+        self.judge = Judge()
         self.queryrewriter = QueryRewrite()
 
         self.prev_response = None
@@ -225,21 +133,6 @@ class Agent(dspy.Module):
                     content=r,
                     max_history_size=limits["conversation_history"],
                 )
-
-            # FIXME: Pre-calling tools.
-            # Currently, it calls ALL tools as the first iteration.
-            # However, it has two issues:
-            # 1. The API of the tools might differ in the future
-            #    (having something other than `query` in parameters).
-            # 2. It has issues with DSPy assertions.
-            # 3. The zipping of the `name_to_model` and `tools` might be problematic.
-            if VERBOSE:
-                print("pre-calling tools")
-
-            # Deal with DSPy assertions
-            # Reference: https://github.com/stanfordnlp/dspy/blob/af5186cf07ab0b95d5a12690d5f7f90f202bc86e/dspy/predict/retry.py#L59
-            with dspy.settings.lock:
-                dspy.settings.backtrack_to = None
 
             for (name, model), tool in zip(
                 self.planner.name_to_model.items(), self.planner.tools
@@ -327,9 +220,9 @@ class Agent(dspy.Module):
                     )
                     if VERBOSE:
                         print(f"Planner:{planner}")
-                except dspy.DSPyAssertionError:
+                except Exception as e:
                     if VERBOSE:
-                        print("max assertion retries hit")
+                        print(e)
                     break
 
                 if VERBOSE:
@@ -423,21 +316,20 @@ def main():
     # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
-    new_lm = dspy.OpenAI(
-        model="Qwen/Qwen3-8B",
-        api_base="http://127.0.0.1:18082/v1/",
+    lm = dspy.LM(
+        model="openai/" + config.llm,
+        api_base=config.llm_url,
         api_key="dummy",
         model_type="chat",
-        max_tokens=50000,
-        stop=["<|im_end|>"]
+        max_tokens=30000,
     )
-    dspy.configure(lm=new_lm)
 
+    dspy.configure(lm=lm)
     import time
 
     agent = Agent(
         max_iterations=2,
-        streaming=True,
+        streaming=False,
         get_intermediate=False,
     )
 
