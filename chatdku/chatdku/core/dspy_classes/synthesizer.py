@@ -164,7 +164,6 @@ class ResponseGen:
                 yield chunk.chunk
                 if hasattr(config, "tracer"):
                     ctx_token = context.attach(ctx)
-                break
             if isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
 

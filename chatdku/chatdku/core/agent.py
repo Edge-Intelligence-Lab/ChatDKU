@@ -329,7 +329,7 @@ def main():
 
     agent = Agent(
         max_iterations=2,
-        streaming=False,
+        streaming=True,
         get_intermediate=False,
     )
 
