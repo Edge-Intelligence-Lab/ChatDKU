@@ -207,3 +207,4 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
+**/dku_website

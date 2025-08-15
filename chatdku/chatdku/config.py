@@ -24,7 +24,7 @@ class Config:
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
-                "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/scrapes/scrape_20250815/download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_host": redis_host,
                 "redis_password":redis_password,
