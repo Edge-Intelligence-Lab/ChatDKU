@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-import traceback
-
-
 import dspy
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
@@ -17,6 +13,7 @@ from chatdku.core.dspy_classes.judge import Judge
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
+import traceback
 from opentelemetry.trace import Status, StatusCode, use_span
 from openinference.semconv.trace import (
     SpanAttributes,
@@ -320,7 +317,7 @@ def main():
         api_base=config.llm_url,
         api_key="dummy",
         model_type="chat",
-        max_tokens=30000,
+        max_tokens=config.context_window,
     )
 
     dspy.configure(lm=lm)
