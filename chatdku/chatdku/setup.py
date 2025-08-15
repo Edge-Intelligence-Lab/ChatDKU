@@ -118,17 +118,16 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
 
 
 def use_phoenix():
+    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
+    collector_endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
     tracer_provider = register(
         project_name="ChatDKU_student_release",  # Default is 'default'
         auto_instrument=True,  # See 'Trace all calls made to a library' below
+        endpoint=collector_endpoint,
+        batch=True,
     )
 
-    tracer = tracer_provider.get_tracer(__name__)
-
-    trace.set_tracer_provider(tracer_provider)
-    # config.tracer = trace.get_tracer(__name__)
-    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
-    collector_endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
-    # span_exporter = OTLPSpanExporter(endpoint=collector_endpoint)
-    # simple_span_processor = SimpleSpanProcessor(span_exporter=span_exporter)
-    # trace.get_tracer_provider().add_span_processor(simple_span_processor)
+    config.tracer = tracer_provider.get_tracer(__name__)
+    span_exporter = OTLPSpanExporter(endpoint=collector_endpoint)
+    simple_span_processor = SimpleSpanProcessor(span_exporter=span_exporter)
+    tracer_provider.add_span_processor(simple_span_processor)
