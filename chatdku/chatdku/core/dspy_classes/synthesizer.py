@@ -138,6 +138,7 @@ class ResponseGen:
         self.full_response = ""
 
     def __iter__(self):
+        first_token = True
         # When streaming the response, it starts a new span inside `synthesizer_span`
         # and ends `synthesizer_span` on completion.
         # Additionally, as the "lifetime" of the agent actually ends when streaming is complete,
@@ -154,13 +155,14 @@ class ResponseGen:
         # before_response = ""
         for chunk in self.llm_completion_gen:
             if isinstance(chunk, dspy.streaming.StreamResponse):
+                first_token = False
                 if hasattr(config, "tracer"):
                     context.detach(ctx_token)
                 yield chunk.chunk
                 if hasattr(config, "tracer"):
                     ctx_token = context.attach(ctx)
 
-            if isinstance(chunk, dspy.Prediction):
+            if first_token and isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
                 yield chunk.response
 
