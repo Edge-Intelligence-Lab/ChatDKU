@@ -351,7 +351,6 @@ def main():
             )
             first_token = True
             print("Response:")
-            print(responses_gen)
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()
