@@ -3,7 +3,6 @@
 import traceback
 
 
-from openai import OpenAI
 import dspy
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
