@@ -162,7 +162,7 @@ class ResponseGen:
 
             if isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
-                yield chunk.chunk
+                yield chunk.response
 
         # for chunk in self.llm_completion_gen:
         #     s = chunk.delta
