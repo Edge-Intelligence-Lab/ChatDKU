@@ -1,7 +1,3 @@
-from itertools import takewhile
-
-from llama_index.core import Settings
-
 import dspy
 
 from contextlib import nullcontext
@@ -22,7 +18,7 @@ from openinference.semconv.trace import (
 )
 
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import custom_cot_rationale, get_template
+from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
@@ -103,7 +99,7 @@ def make_synthesizer_signature():
         "7. **Never mention internal tools**:\n"
         "   - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).\n"
         "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.\n"
-        "   - Never Present your Reasoning when generating response" 
+        "   - Never Present your Reasoning when generating response"
         "---\n\n"
     )
 
@@ -116,14 +112,16 @@ SynthesizerSignature = make_synthesizer_signature()
 
 
 class ResponseGen:
-    """A generator that extracts `response` field and strips whitespace
-    given the generator for the entire LLM completion.
-    """
+    """A generator that uses the DSPY streamify."""
 
     def __init__(
-        self, prompt: str, synthesizer_span: Span = None, agent_span: Span = None
+        self,
+        prompt: str,
+        streamer,
+        synthesizer_span: Span = None,
+        agent_span: Span = None,
     ):
-        self.llm_completion_gen = Settings.llm.stream_complete(prompt)
+        self.llm_completion_gen = streamer
         if hasattr(config, "tracer"):
             self.span = config.tracer.start_span(
                 "LLM", context=set_span_in_context(synthesizer_span)
@@ -140,6 +138,7 @@ class ResponseGen:
         self.full_response = ""
 
     def __iter__(self):
+        first_token = True
         # When streaming the response, it starts a new span inside `synthesizer_span`
         # and ends `synthesizer_span` on completion.
         # Additionally, as the "lifetime" of the agent actually ends when streaming is complete,
@@ -148,40 +147,36 @@ class ResponseGen:
             ctx = set_span_in_context(self.span)
             ctx_token = context.attach(ctx)
 
-        def rstripped(s):
-            """Extract the trailing whitespace itself."""
-            return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
+        # def rstripped(s):
+        #     """Extract the trailing whitespace itself."""
+        #     return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
+        #
+        # field = "Response:"
+        # before_response = ""
+        for chunk in self.llm_completion_gen:
+            if isinstance(chunk, dspy.streaming.StreamResponse):
+                first_token = False
+                if hasattr(config, "tracer"):
+                    context.detach(ctx_token)
+                yield chunk.chunk
+                if hasattr(config, "tracer"):
+                    ctx_token = context.attach(ctx)
 
-        field = "Response:"
-        before_response = ""
-        for r in self.llm_completion_gen:
-            before_response += r.delta
-            offset = before_response.find(field)
-            if offset != -1:
-                s = before_response[offset + len(field) :]
-                if s.strip():
-                    self.full_response += s.strip()
+            if first_token and isinstance(chunk, dspy.Prediction):
+                self.full_response = chunk.response
+                yield chunk.response
 
-                    if hasattr(config, "tracer"):
-                        context.detach(ctx_token)
-                    yield s.strip()
-                    if hasattr(config, "tracer"):
-                        ctx_token = context.attach(ctx)
-
-                    prev_whitespace = rstripped(s)
-                    break
-
-        for r in self.llm_completion_gen:
-            s = r.delta
-            self.full_response += prev_whitespace + s.rstrip()
-
-            if hasattr(config, "tracer"):
-                context.detach(ctx_token)
-            yield prev_whitespace + s.rstrip()
-            if hasattr(config, "tracer"):
-                ctx_token = context.attach(ctx)
-
-            prev_whitespace = rstripped(s)
+        # for chunk in self.llm_completion_gen:
+        #     s = chunk.delta
+        #     self.full_response += prev_whitespace + s.rstrip()
+        #
+        #     if hasattr(config, "tracer"):
+        #         context.detach(ctx_token)
+        #     yield prev_whitespace + s.rstrip()
+        #     if hasattr(config, "tracer"):
+        #         ctx_token = context.attach(ctx)
+        #
+        #     prev_whitespace = rstripped(s)
 
         if hasattr(config, "tracer"):
             context.detach(ctx_token)
@@ -202,17 +197,13 @@ class ResponseGen:
 
     def get_full_response(self) -> str:
         # Make sure the entire response is read
-        for _ in self:
-            pass
         return self.full_response
 
 
 class Synthesizer(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.synthesizer = dspy.ChainOfThought(
-            SynthesizerSignature, rationale_type=custom_cot_rationale
-        )
+        self.synthesizer = dspy.ChainOfThought(SynthesizerSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
@@ -267,22 +258,27 @@ class Synthesizer(dspy.Module):
                 parent_span = get_current_span()
 
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                # A hacky way to stream the final response synthesis LLM call.
-                # The synthesizer module is first converted to a prompt string.
-                # Then the LLM is called manually, and the generator returned is wrapped
-                # to extract only the `response` field.
-                #
-                # FIXME: Contribute streaming support to DSPy
-                # Also see: https://github.com/stanfordnlp/dspy/issues/338
                 synthesizer_template = get_template(
                     self.synthesizer, **synthesizer_args
                 )
+                synthesizer_streamer = dspy.streamify(
+                    program=self.synthesizer,
+                    stream_listeners=[
+                        dspy.streaming.StreamListener(signature_field_name="response")
+                    ],
+                    async_streaming=False,
+                )
                 if hasattr(config, "tracer"):
                     response_gen = ResponseGen(
-                        synthesizer_template, span, parent_span if final else None
+                        synthesizer_template,
+                        synthesizer_streamer(**synthesizer_args),
+                        span,
+                        parent_span if final else None,
                     )
                 else:
-                    response_gen = ResponseGen(synthesizer_template)
+                    response_gen = ResponseGen(
+                        synthesizer_template, synthesizer_streamer(**synthesizer_args)
+                    )
                 return dspy.Prediction(response=response_gen)
 
         else:

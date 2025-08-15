@@ -1,6 +1,5 @@
-import dsp
 import dspy
-from dspy.signatures.signature import ensure_signature, signature_to_template
+from dspy.signatures.signature import ensure_signature
 
 
 def get_template(predict_module: dspy.Module, **kwargs) -> str:
@@ -8,24 +7,28 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
     Adapted from https://github.com/stanfordnlp/dspy/blob/55510eec1b83fa77f368e191a363c150df8c5b02/dspy/predict/llamaindex.py#L22-L36
     """
     # FIXME: This might not be an elegant way to access the predict module.
-    # This is due to that `ChainOfThought` stores the predict module in `_predict` attribute.
-    if hasattr(predict_module, "_predict"):
-        predict_module = predict_module._predict
+    # This is due to that `ChainOfThought` stores the predict module in `predict` attribute.
+    if hasattr(predict_module, "predict"):
+        predict_module = predict_module.predict
 
     # Extract the three privileged keyword arguments.
     signature = ensure_signature(predict_module.signature)
-    # Switch to legacy format for dsp.generate
-    template = signature_to_template(signature)
 
+    inputs = kwargs
     if hasattr(predict_module, "demos"):
         demos = predict_module.demos
     else:
         demos = []
-    # All of the other kwargs are presumed to fit a prefix of the signature.
-    # That is, they are input variables for the bottom most generation, so
-    # we place them inside the input - x - together with the demos.
-    x = dsp.Example(demos=demos, **kwargs)
-    return template(x)
+
+    ## template was an old dspy primitive
+    ## I assume it was to get the final prompt to the llm
+    ## changes made by: Temuulen
+    ## Adapted from: https://github.com/stanfordnlp/dspy/issues/8259
+    template = dspy.ChatAdapter().format(
+        signature=signature, demos=demos, inputs=inputs
+    )
+
+    return template
 
 
 custom_cot_rationale = dspy.OutputField(

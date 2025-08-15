@@ -14,7 +14,7 @@ from openinference.semconv.trace import (
 )
 import re
 
-from chatdku.core.dspy_common import get_template, custom_cot_rationale
+from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
     NameParams,
     func_to_model,
@@ -34,18 +34,21 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
-import re
+
 
 # Heuristic regex method to filter out reasoning and make into proper format for processing (For Qwen3)
-#TODO: Make the Model follow proper instruction via prompting or SFT
-def plan_filter(plans:list):
+# TODO: Make the Model follow proper instruction via prompting or SFT
+def plan_filter(plans: list):
     """Filter Plan from a series of reasoning"""
 
-    pattern=r'\{'
-    filtered_plan=[plan for plan in plans if re.search(pattern,plan)]
-    objects = [obj for plan in filtered_plan for obj in re.findall(r'\{.*?\}(?=\s*\{|\s*$)', plan)]
+    pattern = r"\{"
+    filtered_plan = [plan for plan in plans if re.search(pattern, plan)]
+    objects = [
+        obj
+        for plan in filtered_plan
+        for obj in re.findall(r"\{.*?\}(?=\s*\{|\s*$)", plan)
+    ]
     return objects
-
 
 
 def make_planner_signature():
@@ -110,13 +113,15 @@ def make_planner_signature():
     }
 
     instruction = (
-        "Your current task is to answer the Current User Message using the tools given below. "
-        "Generate a step-by-step plan including each tool and all its parameters. "
+        "You are a tool planner for an AI chatbot. "
+        "Your current task is to plan the correct tool plans to answer the Current User Message. "
+        "All tool parameters are required."
     )
 
-
     return dspy.make_signature(
-        fields, ROLE_PROMPT + "\n\n" + instruction, "PlannerSignature"
+        signature=fields,
+        instructions=(ROLE_PROMPT + "\n\n" + instruction),
+        signature_name="PlannerSignature",
     )
 
 
@@ -124,7 +129,7 @@ PlannerSignature = make_planner_signature()
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools: list[dspy.Module]):
+    def __init__(self, tools: list):
         super().__init__()
 
         self.tools = tools
@@ -143,7 +148,7 @@ class Planner(dspy.Module):
             )
             ToolModel = create_model(
                 tool_name_camel,
-                model_config=ConfigDict(extra="forbid"),
+                __config__=ConfigDict(extra="forbid"),
                 name=(
                     Literal[tool_name_snake],
                     Field(..., description=tool_description),
@@ -153,9 +158,7 @@ class Planner(dspy.Module):
             )
             self.name_to_model[tool_name_snake] = ToolModel
 
-        self.planner = dspy.ChainOfThought(
-            PlannerSignature, rationale_type=custom_cot_rationale
-        )
+        self.planner = dspy.ChainOfThought(PlannerSignature)
 
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
@@ -218,7 +221,45 @@ class Planner(dspy.Module):
                 }
             )
 
-            plan_str_all = self.planner(
+            # Parse tool plan response
+            def _check_errors(args, pred: dspy.Prediction) -> float:
+                score = 1.0
+                plan_str_all = pred.current_tool_plan
+                plan_strs = plan_str_all.strip().split("\n")
+                plan_strs = [s.strip() for s in plan_strs]
+                plan_strs = plan_filter(plan_strs)
+
+                if 5 > len(plan_strs) >= 1:
+                    calls_unvalidated = []
+                    for i, s in enumerate(plan_strs, 1):
+                        try:
+                            calls_unvalidated.append(NameParams.model_validate_json(s))
+                        except ValidationError as e:
+                            print(f"ValidationError on tool call line {i}: {e}")
+                            score -= 0.1
+                    calls = []
+                    for i, c in enumerate(calls_unvalidated, 1):
+                        if c.name not in self.name_to_model:
+                            print(
+                                f'"{c.name}" is not a valid tool. Available tool(s) are: {", ".join(self.name_to_model)}.'
+                            )
+                            score -= 0.1
+                        try:
+                            calls.append(
+                                self.name_to_model[c.name](name=c.name, params=c.params)
+                            )
+                        except ValidationError as e:
+                            print(f"ValidationError on tool call line {i}: {e}")
+                            score -= 0.1
+                    return score
+                else:
+                    return 0.0
+
+            refined_planner = dspy.Refine(
+                self.planner, N=2, reward_fn=_check_errors, threshold=1.0
+            )
+
+            plan_str_all = refined_planner(
                 available_tools="\n".join(
                     [str(m.model_json_schema()) for m in self.name_to_model.values()]
                 ),
@@ -226,40 +267,15 @@ class Planner(dspy.Module):
                 **planner_inputs,
             ).current_tool_plan
 
-            # Parse tool plan response
             plan_strs = plan_str_all.strip().split("\n")
-            plan_strs = list(set([s.strip() for s in plan_strs]))
-            plan_strs=plan_filter(plan_strs)
-            print(plan_strs)
-
-            dspy.Assert(len(plan_strs) >= 1, "Must use at least one tool.")
-            dspy.Assert(
-                len(plan_strs) <= max_calls,
-                f"The number of tool calls in your plan must be no more than {max_calls}.",
-            )
-
-            calls_unvalidated = []
-            for i, s in enumerate(plan_strs, 1):
-                try:
-                    calls_unvalidated.append(NameParams.model_validate_json(s))
-                except ValidationError as e:
-                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+            plan_strs = [s.strip() for s in plan_strs]
+            plan_strs = plan_filter(plan_strs)
 
             calls = []
-            for i, c in enumerate(calls_unvalidated, 1):
-                dspy.Assert(
-                    c.name in self.name_to_model,
-                    (
-                        f'"{c.name}" is not a valid tool. '
-                        f"Available tool(s) are: {', '.join(self.name_to_model)}."
-                    ),
-                )
-                try:
-                    calls.append(
-                        self.name_to_model[c.name](name=c.name, params=c.params)
-                    )
-                except ValidationError as e:
-                    dspy.Assert(False, f"ValidationError on tool call line {i}: {e}")
+
+            for i, c in enumerate(plan_strs, 1):
+                calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
+
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(calls),
