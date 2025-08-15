@@ -76,6 +76,8 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+#scrapper 
+**/dku_website
 # PyBuilder
 .pybuilder/
 target/
