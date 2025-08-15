@@ -1,0 +1,41 @@
+DROP TABLE IF EXISTS classes CASCADE;
+DROP TYPE IF EXISTS season;
+DROP TYPE IF EXISTS first_or_second;
+
+CREATE TYPE season AS ENUM('spring', 'summer', 'fall', 'mini-term');
+CREATE TYPE first_or_second as ENUM('first', 'second');
+
+CREATE TABLE classes (
+    class_id SERIAL PRIMARY KEY,
+    course_code VARCHAR(15) NOT NULL,
+    course_title TEXT,
+    credit_hours NUMERIC(3,1),
+    course_format TEXT,
+    prerequisites TEXT,
+    description TEXT,
+    learning_outcomes TEXT[],
+    required_textbook TEXT,
+    optional_textbooks TEXT[],
+    academic_policies TEXT,
+    instructor_email TEXT,
+    instructor_name TEXT,
+    office_location TEXT,
+    office_hours TEXT,
+    biography TEXT,
+    year INT,
+    semester season NOT NULL,
+    semester_session first_or_second NOT NULL,
+    schedule_days TEXT[],
+    schedule_time_start TEXT,
+    schedule_time_end TEXT,
+    location TEXT,
+    recitation_time TEXT,
+    recitation_location TEXT,
+    lab_time TEXT,
+    lac_location TEXT,
+    grading_policy TEXT,
+    grade_scale TEXT,
+    assignment_policy TEXT,
+    communication_policy TEXT,
+    teaching_methods TEXT
+);

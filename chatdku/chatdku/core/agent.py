@@ -333,8 +333,11 @@ def main():
         get_intermediate=False,
     )
 
-    user_id = input("Input your user id (Chat_DKU for default): ")
-    search_mode = int(input("Search mode (0 for default): "))
+    user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
+
+    search_mode_input = input("Search mode (0 for default): ")
+    search_mode = int(search_mode_input) if search_mode_input else 0
+
     while True:
         try:
             print("*" * 10)
@@ -348,6 +351,7 @@ def main():
             )
             first_token = True
             print("Response:")
+            print(responses_gen)
             for r in responses_gen.response:
                 if first_token:
                     end_time = time.time()

@@ -48,9 +48,12 @@ class MyUser(HttpUser):
         '''Get User Docs'''
         response = self.client.get('/user/user_files', headers=self.headers)
         try:
+            if not response.text.strip():
+                logger.warning("Empty response body from /user/user_files")
+                return []
             return response.json().get('document', [])
         except Exception as e:
-            logger.warning(f"Failed to parse document list: {e}")
+            logger.warning(f"Failed to parse document list: {e}. Raw response: {response.text}")
             return []
 
     def generate_chat(self):
@@ -79,7 +82,7 @@ class MyUser(HttpUser):
         try:
             payload = self.generate_chat()
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
-            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}")
+            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}\n")
         except Exception as e:
             logger.error(f'Chat Error: {str(e)}')
 

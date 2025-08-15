@@ -1,0 +1,81 @@
+index:
+  name: idx:temka_testing
+  prefix: temka_testing_doc
+  key_separator: ':'
+  storage_type: hash
+fields:
+- name: id
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: user_id
+  type: tag
+  attrs:
+    sortable: true
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: doc_id
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: text
+  type: text
+  attrs:
+    sortable: false
+    weight: 1
+    no_stem: false
+    withsuffixtrie: false
+- name: file_name
+  type: tag
+  attrs:
+    sortable: true
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: page_number
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: groups
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: file_path
+  type: tag
+  attrs:
+    sortable: true
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: last_modified_date
+  type: tag
+  attrs:
+    sortable: false
+    separator: ','
+    case_sensitive: false
+    withsuffixtrie: false
+- name: vector
+  type: vector
+  attrs:
+    dims: 1024
+    algorithm: hnsw
+    datatype: float32
+    distance_metric: cosine
+    m: 16
+    ef_construction: 200
+    ef_runtime: 10
+    epsilon: 0.01
+version: 0.1.0

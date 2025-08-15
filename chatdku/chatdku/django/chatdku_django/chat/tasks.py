@@ -8,6 +8,8 @@ import datetime
 from django.template.loader import render_to_string
 from chat.mail import EmailUtil
 import os
+from django.core.cache import cache
+
 
 dotenv.load_dotenv()
 
@@ -21,12 +23,14 @@ logger=logging.getLogger(__name__)
 def chat_load_test_weekly():
     try:
         file_conf=os.path.join(settings.BASE_DIR,"locust_weekly.conf")
-        runner=subprocess.run(["locust","--config",file_conf],check=True,capture_output=True,text=True)
+        locust_path=os.getenv("LOCUST_PATH")
+
+        runner=subprocess.run([locust_path,"--config",file_conf],check=True,capture_output=True,text=True)
         logger.info("Load Test Successful")
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"ErrorCode: {str(runner.returncode)}")
-        logger.error(f"ErrorOutput: {str(runner.stderr)}")
+        logger.error(f"ErrorCode: {str(e.returncode)}")
+        logger.error(f"ErrorOutput: {str(e.stderr)}")
 
     except Exception as e:
         logger.error(f'Chat loader error: {str(e)}')
@@ -48,15 +52,21 @@ def email_weekly_load():
     subject="Weekly ChatDKU Test Result"
     body_content="ChatDKU Weekly Load Test\n"
 
+
+
+
+
     for item in data['locust_data']:
         body_content+=f"Type: {item['type']}\nName:{item['name']}\nRequest Count: {item['request_count']}\nFailure Count: {item['failure_count']}\nAverage Response Time: {item['average_response_time']}\nFailure Percentage: {item['failure_percentage']}\n\n"
 
     try:
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content)
+        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content,add_logo=True)
 
     except Exception as e:
         logger.error(f"Error sending Weekly Load Report: {str(e)}")
 
+FAILURE_THRESHOLD=6
+COUNTER_KEY = "chat_load_test_daily:failures"
 
 
 #For daily task
@@ -67,15 +77,28 @@ def chat_load_test_daily():
         locust_path=os.getenv("LOCUST_PATH")
         runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
         logger.info("Daily Chat Test Successful")
+        
 
     except subprocess.CalledProcessError as e:
+        failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
+
+        if failures==1:
+            cache.set(COUNTER_KEY,1,timeout=60*60) #1hr
+
+
         logger.error(f"ErrorCode: {str(e.returncode)}")
         logger.error(f"ErrorOutput: {str(e.stderr)}")
-        from_email=os.getenv("EMAIL_HOST_USER")
-        to_email=os.getenv("EMAIL_TO")
-        subject="Error in ChatDKU"
-        body=f"Error Occured When completing Daily Load Test at {datetime.datetime.now()}"
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body)
+        if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
+            from_email=os.getenv("EMAIL_HOST_USER")
+            to_email=os.getenv("EMAIL_TO")
+            subject="Error in ChatDKU"
+            body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
+            body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
+
+            EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+
+            logger.info("Email sent on: ",datetime.datetime.now())
+            cache.delete(COUNTER_KEY)
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
@@ -94,11 +117,3 @@ def delete_locust_logs():
 
     except Exception as e:
         logger.error(f"Error in deleting locust logs: {str(e)}")
-
-
-
-
-
-
-
-
