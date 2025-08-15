@@ -1,7 +1,3 @@
-from itertools import takewhile
-
-from llama_index.core import Settings
-
 import dspy
 
 from contextlib import nullcontext
@@ -115,9 +111,7 @@ SynthesizerSignature = make_synthesizer_signature()
 
 
 class ResponseGen:
-    """A generator that extracts `response` field and strips whitespace
-    given the generator for the entire LLM completion.
-    """
+    """A generator that uses the DSPY streamify."""
 
     def __init__(
         self,
@@ -151,12 +145,12 @@ class ResponseGen:
             ctx = set_span_in_context(self.span)
             ctx_token = context.attach(ctx)
 
-        def rstripped(s):
-            """Extract the trailing whitespace itself."""
-            return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
-
-        field = "Response:"
-        before_response = ""
+        # def rstripped(s):
+        #     """Extract the trailing whitespace itself."""
+        #     return "".join(reversed(tuple(takewhile(str.isspace, reversed(s)))))
+        #
+        # field = "Response:"
+        # before_response = ""
         for chunk in self.llm_completion_gen:
             if isinstance(chunk, dspy.streaming.StreamResponse):
                 if hasattr(config, "tracer"):
@@ -164,7 +158,7 @@ class ResponseGen:
                 yield chunk.chunk
                 if hasattr(config, "tracer"):
                     ctx_token = context.attach(ctx)
-                break
+
             if isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
 
@@ -260,13 +254,6 @@ class Synthesizer(dspy.Module):
                 parent_span = get_current_span()
 
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                # A hacky way to stream the final response synthesis LLM call.
-                # The synthesizer module is first converted to a prompt string.
-                # Then the LLM is called manually, and the generator returned is wrapped
-                # to extract only the `response` field.
-                #
-                # FIXME: Contribute streaming support to DSPy
-                # Also see: https://github.com/stanfordnlp/dspy/issues/338
                 synthesizer_template = get_template(
                     self.synthesizer, **synthesizer_args
                 )
@@ -278,9 +265,6 @@ class Synthesizer(dspy.Module):
                     async_streaming=False,
                 )
                 if hasattr(config, "tracer"):
-                    # response_gen = ResponseGen(
-                    #     synthesizer_template, span, parent_span if final else None
-                    # )
                     response_gen = ResponseGen(
                         synthesizer_template,
                         synthesizer_streamer(**synthesizer_args),
