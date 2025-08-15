@@ -134,6 +134,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.syllabi-env/
 
 # Spyder project settings
 .spyderproject
@@ -204,4 +205,3 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
-**/logchatdku/chatdku/custom_schema.yaml

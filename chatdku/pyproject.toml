@@ -52,6 +52,7 @@ dependencies = [
     "openai-whisper",
     "ollama==0.4.9",
     "plotly==6.1.2",
+    "ffmpeg==1.4",
 
     #Django backend
     "Django~=5.2.3",
@@ -64,7 +65,11 @@ dependencies = [
     "djangorestframework~=3.16.0",
     "django-celery-beat~=2.8.1",
     "django_celery_results~=2.6.0",
-    "celery~=5.5.3"
+    "celery~=5.5.3",
+    "django-redis~=6.0.0",
+    "pandas~=2.2.3",
+    "redis~=5.2.1"
+
     ]
 
 [tool.setuptools]

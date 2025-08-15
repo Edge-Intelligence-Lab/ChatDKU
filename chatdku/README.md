@@ -13,9 +13,9 @@
 - `chatdku/frontend`: The HTML, CSS, and JavaScript web frontend.
 
 - `chatdku.backend`: Backend Flask apps.
-  - `chatdku.backend.agent_app`: The main backend app that uses `chatdku.core.agent`.
-  - `chatdku.backend.save_feedback`: The backend app that saves user feedback.
-
+  - `backend.stt_app`: Speech-to-Text app
+  - `backend.whisper_model`: Whisper API using Flask
+- `chatdku.django`: Django Based Backend 
 ## Setup
 
 ### Embedding Model and LLM
@@ -82,39 +82,8 @@ export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5
 ```
 _This is considered [unsecure](https://github.com/Glitterccc/ChatDKU/issues/15), but only a temporary convenience during development._
 
-Then start one of the following:
-
-#### Single-process (`agent_app.py`)
-
-Next, start the `agent_app.py` service. This is the agent interface.(agent_app use port `9015` now)
-```bash
-nohup python -u chatdku/backend/agent_app.py > ./logs/agent_logs.txt &
-disown -h
-```
-
-#### Multi-process (`agent_app_parallel.py`)
-
-Port, number of workers, and timeout can be adjusted. __Use port `9015` to match frontend's setting.__
-
-```bash
-nohup python -u -m gunicorn chatdku.backend.agent_app_parellel:app --bind 0.0.0.0:9015 --workers 32 --timeout 120 > ./logs/agent_logs.txt &
-
-disown -h
-```
-
-### Feedback Collection Backend (`save_feedback.py`)
-
-Finally, start the `save_feedback.py` service. (Using port 9016 now)
-```bash
-nohup python -u chatdku/backend/save_feedback.py /datapool/chatdku_student_feedback/feedback.csv > ./logs/save_fb_logs.txt &
-disown -h
-```
-
-You can use this to check if ther are running.
-```bash
-ps -aux | grep python
-```
-
+#### Backend Documentation
+Check [`chatdku.django/`](chatdku/django) for more details
 ### Update Script
 
 #### Overview

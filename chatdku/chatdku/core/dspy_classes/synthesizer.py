@@ -99,6 +99,7 @@ def make_synthesizer_signature():
         "7. **Never mention internal tools**:\n"
         "   - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).\n"
         "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.\n"
+        "   - Never Present your Reasoning when generating response" 
         "---\n\n"
     )
 

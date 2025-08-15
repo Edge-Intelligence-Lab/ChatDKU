@@ -12,6 +12,7 @@ from openinference.semconv.trace import (
     OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
 )
+import re
 
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
@@ -33,6 +34,16 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
+# Heuristic regex method to filter out reasoning and make into proper format for processing (For Qwen3)
+#TODO: Make the Model follow proper instruction via prompting or SFT
+def plan_filter(plans:list):
+    """Filter Plan from a series of reasoning"""
+
+    pattern=r'\{'
+    filtered_plan=[plan for plan in plans if re.search(pattern,plan)]
+    objects = [obj for plan in filtered_plan for obj in re.findall(r'\{.*?\}(?=\s*\{|\s*$)', plan)]
+    return objects
+
 
 
 def make_planner_signature():
@@ -101,6 +112,7 @@ def make_planner_signature():
         "Your current task is to plan the correct tool plans to answer the Current User Message. "
         "All tool parameters are required."
     )
+
 
     return dspy.make_signature(
         signature=fields,
@@ -211,6 +223,8 @@ class Planner(dspy.Module):
                 plan_str_all = pred.current_tool_plan
                 plan_strs = plan_str_all.strip().split("\n")
                 plan_strs = [s.strip() for s in plan_strs]
+                plan_strs=plan_filter(plan_strs)
+                
                 if 5 > len(plan_strs) >= 1:
                     calls_unvalidated = []
                     for i, s in enumerate(plan_strs, 1):
@@ -238,7 +252,7 @@ class Planner(dspy.Module):
                     return 0.0
 
             refined_planner = dspy.Refine(
-                self.planner, N=3, reward_fn=_check_errors, threshold=1.0
+                self.planner, N=2, reward_fn=_check_errors, threshold=1.0
             )
 
             plan_str_all = refined_planner(
@@ -251,6 +265,7 @@ class Planner(dspy.Module):
 
             plan_strs = plan_str_all.strip().split("\n")
             plan_strs = [s.strip() for s in plan_strs]
+            plan_strs=plan_filter(plan_strs)
 
             calls = []
 
@@ -275,6 +290,7 @@ class Planner(dspy.Module):
                 name_to_tool[tool_name_snake] = tool
 
             span.set_status(Status(StatusCode.OK))
+            print("----Planner END----")
             return dspy.Prediction(
                 calls=calls,
                 tool=name_to_tool[calls[0].name],
