@@ -76,6 +76,8 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+#scrapper 
+**/dku_website
 # PyBuilder
 .pybuilder/
 target/
@@ -205,3 +207,4 @@ benchmarks/*.html
 benchmarks/questions.json
 
 **/nohup.out
+**/dku_website
