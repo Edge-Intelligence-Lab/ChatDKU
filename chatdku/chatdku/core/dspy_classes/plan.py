@@ -34,16 +34,21 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 
 from chatdku.config import config
+
+
 # Heuristic regex method to filter out reasoning and make into proper format for processing (For Qwen3)
-#TODO: Make the Model follow proper instruction via prompting or SFT
-def plan_filter(plans:list):
+# TODO: Make the Model follow proper instruction via prompting or SFT
+def plan_filter(plans: list):
     """Filter Plan from a series of reasoning"""
 
-    pattern=r'\{'
-    filtered_plan=[plan for plan in plans if re.search(pattern,plan)]
-    objects = [obj for plan in filtered_plan for obj in re.findall(r'\{.*?\}(?=\s*\{|\s*$)', plan)]
+    pattern = r"\{"
+    filtered_plan = [plan for plan in plans if re.search(pattern, plan)]
+    objects = [
+        obj
+        for plan in filtered_plan
+        for obj in re.findall(r"\{.*?\}(?=\s*\{|\s*$)", plan)
+    ]
     return objects
-
 
 
 def make_planner_signature():
@@ -112,7 +117,6 @@ def make_planner_signature():
         "Your current task is to plan the correct tool plans to answer the Current User Message. "
         "All tool parameters are required."
     )
-
 
     return dspy.make_signature(
         signature=fields,
@@ -223,8 +227,8 @@ class Planner(dspy.Module):
                 plan_str_all = pred.current_tool_plan
                 plan_strs = plan_str_all.strip().split("\n")
                 plan_strs = [s.strip() for s in plan_strs]
-                plan_strs=plan_filter(plan_strs)
-                
+                plan_strs = plan_filter(plan_strs)
+
                 if 5 > len(plan_strs) >= 1:
                     calls_unvalidated = []
                     for i, s in enumerate(plan_strs, 1):
@@ -265,7 +269,7 @@ class Planner(dspy.Module):
 
             plan_strs = plan_str_all.strip().split("\n")
             plan_strs = [s.strip() for s in plan_strs]
-            plan_strs=plan_filter(plan_strs)
+            plan_strs = plan_filter(plan_strs)
 
             calls = []
 
