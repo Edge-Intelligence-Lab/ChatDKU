@@ -1,16 +1,20 @@
 from django.apps import AppConfig
-
+from chatdku.config import config
 class CoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'core'
 
     def ready(self):
         from chatdku.setup import setup, use_phoenix
-        from chatdku.core.agent import CustomClient
-        import core.signals
         import dspy
         setup()
         use_phoenix()
+        lm = dspy.LM(
+            model="openai/" + config.llm,
+            api_base=config.llm_url,
+            api_key="dummy",
+            model_type="chat",
+            max_tokens=30000,
+        )
 
-        llama_client = CustomClient()
-        dspy.settings.configure(lm=llama_client)
+        dspy.configure(lm=lm)
