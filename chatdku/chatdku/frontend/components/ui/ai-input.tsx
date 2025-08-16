@@ -273,7 +273,7 @@ export function AIInput({
 							<span className={cn("")}>Deep Think</span>
 						</button>
 						{isDevRoute && <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />}
-						{isDevRoute && <UploadSheet />}
+						<UploadSheet />
 					</div>
 					<div>
 						<button
