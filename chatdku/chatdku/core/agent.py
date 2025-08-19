@@ -6,6 +6,7 @@ import traceback
 import dspy
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
@@ -54,8 +55,16 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.planner = Planner([VectorRetriever(), KeywordRetriever()])
-
+        self.planner = assert_transform_module(
+            Planner(
+                [
+                    VectorRetriever(),
+                    KeywordRetriever(),
+                    QueryCurriculumDB(),
+                ],
+            ),
+            functools.partial(backtrack_handler, max_backtracks=5),
+        )
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
 
@@ -333,7 +342,6 @@ def main():
     )
 
     user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
-
     search_mode_input = input("Search mode (0 for default): ")
     search_mode = int(search_mode_input) if search_mode_input else 0
 
