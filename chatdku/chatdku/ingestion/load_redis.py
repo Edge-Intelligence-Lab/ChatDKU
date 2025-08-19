@@ -140,6 +140,17 @@ def main(nodes_path, index_name, reset):
     )
 
 
+def str2bool(val):
+    if isinstance(val,bool):
+        return val
+    if val.lower() in ["t","true"]:
+        return True
+    if val.lower() in ['f','false']:
+        return False
+    else:
+        raise ValueError(f"Expected String, got {type(val)}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Load the specified nodes.json file into redis"
@@ -158,7 +169,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--reset",
-        type=bool,
+        type=str2bool,
         default=False,
         help="Overwrite existing data?",
     )

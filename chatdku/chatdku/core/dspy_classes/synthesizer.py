@@ -155,7 +155,7 @@ class ResponseGen:
         # before_response = ""
         for chunk in self.llm_completion_gen:
             if isinstance(chunk, dspy.streaming.StreamResponse):
-                first_token = True
+                first_token = False
                 if hasattr(config, "tracer"):
                     context.detach(ctx_token)
                 yield chunk.chunk
@@ -181,7 +181,7 @@ class ResponseGen:
             context.detach(ctx_token)
             self.span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.full_response)
             self.span.set_status(Status(StatusCode.OK))
-            # self.span.end()
+            self.span.end()
 
             self.synthesizer_span.set_attribute(
                 
