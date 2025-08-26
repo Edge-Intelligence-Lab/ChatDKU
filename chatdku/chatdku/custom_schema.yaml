@@ -1,6 +1,6 @@
 index:
-  name: idx:temka_testing
-  prefix: temka_testing_doc
+  name: idx:chat_dku_advising
+  prefix: chat_dku_advising
   key_separator: ':'
   storage_type: hash
 fields:

@@ -167,10 +167,10 @@ class ToolMemory(dspy.Module):
                 self.summary = self.compressor(**compressor_inputs).current_summary
                 self.history = self.history[min_index:]
 
-            print("\n\n\n\n\n")
-            print(type(self.history))
-            print(self.history)
-            print("\n\n\n\n\n")
+            # print("\n\n\n\n\n")
+            # print(type(self.history))
+            # print(self.history)
+            # print("\n\n\n\n\n")
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
