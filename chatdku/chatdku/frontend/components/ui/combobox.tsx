@@ -16,7 +16,7 @@ type Branch = {
 
 const branches: Branch[] = [
 	{
-		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/api/chat",
+		chatEndpoint: "https://chatdku.dukekunshan.edu.cn/chat",
 		label: "Standard",
 	},
 	{
