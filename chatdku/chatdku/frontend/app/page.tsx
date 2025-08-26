@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
+import WelcomeBanner from "@/components/WelcomeBanner";
 
 // Configure marked options
 const configureMarked = () => {
@@ -18,8 +19,11 @@ const configureMarked = () => {
 };
 
 // Helper function to safely handle marked.parse which might return Promise<string>
+// Remove <think>...</think> tags before parsing
 const parseMarkdown = (content: string): string => {
-	const parsed = marked.parse(content);
+	// Remove all <think>...</think> tags (including multiline)
+	const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
+	const parsed = marked.parse(cleanedContent);
 	// If it's a promise, return empty string initially (will be updated later)
 	if (typeof (parsed as any)?.then === "function") {
 		return "";
@@ -28,7 +32,9 @@ const parseMarkdown = (content: string): string => {
 };
 
 // Simulates a streaming effect for text
-const streamText = async (text: string, elementContainer: HTMLElement, delay = 15) => {
+const streamText = async (text: string, elementContainer: HTMLElement, delay = 10) => {
+	// Remove <think>...</think> tags before streaming
+	const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
 	let currentText = "";
 	const streamContainer = document.createElement("div");
 	streamContainer.className = "text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
@@ -59,7 +65,7 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	}
 
 	// Split into tokens - in a real implementation you might want to use a more sophisticated approach
-	const tokens = text.split(/(?<=[\s.,;:!?])/);
+	const tokens = cleanedText.split(/(?<=[\s.,;:!?])/);
 
 	for (const token of tokens) {
 		currentText += token;
@@ -72,20 +78,22 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	cursor.remove();
 
 	// Parse Markdown after streaming is complete
-	streamContainer.innerHTML = parseMarkdown(text);
+	streamContainer.innerHTML = parseMarkdown(cleanedText);
 
 	return streamContainer;
 };
 
 // API endpoint
-const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
+// const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/dev/chat";
 
 export default function Home() {
 	const [showStarter, setShowStarter] = useState(true);
 	const [isChatboxCentered, setIsChatboxCentered] = useState(true);
 	const [chatHistoryId, setChatHistoryId] = useState("");
 	const [thinkingMode, setThinkingMode] = useState(false);
+	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
+	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/api/chat");
 	const router = useRouter();
 
 	// Initialize marked configuration on component mount and check for terms acceptance
@@ -135,7 +143,7 @@ export default function Home() {
 		// For user messages or non-streamed assistant messages
 		if (isUser || !shouldStream) {
 			// Use DOMPurify to sanitize HTML content when it's from markdown
-			const sanitizedContent = role === "user" ? content : parseMarkdown(content).trim();
+			const sanitizedContent = (content = parseMarkdown(content)).trim();
 
 			messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
@@ -202,7 +210,7 @@ export default function Home() {
 				{showStarter && (
 					<div className="w-full flex justify-center">
 						<div className="flex flex-col items-center p-4 w-4/5 md:max-w-1/2 sm:max-w-4/5">
-							<h1 className=" text-2xl lg:text-3xl">Ask ChatDKU</h1>
+							<WelcomeBanner />
 						</div>
 					</div>
 				)}
@@ -210,7 +218,10 @@ export default function Home() {
 					<AIInput
 						thinkingMode={thinkingMode}
 						onThinkingModeChange={(value) => setThinkingMode(value)}
-						onInputChange={(value) => setInputValue(value)} // Track input value changes
+						searchMode={searchMode}
+						onSearchModeChange={(value: SetStateAction<string>) => setSearchMode(value)}
+						onInputChange={(value) => setInputValue(value)}
+						onEndpointChange={setApiEndpoint}
 						onSubmit={async (value) => {
 							if (!value.trim()) return;
 
@@ -229,13 +240,14 @@ export default function Home() {
 							const botMessage = addMessageToChat("assistant", "Searching relevant documents for you, please wait...", "text-sm");
 
 							try {
-								const response = await fetch(API_ENDPOINT, {
+								const response = await fetch(apiEndpoint, {
 									method: "POST",
 									headers: { "Content-Type": "application/json" },
 									body: JSON.stringify({
 										messages: [{ role: "user", content: value }],
 										chatHistoryId: newChatHistoryId,
 										mode: thinkingMode ? "agent" : "",
+										searchMode: searchMode,
 									}),
 								});
 
@@ -367,8 +379,7 @@ export default function Home() {
 						}}
 					/>
 					{isChatboxCentered && (
-						<div className={`transition-all text-center duration-300 ${inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"}`}>
-							{/* <p className="py-2 font-bold text-sm">Try asking:</p> */}
+						<div className={`transition-all duration-300 ${inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"}`}>
 							<PromptRecs
 								onPromptSelect={(prompt) => {
 									const aiInput = document.getElementById("ai-input") as HTMLTextAreaElement;
@@ -394,7 +405,7 @@ export default function Home() {
 				</div>
 				{!isChatboxCentered && (
 					<p className="text-center text-[11px]/3 pb-1 sm:py-0 sm:leading-1 leading-3 tracking-tight text-muted-foreground drop-shadow-background drop-shadow-xl">
-						AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
+						This is an unreleased testing site for development purposes only.
 					</p>
 				)}
 			</div>

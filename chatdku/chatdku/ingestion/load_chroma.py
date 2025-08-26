@@ -16,12 +16,12 @@ from chatdku.config import config
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
+from custom_filetype_detect import custom_detect_filetype
 
 
 # Override auto partation
 import unstructured.partition.auto
-from chatdku.ingestion.custom_partation import partition
+from custom_partation import partition
 
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 unstructured.partition.auto.partition = partition
@@ -102,6 +102,8 @@ def load_chroma(
                     metadatas=nodes_buffer_dict["metadatas"],
                 )
             except Exception as e:
+                for i in nodes_buffer_dict["metadatas"]:
+                    print(i)
                 raise e
                 for node in nodes_buffer:
                     node_dict = nodes_to_dicts(node)
@@ -165,7 +167,7 @@ def load_chroma(
 
 def main(nodes_path=None, collection_name=None):
     load_chroma(
-        reset=False,
+        reset=True,
         nodes_path=nodes_path,
         collection=collection_name,
     )

@@ -19,10 +19,13 @@ const configureMarked = () => {
 };
 
 // Helper function to safely handle marked.parse which might return Promise<string>
+// Remove <think>...</think> tags before parsing
 const parseMarkdown = (content: string): string => {
-	const parsed = marked.parse(content);
+	// Remove all <think>...</think> tags (including multiline)
+	const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
+	const parsed = marked.parse(cleanedContent);
 	// If it's a promise, return empty string initially (will be updated later)
-	if (parsed instanceof Promise) {
+	if (typeof (parsed as any)?.then === "function") {
 		return "";
 	}
 	return typeof parsed === "string" ? parsed : "";
@@ -30,6 +33,8 @@ const parseMarkdown = (content: string): string => {
 
 // Simulates a streaming effect for text
 const streamText = async (text: string, elementContainer: HTMLElement, delay = 10) => {
+	// Remove <think>...</think> tags before streaming
+	const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
 	let currentText = "";
 	const streamContainer = document.createElement("div");
 	streamContainer.className = "text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
@@ -60,7 +65,7 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	}
 
 	// Split into tokens - in a real implementation you might want to use a more sophisticated approach
-	const tokens = text.split(/(?<=[\s.,;:!?])/);
+	const tokens = cleanedText.split(/(?<=[\s.,;:!?])/);
 
 	for (const token of tokens) {
 		currentText += token;
@@ -73,13 +78,13 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	cursor.remove();
 
 	// Parse Markdown after streaming is complete
-	streamContainer.innerHTML = parseMarkdown(text);
+	streamContainer.innerHTML = parseMarkdown(cleanedText);
 
 	return streamContainer;
 };
 
 // API endpoint
-const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/dev/chat";
+// const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/dev/chat";
 
 export default function Home() {
 	const [showStarter, setShowStarter] = useState(true);
@@ -88,7 +93,7 @@ export default function Home() {
 	const [thinkingMode, setThinkingMode] = useState(false);
 	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
-	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/dev/chat");
+	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/api/chat");
 	const router = useRouter();
 
 	// Initialize marked configuration on component mount and check for terms acceptance

@@ -15,7 +15,32 @@ from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
 from http.cookiejar import CookieJar
-from scraper.utils import Status, DownloadInfo, print_summary
+from utils import Status, DownloadInfo, print_summary
+import logging
+
+logger = logging.getLogger("scrap_logger")
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler("error_url.log")
+file_handler.setLevel(logging.INFO)
+file_formatter = logging.Formatter(
+    "%(message)s"
+)
+file_handler.setFormatter(file_formatter)
+
+error_handler = logging.FileHandler("error.log")
+error_handler.setLevel(logging.ERROR)
+error_formatter = logging.Formatter(
+    "[%(levelname)s] %(message)s"
+)
+error_handler.setFormatter(error_formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(error_handler)
+
+logger.info("----URL LOGS for Scrapper----")
+
+
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
 # infinite loop and make it possible to restore download progress
@@ -196,7 +221,6 @@ async def scrape_site(
             tried[url].status = Status.FAILED
         return
     canonical_url, ty, filename, content = result
-
     included = is_included(canonical_url)
     if not (
         args.external == "all"
@@ -240,13 +264,17 @@ async def scrape_site(
     # Save the content
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-    if ty[0] == "text":
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write(content)
-    else:
-        with open(file_path, "wb") as file:
-            file.write(content)
-
+    try:
+        if ty[0] == "text":
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(content)
+        else:
+            with open(file_path, "wb") as file:
+                file.write(content)
+    except Exception as e:
+        print(e)
+        logger.info(f"{canonical_url}")
+        logger.error(f"Failed to save file {file_path}: {e}")
     tried[url].status = Status.SUCCESS
     tried[url].canonical_url = canonical_url
     tried[url].file_path = file_path
@@ -349,7 +377,7 @@ if __name__ == "__main__":
         "-r",
         "--max-depth",
         type=int,
-        default=5,
+        default=3,
         help="Maximum depth of recursive website download.",
     )
     parser.add_argument(

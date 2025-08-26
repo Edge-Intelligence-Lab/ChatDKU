@@ -1,8 +1,18 @@
 "use client";
 import { MessageCircleQuestion, SquarePen } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+	NavigationMenu,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+} from "@/components/ui/navigation-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 // import { ModeToggle } from "@/components/ui/mode-toggle";
 import DynamicLogo from "@/components/dynamic-logo";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +41,10 @@ export function Navbar() {
 				<TooltipProvider>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<NavigationMenuLink href="/about" className="lg:text-md flex flex-row items-center">
+							<NavigationMenuLink
+								href="/about"
+								className="lg:text-md flex flex-row items-center"
+							>
 								<MessageCircleQuestion className="size-4 text-primary-500" />
 							</NavigationMenuLink>
 						</TooltipTrigger>
@@ -46,7 +59,10 @@ export function Navbar() {
 					<TooltipProvider>
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<NavigationMenuLink href={isDevRoute ? "/dev" : "/"} className="lg:text-md flex flex-row items-center">
+								<NavigationMenuLink
+									href={isDevRoute ? "/dev" : "/"}
+									className="lg:text-md flex flex-row items-center"
+								>
 									<p className="hidden sm:block">New Chat</p>
 									<SquarePen className="size-5 text-primary-500" />
 								</NavigationMenuLink>
@@ -57,7 +73,9 @@ export function Navbar() {
 						</Tooltip>
 					</TooltipProvider>
 				</NavigationMenuItem>
-				<NavigationMenuItem className="">{/* <ModeToggle /> */}</NavigationMenuItem>
+				<NavigationMenuItem className="">
+					{/* <ModeToggle /> */}
+				</NavigationMenuItem>
 			</NavigationMenuList>
 		</NavigationMenu>
 	);

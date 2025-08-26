@@ -129,7 +129,7 @@ import pandas as pd
 
 df = pd.read_csv(config.url_csv_path)
 # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
-df["file_path"] = df["file_path"].str.extract(r"(dku_website/.*)")
+df["file_path_forweb"] = df["file_path"].str.extract(r"(dku_website/.*)")
 
 
 def get_url(metadata: dict):
@@ -138,20 +138,18 @@ def get_url(metadata: dict):
             path = metadata["file_path"]
         except:
             path = metadata["file_directory"] + "/" + metadata["filename"]
+            
         if "dku_website" in path:
             match = re.search(r"dku_website/.*", path)
             if match:
                 result = match.group(0)
-                matching_row = df[df["file_path"] == result]
+                matching_row = df[df["file_path_forweb"] == result]
                 if not matching_row.empty:
                     return matching_row.iloc[0]["url"]
-        elif "new_bulletin" in path:
-            match = re.search(r"new_bulletin/.*", path)
-            if match:
-                result = match.group(0)
-                matching_row = df[df["file_path"] == result]
-                if not matching_row.empty:
-                    return matching_row.iloc[0]["url"]
+        else:
+            matching_row = df[df["file_path"] == path]
+            if not matching_row.empty:
+                return matching_row.iloc[0]["url"]
         return "no url"
     except Exception as e:
         return f"no url, error: {str(e)}"
@@ -262,9 +260,9 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 5,
+        retriever_top_k: int = 10,
         use_reranker: bool = False,
-        reranker_top_n: int = 3,
+        reranker_top_n: int = 5,
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker

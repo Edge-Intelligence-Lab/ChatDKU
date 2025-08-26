@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, ChangeEvent, FormEvent } from "react";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+	Sheet,
+	SheetTrigger,
+	SheetContent,
+	SheetHeader,
+	SheetFooter,
+	SheetTitle,
+	SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,14 +61,22 @@ export function UploadSheet() {
 			<SheetContent>
 				<SheetHeader>
 					<SheetTitle>Choose sources</SheetTitle>
-					<SheetDescription>Add a .pdf file for ChatDKU to use as an extra source.</SheetDescription>
+					<SheetDescription>
+						Add a .pdf file for ChatDKU to use as an extra source.
+					</SheetDescription>
 				</SheetHeader>
 
 				<div className="px-2">
 					<form onSubmit={handleSubmit} className="space-y-4 mt-4">
 						<div>
 							<Label htmlFor="file-input">Select file</Label>
-							<Input id="file-input" type="file" accept=".pdf" onChange={handleFileChange} className="mt-1" />
+							<Input
+								id="file-input"
+								type="file"
+								accept=".pdf"
+								onChange={handleFileChange}
+								className="mt-1"
+							/>
 						</div>
 						{status && <p className="text-sm">{status}</p>}
 					</form>
