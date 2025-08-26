@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
+import WelcomeBanner from "@/components/WelcomeBanner";
 
 // Configure marked options
 const configureMarked = () => {
@@ -18,8 +19,11 @@ const configureMarked = () => {
 };
 
 // Helper function to safely handle marked.parse which might return Promise<string>
+// Remove <think>...</think> tags before parsing
 const parseMarkdown = (content: string): string => {
-	const parsed = marked.parse(content);
+	// Remove all <think>...</think> tags (including multiline)
+	const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
+	const parsed = marked.parse(cleanedContent);
 	// If it's a promise, return empty string initially (will be updated later)
 	if (typeof (parsed as any)?.then === "function") {
 		return "";
@@ -28,10 +32,17 @@ const parseMarkdown = (content: string): string => {
 };
 
 // Simulates a streaming effect for text
-const streamText = async (text: string, elementContainer: HTMLElement, delay = 15) => {
+const streamText = async (
+	text: string,
+	elementContainer: HTMLElement,
+	delay = 10,
+) => {
+	// Remove <think>...</think> tags before streaming
+	const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
 	let currentText = "";
 	const streamContainer = document.createElement("div");
-	streamContainer.className = "text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
+	streamContainer.className =
+		"text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
 	elementContainer.appendChild(streamContainer);
 
 	// Create cursor element
@@ -59,7 +70,7 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	}
 
 	// Split into tokens - in a real implementation you might want to use a more sophisticated approach
-	const tokens = text.split(/(?<=[\s.,;:!?])/);
+	const tokens = cleanedText.split(/(?<=[\s.,;:!?])/);
 
 	for (const token of tokens) {
 		currentText += token;
@@ -72,20 +83,24 @@ const streamText = async (text: string, elementContainer: HTMLElement, delay = 1
 	cursor.remove();
 
 	// Parse Markdown after streaming is complete
-	streamContainer.innerHTML = parseMarkdown(text);
+	streamContainer.innerHTML = parseMarkdown(cleanedText);
 
 	return streamContainer;
 };
 
 // API endpoint
-const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/api/chat";
+// const API_ENDPOINT = "https://chatdku.dukekunshan.edu.cn/dev/chat";
 
 export default function Home() {
 	const [showStarter, setShowStarter] = useState(true);
 	const [isChatboxCentered, setIsChatboxCentered] = useState(true);
 	const [chatHistoryId, setChatHistoryId] = useState("");
 	const [thinkingMode, setThinkingMode] = useState(false);
+	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
+	const [apiEndpoint, setApiEndpoint] = useState(
+		"https://chatdku.dukekunshan.edu.cn/dev/chat",
+	);
 	const router = useRouter();
 
 	// Initialize marked configuration on component mount and check for terms acceptance
@@ -123,43 +138,42 @@ export default function Home() {
 				console.error("Failed to save feedback:", error);
 			}
 		},
-		[chatHistoryId]
+		[chatHistoryId],
 	);
 
-	const addMessageToChat = useCallback((role: string, content: any, className: any, shouldStream = false) => {
-		const chatLog = document.getElementById("chat-log");
-		const messageElement = document.createElement("div");
-		const isUser = role === "user";
-		messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
+	const addMessageToChat = useCallback(
+		(role: string, content: any, className: any, shouldStream = false) => {
+			const chatLog = document.getElementById("chat-log");
+			const messageElement = document.createElement("div");
+			const isUser = role === "user";
+			messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
 
-		// For user messages or non-streamed assistant messages
-		if (isUser || !shouldStream) {
-			// Use DOMPurify to sanitize HTML content when it's from markdown
-			const sanitizedContent = role === "user" ? content : parseMarkdown(content).trim();
+			// For user messages or non-streamed assistant messages
+			if (isUser || !shouldStream) {
+				// Use DOMPurify to sanitize HTML content when it's from markdown
+				const sanitizedContent = (content = parseMarkdown(content)).trim();
 
-			messageElement.innerHTML = `
+				messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
           <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
-            ${
-				isUser
-					? ""
-					: '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
-			}
+            ${isUser
+						? ""
+						: '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
+					}
             <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
-              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${
-					!isUser ? "text-[0.9375rem]" : ""
-				}">${sanitizedContent}</div>
+              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""
+					}">${sanitizedContent}</div>
             </div>
           </div>
         </div>
       `;
-			chatLog?.appendChild(messageElement);
-			chatLog?.scrollTo(0, chatLog.scrollHeight);
-			return messageElement.querySelector(".flex.flex-col"); // Return the inner container for feedback
-		}
-		// For streamed assistant messages
-		else {
-			messageElement.innerHTML = `
+				chatLog?.appendChild(messageElement);
+				chatLog?.scrollTo(0, chatLog.scrollHeight);
+				return messageElement.querySelector(".flex.flex-col"); // Return the inner container for feedback
+			}
+			// For streamed assistant messages
+			else {
+				messageElement.innerHTML = `
         <div class="flex flex-col items-start w-full sm:max-w-[85%]">
           <div class="flex flex-col lg:flex-row gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
             <div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>
@@ -169,18 +183,22 @@ export default function Home() {
           </div>
         </div>
       `;
-			chatLog?.appendChild(messageElement);
-			chatLog?.scrollTo(0, chatLog.scrollHeight);
+				chatLog?.appendChild(messageElement);
+				chatLog?.scrollTo(0, chatLog.scrollHeight);
 
-			// Start streaming the content
-			const streamContainer = messageElement.querySelector("#stream-container") as HTMLElement;
-			if (streamContainer) {
-				streamText(content, streamContainer);
+				// Start streaming the content
+				const streamContainer = messageElement.querySelector(
+					"#stream-container",
+				) as HTMLElement;
+				if (streamContainer) {
+					streamText(content, streamContainer);
+				}
+
+				return messageElement.querySelector(".flex.flex-col");
 			}
-
-			return messageElement.querySelector(".flex.flex-col");
-		}
-	}, []);
+		},
+		[],
+	);
 
 	return (
 		<div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
@@ -189,20 +207,22 @@ export default function Home() {
 			</header>
 
 			<main className="flex-1 w-full flex flex-col items-center pt-16">
-				<div id="chat-log" className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-42 overflow-y-auto"></div>
+				<div
+					id="chat-log"
+					className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-42 overflow-y-auto"
+				></div>
 			</main>
 
 			<div
-				className={`w-full max-w-[95vw] p-2 pt-0 transition-all duration-300 ${
-					isChatboxCentered
+				className={`w-full max-w-[95vw] p-2 pt-0 transition-all duration-300 ${isChatboxCentered
 						? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
 						: "fixed bottom-0 left-1/2 -translate-x-1/2 rounded-t-3xl backdrop-blur-md md:backdrop-blur-none z-10"
-				}`}
+					}`}
 			>
 				{showStarter && (
 					<div className="w-full flex justify-center">
 						<div className="flex flex-col items-center p-4 w-4/5 md:max-w-1/2 sm:max-w-4/5">
-							<h1 className=" text-2xl lg:text-3xl">Ask ChatDKU</h1>
+							<WelcomeBanner />
 						</div>
 					</div>
 				)}
@@ -210,7 +230,12 @@ export default function Home() {
 					<AIInput
 						thinkingMode={thinkingMode}
 						onThinkingModeChange={(value) => setThinkingMode(value)}
-						onInputChange={(value) => setInputValue(value)} // Track input value changes
+						searchMode={searchMode}
+						onSearchModeChange={(value: SetStateAction<string>) =>
+							setSearchMode(value)
+						}
+						onInputChange={(value) => setInputValue(value)}
+						onEndpointChange={setApiEndpoint}
 						onSubmit={async (value) => {
 							if (!value.trim()) return;
 
@@ -223,19 +248,24 @@ export default function Home() {
 							addMessageToChat(
 								"user",
 								value,
-								"bg-muted/50 dark:bg-muted/50 text-sm" // Removed background color classes
+								"bg-muted/50 dark:bg-muted/50 text-sm", // Removed background color classes
 							);
 
-							const botMessage = addMessageToChat("assistant", "Searching relevant documents for you, please wait...", "text-sm");
+							const botMessage = addMessageToChat(
+								"assistant",
+								"Searching relevant documents for you, please wait...",
+								"text-sm",
+							);
 
 							try {
-								const response = await fetch(API_ENDPOINT, {
+								const response = await fetch(apiEndpoint, {
 									method: "POST",
 									headers: { "Content-Type": "application/json" },
 									body: JSON.stringify({
 										messages: [{ role: "user", content: value }],
 										chatHistoryId: newChatHistoryId,
 										mode: thinkingMode ? "agent" : "",
+										searchMode: searchMode,
 									}),
 								});
 
@@ -250,12 +280,14 @@ export default function Home() {
 									"assistant",
 									"",
 									"text-sm",
-									true // Use streaming mode
+									true, // Use streaming mode
 								);
 
 								// Get the stream container
-								const streamContainer = messageDiv?.querySelector("#stream-container");
-								if (!streamContainer) throw new Error("Failed to create stream container");
+								const streamContainer =
+									messageDiv?.querySelector("#stream-container");
+								if (!streamContainer)
+									throw new Error("Failed to create stream container");
 
 								// Process the streamed response
 								const data = await response.text();
@@ -282,7 +314,8 @@ export default function Home() {
 
 									yesButton?.addEventListener("click", () => {
 										handleFeedback(value, data, "helpful");
-										feedbackDiv.innerHTML = '<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
+										feedbackDiv.innerHTML =
+											'<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
 									});
 
 									noButton?.addEventListener("click", () => {
@@ -310,18 +343,26 @@ export default function Home() {
                       </div>
                     `;
 
-										const optionButtons = feedbackDiv.querySelectorAll(".reason-btn");
-										const customReason = feedbackDiv.querySelector("#custom-reason") as HTMLTextAreaElement;
-										const submitBtn = feedbackDiv.querySelector("#submit-feedback");
-										const cancelBtn = feedbackDiv.querySelector("#cancel-feedback");
+										const optionButtons =
+											feedbackDiv.querySelectorAll(".reason-btn");
+										const customReason = feedbackDiv.querySelector(
+											"#custom-reason",
+										) as HTMLTextAreaElement;
+										const submitBtn =
+											feedbackDiv.querySelector("#submit-feedback");
+										const cancelBtn =
+											feedbackDiv.querySelector("#cancel-feedback");
 
 										let selectedReason: string | null = null;
 
 										optionButtons.forEach((btn) => {
 											btn.addEventListener("click", () => {
-												selectedReason = (btn as HTMLElement).dataset.reason || null;
+												selectedReason =
+													(btn as HTMLElement).dataset.reason || null;
 
-												optionButtons.forEach((b) => b.classList.remove("bg-secondary", "text-white"));
+												optionButtons.forEach((b) =>
+													b.classList.remove("bg-secondary", "text-white"),
+												);
 												btn.classList.add("bg-secondary", "text-black");
 
 												if (selectedReason === "other") {
@@ -335,7 +376,10 @@ export default function Home() {
 										submitBtn?.addEventListener("click", () => {
 											if (!selectedReason) return;
 
-											let reasonToSend = selectedReason === "other" ? customReason.value.trim() : selectedReason;
+											let reasonToSend =
+												selectedReason === "other"
+													? customReason.value.trim()
+													: selectedReason;
 
 											if (selectedReason === "other" && !reasonToSend) {
 												customReason.classList.add("border-destructive");
@@ -361,17 +405,20 @@ export default function Home() {
 								addMessageToChat(
 									"assistant",
 									`Error: ${error instanceof Error ? error.message : "An unknown error occurred"}`,
-									"bg-destructive/10 dark:bg-destructive/20"
+									"bg-destructive/10 dark:bg-destructive/20",
 								);
 							}
 						}}
 					/>
 					{isChatboxCentered && (
-						<div className={`transition-all text-center duration-300 ${inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"}`}>
-							{/* <p className="py-2 font-bold text-sm">Try asking:</p> */}
+						<div
+							className={`transition-all duration-300 ${inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"}`}
+						>
 							<PromptRecs
 								onPromptSelect={(prompt) => {
-									const aiInput = document.getElementById("ai-input") as HTMLTextAreaElement;
+									const aiInput = document.getElementById(
+										"ai-input",
+									) as HTMLTextAreaElement;
 									if (aiInput) {
 										aiInput.value = prompt;
 										// Update the internal state of AIInput
@@ -394,7 +441,7 @@ export default function Home() {
 				</div>
 				{!isChatboxCentered && (
 					<p className="text-center text-[11px]/3 pb-1 sm:py-0 sm:leading-1 leading-3 tracking-tight text-muted-foreground drop-shadow-background drop-shadow-xl">
-						AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear.
+						This is an unreleased testing site for development purposes only.
 					</p>
 				)}
 			</div>
