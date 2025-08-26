@@ -72,7 +72,12 @@ def load_redis(
     if index_name is None:
         index_name = config.index_name
 
-    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
+    redis_client = Redis(
+        host=config.redis_host,
+        port=6379,
+        username="default",
+        password=config.redis_password,
+    )
 
     custom_schema = IndexSchema.from_dict(
         {
@@ -153,7 +158,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--reset",
-        type=str,
+        type=bool,
         default=False,
         help="Overwrite existing data?",
     )
