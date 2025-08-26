@@ -175,7 +175,7 @@ class ToolMemory(dspy.Module):
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
                         dict(
-                            history=[i.model_dump() for i in self.history],
+                            history=[i.model_dump_json() for i in self.history],
                             summary=self.summary,
                         )
                     ),
