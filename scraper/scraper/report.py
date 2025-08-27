@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from argparse import ArgumentParser
-from scraper.utils import DownloadInfo, print_summary
+from utils import DownloadInfo, print_summary
 from pathlib import Path
 from dataclass_csv import DataclassReader
 

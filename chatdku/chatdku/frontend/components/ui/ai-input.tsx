@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Brain, CornerRightUp, FileBox, FolderPlus, Mic, PlusCircle, Trash, Trash2, Upload, Wrench, X } from "lucide-react";
+import { Brain, CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,11 +9,12 @@ import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textar
 import { io } from "socket.io-client";
 import { ComboBoxResponsive } from "./combobox";
 import { UploadSheet } from "../UploadSheet";
+import { Button } from "@/components/ui/button";
 
 export function AIInput({
 	id = "ai-input",
 	placeholder = "Type your message...",
-	minHeight = 42,
+	minHeight = 50,
 	maxHeight = 200,
 	onSubmit,
 	onInputChange,
@@ -51,7 +52,7 @@ export function AIInput({
 	const isDevRoute = pathname === "/dev" || pathname === "/dev/";
 
 	const inputButtonStyle = cn(
-		"flex items-center justify-around gap-1 p-2 text-sm min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer border-transparent hover:border-foreground/10 border-1 hover:shadow-md active:text-foreground active:bg-foreground/10 transition-all duration-200"
+		"flex items-center justify-around gap-1 p-2 text-sm min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer border-transparent hover:border-foreground/10 border-1 hover:shadow-md active:text-foreground active:bg-foreground/10 transition-all duration-200",
 	);
 
 	useEffect(() => {
@@ -112,7 +113,9 @@ export function AIInput({
 
 			audioStreamRef.current = stream;
 
-			const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+			const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+				? "audio/webm;codecs=opus"
+				: "audio/webm";
 
 			mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
 
@@ -213,7 +216,9 @@ export function AIInput({
 					"transition-[height] duration-75 ease-in-out",
 					"[&::-webkit-resizer]:hidden",
 					"transition-all duration-200",
-					inputValue ? "shadow-[0_0_12px_rgba(46,185,224,1)] animate-shadow-pulse" : ""
+					inputValue
+						? "shadow-[0_0_12px_rgba(46,185,224,1)] animate-shadow-pulse"
+						: "",
 				)}
 			>
 				<style>
@@ -245,7 +250,7 @@ export function AIInput({
 						"focus-visible:ring-0 focus-visible:ring-offset-0",
 						"pt-3 border-none bg-transparent",
 						`min-h-[${minHeight}px] max-h-[${maxHeight}px]`,
-						"[&::-webkit-resizer]:hidden"
+						"[&::-webkit-resizer]:hidden",
 					)}
 					ref={textareaRef}
 					value={inputValue}
@@ -267,20 +272,35 @@ export function AIInput({
 					}}
 				/>
 				<div className="flex flex-row justify-between">
-					<div className="flex flex-row gap-x-1">
-						<button className={cn(inputButtonStyle, isThinking && "bg-primary text-primary-foreground")} onClick={toggleThinkingMode}>
+					<div className="flex flex-row gap-x-0">
+						<Button
+							variant="inChatbox"
+							className={cn(
+								// inputButtonStyle,
+								isThinking && "bg-primary text-primary-foreground",
+							)}
+							onClick={toggleThinkingMode}
+						>
 							<Brain className="w-4 h-4" />
-							<span className={cn("")}>Deep Think</span>
-						</button>
-						{isDevRoute && <ComboBoxResponsive inputValue={inputValue} onEndpointChange={onEndpointChange ?? (() => {})} />}
-						{isDevRoute && <UploadSheet />}
+							<span className={cn(isDevRoute && "hidden sm:block")}>
+								Deep Think
+							</span>
+						</Button>
+						{isDevRoute && (
+							<ComboBoxResponsive
+								inputValue={inputValue}
+								onEndpointChange={onEndpointChange ?? (() => { })}
+							/>
+						)}
+						<UploadSheet />
 					</div>
 					<div>
 						<button
 							className={cn(
 								inputButtonStyle,
 								inputValue && "hidden",
-								isRecording && "bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary"
+								isRecording &&
+								"bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary",
 							)}
 							onClick={toggleRecording}
 						>
@@ -290,7 +310,12 @@ export function AIInput({
 						<button
 							onClick={handleReset}
 							type="button"
-							className={cn(inputButtonStyle, inputValue ? "opacity-100 scale-100" : "hidden opacity-0 scale-50")}
+							className={cn(
+								inputButtonStyle,
+								inputValue
+									? "opacity-100 scale-100"
+									: "hidden opacity-0 scale-50",
+							)}
 						>
 							<CornerRightUp className="w-5 h-5" />
 						</button>

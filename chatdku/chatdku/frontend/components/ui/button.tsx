@@ -9,16 +9,19 @@ const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+				default:
+					"bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
 				destructive:
 					"bg-destructive/70 text-white shadow-xs hover:bg-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/40 dark:hover:bg-destructive/80 dark:active:bg-destructive/30 active:bg-destructive/60",
 				outline:
 					"border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-				secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-				ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+				secondary:
+					"bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+				ghost:
+					"hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
 				link: "text-primary underline-offset-4 hover:underline",
 				inChatbox:
-					"flex items-center justify-around gap-1 p-2 text-sm min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer border-transparent hover:border-foreground/10 border-1 hover:shadow-md active:text-foreground active:bg-foreground/10 transition-all duration-200",
+					"flex flex-row items-center justify-around gap-1 p-1 text-xs sm:text-sm min-w-[45px] min-h-[45px] rounded-4xl cursor-pointer border-transparent hover:border-foreground/10 border-1 hover:shadow-md active:text-foreground active:bg-foreground/10 transition-all duration-200",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -31,7 +34,7 @@ const buttonVariants = cva(
 			variant: "default",
 			size: "default",
 		},
-	}
+	},
 );
 
 function Button({
@@ -46,7 +49,13 @@ function Button({
 	}) {
 	const Comp = asChild ? Slot : "button";
 
-	return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+	return (
+		<Comp
+			data-slot="button"
+			className={cn(buttonVariants({ variant, size, className }))}
+			{...props}
+		/>
+	);
 }
 
 export { Button, buttonVariants };

@@ -118,7 +118,7 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
 
 
 def use_phoenix():
-    phoenix_port = os.environ.get("PHOENIX_PORT", 6006)
+    phoenix_port = os.environ.get("PHOENIX_PORT", 6007)
     collector_endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
     tracer_provider = register(
         project_name="ChatDKU_student_release",  # Default is 'default'

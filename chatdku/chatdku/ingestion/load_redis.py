@@ -17,12 +17,12 @@ from chatdku.setup import setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
+from custom_filetype_detect import custom_detect_filetype
 
 
 # Override auto partation
 import unstructured.partition.auto
-from chatdku.ingestion.custom_partation import partition
+from custom_partation import partition
 from chatdku.config import config
 
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
@@ -72,7 +72,12 @@ def load_redis(
     if index_name is None:
         index_name = config.index_name
 
-    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password)
+    redis_client = Redis(
+        host=config.redis_host,
+        port=6379,
+        username="default",
+        password=config.redis_password,
+    )
 
     custom_schema = IndexSchema.from_dict(
         {
@@ -135,6 +140,17 @@ def main(nodes_path, index_name, reset):
     )
 
 
+def str2bool(val):
+    if isinstance(val,bool):
+        return val
+    if val.lower() in ["t","true"]:
+        return True
+    if val.lower() in ['f','false']:
+        return False
+    else:
+        raise ValueError(f"Expected String, got {type(val)}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Load the specified nodes.json file into redis"
@@ -153,7 +169,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--reset",
-        type=str,
+        type=str2bool,
         default=False,
         help="Overwrite existing data?",
     )

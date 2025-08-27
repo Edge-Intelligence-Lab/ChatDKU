@@ -21,13 +21,13 @@ class Config:
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
-                "context_window": 40900,
+                "context_window": 30000,
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
-                "url_csv_path": "/datapool/scrapes/public_and_calender_20241128/public_download_info.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/url_csv/public_download_info.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_host": redis_host,
                 "redis_password": redis_password,

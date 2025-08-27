@@ -87,7 +87,7 @@ def load_and_index(
     temp_chroma_db = tempfile.mkdtemp(dir=chroma_db_parent_dir, prefix='temp_chroma_db_')
 
     db = chromadb.PersistentClient(
-        path=temp_chroma_db, settings=chromadb.Settings(allow_reset=True)
+        path=temp_chroma_db, settings=chromadb.Settings(allow_reset=True, anonymized_telemetry=False)
     )
     db.reset()
     chroma_collection = db.get_or_create_collection("dku_html_pdf")

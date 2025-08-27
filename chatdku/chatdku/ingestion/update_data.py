@@ -6,11 +6,11 @@ import uuid
 import json
 import argparse
 from llama_index.core import SimpleDirectoryReader
+from llama_index.readers.file import UnstructuredReader, PptxReader, DocxReader
 from llama_index.core.schema import TextNode
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.readers.base import BaseReader
-from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from chatdku.config import config
 from pathlib import Path
@@ -22,11 +22,11 @@ from openpyxl import load_workbook
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from chatdku.ingestion.custom_filetype_detect import custom_detect_filetype
+from custom_filetype_detect import custom_detect_filetype
 
 # Override auto partation
 import unstructured.partition.auto
-from chatdku.ingestion.custom_partation import partition
+from custom_partation import partition
 
 nest_asyncio.apply()
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
@@ -58,14 +58,14 @@ def custom_metadata(user_id: str):
             "file_type": mimetypes.guess_type(file_path)[0]
             or "application/octet-stream",
             "file_size": stat.st_size,
-            "creation_date": datetime.datetime.utcfromtimestamp(
-                stat.st_ctime
+            "creation_date": datetime.datetime.fromtimestamp(
+                stat.st_ctime, datetime.UTC
             ).isoformat(),
-            "last_modified_date": datetime.datetime.utcfromtimestamp(
-                stat.st_mtime
+            "last_modified_date": datetime.datetime.fromtimestamp(
+                stat.st_mtime, datetime.UTC
             ).isoformat(),
-            "last_accessed_date": datetime.datetime.utcfromtimestamp(
-                stat.st_atime
+            "last_accessed_date": datetime.datetime.fromtimestamp(
+                stat.st_atime, datetime.UTC
             ).isoformat(),
             "user_id": user_id,
             "chunk_id": "Not given",
@@ -118,7 +118,7 @@ class XlsxReader(BaseReader):
             df = pd.DataFrame(data, columns=columns)
 
             # 处理 DataFrame 中的回车符
-            df = df.applymap(
+            df = df.map(
                 lambda x: str(x).replace("\n", " ") if isinstance(x, str) else x
             )
 
@@ -127,7 +127,7 @@ class XlsxReader(BaseReader):
             df.dropna(axis=1, how="all", inplace=True)
 
             # 去掉全为 None 的行和列
-            df = df.applymap(lambda x: None if x == "None" else x)
+            df = df.map(lambda x: None if x == "None" else x)
             df.dropna(how="all", inplace=True)
             df.dropna(axis=1, how="all", inplace=True)
 
@@ -205,7 +205,7 @@ def read_changes(data_dir: str):
 
 def read_pdf(file_paths: list[str], user_id):
     total_nodes = []
-    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
+    llama_parse_api_key = "llx-c3nm6yxbViR52YQhdE0H7yozobV879U7TXW05cxJ2inPGH3u"
 
     parser = SentenceSplitter(
         chunk_size=1024,
@@ -276,6 +276,15 @@ def read_non_pdf(files: list, user_id):
             continue
         node.node_id = str(uuid.uuid4())
         node.metadata["chunk_id"] = node.node_id
+        if node.metadata["file_name"].endswith(".pptx"):
+            node.metadata["extraction_errors"] = str(node.metadata["extraction_errors"])
+            node.metadata["extraction_warnings"] = str(
+                node.metadata["extraction_warnings"]
+            )
+            node.metadata["tables"] = str(node.metadata["tables"])
+            node.metadata["charts"] = str(node.metadata["charts"])
+            node.metadata["images"] = str(node.metadata["images"])
+            node.metadata["text_sections"] = str(node.metadata["text_sections"])
 
     return non_pdf_nodes
 

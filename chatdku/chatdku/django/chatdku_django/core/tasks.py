@@ -83,11 +83,7 @@ def update_user_embedding():
 @shared_task(bind=True, max_retries=5)
 def update_user_chroma(self, netid):
     try:
-        while True:
-            metadata = redis_client.lpop(f"queue_key:{netid}")
-            if not metadata:
-                break
-
+        while (metadata := redis_client.lpop(f"queue_key:{netid}")):
             metadata_info = json.loads(metadata.decode("utf-8"))
             lock_key = metadata_info["lock_key"]
 
@@ -96,7 +92,7 @@ def update_user_chroma(self, netid):
             kwargs = json.loads(full_data.get(b"kwargs", b"{}").decode("utf-8"))
 
             try:
-                with redis_lock(lockkey=lock_key):
+                with redis_lock(lockkey=lock_key, expire=600):
                     folder = kwargs["user_folder_path"]
                     json_path = os.path.join(folder, "data_state.json")
                     os.makedirs(folder, exist_ok=True)
@@ -109,12 +105,15 @@ def update_user_chroma(self, netid):
                     redis_client.hset(f"task:{metadata_info['id']}", "status", "completed")
 
             except Exception as e:
-                logger.error(f"User {netid} locked or errored: {e}")
+                logger.error(f"User {netid} task error: {e}")
+                redis_client.rpush(f"queue_key:{netid}", metadata)
                 self.retry(exc=e, countdown=5)
 
+            finally:
+                redis_client.delete(f"task:{metadata_info['id']}")
+
     finally:
-        
-        redis_client.delete(f"processing:{netid}")  
+        redis_client.delete(f"processing:{netid}")
 
 
                 
