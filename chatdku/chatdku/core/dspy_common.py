@@ -28,10 +28,10 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
         signature=signature, demos=demos, inputs=inputs
     )
 
-    return template
+    return str(template)
 
 
 custom_cot_rationale = dspy.OutputField(
     prefix="<think>",
-    desc="The step-by-step rationale of how you derive the response."+"</think>",
+    desc="The step-by-step rationale of how you derive the response." + "</think>",
 )

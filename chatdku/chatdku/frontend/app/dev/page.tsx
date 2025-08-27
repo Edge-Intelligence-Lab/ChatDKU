@@ -93,7 +93,7 @@ export default function Home() {
 	const [thinkingMode, setThinkingMode] = useState(false);
 	const [searchMode, setSearchMode] = useState("");
 	const [inputValue, setInputValue] = useState("");
-	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/dev/chat");
+	const [apiEndpoint, setApiEndpoint] = useState("https://chatdku.dukekunshan.edu.cn/api/chat");
 	const router = useRouter();
 
 	// Initialize marked configuration on component mount and check for terms acceptance

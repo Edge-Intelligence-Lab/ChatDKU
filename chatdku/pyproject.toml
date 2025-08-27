@@ -33,9 +33,14 @@ dependencies = [
     "arize-phoenix~=11.21.1",
     "opentelemetry-api~=1.36.0",
     "opentelemetry-sdk~=1.36.0",
+    "openinference-instrumentation~=0.1.37",
+    "openinference-instrumentation-dspy~=0.1.28",
+    "openinference-instrumentation-litellm~=0.1.25",
     "openinference-semantic-conventions~=0.1.21",
     "dspy~=2.6.27",
     "pydantic~=2.11.7",
+    "flashinfer-python~=0.2.14.post1",
+    "sglang[all]>=0.5.1.post2",
 
     # backend
     "Flask~=3.0.3",

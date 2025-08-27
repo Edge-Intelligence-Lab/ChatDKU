@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-import traceback
-
-
 import dspy
 
 from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
@@ -18,6 +14,7 @@ from chatdku.core.dspy_classes.judge import Judge
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
+import traceback
 from opentelemetry.trace import Status, StatusCode, use_span
 from openinference.semconv.trace import (
     SpanAttributes,
@@ -55,16 +52,14 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.planner = assert_transform_module(
-            Planner(
-                [
-                    VectorRetriever(),
-                    KeywordRetriever(),
-                    QueryCurriculumDB(),
-                ],
-            ),
-            functools.partial(backtrack_handler, max_backtracks=5),
+        self.planner = Planner(
+            [
+                VectorRetriever(),
+                KeywordRetriever(),
+                QueryCurriculumDB(),
+            ],
         )
+
         self.conversation_memory = ConversationMemory()
         self.tool_memory = ToolMemory()
 
@@ -329,7 +324,7 @@ def main():
         api_base=config.llm_url,
         api_key="dummy",
         model_type="chat",
-        max_tokens=30000,
+        max_tokens=config.context_window,
     )
 
     dspy.configure(lm=lm)
