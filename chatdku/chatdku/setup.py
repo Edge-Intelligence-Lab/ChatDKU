@@ -92,29 +92,29 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
     print("Loaded tokenizer")
 
-    messages_to_prompt = (
-        UseCustomPrompt(messages_to_prompt_v3_instruct) if add_system_prompt else None
-    )
-    completion_to_prompt = (
-        UseCustomPrompt(completion_to_prompt_v3_instruct) if add_system_prompt else None
-    )
-
+    # messages_to_prompt = (
+    #     UseCustomPrompt(messages_to_prompt_v3_instruct) if add_system_prompt else None
+    # )
+    # completion_to_prompt = (
+    #     UseCustomPrompt(completion_to_prompt_v3_instruct) if add_system_prompt else None
+    # )
+    #
     # An OpenAI-like API endpoint is needed for the LLM, which could be hosted
     # with e.g. vLLM
-    if use_llm:
-        Settings.llm = OpenAILike(
-            model=config.llm,
-            api_base=config.llm_url,
-            api_key="fake",  # A dummy API key is needed or else connection error would occur
-            context_window=config.context_window,
-            temperature=0.7,
-            is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
-            is_function_calling_model=False,
-            tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
-            messages_to_prompt=messages_to_prompt,
-            completion_to_prompt=completion_to_prompt,
-        )
-        print("Using LLM")
+    # if use_llm:
+    #     Settings.llm = OpenAILike(
+    #         model=config.llm,
+    #         api_base=config.llm_url,
+    #         api_key="fake",  # A dummy API key is needed or else connection error would occur
+    #         context_window=config.context_window,
+    #         temperature=0.7,
+    #         is_chat_model=False,  # Set to False to use custom messages/completion_to_prompt() functions
+    #         is_function_calling_model=False,
+    #         tokenizer=config.tokenizer,  # Use a tokenizer to enable token counting (just pass the name of the LLM is OK)
+    #         messages_to_prompt=messages_to_prompt,
+    #         completion_to_prompt=completion_to_prompt,
+    #     )
+    #     print("Using LLM")
 
 
 def use_phoenix():
@@ -126,7 +126,6 @@ def use_phoenix():
         endpoint=collector_endpoint,
         batch=True,
     )
-
     config.tracer = tracer_provider.get_tracer(__name__)
     span_exporter = OTLPSpanExporter(endpoint=collector_endpoint)
     simple_span_processor = SimpleSpanProcessor(span_exporter=span_exporter)

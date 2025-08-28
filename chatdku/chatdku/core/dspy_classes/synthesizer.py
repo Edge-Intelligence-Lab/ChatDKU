@@ -128,7 +128,9 @@ class ResponseGen:
             )
             self.span.set_attributes(
                 {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: str(OpenInferenceSpanKindValues.LLM.value),
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: str(
+                        OpenInferenceSpanKindValues.LLM.value
+                    ),
                     SpanAttributes.INPUT_VALUE: str(prompt),
                     SpanAttributes.LLM_MODEL_NAME: str(config.llm),
                 }
@@ -162,9 +164,10 @@ class ResponseGen:
                 if hasattr(config, "tracer"):
                     ctx_token = context.attach(ctx)
 
-            if first_token and isinstance(chunk, dspy.Prediction):
+            if isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
-                yield chunk.response
+                if first_token:
+                    yield chunk.response
 
         # for chunk in self.llm_completion_gen:
         #     s = chunk.delta
@@ -184,15 +187,14 @@ class ResponseGen:
             self.span.end()
 
             self.synthesizer_span.set_attribute(
-                
-                    
                 SpanAttributes.OUTPUT_VALUE, self.full_response
-                
             )
             self.synthesizer_span.set_status(Status(StatusCode.OK))
             self.synthesizer_span.end()
             if self.agent_span:
-                self.agent_span.set_attribute( SpanAttributes.OUTPUT_VALUE, self.full_response)
+                self.agent_span.set_attribute(
+                    SpanAttributes.OUTPUT_VALUE, self.full_response
+                )
                 self.agent_span.set_status(Status(StatusCode.OK))
                 self.agent_span.end()
 
@@ -270,14 +272,13 @@ class Synthesizer(dspy.Module):
                     async_streaming=False,
                 )
                 if hasattr(config, "tracer"):
-                        response_gen = ResponseGen(
-                            synthesizer_template,
-                            synthesizer_streamer(**synthesizer_args),
-                            span,
-                            parent_span if final else None,
-                        )
+                    response_gen = ResponseGen(
+                        synthesizer_template,
+                        synthesizer_streamer(**synthesizer_args),
+                        span,
+                        parent_span if final else None,
+                    )
 
-                
                 else:
                     response_gen = ResponseGen(
                         synthesizer_template, synthesizer_streamer(**synthesizer_args)
