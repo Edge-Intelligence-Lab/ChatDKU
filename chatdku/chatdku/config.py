@@ -17,11 +17,11 @@ class Config:
                 # about settings.py
                 "llm": "Qwen/Qwen3-8B",
                 "llm_url": "http://localhost:18082/v1",
-                "llm_temperature": 0.7,
+                "llm_temperature": 0.6,
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
-                "context_window": 35000,
+                "context_window": 30000,
                 # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
