@@ -154,7 +154,7 @@ class ToolMemory(dspy.Module):
             )
 
             # FIXME: There were reports that the max_history_size must be set here to avoid issues
-            # max_history_size = 13000
+            max_history_size = 13000
             self.plan = calls[1:].copy()
             min_index = strs_fit_max_tokens_reverse(
                 [i.model_dump_json() for i in self.history],
