@@ -26,14 +26,13 @@ from chatdku.core.dspy_classes.prompt_settings import (
 from chatdku.config import config
 import re
 
-def filter_judge(judge_str:str):
+
+def filter_judge(judge_str: str):
     """Filter reasoning from Judge"""
-    pattern=r"<think>.*?</think>"
-    cleaned_text=re.sub(pattern,"",judge_str,flags=re.DOTALL)
-    cleaned_text=cleaned_text.replace(".","").strip()
+    pattern = r"<think>.*?</think>"
+    cleaned_text = re.sub(pattern, "", judge_str, flags=re.DOTALL)
+    cleaned_text = cleaned_text.replace(".", "").strip()
     return cleaned_text
-
-
 
 
 def make_judge_signature():
@@ -83,7 +82,7 @@ JudgeSignature = make_judge_signature()
 class Judge(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.judge = dspy.ChainOfThought(JudgeSignature)
+        self.judge = dspy.Predict(JudgeSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
@@ -127,7 +126,6 @@ class Judge(dspy.Module):
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
-            
 
             def _check_judge(args, pred: dspy.Prediction) -> float:
                 answer = filter_judge(pred.judgement)
@@ -140,14 +138,13 @@ class Judge(dspy.Module):
                     )
                     return 0.0
 
-
             refined_judge = dspy.Refine(
                 module=self.judge, N=2, reward_fn=_check_judge, threshold=1.0
             )
 
             judgement_str = refined_judge(**judge_inputs).judgement
-            judgement_str=filter_judge(judgement_str)
-            
+            judgement_str = filter_judge(judgement_str)
+
             if judgement_str not in ["Yes", "No"]:
                 if VERBOSE:
                     print(
