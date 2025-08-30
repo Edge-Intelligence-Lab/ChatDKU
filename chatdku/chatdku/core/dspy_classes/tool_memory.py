@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Any, Optional
 
 import dspy
+import re
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -28,6 +29,14 @@ from chatdku.core.dspy_classes.prompt_settings import (
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 
 from chatdku.config import config
+
+
+def filter_judge(judge_str: str):
+    """Filter reasoning from Judge"""
+    pattern = r"<think>.*?</think>"
+    cleaned_text = re.sub(pattern, "", judge_str, flags=re.DOTALL)
+    cleaned_text = cleaned_text.replace(".", "").strip()
+    return cleaned_text
 
 
 class ToolMemoryEntry(BaseModel):
@@ -98,7 +107,7 @@ class ToolMemory(dspy.Module):
 
     def __init__(self):
         super().__init__()
-        self.compressor = dspy.ChainOfThought(CompressToolMemorySignature)
+        self.compressor = dspy.Predict(CompressToolMemorySignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 14,
             "conversation_history": 2 / 14,
@@ -145,7 +154,7 @@ class ToolMemory(dspy.Module):
             )
 
             # FIXME: There were reports that the max_history_size must be set here to avoid issues
-            # max_history_size = 13000
+            max_history_size = 13000
             self.plan = calls[1:].copy()
             min_index = strs_fit_max_tokens_reverse(
                 [i.model_dump_json() for i in self.history],
@@ -165,7 +174,8 @@ class ToolMemory(dspy.Module):
                 )
 
                 self.summary = self.compressor(**compressor_inputs).current_summary
-                self.history = self.history[min_index:]
+                self.summary = filter_judge(self.summary)
+                self.history = self.history[min_index:-1]
 
             # print("\n\n\n\n\n")
             # print(type(self.history))

@@ -39,9 +39,6 @@ dependencies = [
     "openinference-semantic-conventions~=0.1.21",
     "dspy~=2.6.27",
     "pydantic~=2.11.7",
-    "flashinfer-python~=0.2.14.post1",
-    "sglang[all]>=0.5.1.post2",
-
     # backend
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",
@@ -58,7 +55,6 @@ dependencies = [
     "ollama==0.4.9",
     "plotly==6.1.2",
     "ffmpeg==1.4",
-
     #Django backend
     "Django~=5.2.3",
     "django-appconf~=1.1.0",
@@ -73,9 +69,14 @@ dependencies = [
     "celery~=5.5.3",
     "django-redis~=6.0.0",
     "pandas~=2.2.3",
-    "redis~=5.2.1"
-
-    ]
+    "redis~=5.2.1",
+    "psycopg2-binary>=2.9.10",
+    "openpyxl>=3.1.5",
+    "dotenv>=0.9.9",
+    "locust>=2.39.0",
+    "ml-dtypes~=0.5.3",
+    "numpy~=2.3.2"
+]
 
 [tool.setuptools]
 packages = ["chatdku"]
