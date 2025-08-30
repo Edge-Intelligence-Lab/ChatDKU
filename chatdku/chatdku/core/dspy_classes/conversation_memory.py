@@ -76,7 +76,7 @@ CompressConversationMemorySignature = make_compress_conversation_memory_signatur
 class ConversationMemory(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.compressor = dspy.ChainOfThought(CompressConversationMemorySignature)
+        self.compressor = dspy.Predict(CompressConversationMemorySignature)
         self.history: list[ConversationMemoryEntry] = []
         self.summary: str = ""
         self.token_ratios: dict[str, float] = {

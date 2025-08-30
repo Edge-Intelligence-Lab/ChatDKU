@@ -107,7 +107,7 @@ class ToolMemory(dspy.Module):
 
     def __init__(self):
         super().__init__()
-        self.compressor = dspy.ChainOfThought(CompressToolMemorySignature)
+        self.compressor = dspy.Predict(CompressToolMemorySignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 14,
             "conversation_history": 2 / 14,

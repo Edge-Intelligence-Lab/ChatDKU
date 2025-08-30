@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Classes Database Schema",
+  "description": "Schema for structured data that can be inserted into the classes PostgreSQL table",
+  "properties": {
+    "course_code": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "Course identifier code (e.g., COMPSCI 101, MATH 201)"
+    },
+    "course_title": {
+      "type": "string",
+      "description": "Full title of the course"
+    },
+    "credit_hours": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 12.0,
+      "multipleOf": 0.1,
+      "description": "Number of credit hours for the course"
+    },
+    "course_format": {
+      "type": "string",
+      "description": "Format of the course (e.g., lecture, online, hybrid)"
+    },
+    "prerequisites": {
+      "type": "string",
+      "description": "Course prerequisites as text"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed course description"
+    },
+    "attributes": {
+      "type": "string",
+      "enum": [
+        "two-credit-writing",
+        "ah-foundations",
+        "chinese-student-requirements",
+        "common-core",
+        "language",
+        "ns-foundations",
+        "quantitative-reasoning",
+        "ss-foundations",
+        "signature-projects"
+      ]
+    },
+    "learning_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of learning outcomes for the course"
+    },
+    "required_textbook": {
+      "type": "string",
+      "description": "Required textbook information"
+    },
+    "optional_textbooks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of optional textbook information"
+    },
+    "academic_policies": {
+      "type": "string",
+      "description": "Academic policies for the course"
+    },
+    "instructor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Instructor’s email address"
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Full name of the instructor, no title nor honorifics"
+    },
+    "office_location": {
+      "type": "string",
+      "description": "Instructor’s office location"
+    },
+    "office_hours": {
+      "type": "string",
+      "description": "Instructor’s office hours"
+    },
+    "biography": {
+      "type": "string",
+      "description": "Instructor’s biography"
+    },
+    "year": {
+      "type": "integer",
+      "minimum": 1900,
+      "maximum": 2100,
+      "description": "Academic year"
+    },
+    "semester": {
+      "type": "string",
+      "enum": ["spring", "summer", "fall"],
+      "description": "Semester when the course is offered"
+    },
+    "semester_session": {
+      "type": "string",
+      "enum": ["first", "second", "third", "fourth", "mini-term"],
+      "description": "Whether this is the first, second, third, or fourth seven-week session of the academic year, or a spring mini-term class."
+    },
+    "schedule_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of days when the class meets (e.g., ['Monday', 'Wednesday', 'Friday'])"
+    },
+    "schedule_time_start": {
+      "type": "string",
+      "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "Start time of the class (HH:MM format)"
+    },
+    "schedule_time_end": {
+      "type": "string",
+      "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "End time of the class (HH:MM format)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Classroom or location where the class meets"
+    },
+    "recitation_time": {
+      "type": "string",
+      "description": "Time for recitation sessions"
+    },
+    "recitation_location": {
+      "type": "string",
+      "description": "Location for recitation sessions"
+    },
+    "lab_time": {
+      "type": "string",
+      "description": "Time for laboratory sessions"
+    },
+    "lab_location": {
+      "type": "string",
+      "description": "Location for laboratory sessions"
+    },
+    "grading_policy": {
+      "type": "string",
+      "description": "Course grading policy"
+    },
+    "grade_scale": {
+      "type": "string",
+      "description": "Grading scale used for the course"
+    },
+    "assignment_policy": {
+      "type": "string",
+      "description": "Policy regarding assignments"
+    },
+    "communication_policy": {
+      "type": "string",
+      "description": "Communication policy for the course"
+    },
+    "teaching_methods": {
+      "type": "string",
+      "description": "Teaching methods employed in the course"
+    }
+  },
+  "required": ["course_code", "semester", "semester_session"],
+  "additionalProperties": false
+}
