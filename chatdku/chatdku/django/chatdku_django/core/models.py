@@ -1,5 +1,4 @@
 from django.db import models
-from encrypted_model_fields.fields import EncryptedCharField
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,PermissionsMixin
 from django.utils import timezone
 from django.conf import settings

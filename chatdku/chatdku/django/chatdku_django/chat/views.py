@@ -1,15 +1,22 @@
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
 from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chat.models import Feedback
 from chatdku.backend.user_data_interface import update
 from chatdku_django.celery import redis_client
-from chat.serializer import SourceSerializer
+from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer
+from chat.models import UserSession, ChatMessages
+from django.contrib.auth import get_user_model
 
 import logging
 logger=logging.getLogger(__name__)
 
+User = get_user_model()
 
 
 
@@ -19,6 +26,15 @@ def chat(request):
     
     messages = request.data.get("messages", [])
     question_id = request.data.get("chatHistoryId")
+    session_id=request.data.get("session_id")
+    print(request.user)
+    if not session_id:
+        session=UserSession.objects.create(user=request.user)
+        session_id=str(session.id)
+    else:
+        session=get_object_or_404(UserSession,id=session_id)
+
+    request.session['session_id']=session_id
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
     serializer=SourceSerializer(data=request.data)
@@ -32,7 +48,7 @@ def chat(request):
  
     if search_mode==1 or search_mode==2:
         if redis_client.get(lock_key):
-            return Response({"error","The file is uploading"},status=423)
+            return Response({"error":"The file is uploading"},status=423)
         
         
     if not messages:
@@ -40,15 +56,27 @@ def chat(request):
 
     try:
         message_content = messages[-1]["content"]
+        ChatMessages.objects.create(session=session,role='User',message=message_content)
+        session.title=message_content
+        session.save()  
         # Create a new Agent instance per request
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
+
+
+
+
         def generate():
+            response_text = ""
+            yield f"SESSION_ID:{session_id}\n"
+
             for response in responses_gen.response:
+                response_text+=response
                 yield response  
 
+            ChatMessages.objects.create(session=session,role="Bot",message=response_text)
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:
@@ -76,3 +104,22 @@ def save_feedback(request):
     except Exception as e:
         logger.error(f"Error occured in Feedback {str(e)}")
         return Response({'message': str(e)}, status=500)
+
+
+class SessionViewSet(viewsets.ModelViewSet):
+    def get_queryset(self):
+        return UserSession.objects.filter(user=self.request.user)
+    
+    def create(self,*args, **kwargs):
+        raise MethodNotAllowed("Cannot Create a Session!")
+
+    serializer_class=SessionSerializer
+
+    @action(methods=['GET'],detail=True)
+    def messages(self,request,pk=None):
+        session=self.get_object()
+        msgs=session.messages.all()
+        print(msgs)
+        serializer=ChatMessageSerializer(msgs,many=True)
+        return Response(serializer.data)
+

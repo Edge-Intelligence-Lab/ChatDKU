@@ -1,7 +1,6 @@
 from rest_framework import serializers
+from chat.models import UserSession,ChatMessages
 
-
-from rest_framework import serializers
 
 class SourceSerializer(serializers.Serializer):
 
@@ -26,3 +25,14 @@ class SourceSerializer(serializers.Serializer):
         data['search_mode'] = search_mode
         data['docs']=docs
         return data
+
+class SessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=UserSession
+        fields=['id', 'title', 'created_at']
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ChatMessages
+        fields=['id', 'role', 'message', 'created_at']
