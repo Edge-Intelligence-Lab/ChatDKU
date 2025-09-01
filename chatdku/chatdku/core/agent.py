@@ -324,7 +324,11 @@ def main():
         api_base=config.llm_url,
         api_key="dummy",
         model_type="chat",
-        max_tokens=config.context_window,
+        max_tokens=32768,
+        temperature=config.llm_temperature,
+        launch_kwargs={
+            "TopP": 0.95,
+        },
     )
 
     dspy.configure(lm=lm)

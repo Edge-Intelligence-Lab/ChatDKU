@@ -95,11 +95,9 @@ def make_synthesizer_signature():
         "   - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).\n\n"
         "6. **Major-Related Queries:**:\n"
         "   - If the **Current User Message** is asking about majors, answer with these, as these are the majors at DKU: Applied Mathematics and Computational Sciences with tracks in Computer Science and Mathematics Arts & Media Major with tracks in Arts and Media Behavioral Science with tracks in Psychology and Neuroscience Computation and Design with tracks in Computer Science, Digital Media, and Social Policy Cultures and Movements with tracks in Cultural Anthropology, Sociology, Religious Studies, and World History Data Science Environmental Science with tracks in Biogeochemistry, Biology, Chemistry, and Public Policy Ethics and Leadership with tracks in Philosophy and Public Policy Global China Studies with tracks in Chinese History, Political Science, and Religious Studies Global Cultural Studies with tracks in Creative Writing and Translation, World History, and World Literature Global Health with tracks in Biology and Public Policy Institutions and Governance with tracks in Economics, Political Science, and Public Policy Materials Science with tracks in Chemistry and Physics Molecular Bioscience with tracks in Biogeochemistry, Biophysics, Cell and Molecular Biology, Genetics and Genomics Political Economy with tracks in Economics, Political Science, and Public Policy US Studies with tracks in American History, American Literature, Political Science, and Public Policy\n"
-        "   - When listing the majors at DKU, return a markdown table with the numbered list of majors.\n"
         "7. **Never mention internal tools**:\n"
         "   - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).\n"
         "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.\n"
-        "   - Never Present your Reasoning when generating response"
         "---\n\n"
     )
 
@@ -128,7 +126,9 @@ class ResponseGen:
             )
             self.span.set_attributes(
                 {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: str(OpenInferenceSpanKindValues.LLM.value),
+                    SpanAttributes.OPENINFERENCE_SPAN_KIND: str(
+                        OpenInferenceSpanKindValues.LLM.value
+                    ),
                     SpanAttributes.INPUT_VALUE: str(prompt),
                     SpanAttributes.LLM_MODEL_NAME: str(config.llm),
                 }
@@ -162,9 +162,10 @@ class ResponseGen:
                 if hasattr(config, "tracer"):
                     ctx_token = context.attach(ctx)
 
-            if first_token and isinstance(chunk, dspy.Prediction):
+            if isinstance(chunk, dspy.Prediction):
                 self.full_response = chunk.response
-                yield chunk.response
+                if first_token:
+                    yield chunk.response
 
         # for chunk in self.llm_completion_gen:
         #     s = chunk.delta
@@ -184,15 +185,14 @@ class ResponseGen:
             self.span.end()
 
             self.synthesizer_span.set_attribute(
-                
-                    
                 SpanAttributes.OUTPUT_VALUE, self.full_response
-                
             )
             self.synthesizer_span.set_status(Status(StatusCode.OK))
             self.synthesizer_span.end()
             if self.agent_span:
-                self.agent_span.set_attribute( SpanAttributes.OUTPUT_VALUE, self.full_response)
+                self.agent_span.set_attribute(
+                    SpanAttributes.OUTPUT_VALUE, self.full_response
+                )
                 self.agent_span.set_status(Status(StatusCode.OK))
                 self.agent_span.end()
 
@@ -204,7 +204,7 @@ class ResponseGen:
 class Synthesizer(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.synthesizer = dspy.ChainOfThought(SynthesizerSignature)
+        self.synthesizer = dspy.Predict(SynthesizerSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
@@ -270,14 +270,13 @@ class Synthesizer(dspy.Module):
                     async_streaming=False,
                 )
                 if hasattr(config, "tracer"):
-                        response_gen = ResponseGen(
-                            synthesizer_template,
-                            synthesizer_streamer(**synthesizer_args),
-                            span,
-                            parent_span if final else None,
-                        )
+                    response_gen = ResponseGen(
+                        synthesizer_template,
+                        synthesizer_streamer(**synthesizer_args),
+                        span,
+                        parent_span if final else None,
+                    )
 
-                
                 else:
                     response_gen = ResponseGen(
                         synthesizer_template, synthesizer_streamer(**synthesizer_args)
