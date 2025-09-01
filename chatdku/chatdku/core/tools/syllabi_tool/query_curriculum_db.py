@@ -20,19 +20,23 @@ def remove_think_section(text: str) -> str:
 def fetch_schema(conn):
     # print("Fetching schema...")
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         SELECT table_name
         FROM information_schema.tables
         WHERE table_name = 'classes';
-    """)
+    """
+    )
     tables = [row[0] for row in cur.fetchall()]
     schema = {}
     for table in tables:
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT column_name, data_type
             FROM information_schema.columns
             WHERE table_name = '{table}';
-        """)
+        """
+        )
         schema[table] = {col: dtype for col, dtype in cur.fetchall()}
     # print("Schema fetched!")
     # print(schema)
@@ -75,15 +79,15 @@ class QueryCurriculumDB(dspy.Module):
             print("You are connected to -", record)
 
             # lm = dspy.LM("ollama_chat/qwen3:4b", api_base="http://localhost:11434", api_key="")
-            new_lm = dspy.OpenAI(
-                model="Qwen/Qwen3-8B",
-                api_base="http://127.0.0.1:18082/v1/",
-                api_key="dummy",
-                model_type="chat",
-                max_tokens=40960,
-                stop=["<|im_end|>"],
-            )
-            dspy.configure(lm=new_lm)
+            # new_lm = dspy.OpenAI(
+            #     model="Qwen/Qwen3-8B",
+            #     api_base="http://127.0.0.1:18082/v1/",
+            #     api_key="dummy",
+            #     model_type="chat",
+            #     max_tokens=40960,
+            #     stop=["<|im_end|>"],
+            # )
+            # dspy.configure(lm=new_lm)
             sql_agent = GenerateSQL()
             print("Executing agent...")
 

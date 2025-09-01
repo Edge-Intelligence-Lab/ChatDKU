@@ -56,7 +56,7 @@ class Agent(dspy.Module):
             [
                 VectorRetriever(),
                 KeywordRetriever(),
-                # QueryCurriculumDB(),
+                QueryCurriculumDB(),
             ],
         )
 
