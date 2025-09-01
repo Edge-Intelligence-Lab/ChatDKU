@@ -138,7 +138,7 @@ def get_url(metadata: dict):
             path = metadata["file_path"]
         except:
             path = metadata["file_directory"] + "/" + metadata["filename"]
-            
+
         if "dku_website" in path:
             match = re.search(r"dku_website/.*", path)
             if match:
@@ -260,7 +260,7 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 10,
+        retriever_top_k: int = 5,
         use_reranker: bool = False,
         reranker_top_n: int = 5,
     ):
