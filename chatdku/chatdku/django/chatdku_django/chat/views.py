@@ -27,14 +27,11 @@ def chat(request):
     messages = request.data.get("messages", [])
     question_id = request.data.get("chatHistoryId")
     session_id=request.data.get("session_id")
-    print(request.user)
     if not session_id:
-        session=UserSession.objects.create(user=request.user)
-        session_id=str(session.id)
-    else:
-        session=get_object_or_404(UserSession,id=session_id)
-
+        return Response({"error":"Could not get session_id"})
     request.session['session_id']=session_id
+    session=UserSession.objects.get(id=session_id)
+
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
     serializer=SourceSerializer(data=request.data)
@@ -44,7 +41,6 @@ def chat(request):
     user_id=netid if search_mode !=0 else "Chat_DKU"
     lock_key=f"user_lock:{netid}"
 
-    print(search_mode,docs)
  
     if search_mode==1 or search_mode==2:
         if redis_client.get(lock_key):
@@ -104,6 +100,16 @@ def save_feedback(request):
     except Exception as e:
         logger.error(f"Error occured in Feedback {str(e)}")
         return Response({'message': str(e)}, status=500)
+    
+@api_view(['GET'])
+def get_session(request):
+    try:
+        session=UserSession.objects.create(user=request.user)
+        session_id=str(session.id)
+        return Response({"session_id":session_id})
+    except Exception as e:
+        return Response({"error":f"Could not issue a session_id:{e}"})
+
 
 
 class SessionViewSet(viewsets.ModelViewSet):
