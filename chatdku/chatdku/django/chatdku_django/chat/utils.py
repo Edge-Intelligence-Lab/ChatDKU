@@ -4,12 +4,12 @@ from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
 from chatdku.setup import setup
-
+from openai import OpenAI
 import os
 import datetime
 import dspy
-from chatdku.core.agent import CustomClient
 import logging
+import asyncio
 
 logger=logging.getLogger(__name__)
 
@@ -82,6 +82,39 @@ def feedback_summary():
     email_text=answer_text+'\n'+reason_text
 
     return email_text
+
+
+TITLE_PROMPT="""
+    Create a short title based on the user Query. For example:
+    User: "What are the four subspaces ?"
+    Response: "Four subspaces Explanation"
+
+    User Query:
+
+    {user_query}
+    """
+
+client=OpenAI(
+    api_key="dummy",
+    base_url="http://127.0.0.1:18082/v1/"
+)
+
+
+async def title_gen(user_query):
+    prompt = TITLE_PROMPT.format(user_query=user_query)
+    loop = asyncio.get_running_loop()
+
+    chat_response =await loop.run_in_executor(None,lambda:client.chat.completions.create(
+            model="Qwen/Qwen3-8B",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=8192,
+            temperature=0.7,
+            top_p=0.8,
+            presence_penalty=1.5,
+            extra_body={
+                "top_k": 10,
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
+        ))
     
-
-
+    return chat_response.choices[0].message.content

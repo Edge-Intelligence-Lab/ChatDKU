@@ -12,6 +12,8 @@ from chatdku_django.celery import redis_client
 from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer
 from chat.models import UserSession, ChatMessages
 from django.contrib.auth import get_user_model
+from chat.utils import title_gen
+import asyncio
 
 import logging
 logger=logging.getLogger(__name__)
@@ -53,20 +55,28 @@ def chat(request):
     try:
         message_content = messages[-1]["content"]
         ChatMessages.objects.create(session=session,role='User',message=message_content)
-        session.title=message_content
-        session.save()  
+        if not session.title:
+
+            try:
+                loop = asyncio.get_event_loop()
+                title = loop.run_until_complete(title_gen(message_content)) # Async to prevent further latency
+            except Exception as e: #Fallback incase error
+                logger.error(f"Error in title Generation: {e}")
+                title=message_content
         # Create a new Agent instance per request
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
+        if not session.title:
+            session.title=title
+            session.save()  
 
 
 
 
         def generate():
             response_text = ""
-            yield f"SESSION_ID:{session_id}\n"
 
             for response in responses_gen.response:
                 response_text+=response

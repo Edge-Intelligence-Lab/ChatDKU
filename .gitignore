@@ -139,6 +139,7 @@ env.bak/
 venv.bak/
 *.syllabi-env/
 node_modules/*
+**/uv.lock
 
 # Spyder project settings
 .spyderproject
