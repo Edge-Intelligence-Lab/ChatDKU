@@ -7,7 +7,6 @@ import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
-import { ComboBoxResponsive } from "./combobox";
 import { UploadSheet } from "../UploadSheet";
 import { Button } from "@/components/ui/button";
 
@@ -299,59 +298,6 @@ export function AIInput({
             >
               <CornerRightUp className="w-5 h-5" />
             </button>
-          </div>
-        </div>
-
-        <div className="flex flex-row justify-between">
-          <div className="flex flex-row gap-x-0">
-            {isDevRoute && (
-              <>
-                <Button
-                  variant="inChatbox"
-                  className={cn(
-                    // inputButtonStyle,
-                    isThinking && "bg-primary text-primary-foreground",
-                  )}
-                  onClick={toggleThinkingMode}
-                >
-                  <Brain className="w-4 h-4" />
-                  <span className={cn(isDevRoute && "hidden sm:block")}>
-                    Deep Think
-                  </span>
-                </Button>
-                <ComboBoxResponsive
-                  inputValue={inputValue}
-                  onEndpointChange={onEndpointChange ?? (() => {})}
-                />
-                {/* <div className={cn(!isDevRoute && "hidden")}> */}
-                {/* 	<button */}
-                {/* 		className={cn( */}
-                {/* 			inputButtonStyle, */}
-                {/* 			inputValue && "hidden", */}
-                {/* 			isRecording && */}
-                {/* 			"bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary", */}
-                {/* 		)} */}
-                {/* 		onClick={toggleRecording} */}
-                {/* 	> */}
-                {/* 		<Mic className="cursor-pointer w-5 h-5" /> */}
-                {/* 	</button> */}
-                {/**/}
-                {/* 	<button */}
-                {/* 		onClick={handleReset} */}
-                {/* 		type="button" */}
-                {/* 		className={cn( */}
-                {/* 			inputButtonStyle, */}
-                {/* 			inputValue */}
-                {/* 				? "opacity-100 scale-100" */}
-                {/* 				: "hidden opacity-0 scale-50", */}
-                {/* 		)} */}
-                {/* 	> */}
-                {/* 		<CornerRightUp className="w-5 h-5" /> */}
-                {/* 	</button> */}
-                {/* </div> */}
-                <UploadSheet />
-              </>
-            )}
           </div>
         </div>
       </div>

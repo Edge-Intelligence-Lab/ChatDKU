@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
 // import { ModeToggle } from "@/components/ui/mode-toggle";
 import DynamicLogo from "@/components/dynamic-logo";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export function Navbar() {
     <NavigationMenu className="w-full max-w-[98vw] mx-auto flex justify-between items-center border-b lg:border-none fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md lg:backdrop-blur-none bg-gradient-to-b from-background to-transparent">
       <div className="flex flex-row items-center ">
         <div className="flex flex-row items-center p-3 pr-0 space-x-2">
+          {isDevRoute && <div className="w-5" />}
           <DynamicLogo width={35} height={35} />
           <h2 className="flex flex-row gap-1 items-center font-inter text-xl md:text-xl font-bold">
             ChatDKU
@@ -43,7 +45,11 @@ export function Navbar() {
             <TooltipTrigger asChild>
               <NavigationMenuLink
                 href="/about"
-                className="lg:text-md flex flex-row items-center"
+                className={
+                  isDevRoute
+                    ? "hidden"
+                    : "lg:text-md flex flex-row items-center"
+                }
               >
                 <MessageCircleQuestion className="size-4 text-primary-500" />
               </NavigationMenuLink>
