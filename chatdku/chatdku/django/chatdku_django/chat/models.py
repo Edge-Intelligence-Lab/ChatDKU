@@ -15,7 +15,7 @@ class Feedback(models.Model):
 
 class UserSession(models.Model):
     id=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user=models.ForeignKey(User, null=False, on_delete=models.CASCADE)
+    user=models.ForeignKey(User, null=False, on_delete=models.CASCADE,related_name="usersession")
     created_at=models.DateTimeField(auto_now_add=True)
     title=models.CharField(max_length=100, null=False)
 

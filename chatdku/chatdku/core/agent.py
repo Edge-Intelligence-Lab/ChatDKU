@@ -322,9 +322,9 @@ def main():
     lm = dspy.LM(
         model="openai/" + config.llm,
         api_base=config.llm_url,
-        api_key="dummy",
+        api_key=config.llm_api_key,
         model_type="chat",
-        max_tokens=32768,
+        max_tokens=config.context_window,
         temperature=config.llm_temperature,
         launch_kwargs={
             "TopP": 0.95,
@@ -332,6 +332,13 @@ def main():
     )
 
     dspy.configure(lm=lm)
+    #To disable cache:
+    
+    # dspy.configure_cache(
+    # enable_disk_cache=False,
+    # enable_memory_cache=False
+    # )
+
     import time
 
     agent = Agent(

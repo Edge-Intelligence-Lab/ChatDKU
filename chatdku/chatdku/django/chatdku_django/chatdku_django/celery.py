@@ -49,6 +49,14 @@ app.conf.beat_schedule={
     "chat-test-every-12hr":{
         "task":"chat.tasks.chat_load_test_daily",
         "schedule":crontab(minute=00, hour='*/12') # 12hr, everyday
+    },
+    "session-clean-admin-1day":{
+        "task":"chat.tasks.clean_admin_session",
+        "schedule":crontab(minute=00,hour='*/22') # Every 22hr
+    },
+    "session-clean-empty":{
+        "task":"chat.tasks.clean_empty_sessions",
+        "schedule":crontab(minute=00,hour='*/3') #Every 3 hour everyday
     }
 }
 

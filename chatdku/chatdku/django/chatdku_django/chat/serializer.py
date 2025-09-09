@@ -1,5 +1,9 @@
 from rest_framework import serializers
 from chat.models import UserSession,ChatMessages
+from django.contrib.auth import get_user_model
+
+
+User=get_user_model()
 
 
 class SourceSerializer(serializers.Serializer):
@@ -36,3 +40,20 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model=ChatMessages
         fields=['id', 'role', 'message', 'created_at']
+
+class SessionVerifierSerializer(serializers.Serializer):
+    session_id = serializers.CharField()
+
+    def validate(self, data):
+        user = self.context['user']  
+        session_id = data.get('session_id')
+
+        exists = user.usersession.filter(id=session_id).exists()
+        if exists:
+            return data
+        else:
+            raise serializers.ValidationError("Session ID not found")
+
+
+
+        

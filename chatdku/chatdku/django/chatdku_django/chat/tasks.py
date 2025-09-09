@@ -9,11 +9,17 @@ from django.template.loader import render_to_string
 from chat.mail import EmailUtil
 import os
 from django.core.cache import cache
+from chat.models import UserSession
+from django.contrib.auth import get_user_model
 
+from django.db.models import Q
+from core.models import hash_netid
 
 dotenv.load_dotenv()
 
 logger=logging.getLogger(__name__)
+
+User=get_user_model()
 
 
 
@@ -117,3 +123,17 @@ def delete_locust_logs():
 
     except Exception as e:
         logger.error(f"Error in deleting locust logs: {str(e)}")
+
+@shared_task
+def clean_admin_session():
+    try:
+        admin_session=os.getenv("UID",'chatdku_admin')
+        hashed_id=hash_netid(admin_session)
+        query=UserSession.objects.filter(user__username=hashed_id).delete()
+
+    except Exception as e:
+        logger.error(f"Error occured while cleaning admin session: {e}")
+
+@shared_task
+def clean_empty_sessions():
+    query=UserSession.objects.all().filter(Q(title='')|Q(title__isnull=True)).delete()
