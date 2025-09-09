@@ -153,7 +153,7 @@ export default function Home() {
 				const sanitizedContent = (content = parseMarkdown(content)).trim();
 
 				messageElement.innerHTML = `
-        <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
+        <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[95%]"}">
           <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
             ${isUser
 						? ""
