@@ -9,11 +9,12 @@ from django.http import StreamingHttpResponse
 from chat.models import Feedback
 from chatdku.backend.user_data_interface import update
 from chatdku_django.celery import redis_client
-from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer
+from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer,SessionVerifierSerializer
 from chat.models import UserSession, ChatMessages
 from django.contrib.auth import get_user_model
 from chat.utils import title_gen
 import asyncio
+from chat.tasks import clean_empty_sessions
 
 import logging
 logger=logging.getLogger(__name__)
@@ -30,8 +31,17 @@ def chat(request):
     question_id = request.data.get("chatHistoryId")
     session_id=request.data.get("session_id")
     if not session_id:
-        return Response({"error":"Could not get session_id"})
-    request.session['session_id']=session_id
+        return Response({"error":"Could not get session_id"},status=400)
+    
+    serializer = SessionVerifierSerializer(
+        data=request.data,
+        context={'user': request.user}
+    )
+    serializer.is_valid(raise_exception=True)
+
+    # Extract UUID
+    session_id = serializer.validated_data["session_id"]
+
     session=UserSession.objects.get(id=session_id)
 
     mode = request.data.get("mode", "default")
@@ -53,8 +63,10 @@ def chat(request):
         return Response({"error": "No message provided"}, status=400)
 
     try:
+        print("1")
         message_content = messages[-1]["content"]
         ChatMessages.objects.create(session=session,role='User',message=message_content)
+        print("2")
         if not session.title:
 
             try:
@@ -68,12 +80,12 @@ def chat(request):
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
+        print("3")
         if not session.title:
             session.title=title
-            session.save()  
+            session.save()
 
-
-
+        clean_empty_sessions.delay()  
 
         def generate():
             response_text = ""

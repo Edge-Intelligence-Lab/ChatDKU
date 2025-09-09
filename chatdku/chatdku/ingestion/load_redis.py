@@ -141,11 +141,11 @@ def main(nodes_path, index_name, reset):
 
 
 def str2bool(val):
-    if isinstance(val,bool):
+    if isinstance(val, bool):
         return val
-    if val.lower() in ["t","true"]:
+    if val.lower() in ["t", "true"]:
         return True
-    if val.lower() in ['f','false']:
+    if val.lower() in ["f", "false"]:
         return False
     else:
         raise ValueError(f"Expected String, got {type(val)}")

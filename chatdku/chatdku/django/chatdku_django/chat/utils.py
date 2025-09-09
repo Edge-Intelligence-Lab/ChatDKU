@@ -62,11 +62,11 @@ def feedback_summary():
 
     summarizer = FeedbackSummarizer()
     new_lm = dspy.OpenAI(
-        model="Qwen/Qwen3-8B",
-        api_base="http://127.0.0.1:18082/v1/",
+        model="openai/Qwen3-8B",
+        api_base="http://127.0.0.1:18083/v1/",
         api_key="dummy",
         model_type="chat",
-        max_tokens=50000,
+        max_tokens=1000,
         stop=["<|im_end|>"]
     )
     dspy.configure(lm=new_lm)
@@ -96,7 +96,7 @@ TITLE_PROMPT="""
 
 client=OpenAI(
     api_key="dummy",
-    base_url="http://127.0.0.1:18082/v1/"
+    base_url="http://127.0.0.1:18083/v1/"
 )
 
 
