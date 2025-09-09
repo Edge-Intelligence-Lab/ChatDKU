@@ -189,12 +189,12 @@ class ResponseGen:
             )
             self.synthesizer_span.set_status(Status(StatusCode.OK))
             self.synthesizer_span.end()
-            if self.agent_span:
-                self.agent_span.set_attribute(
-                    SpanAttributes.OUTPUT_VALUE, self.full_response
-                )
-                self.agent_span.set_status(Status(StatusCode.OK))
-                self.agent_span.end()
+            # if self.agent_span:
+            #     self.agent_span.set_attribute(
+            #         SpanAttributes.OUTPUT_VALUE, self.full_response
+            #     )
+            #     self.agent_span.set_status(Status(StatusCode.OK))
+            #     self.agent_span.end()
 
     def get_full_response(self) -> str:
         # Make sure the entire response is read
