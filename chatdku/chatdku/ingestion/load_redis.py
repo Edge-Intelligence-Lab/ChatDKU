@@ -17,12 +17,12 @@ from chatdku.setup import setup
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
 import unstructured.file_utils.filetype
-from .custom_filetype_detect import custom_detect_filetype
+from custom_filetype_detect import custom_detect_filetype
 
 
 # Override auto partation
 import unstructured.partition.auto
-from .custom_partation import partition
+from custom_partation import partition
 from chatdku.config import config
 
 unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
@@ -141,11 +141,11 @@ def main(nodes_path, index_name, reset):
 
 
 def str2bool(val):
-    if isinstance(val,bool):
+    if isinstance(val, bool):
         return val
-    if val.lower() in ["t","true"]:
+    if val.lower() in ["t", "true"]:
         return True
-    if val.lower() in ['f','false']:
+    if val.lower() in ["f", "false"]:
         return False
     else:
         raise ValueError(f"Expected String, got {type(val)}")

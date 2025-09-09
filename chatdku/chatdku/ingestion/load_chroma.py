@@ -14,18 +14,6 @@ from llama_index.core.schema import TextNode
 # from chatdku.setup import setup
 from chatdku.config import config
 
-# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
-import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
-
-
-# Override auto partation
-import unstructured.partition.auto
-from custom_partation import partition
-
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-unstructured.partition.auto.partition = partition
-
 
 def nodes_to_dicts(nodes: list):
     result = {
@@ -75,9 +63,10 @@ def load_chroma(
     chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
     if reset:
-        chroma_db.delete_collection(
-            collection
-        )  # Clear previously stored data in vector database
+        if collection in chroma_db.list_collections():
+            chroma_db.delete_collection(
+                collection
+            )  # Clear previously stored data in vector database
 
     collection = chroma_db.get_or_create_collection(
         name=collection,
