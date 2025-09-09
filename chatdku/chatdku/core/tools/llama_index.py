@@ -270,7 +270,7 @@ class VectorRetriever(dspy.Module):
 
         db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
         self.collection = db.get_collection(
-            name=config.user_uploads_collection,
+            name=config.chroma_collection,
             # name=config.chroma_collection,
             embedding_function=HuggingFaceEmbeddingServer(
                 url=config.tei_url + "/" + config.embedding + "/embed"
