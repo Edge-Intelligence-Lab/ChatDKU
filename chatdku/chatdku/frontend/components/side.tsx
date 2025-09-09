@@ -120,7 +120,7 @@ export default function Side({
                           {conversation.title}
                         </div>
                         <div className="text-xs text-sidebar-foreground/60">
-                          {conversation.createdAt.toLocaleDateString()}
+                          {conversation.created_at.toLocaleDateString()}
                         </div>
                       </div>
                     </Button>
