@@ -12,8 +12,7 @@ import WelcomeBanner from "@/components/WelcomeBanner";
 const configureMarked = () => {
   // Use only the options that are supported by the current MarkedOptions type
   marked.setOptions({
-    breaks: true, // Enable line breaks
-    gfm: true, // Enable GitHub Flavored Markdown
+    breaks: true,
   });
 };
 
@@ -34,14 +33,14 @@ const parseMarkdown = (content: string): string => {
 const streamText = async (
   text: string,
   elementContainer: HTMLElement,
-  delay = 5,
+  delay = 1,
 ) => {
   // Remove <think>...</think> tags before streaming
   const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
   let currentText = "";
   const streamContainer = document.createElement("div");
   streamContainer.className =
-    "text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
+    "text-foreground break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
   elementContainer.appendChild(streamContainer);
 
   // Create cursor element
@@ -260,18 +259,23 @@ export default function Home() {
               );
 
               try {
-                const response = await fetch(apiEndpoint, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    messages: [{ role: "user", content: value }],
-                    chatHistoryId: newChatHistoryId,
-                    mode: thinkingMode ? "agent" : "",
-                    searchMode: searchMode,
-                  }),
-                });
-
-                if (!response.ok) throw new Error("Failed to fetch response");
+                var response: any;
+                if (value.trim().toLowerCase() === "test") {
+                  response = await fetch("/mdtest.md");
+                } else {
+                  response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messages: [{ role: "user", content: value }],
+                      chatHistoryId: newChatHistoryId,
+                      mode: thinkingMode ? "agent" : "",
+                      searchMode: searchMode,
+                    }),
+                  });
+                  if (!response.ok)
+                    throw new Error("Failed to fetch response. Try reloading?");
+                }
 
                 if (botMessage) {
                   botMessage.remove();
