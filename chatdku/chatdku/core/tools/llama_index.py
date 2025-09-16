@@ -260,8 +260,8 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 5,
-        use_reranker: bool = False,
+        retriever_top_k: int = 10,
+        use_reranker: bool = True,
         reranker_top_n: int = 5,
     ):
         self.retriever_top_k = retriever_top_k
