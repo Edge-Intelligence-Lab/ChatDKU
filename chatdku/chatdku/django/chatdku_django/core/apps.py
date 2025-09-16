@@ -12,9 +12,12 @@ class CoreConfig(AppConfig):
         lm = dspy.LM(
             model="openai/" + config.llm,
             api_base=config.llm_url,
-            api_key="dummy",
+            api_key=config.llm_api_key,
             model_type="chat",
-            max_tokens=30000,
+            max_tokens=config.context_window,
+            temperature=config.llm_temperature,
+            launch_kwargs={
+                "TopP": 0.95,
+            },
         )
-
         dspy.configure(lm=lm)

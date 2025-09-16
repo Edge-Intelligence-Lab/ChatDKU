@@ -3,12 +3,11 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
-from chatdku.setup import setup
+from chatdku.config import config
 
 import os
 import datetime
 import dspy
-from chatdku.core.agent import CustomClient
 import logging
 
 logger=logging.getLogger(__name__)
@@ -61,10 +60,10 @@ def feedback_summary():
         feedback_text+=f"(feedback {idx}):\nUser Question: {item.user_input}\nGeneration: {item.gen_answer}\nReason: {item.feedback_reason}\n"
 
     summarizer = FeedbackSummarizer()
-    new_lm = dspy.OpenAI(
-        model="Qwen/Qwen3-8B",
-        api_base="http://127.0.0.1:18082/v1/",
-        api_key="dummy",
+    new_lm = dspy.LM(
+        model='openai/'+config.llm,
+        api_base=config.llm_url,
+        api_key=config.llm_api_key,
         model_type="chat",
         max_tokens=50000,
         stop=["<|im_end|>"]
