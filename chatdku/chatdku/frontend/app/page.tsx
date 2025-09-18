@@ -12,7 +12,8 @@ import WelcomeBanner from "@/components/WelcomeBanner";
 const configureMarked = () => {
   // Use only the options that are supported by the current MarkedOptions type
   marked.setOptions({
-    breaks: true,
+    breaks: true, // Enable line breaks
+    gfm: true, // Enable GitHub Flavored Markdown
   });
 };
 
@@ -33,14 +34,14 @@ const parseMarkdown = (content: string): string => {
 const streamText = async (
   text: string,
   elementContainer: HTMLElement,
-  delay = 1,
+  delay = 5,
 ) => {
   // Remove <think>...</think> tags before streaming
   const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
   let currentText = "";
   const streamContainer = document.createElement("div");
   streamContainer.className =
-    "text-foreground break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
+    "text-foreground  break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
   elementContainer.appendChild(streamContainer);
 
   // Create cursor element
@@ -152,7 +153,7 @@ export default function Home() {
         const sanitizedContent = (content = parseMarkdown(content)).trim();
 
         messageElement.innerHTML = `
-        <div class="flex flex-col ${isUser ? "items-end max-w-[95%] sm:max-w-[85%]" : "items-start w-full sm:max-w-[95%]"}">
+        <div class="flex flex-col ${isUser ? "items-end max-w-[95%] sm:max-w-[85%]" : "items-start w-full sm:max-w-[85%]"}">
           <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
             ${
               isUser
@@ -174,7 +175,7 @@ export default function Home() {
       // For streamed assistant messages
       else {
         messageElement.innerHTML = `
-        <div class="flex flex-col items-start w-full sm:max-w-[95%]">
+        <div class="flex flex-col items-start w-full sm:max-w-[85%]">
           <div class="flex flex-col lg:flex-row gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
             <div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>
             <div class="text-left overflow-hidden" id="stream-container">
@@ -273,9 +274,9 @@ export default function Home() {
                       searchMode: searchMode,
                     }),
                   });
-                  if (!response.ok)
-                    throw new Error("Failed to fetch response. Try reloading?");
                 }
+
+                if (!response.ok) throw new Error("Failed to fetch response");
 
                 if (botMessage) {
                   botMessage.remove();
@@ -330,16 +331,16 @@ export default function Home() {
                         <div class="fixed inset-0 flex items-center justify-center">
                           <div class="dialog bg-background border shadow-lg rounded-lg w-[90%] max-w-md p-6">
                             <h3 class="text-lg font-semibold mb-4">Sorry to hear that. Can you tell us why?</h3>
-
+                            
                             <div class="feedback-options space-y-2" id="reason-options">
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_correct">Not Correct</button>
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_clear">Not Clear</button>
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_relevant">Not Relevant</button>
                               <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="other">Other</button>
                             </div>
-
+                
                             <textarea id="custom-reason" class="w-full mt-4 p-2 rounded-md border bg-background text-foreground hidden" rows="5" placeholder="Please describe the issue"></textarea>
-
+                    
                             <div class="flex justify-end mt-6 space-x-2">
                               <button id="submit-feedback" class="btn px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Submit</button>
                               <button id="cancel-feedback" class="btn px-4 py-2 text-sm rounded-md bg-secondary text-secondary-foreground hover:bg-destructive hover:text-destructive-foreground">Cancel</button>
