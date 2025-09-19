@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
+from django.db.models import Q
 from chatdku.config import config
 from openai import OpenAI
 import os
@@ -136,4 +137,14 @@ def ping_oss(message:str):
                 },
             )
     return response
+
+
+def load_conversation(user,session_id):
+    objects=user.usersession
+    sessions=objects.filter(Q(id=session_id)).first()
+    messages= sessions.messages.order_by('-created_at')[1:11]
+    return_message=list(messages.values_list("role","message"))
+    return_message=return_message[::-1]
+    return return_message
+
 

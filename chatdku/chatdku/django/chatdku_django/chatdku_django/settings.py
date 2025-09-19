@@ -95,6 +95,7 @@ logging.config.dictConfig(
 ALLOWED_HOSTS = [
     "chatdku.dukekunshan.edu.cn",
     "10.200.14.82",
+    "localhost"
     "127.0.0.1:8009",
     "localhost:8009",
 ]
@@ -164,6 +165,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    # "PAGE_SIZE":20
 }
 AUTH_USER_MODEL = "core.UserModel"
 

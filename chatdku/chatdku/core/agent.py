@@ -24,6 +24,7 @@ from openinference.semconv.trace import (
 
 from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
+from chatdku.core.utils import load_conversation
 
 
 class Agent(dspy.Module):
@@ -33,6 +34,7 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
+        previous_conversation:list=None
     ):
         """
         Args:
@@ -44,6 +46,7 @@ class Agent(dspy.Module):
                 complete response as a string.
             get_itermediate: If `True`, `forward()` would return the synthesized
                 result for each agent iteration as a generator.
+            previous_conversation: List of User-Assistant conversation retrieved from the database.
         """
 
         super().__init__()
@@ -61,6 +64,26 @@ class Agent(dspy.Module):
         )
 
         self.conversation_memory = ConversationMemory()
+
+        try:
+            if previous_conversation:
+                past_conversations= load_conversation(previous_conversation)
+
+                for conversation in past_conversations:
+                    user,bot=conversation[0],conversation[1]
+                    self.conversation_memory.register_history(
+                            role="user",
+                            content=user
+                    )
+                    self.conversation_memory.register_history(
+                            role="assistant",
+                            content=bot
+
+                    )
+        except Exception as e:
+            print(f"error encountered in loading conversation: {e}")
+
+
         self.tool_memory = ToolMemory()
 
         # Store information not accessible to the LLM.

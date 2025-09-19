@@ -15,6 +15,7 @@ from django.contrib.auth import get_user_model
 from chat.utils import title_gen
 import asyncio
 from chat.tasks import clean_empty_sessions
+from chat.utils import load_conversation
 
 import logging
 logger=logging.getLogger(__name__)
@@ -63,10 +64,8 @@ def chat(request):
         return Response({"error": "No message provided"}, status=400)
 
     try:
-        print("1")
         message_content = messages[-1]["content"]
         ChatMessages.objects.create(session=session,role='User',message=message_content)
-        print("2")
         if not session.title:
 
             try:
@@ -76,11 +75,12 @@ def chat(request):
                 logger.error(f"Error in title Generation: {e}")
                 title=message_content
         # Create a new Agent instance per request
-        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
+
+        conversation=(load_conversation(request.user,session_id))
+        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
             current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
         )
-        print("3")
         if not session.title:
             session.title=title
             session.save()

@@ -141,3 +141,10 @@ class ConversationMemory(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
+
+    def register_history(self, role: str, content: str):
+        new_entry = ConversationMemoryEntry(role=role, content=content)
+        self.history.append(new_entry)
+
+
+
