@@ -3,7 +3,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
-from chatdku.setup import setup
+from chatdku.config import config
 from openai import OpenAI
 import os
 import datetime
@@ -61,10 +61,10 @@ def feedback_summary():
         feedback_text+=f"(feedback {idx}):\nUser Question: {item.user_input}\nGeneration: {item.gen_answer}\nReason: {item.feedback_reason}\n"
 
     summarizer = FeedbackSummarizer()
-    new_lm = dspy.OpenAI(
-        model="openai/Qwen3-8B",
-        api_base="http://127.0.0.1:18083/v1/",
-        api_key="dummy",
+    new_lm = dspy.LM(
+        model="openai/"+config.llm,
+        api_base=config.llm_url,
+        api_key=config.llm_api_key,
         model_type="chat",
         max_tokens=1000,
         stop=["<|im_end|>"]
@@ -95,8 +95,8 @@ TITLE_PROMPT="""
     """
 
 client=OpenAI(
-    api_key="dummy",
-    base_url="http://127.0.0.1:18083/v1/"
+    api_key=config.llm_api_key,
+    base_url=config.llm_url
 )
 
 
@@ -105,7 +105,7 @@ async def title_gen(user_query):
     loop = asyncio.get_running_loop()
 
     chat_response =await loop.run_in_executor(None,lambda:client.chat.completions.create(
-            model="Qwen/Qwen3-8B",
+            model=config.llm,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=8192,
             temperature=0.7,
@@ -118,3 +118,22 @@ async def title_gen(user_query):
         ))
     
     return chat_response.choices[0].message.content
+
+
+def ping_oss(message:str):
+    response=client.chat.completions.create(
+                model=config.llm,
+                messages=[{"role": "system", "content": "This is a ping test."},
+                          {"role":"user","content":message}
+                          ],
+                max_tokens=8192,
+                temperature=0.7,
+                top_p=0.8,
+                presence_penalty=1.5,
+                extra_body={
+                    "top_k": 10,
+                    "chat_template_kwargs": {"enable_thinking": False},
+                },
+            )
+    return response
+

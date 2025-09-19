@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 
 from django.db.models import Q
 from core.models import hash_netid
+from chat.utils import ping_oss
 
 dotenv.load_dotenv()
 
@@ -136,4 +137,16 @@ def clean_admin_session():
 
 @shared_task
 def clean_empty_sessions():
-    query=UserSession.objects.all().filter(Q(title='')|Q(title__isnull=True)).delete()
+    try:
+        query=UserSession.objects.all().filter(Q(title='')|Q(title__isnull=True)).delete()
+    except Exception as e:
+        logger.error(f"Error cleaning empty sessions: {e}")
+
+@shared_task(bind=True, max_retries=5)
+def oss_test(self):
+    try:
+        chat_response = ping_oss("What can you do?")
+        return "Pass"
+    except Exception as e:
+        print(f"Retry {self.request.retries + 1}/{self.max_retries}")
+        raise self.retry(exc=e, countdown=5)

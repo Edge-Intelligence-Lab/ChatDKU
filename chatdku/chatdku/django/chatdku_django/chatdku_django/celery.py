@@ -36,15 +36,15 @@ app.conf.beat_schedule={
     },
     "chat-load-test-every-sunday":{
         "task":"chat.tasks.chat_load_test_weekly",
-        "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 4:20 local time
+        "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 
     },
     "delete-load-test-logs-every-sunday":{
         "task":"chat.tasks.delete_locust_logs",
-        "schedule":crontab(minute=20, hour=19,day_of_week=0) #Every Sunday 3:20 local time
+        "schedule":crontab(minute=20, hour=19,day_of_week=0) #Every Sunday 
     },
     "email-load-test-every-sunday":{
         "task":"chat.tasks.email_weekly_load",
-        "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 5:20 local time
+        "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 
     },
     "chat-test-every-12hr":{
         "task":"chat.tasks.chat_load_test_daily",
@@ -57,6 +57,10 @@ app.conf.beat_schedule={
     "session-clean-empty":{
         "task":"chat.tasks.clean_empty_sessions",
         "schedule":crontab(minute=00,hour='*/3') #Every 3 hour everyday
+    },
+    "oss-test-30min":{
+        "task":"chat.tasks.oss_test",
+        "schedule":crontab(minute="*/30") #run every 30 mins
     }
 }
 
