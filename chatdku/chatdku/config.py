@@ -51,7 +51,7 @@ class Config:
         if key in self._config:
             return self._config[key]
         else:
-            return super.__getattr__(key)
+            return super().__getattr__(key)
 
     def __setattr__(self, key, value):
         # Treat changing internal attributes differently from changing settings
@@ -64,7 +64,7 @@ class Config:
         if key in self._config:
             del self._config[key]
         else:
-            super.__delattr__(key)
+            super().__delattr__(key)
 
 
 config = Config()
