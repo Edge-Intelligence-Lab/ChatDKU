@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { BrainCircuit, ChevronsUpDown } from "lucide-react";
+import { getStoredEndpoint, setStoredEndpoint } from "@/lib/convosNew";
 
 type Branch = {
   chatEndpoint: string;
@@ -58,14 +59,18 @@ export function ComboBoxResponsive({
 }: ComboBoxResponsiveProps) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(
-    branches[0],
-  );
+  
+  // Initialize with stored endpoint or default
+  const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(() => {
+    const storedEndpoint = getStoredEndpoint();
+    return branches.find(branch => branch.chatEndpoint === storedEndpoint) || branches[0];
+  });
 
   // Update endpoint when selected status changes
   React.useEffect(() => {
     if (selectedStatus) {
       onEndpointChange(selectedStatus.chatEndpoint);
+      setStoredEndpoint(selectedStatus.chatEndpoint);
     }
   }, [selectedStatus, onEndpointChange]);
 

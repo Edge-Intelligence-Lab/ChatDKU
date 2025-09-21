@@ -19,6 +19,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!chatdku/chatdku/frontend/lib/
 lib64/
 parts/
 sdist/

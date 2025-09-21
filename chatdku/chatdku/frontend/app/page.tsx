@@ -3,10 +3,13 @@ import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { getNewSession, getCurrentSessionId, getStoredEndpoint, getSessionMessages } from "@/lib/convosNew";
 import { AIInput } from "@/components/ui/ai-input";
 import { Navbar } from "@/components/navbar";
 import { PromptRecs } from "@/components/prompt_recs";
 import WelcomeBanner from "@/components/WelcomeBanner";
+import Side from "@/components/side";
+import { DocumentManager } from "@/components/doc-manager";
 
 // Configure marked options
 const configureMarked = () => {
@@ -94,13 +97,15 @@ export default function Home() {
   const [showStarter, setShowStarter] = useState(true);
   const [isChatboxCentered, setIsChatboxCentered] = useState(true);
   const [chatHistoryId, setChatHistoryId] = useState("");
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [thinkingMode, setThinkingMode] = useState(false);
   const [searchMode, setSearchMode] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [apiEndpoint, setApiEndpoint] = useState(
-    "https://chatdku.dukekunshan.edu.cn/api/chat",
+    getStoredEndpoint(),
   );
   const router = useRouter();
+  const [showDocumentManager, setShowDocumentManager] = useState(false);
 
   // Initialize marked configuration on component mount and check for terms acceptance
   useEffect(() => {
@@ -110,6 +115,12 @@ export default function Home() {
     const termsAccepted = Cookies.get("terms_accepted");
     if (!termsAccepted) {
       router.push("/landing");
+    } else {
+      // Initialize session if user is logged in
+      const currentSession = getCurrentSessionId();
+      if (!currentSession) {
+        getNewSession();
+      }
     }
   }, [router]);
 
@@ -202,7 +213,53 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
+    <>
+      <Side
+        onDocumentManager={() => {
+          setShowDocumentManager(true);
+        }}
+        onEndpointChange={setApiEndpoint}
+        currentEndpoint={apiEndpoint}
+        currentSessionId={currentSessionId}
+        onNewChat={async () => {
+          setShowStarter(true);
+          setIsChatboxCentered(true);
+          const newSessionId = await getNewSession();
+          if (newSessionId) {
+            setCurrentSessionId(newSessionId);
+            setChatHistoryId(newSessionId);
+          }
+          // Clear existing chat
+          const chatLog = document.getElementById("chat-log");
+          if (chatLog) {
+            chatLog.innerHTML = "";
+          }
+        }}
+        onConversationSelect={async (sessionId) => {
+          setShowStarter(false);
+          setIsChatboxCentered(false);
+          setCurrentSessionId(sessionId);
+          setChatHistoryId(sessionId);
+
+          // Clear existing chat
+          const chatLog = document.getElementById("chat-log");
+          if (chatLog) {
+            chatLog.innerHTML = "";
+          }
+
+          // Load and display messages for the selected conversation
+          const messages = await getSessionMessages(sessionId);
+          messages.forEach((msg) => {
+            addMessageToChat(
+              msg.role.toLowerCase(),
+              msg.content,
+              "text-sm",
+              false,
+            );
+          });
+        }}
+      />
+      <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
       <header className="sticky top-0 z-20 w-full">
         <Navbar />
       </header>
@@ -244,8 +301,8 @@ export default function Home() {
               setShowStarter(false);
               setIsChatboxCentered(false);
 
-              const newChatHistoryId = generateUniqueId();
-              setChatHistoryId(newChatHistoryId);
+              // Get or create a session ID
+              const currentSessionId = getCurrentSessionId();
 
               addMessageToChat(
                 "user",
@@ -264,12 +321,12 @@ export default function Home() {
                 if (value.trim().toLowerCase() === "test") {
                   response = await fetch("/mdtest.md");
                 } else {
-                  response = await fetch(apiEndpoint, {
+                  response = await fetch("https://chatdku.dukekunshan.edu.cn/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       messages: [{ role: "user", content: value }],
-                      chatHistoryId: newChatHistoryId,
+                      chatHistoryId: currentSessionId,
                       mode: thinkingMode ? "agent" : "",
                       searchMode: searchMode,
                     }),
@@ -453,6 +510,11 @@ export default function Home() {
           </p>
         )}
       </div>
-    </div>
+      <DocumentManager
+        open={showDocumentManager}
+        onOpenChange={setShowDocumentManager}
+      />
+      </div>
+    </>
   );
 }

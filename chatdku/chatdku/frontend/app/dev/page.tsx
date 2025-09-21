@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, SetStateAction } from "react";
-import { getNewSession, getSessionMessages } from "@/lib/convos";
+import { getNewSession, getSessionMessages, getCurrentSessionId, getStoredEndpoint } from "@/lib/convosNew";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -103,7 +103,7 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [apiEndpoint, setApiEndpoint] = useState(
-    "https://chatdku.dukekunshan.edu.cn/api/chat",
+    getStoredEndpoint(),
   );
   const router = useRouter();
   const [showDocumentManager, setShowDocumentManager] = useState(false);
@@ -116,6 +116,12 @@ export default function Home() {
     const termsAccepted = Cookies.get("terms_accepted");
     if (!termsAccepted) {
       router.push("/landing");
+    } else {
+      // Initialize session if user is logged in
+      const currentSession = getCurrentSessionId();
+      if (!currentSession) {
+        getNewSession();
+      }
     }
   }, [router]);
 
@@ -214,6 +220,7 @@ export default function Home() {
           setShowDocumentManager(true);
         }}
         onEndpointChange={setApiEndpoint}
+        currentEndpoint={apiEndpoint}
         currentSessionId={currentSessionId}
         onNewChat={async () => {
           setShowStarter(true);
@@ -295,11 +302,7 @@ export default function Home() {
                 setShowStarter(false);
                 setIsChatboxCentered(false);
 
-                const newSessionId = await getNewSession();
-                if (newSessionId) {
-                  setCurrentSessionId(newSessionId);
-                  setChatHistoryId(newSessionId);
-                }
+                const currentSessionId = getCurrentSessionId();
 
                 addMessageToChat(
                   "user",
@@ -323,7 +326,7 @@ export default function Home() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         messages: [{ role: "user", content: value }],
-                        chatHistoryId: chatHistoryId,
+                        chatHistoryId: currentSessionId,
                         mode: thinkingMode ? "agent" : "",
                         searchMode: searchMode,
                       }),
