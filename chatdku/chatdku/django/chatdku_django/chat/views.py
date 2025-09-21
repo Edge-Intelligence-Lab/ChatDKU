@@ -16,6 +16,7 @@ from chat.utils import title_gen
 import asyncio
 from chat.tasks import clean_empty_sessions
 from chat.utils import load_conversation
+from django.db.models import Q
 
 import logging
 logger=logging.getLogger(__name__)
@@ -136,7 +137,7 @@ def get_session(request):
 
 class SessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        return UserSession.objects.filter(user=self.request.user)
+        return UserSession.objects.filter(Q(user=self.request.user)).exclude(Q(title='')|Q(title__isnull=True)).order_by('-created_at')
     
     def create(self,*args, **kwargs):
         raise MethodNotAllowed("Cannot Create a Session!")
@@ -147,7 +148,6 @@ class SessionViewSet(viewsets.ModelViewSet):
     def messages(self,request,pk=None):
         session=self.get_object()
         msgs=session.messages.all()
-        print(msgs)
         serializer=ChatMessageSerializer(msgs,many=True)
         return Response(serializer.data)
 
