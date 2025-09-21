@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
     { id: "qwen", name: "Qwen Model", endpoint: API_ENDPOINTS.CHAT_DEV2 },
   ] as const;
   
-  // TODO: Move all sample questions here below:
+  // TODO: Move all old sample questions here below:
   export const EXAMPLE_QUESTIONS = [
     { emoji: "🔬", question: "Explain quantum computing principles" },
     { emoji: "📚", question: "Summarize recent AI research papers" },

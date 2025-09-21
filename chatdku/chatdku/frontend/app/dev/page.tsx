@@ -24,6 +24,9 @@ const configureMarked = () => {
 // Helper function to safely handle marked.parse which might return Promise<string>
 // Remove <think>...</think> tags before parsing
 const parseMarkdown = (content: string): string => {
+  // Handle null/undefined content
+  if (!content) return "";
+  
   // Remove all <think>...</think> tags (including multiline)
   const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
   const parsed = marked.parse(cleanedContent);
@@ -162,7 +165,7 @@ export default function Home() {
       // For user messages or non-streamed assistant messages
       if (isUser || !shouldStream) {
         // Use DOMPurify to sanitize HTML content when it's from markdown
-        const sanitizedContent = (content = parseMarkdown(content)).trim();
+        const sanitizedContent = content ? parseMarkdown(content).trim() : "";
 
         messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
