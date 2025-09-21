@@ -1,15 +1,27 @@
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
 from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chat.models import Feedback
 from chatdku.backend.user_data_interface import update
 from chatdku_django.celery import redis_client
-from chat.serializer import SourceSerializer
+from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer,SessionVerifierSerializer
+from chat.models import UserSession, ChatMessages
+from django.contrib.auth import get_user_model
+from chat.utils import title_gen
+import asyncio
+from chat.tasks import clean_empty_sessions
+from chat.utils import load_conversation
+from django.db.models import Q
 
 import logging
 logger=logging.getLogger(__name__)
 
+User = get_user_model()
 
 
 
@@ -18,7 +30,21 @@ logger=logging.getLogger(__name__)
 def chat(request):
     
     messages = request.data.get("messages", [])
-    question_id = request.data.get("chatHistoryId")
+    chatHistoryId=request.data.get("chatHistoryId")
+    if not chatHistoryId:
+        return Response({"error":"Could not get chatHistoryId"},status=400)
+    
+    serializer = SessionVerifierSerializer(
+        data=request.data,
+        context={'user': request.user}
+    )
+    serializer.is_valid(raise_exception=True)
+
+    # Extract UUID
+    chatHistoryId = serializer.validated_data["chatHistoryId"]
+
+    session=UserSession.objects.get(id=chatHistoryId)
+
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
     serializer=SourceSerializer(data=request.data)
@@ -28,11 +54,10 @@ def chat(request):
     user_id=netid if search_mode !=0 else "Chat_DKU"
     lock_key=f"user_lock:{netid}"
 
-    print(search_mode,docs)
  
     if search_mode==1 or search_mode==2:
         if redis_client.get(lock_key):
-            return Response({"error","The file is uploading"},status=423)
+            return Response({"error":"The file is uploading"},status=423)
         
         
     if not messages:
@@ -40,15 +65,36 @@ def chat(request):
 
     try:
         message_content = messages[-1]["content"]
+        ChatMessages.objects.create(session=session,role='User',message=message_content)
+        if not session.title:
+
+            try:
+                loop = asyncio.get_event_loop()
+                title = loop.run_until_complete(title_gen(message_content)) # Async to prevent further latency
+            except Exception as e: #Fallback incase error
+                logger.error(f"Error in title Generation: {e}")
+                title=message_content
         # Create a new Agent instance per request
-        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False)
+
+        conversation=(load_conversation(request.user,chatHistoryId))
+        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
-            current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
+            current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
         )
+        if not session.title:
+            session.title=title
+            session.save()
+
+        clean_empty_sessions.delay()  
+
         def generate():
+            response_text = ""
+
             for response in responses_gen.response:
+                response_text+=response
                 yield response  
 
+            ChatMessages.objects.create(session=session,role="Bot",message=response_text)
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:
@@ -76,3 +122,31 @@ def save_feedback(request):
     except Exception as e:
         logger.error(f"Error occured in Feedback {str(e)}")
         return Response({'message': str(e)}, status=500)
+    
+@api_view(['GET'])
+def get_session(request):
+    try:
+        session=UserSession.objects.create(user=request.user)
+        session_id=str(session.id)
+        return Response({"session_id":session_id})
+    except Exception as e:
+        return Response({"error":f"Could not issue a session_id:{e}"})
+
+
+
+class SessionViewSet(viewsets.ModelViewSet):
+    def get_queryset(self):
+        return UserSession.objects.filter(Q(user=self.request.user)).exclude(Q(title='')|Q(title__isnull=True)).order_by('-created_at')
+    
+    def create(self,*args, **kwargs):
+        raise MethodNotAllowed("Cannot Create a Session!")
+
+    serializer_class=SessionSerializer
+
+    @action(methods=['GET'],detail=True)
+    def messages(self,request,pk=None):
+        session=self.get_object()
+        msgs=session.messages.all()
+        serializer=ChatMessageSerializer(msgs,many=True)
+        return Response(serializer.data)
+

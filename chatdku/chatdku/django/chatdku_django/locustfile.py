@@ -3,6 +3,7 @@ import os
 import dotenv
 import logging
 import random
+import json
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -12,8 +13,9 @@ logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
 
 class MyUser(HttpUser):
-    wait_time = between(1, 3)
+    wait_time = between(5, 10)
     host=os.getenv('HOST')
+    session_id=''
 
     messages = [
         {"content": "What is chatDKU?"},
@@ -35,6 +37,10 @@ class MyUser(HttpUser):
         {"content": "How can I use the resources at DKU (academic, mental health, and advising) to create a personalized 4-year roadmap for research and career preparation?"}
     ]
 
+    def get_session(self):
+        response=self.client.get('/api/get_session',headers=self.headers)
+        return response.text
+    
 
     def on_start(self):
         '''To Bypasss Authentication Middleware'''
@@ -42,7 +48,11 @@ class MyUser(HttpUser):
                 "UID": os.getenv("UID"),               
                 "X-DisplayName": os.getenv("DISPLAY_NAME"),      
                 "Content-Type": "application/json",
-    }
+        
+        }
+
+        self.session=json.loads(self.get_session())['session_id']
+
 
     def get_doc_list(self):
         '''Get User Docs'''
@@ -73,7 +83,8 @@ class MyUser(HttpUser):
             "chatHistoryId": chat_history_id,
             "mode": mode,
             "messages": [message],  
-            "sources": sources       
+            "sources": sources,    
+            "session_id":self.session   
         }
 
     @task

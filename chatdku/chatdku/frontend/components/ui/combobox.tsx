@@ -59,6 +59,7 @@ export function ComboBoxResponsive({
 }: ComboBoxResponsiveProps) {
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+
   
   // Initialize with stored endpoint or default
   const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(() => {
@@ -66,11 +67,14 @@ export function ComboBoxResponsive({
     return branches.find(branch => branch.chatEndpoint === storedEndpoint) || branches[0];
   });
 
+
   // Update endpoint when selected status changes
   React.useEffect(() => {
     if (selectedStatus) {
       onEndpointChange(selectedStatus.chatEndpoint);
+
       setStoredEndpoint(selectedStatus.chatEndpoint);
+
     }
   }, [selectedStatus, onEndpointChange]);
 

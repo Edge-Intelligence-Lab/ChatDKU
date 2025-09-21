@@ -115,10 +115,3 @@ def update_user_chroma(self, netid):
     finally:
         redis_client.delete(f"processing:{netid}")
 
-
-                
-
-
-    
-
-

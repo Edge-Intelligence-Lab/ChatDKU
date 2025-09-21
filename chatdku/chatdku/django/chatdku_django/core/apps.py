@@ -9,6 +9,7 @@ class CoreConfig(AppConfig):
         import dspy
         setup()
         use_phoenix()
+
         lm = dspy.LM(
             model="openai/" + config.llm,
             api_base=config.llm_url,
@@ -21,3 +22,7 @@ class CoreConfig(AppConfig):
             },
         )
         dspy.configure(lm=lm)
+        dspy.configure_cache(
+        enable_disk_cache=False,
+        enable_memory_cache=False
+        )
