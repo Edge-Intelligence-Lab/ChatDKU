@@ -3,12 +3,16 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
+
+from django.db.models import Q
 from chatdku.config import config
+from openai import OpenAI
 
 import os
 import datetime
 import dspy
 import logging
+import asyncio
 
 logger=logging.getLogger(__name__)
 
@@ -61,11 +65,13 @@ def feedback_summary():
 
     summarizer = FeedbackSummarizer()
     new_lm = dspy.LM(
-        model='openai/'+config.llm,
+
+        model="openai/"+config.llm,
+
         api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
-        max_tokens=50000,
+        max_tokens=1000,
         stop=["<|im_end|>"]
     )
     dspy.configure(lm=new_lm)
@@ -81,6 +87,68 @@ def feedback_summary():
     email_text=answer_text+'\n'+reason_text
 
     return email_text
+
+
+TITLE_PROMPT="""
+    Create a short title based on the user Query. For example:
+    User: "What are the four subspaces ?"
+    Response: "Four subspaces Explanation"
+
+    User Query:
+
+    {user_query}
+    """
+
+client=OpenAI(
+    api_key=config.llm_api_key,
+    base_url=config.llm_url
+)
+
+
+async def title_gen(user_query):
+    prompt = TITLE_PROMPT.format(user_query=user_query)
+    loop = asyncio.get_running_loop()
+
+    chat_response =await loop.run_in_executor(None,lambda:client.chat.completions.create(
+            model=config.llm,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=8192,
+            temperature=0.7,
+            top_p=0.8,
+            presence_penalty=1.5,
+            extra_body={
+                "top_k": 10,
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
+        ))
     
+    return chat_response.choices[0].message.content
+
+
+def ping_oss(message:str):
+    response=client.chat.completions.create(
+                model=config.llm,
+                messages=[{"role": "system", "content": "This is a ping test."},
+                          {"role":"user","content":message}
+                          ],
+                max_tokens=8192,
+                temperature=0.7,
+                top_p=0.8,
+                presence_penalty=1.5,
+                extra_body={
+                    "top_k": 10,
+                    "chat_template_kwargs": {"enable_thinking": False},
+                },
+            )
+    return response
+
+
+def load_conversation(user,session_id):
+    objects=user.usersession
+    sessions=objects.filter(Q(id=session_id)).first()
+    messages= sessions.messages.order_by('-created_at')[1:11]
+    return_message=list(messages.values_list("role","message"))
+    return_message=return_message[::-1]
+    return return_message
 
 

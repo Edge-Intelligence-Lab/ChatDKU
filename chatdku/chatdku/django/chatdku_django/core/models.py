@@ -1,11 +1,11 @@
 from django.db import models
-from encrypted_model_fields.fields import EncryptedCharField
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,PermissionsMixin
 from django.utils import timezone
 from django.conf import settings
 import uuid
 import hashlib
 import os
+import re
 #helper function and class
 def generate_uuid_string():
     return str(uuid.uuid4())
@@ -42,7 +42,10 @@ class ChatDkuUserManager(BaseUserManager):
 
 
     def get_or_create_by_netid(self, netid, password=None, **kwargs):
-        hashed_netid = hash_netid(netid)
+        if re.search(r'admin',netid):
+            hashed_netid=netid
+        else:    
+            hashed_netid = hash_netid(netid)
         user, created = self.get_or_create(username=hashed_netid, defaults={**kwargs})
         if created and password:
             user.set_password(password)

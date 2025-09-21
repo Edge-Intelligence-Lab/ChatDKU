@@ -1,6 +1,8 @@
 "use client";
 import { useState, useCallback, useEffect, SetStateAction } from "react";
+
 import { getNewSession, getSessionMessages, getCurrentSessionId, getStoredEndpoint } from "@/lib/convosNew";
+
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -24,6 +26,11 @@ const configureMarked = () => {
 // Helper function to safely handle marked.parse which might return Promise<string>
 // Remove <think>...</think> tags before parsing
 const parseMarkdown = (content: string): string => {
+
+  // Handle null/undefined content
+  if (!content) return "";
+  
+
   // Remove all <think>...</think> tags (including multiline)
   const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
   const parsed = marked.parse(cleanedContent);
@@ -45,7 +52,9 @@ const streamText = async (
   let currentText = "";
   const streamContainer = document.createElement("div");
   streamContainer.className =
+
     "text-foreground break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
+
   elementContainer.appendChild(streamContainer);
 
   // Create cursor element
@@ -103,7 +112,9 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [apiEndpoint, setApiEndpoint] = useState(
+
     getStoredEndpoint(),
+
   );
   const router = useRouter();
   const [showDocumentManager, setShowDocumentManager] = useState(false);
@@ -116,12 +127,14 @@ export default function Home() {
     const termsAccepted = Cookies.get("terms_accepted");
     if (!termsAccepted) {
       router.push("/landing");
+
     } else {
       // Initialize session if user is logged in
       const currentSession = getCurrentSessionId();
       if (!currentSession) {
         getNewSession();
       }
+
     }
   }, [router]);
 
@@ -162,7 +175,9 @@ export default function Home() {
       // For user messages or non-streamed assistant messages
       if (isUser || !shouldStream) {
         // Use DOMPurify to sanitize HTML content when it's from markdown
-        const sanitizedContent = (content = parseMarkdown(content)).trim();
+
+        const sanitizedContent = content ? parseMarkdown(content).trim() : "";
+
 
         messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-start w-full sm:max-w-[85%]"}">
@@ -220,7 +235,9 @@ export default function Home() {
           setShowDocumentManager(true);
         }}
         onEndpointChange={setApiEndpoint}
+
         currentEndpoint={apiEndpoint}
+
         currentSessionId={currentSessionId}
         onNewChat={async () => {
           setShowStarter(true);
@@ -302,7 +319,9 @@ export default function Home() {
                 setShowStarter(false);
                 setIsChatboxCentered(false);
 
+
                 const currentSessionId = getCurrentSessionId();
+
 
                 addMessageToChat(
                   "user",
@@ -317,6 +336,7 @@ export default function Home() {
                 );
 
                 try {
+
                   var response: any;
                   if (value.trim().toLowerCase() === "test") {
                     response = await fetch("/mdtest.md");
@@ -332,6 +352,7 @@ export default function Home() {
                       }),
                     });
                   }
+
 
                   if (!response.ok) throw new Error("Failed to fetch response");
 

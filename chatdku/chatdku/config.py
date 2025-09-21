@@ -5,7 +5,9 @@ from urllib.parse import quote
 dotenv.load_dotenv()
 redis_host = os.getenv("REDIS_HOST")
 redis_password = os.getenv("REDIS_PASSWORD")
-llm_api_key=os.getenv("LLM_API_KEY",'dummy')
+
+llm_api_key=os.getenv("LLM_API_KEY")
+
 
 
 class Config:
@@ -17,7 +19,9 @@ class Config:
                 # about settings.py
                 "llm": "openai/gpt-oss-20b",
                 "llm_url": "http://dku-vcm-3831.vm.duke.edu:3000/v1",
-                "llm_api_key":llm_api_key,
+
+                "llm_api_key": llm_api_key,
+
                 "llm_temperature": 0.6,
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",

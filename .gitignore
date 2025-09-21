@@ -139,7 +139,10 @@ ENV/
 env.bak/
 venv.bak/
 *.syllabi-env/
-**/node_modules/
+
+node_modules/*
+**/uv.lock
+
 
 # Spyder project settings
 .spyderproject
@@ -211,3 +214,4 @@ benchmarks/questions.json
 
 **/nohup.out
 **/dku_website
+**/locust_logs
