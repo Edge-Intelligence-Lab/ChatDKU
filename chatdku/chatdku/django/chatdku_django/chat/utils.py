@@ -3,9 +3,11 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
+
 from django.db.models import Q
 from chatdku.config import config
 from openai import OpenAI
+
 import os
 import datetime
 import dspy
@@ -63,7 +65,9 @@ def feedback_summary():
 
     summarizer = FeedbackSummarizer()
     new_lm = dspy.LM(
+
         model="openai/"+config.llm,
+
         api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",

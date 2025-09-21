@@ -21,7 +21,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ScrollArea } from "./ui/scroll-area";
 import { useEffect, useState } from "react";
-import { Convo, getConversations } from "@/lib/convos";
+
+import { Convo, getConversations } from "@/lib/convosNew";
+
 import { cn } from "@/components/utils";
 
 interface SidebarProps {
@@ -30,6 +32,9 @@ interface SidebarProps {
   currentSessionId?: string;
   onNewChat: () => void;
   onConversationSelect: (sessionId: string) => void;
+
+  currentEndpoint?: string;
+
 }
 
 export default function Side({
@@ -38,6 +43,9 @@ export default function Side({
   currentSessionId,
   onNewChat,
   onConversationSelect,
+
+  currentEndpoint,
+
 }: SidebarProps) {
   const pathname = usePathname();
   const isDevRoute = pathname === "/dev" || pathname === "/dev/";
@@ -66,7 +74,9 @@ export default function Side({
               ChatDKU
             </SheetTitle>
           </SheetHeader>
-          <div className="px-2 flex-col space-y-1.5">
+
+          <div className="px-2 flex flex-col space-y-1.5 h-full">
+
             <Button
               variant="inChatbox"
               className="w-full justify-start"
@@ -75,32 +85,40 @@ export default function Side({
               <SquarePen />
               New Chat
             </Button>
-            <Button
-              variant="inChatbox"
-              onClick={onDocumentManager}
-              className="w-full justify-start m-0"
-            >
-              <FileText />
-              Document Manager
-              <ChevronRight className="ml-auto" />
-            </Button>
+
+            <div className={cn(!isDevRoute && "hidden")}>
+              <Button
+                variant="inChatbox"
+                onClick={onDocumentManager}
+                className="w-full justify-start"
+              >
+                <FileText />
+                Document Manager
+                <ChevronRight className="ml-auto" />
+              </Button>
+            </div>
+
             <Link href="/about">
               <Button variant="inChatbox" className="w-full justify-start">
                 <MessageCircleQuestion />
                 About ChatDKU
               </Button>
             </Link>
-            <p className="ml-2 mt-4 text-sm text-muted-foreground">
-              Model Selection
-            </p>
-            <ComboBoxResponsive
-              inputValue=""
-              onEndpointChange={onEndpointChange ?? (() => {})}
-            />
+
+            <div className={cn(!isDevRoute && "hidden")}>
+              <p className="ml-2 mt-4 text-sm text-muted-foreground">
+                Model Selection
+              </p>
+              <ComboBoxResponsive
+                inputValue={currentEndpoint || ""}
+                onEndpointChange={onEndpointChange ?? (() => {})}
+              />
+            </div>
             <p className="ml-2 mt-4 text-sm text-muted-foreground">
               Chat History
             </p>
-            <ScrollArea className="flex-1 px-4">
+            <ScrollArea className="flex-1 min-h-0 px-4">
+
               <div className="space-y-1 pb-4">
                 {conversations.length > 0 ? (
                   conversations.map((conversation) => (

@@ -19,6 +19,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!chatdku/chatdku/frontend/lib/
 lib64/
 parts/
 sdist/
@@ -138,8 +139,10 @@ ENV/
 env.bak/
 venv.bak/
 *.syllabi-env/
+
 node_modules/*
 **/uv.lock
+
 
 # Spyder project settings
 .spyderproject

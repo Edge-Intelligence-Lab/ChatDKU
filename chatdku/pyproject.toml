@@ -37,7 +37,7 @@ dependencies = [
     "openinference-instrumentation-dspy~=0.1.28",
     "openinference-instrumentation-litellm~=0.1.25",
     "openinference-semantic-conventions~=0.1.21",
-    "dspy~=2.6.27",
+    "dspy~=3.0.3",
     "pydantic~=2.11.7",
     # backend
     "Flask~=3.0.3",

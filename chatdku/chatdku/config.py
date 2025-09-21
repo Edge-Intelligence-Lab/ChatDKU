@@ -5,12 +5,13 @@ from urllib.parse import quote
 dotenv.load_dotenv()
 redis_host = os.getenv("REDIS_HOST")
 redis_password = os.getenv("REDIS_PASSWORD")
+
 llm_api_key=os.getenv("LLM_API_KEY")
+
 
 
 class Config:
     _instance = None
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -18,7 +19,9 @@ class Config:
                 # about settings.py
                 "llm": "openai/gpt-oss-20b",
                 "llm_url": "http://dku-vcm-3831.vm.duke.edu:3000/v1",
+
                 "llm_api_key": llm_api_key,
+
                 "llm_temperature": 0.6,
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
@@ -29,7 +32,7 @@ class Config:
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
-                "url_csv_path": "/datapool/url_csv/public_download_info.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/url_csv/url_database.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_host": redis_host,
                 "redis_password": redis_password,
@@ -52,7 +55,7 @@ class Config:
         if key in self._config:
             return self._config[key]
         else:
-            return super.__getattr__(key)
+            return super().__getattr__(key)
 
     def __setattr__(self, key, value):
         # Treat changing internal attributes differently from changing settings
@@ -65,7 +68,7 @@ class Config:
         if key in self._config:
             del self._config[key]
         else:
-            super.__delattr__(key)
+            super().__delattr__(key)
 
 
 config = Config()

@@ -34,12 +34,6 @@ from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
 
-# from llama_index.core.vector_stores import (
-#     MetadataFilter,
-#     MetadataFilters,
-#     FilterOperator,
-#     FilterCondition,
-# )
 
 from redis import Redis
 from redis.commands.search.query import Query
@@ -260,13 +254,15 @@ class VectorRetriever(dspy.Module):
 
     def __init__(
         self,
-        retriever_top_k: int = 10,
+
+        retriever_top_k: int = 5,
         use_reranker: bool = True,
-        reranker_top_n: int = 5,
+        reranker_top_n: int = 3,
+
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
-        self.reranker_top_n = reranker_top_n
+        self.reranker = get_reranker(reranker_top_n)
 
         db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
         self.collection = db.get_collection(
@@ -395,12 +391,11 @@ class VectorRetriever(dspy.Module):
             retrieved_nodes = chroma_result_to_nodes(query_result)
 
             if self.use_reranker:
-                reranker = get_reranker(self.reranker_top_n)
                 tokenizer = AutoTokenizer.from_pretrained(
                     "cross-encoder/ms-marco-MiniLM-L6-v2"
                 )
 
-                nodes = reranker.postprocess_nodes(
+                nodes = self.reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
                     query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
@@ -457,7 +452,7 @@ class KeywordRetriever(dspy.Module):
         #     docstore=docstore, similarity_top_k=retriever_top_k
         # )
 
-        # self.reranker = get_reranker(reranker_top_n)
+        self.reranker = get_reranker(reranker_top_n)
 
         # self.summarizer = DocumentSummarizer()
 
@@ -624,12 +619,11 @@ class KeywordRetriever(dspy.Module):
                 ]
 
             # retrieved_nodes = self.retriever.retrieve(query)
-            # reranked_nodes = self.reranker.postprocess_nodes(
-            #     retrieved_nodes,
-            #     # BERT token limit is 512, however, we should leave some space for special tokens
-            #     query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
-            # )
-            # return dspy.Prediction(result=get_str_of_simplified_nodes(reranked_nodes))
+            nodes = self.reranker.postprocess_nodes(
+                nodes,
+                # BERT token limit is 512, however, we should leave some space for special tokens
+                query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
+            )
 
             nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
