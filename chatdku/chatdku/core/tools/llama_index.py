@@ -429,6 +429,7 @@ class KeywordRetriever(dspy.Module):
     def __init__(
         self,
         retriever_top_k: int = 5,
+        use_reranker: bool = True,
         reranker_top_n: int = 3,
     ):
         self.client = Redis(
@@ -451,6 +452,7 @@ class KeywordRetriever(dspy.Module):
         # )
 
         self.reranker = get_reranker(reranker_top_n)
+        self.use_reranker = use_reranker
 
         # self.summarizer = DocumentSummarizer()
 
@@ -594,7 +596,7 @@ class KeywordRetriever(dspy.Module):
             )
             results = self.client.ft(self.index_name).search(query_cmd)
             try:
-                nodes = [
+                retrieved_nodes = [
                     NodeWithScore(
                         node=TextNode(
                             id=r.id,
@@ -609,7 +611,7 @@ class KeywordRetriever(dspy.Module):
                     for r in results.docs
                 ]
             except:
-                nodes = [
+                retrieved_nodes = [
                     NodeWithScore(
                         node=TextNode(id=r.id, text=r.text), score=float(r.score)
                     )
@@ -617,11 +619,18 @@ class KeywordRetriever(dspy.Module):
                 ]
 
             # retrieved_nodes = self.retriever.retrieve(query)
-            nodes = self.reranker.postprocess_nodes(
-                nodes,
-                # BERT token limit is 512, however, we should leave some space for special tokens
-                query_str=truncate_tokens(query, 500, tokenizer=self.reranker._tokenizer),
-            )
+            if self.use_reranker:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    "cross-encoder/ms-marco-MiniLM-L6-v2"
+                )
+
+                nodes = self.reranker.postprocess_nodes(
+                    retrieved_nodes,
+                    # BERT token limit is 512, however, we should leave some space for special tokens
+                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
+                )
+            else:
+                nodes = retrieved_nodes
 
             nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
