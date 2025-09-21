@@ -30,10 +30,9 @@ User = get_user_model()
 def chat(request):
     
     messages = request.data.get("messages", [])
-    question_id = request.data.get("chatHistoryId")
-    session_id=request.data.get("session_id")
-    if not session_id:
-        return Response({"error":"Could not get session_id"},status=400)
+    chatHistoryId=request.data.get("chatHistoryId")
+    if not chatHistoryId:
+        return Response({"error":"Could not get chatHistoryId"},status=400)
     
     serializer = SessionVerifierSerializer(
         data=request.data,
@@ -42,9 +41,9 @@ def chat(request):
     serializer.is_valid(raise_exception=True)
 
     # Extract UUID
-    session_id = serializer.validated_data["session_id"]
+    chatHistoryId = serializer.validated_data["chatHistoryId"]
 
-    session=UserSession.objects.get(id=session_id)
+    session=UserSession.objects.get(id=chatHistoryId)
 
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
@@ -77,10 +76,10 @@ def chat(request):
                 title=message_content
         # Create a new Agent instance per request
 
-        conversation=(load_conversation(request.user,session_id))
+        conversation=(load_conversation(request.user,chatHistoryId))
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
-            current_user_message=message_content, question_id=question_id, search_mode=search_mode, user_id=str(user_id), files=docs
+            current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
         )
         if not session.title:
             session.title=title

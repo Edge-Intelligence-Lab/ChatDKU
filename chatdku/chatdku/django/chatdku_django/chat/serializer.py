@@ -42,13 +42,13 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         fields=['id', 'role', 'message', 'created_at']
 
 class SessionVerifierSerializer(serializers.Serializer):
-    session_id = serializers.CharField()
+    chatHistoryId = serializers.CharField()
 
     def validate(self, data):
         user = self.context['user']  
-        session_id = data.get('session_id')
+        chatHistoryId = data.get('chatHistoryId')
 
-        exists = user.usersession.filter(id=session_id).exists()
+        exists = user.usersession.filter(id=chatHistoryId).exists()
         if exists:
             return data
         else:
