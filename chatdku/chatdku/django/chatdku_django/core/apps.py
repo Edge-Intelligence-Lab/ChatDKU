@@ -23,6 +23,6 @@ class CoreConfig(AppConfig):
         )
         dspy.configure(lm=lm)
         dspy.configure_cache(
-        enable_disk_cache=False,
-        enable_memory_cache=False
+        enable_disk_cache=True,
+        enable_memory_cache=True
         )
