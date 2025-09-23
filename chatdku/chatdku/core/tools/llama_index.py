@@ -256,7 +256,7 @@ class VectorRetriever(dspy.Module):
         self,
 
         retriever_top_k: int = 5,
-        use_reranker: bool = True,
+        use_reranker: bool = False,
         reranker_top_n: int = 3,
 
     ):
@@ -431,7 +431,7 @@ class KeywordRetriever(dspy.Module):
     def __init__(
         self,
         retriever_top_k: int = 5,
-        use_reranker: bool = True,
+        use_reranker: bool = False,
         reranker_top_n: int = 3,
     ):
         self.client = Redis(

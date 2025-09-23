@@ -148,5 +148,34 @@ def oss_test(self):
         chat_response = ping_oss("What can you do?")
         return "Pass"
     except Exception as e:
-        print(f"Retry {self.request.retries + 1}/{self.max_retries}")
+        if self.request.retries >= self.max_retries:
+            if not cache.get("oss_test:fail"):
+                cache.set("oss_test:fail", 1, timeout=60*60*3)
+
+                from_email = os.getenv("EMAIL_HOST_USER")
+                to_email = os.getenv("EMAIL_TO")
+                subject = "Error in OSS Model"
+                body_html = (
+                    f"<h2>Issue Identified: GPT-OSS</h2>"
+                    f"<p>GPT OSS has stopped responding since {datetime.datetime.now()}."
+                    f" Please look into it!</p>"
+                )
+                body_text = (
+                    f"Issue Identified: GPT-OSS\n"
+                    f"GPT OSS has stopped responding since {datetime.datetime.now()}."
+                    f" Please look into it!"
+                )
+
+                EmailUtil.send_mail(
+                    from_email=from_email,
+                    to_email=to_email,
+                    subject=subject,
+                    content_text=body_text,
+                    content_html=body_html,
+                )
+
+                logger.info(f"Email sent on: {datetime.datetime.now()}")
+            raise e
         raise self.retry(exc=e, countdown=5)
+
+

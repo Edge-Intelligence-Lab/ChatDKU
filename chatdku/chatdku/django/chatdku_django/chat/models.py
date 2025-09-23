@@ -23,8 +23,16 @@ class UserSession(models.Model):
         return f"Session {self.id} - {self.title}"
 
 class ChatMessages(models.Model):
+    USER="user"
+    BOT="bot"
+
+    ROLE_CHOICES=[
+        (USER,"User"),
+        (BOT,"Bot")
+    ]
+
     session=models.ForeignKey(to=UserSession,on_delete=models.CASCADE,related_name="messages")
-    role=models.CharField(max_length=20,choices=[("user","User"),("bot","Bot")])
+    role=models.CharField(max_length=20,choices=ROLE_CHOICES)
     message=models.TextField()
     created_at=models.DateTimeField(auto_now_add=True)
 

@@ -65,7 +65,7 @@ def chat(request):
 
     try:
         message_content = messages[-1]["content"]
-        ChatMessages.objects.create(session=session,role='User',message=message_content)
+        ChatMessages.objects.create(session=session,role=ChatMessages.USER,message=message_content)
         if not session.title:
 
             try:
@@ -94,7 +94,7 @@ def chat(request):
                 response_text+=response
                 yield response  
 
-            ChatMessages.objects.create(session=session,role="Bot",message=response_text)
+            ChatMessages.objects.create(session=session,role=ChatMessages.BOT,message=response_text)
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:
