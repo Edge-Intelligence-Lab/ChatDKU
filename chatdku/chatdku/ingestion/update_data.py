@@ -8,8 +8,7 @@ import argparse
 from llama_index.core import SimpleDirectoryReader
 from llama_index.readers.file import UnstructuredReader
 from llama_index.core.schema import TextNode, BaseNode
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.node_parser import SentenceSplitter from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.readers.base import BaseReader
 from llama_parse import LlamaParse
 from chatdku.config import config
@@ -33,6 +32,14 @@ unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
 
 unstructured.partition.auto.partition = partition
 
+def _import_data(nodes_path: str) -> list:
+    with open(nodes_path, "r") as f:
+        datas = json.load(f)
+    return [TextNode.from_dict(data) for data in datas]
+
+def _write_data(nodes_path: str, data: list):
+    with open(nodes_path, "w") as f:
+        json.dump(data, f)
 
 def nodes_to_dicts(nodes: list) -> dict:
     result = {
@@ -299,23 +306,23 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
         print(f"Files to be removed: {removed_files}")
     
     if removed_files:
-        with open(nodes_path, "r") as f:
-            datas = json.load(f)
-        old_nodes = [TextNode.from_dict(data) for data in datas]
+        old_nodes = _import_data(nodes_path)
 
         for node in old_nodes:
             if node.metadata["file_name"] in removed_files:
                 continue
             total_nodes.append(node)
 
-        old_nodes_dict = [node.to_dict() for node in old_nodes]
+        old_nodes_dict = [node.to_dict() for node in total_nodes]
 
-        with open(nodes_path, "w") as f:
-            json.dump(old_nodes_dict, f)
 
         print("Documents removal done!")
 
     elif added_files:
+        if not total_nodes:
+            if os.path.exists(nodes_path):
+                total_nodes = _import_data(nodes_path)
+
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
@@ -329,8 +336,7 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
 
         nodes_dicts = [node.to_dict() for node in total_nodes]
 
-        with open(nodes_path, "w") as f:
-            json.dump(nodes_dicts, f)
+        _write_data(nodes_path, nodes_dicts)
 
         print("Documents add done!")
 
