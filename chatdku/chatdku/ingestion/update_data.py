@@ -1,7 +1,6 @@
 import os
 import mimetypes
 import datetime
-import nest_asyncio
 import uuid
 import json
 import argparse
@@ -18,20 +17,6 @@ from typing import Dict, List, Optional
 from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
-
-
-# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
-import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
-
-# Override auto partition
-import unstructured.partition.auto
-from custom_partation import partition
-
-nest_asyncio.apply()
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-
-unstructured.partition.auto.partition = partition
 
 
 def nodes_to_dicts(nodes: list) -> dict:
@@ -297,7 +282,7 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
     if verbose:
         print(f"Files to be added: {added_files}")
         print(f"Files to be removed: {removed_files}")
-    
+
     if removed_files:
         with open(nodes_path, "r") as f:
             datas = json.load(f)
@@ -363,11 +348,8 @@ if __name__ == "__main__":
         help="ID of the user. Defaults to Chat_DKU if none given.",
     )
     parser.add_argument(
-        "-v",
-        type=bool,
-        default=True,
-        help="Whether to print extra information."
+        "-v", type=bool, default=True, help="Whether to print extra information."
     )
     args = parser.parse_args()
 
-    main(args.data_dir, args.user_id, args.verbose)
+    main(args.data_dir, args.user_id, args.v)
