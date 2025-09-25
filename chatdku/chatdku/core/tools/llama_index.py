@@ -3,7 +3,7 @@ from enum import Enum
 from collections.abc import Iterator, Mapping
 from pydantic import Field
 import os
-
+import pandas as pd
 import dspy
 
 from contextlib import nullcontext
@@ -26,10 +26,6 @@ from nltk.tokenize import word_tokenize
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
-# import llama_index
-
-# from llama_index.vector_stores.chroma import ChromaVectorStore
-# from llama_index.core import VectorStoreIndex
 from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
@@ -119,7 +115,6 @@ def get_reranker(top_n: int):
     )
 
 
-import pandas as pd
 
 df = pd.read_csv(config.url_csv_path)
 # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
@@ -159,20 +154,21 @@ def get_file_name(metadata: dict):
     return metadata["file_name"]
 
 
-def simplify_nodes(nodes: list[NodeWithScore]) -> NodeWithScore:
+def simplify_nodes(results) -> NodeWithScore:
     return [
         NodeWithScore(
             node=TextNode(
-                node_id=node.node_id,
-                text=node.text,
+                id_=doc.id,
+                text=doc.text,
                 metadata={
-                    "filename": get_file_name(node.metadata),
-                    "url": get_url(node.metadata),
+                    "filename": os.path.basename(doc.file_path),
+                    "url": get_url({"file_path": doc.file_path}),
+                    "page_number": doc.page_number,
                 },
             ),
-            score=float(node.score),
+            score=float(doc.score),
         )
-        for node in nodes
+        for doc in results.docs
     ]
 
 
@@ -249,38 +245,26 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
     )
 
 
-class VectorRetriever(dspy.Module):
+def VectorRetriever(
+):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(
-        self,
+    retriever_top_k = 5,
+    use_reranker = False,
+    reranker_top_n = 3,
+    if use_reranker:
+        reranker = get_reranker(reranker_top_n)
 
-        retriever_top_k: int = 5,
-        use_reranker: bool = False,
-        reranker_top_n: int = 3,
+    db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
+    collection = db.get_collection(
+        name=config.chroma_collection,
+        # name=config.chroma_collection,
+        embedding_function=HuggingFaceEmbeddingServer(
+            url=config.tei_url + "/" + config.embedding + "/embed"
+        ),
+    )
 
-    ):
-        self.retriever_top_k = retriever_top_k
-        self.use_reranker = use_reranker
-        self.reranker = get_reranker(reranker_top_n)
-
-        db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-        self.collection = db.get_collection(
-            name=config.chroma_collection,
-            # name=config.chroma_collection,
-            embedding_function=HuggingFaceEmbeddingServer(
-                url=config.tei_url + "/" + config.embedding + "/embed"
-            ),
-        )
-
-        # vector_store = ChromaVectorStore(chroma_collection=chatdku_collection)
-
-        # self.index = VectorStoreIndex.from_vector_store(vector_store)
-        # self.retriever = TransformRetriever(
-        #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
-        #     query_transform=HyDEQueryTransform(include_original=True),
-        # )
-        # self.summarizer = DocumentSummarizer()
+    # self.summarizer = DocumentSummarizer()
 
     def forward(
         self,
@@ -597,28 +581,7 @@ class KeywordRetriever(dspy.Module):
                 .with_scores()
             )
             results = self.client.ft(self.index_name).search(query_cmd)
-            try:
-                retrieved_nodes = [
-                    NodeWithScore(
-                        node=TextNode(
-                            id=r.id,
-                            text=r.text,
-                            metadata={
-                                "file_path": r.file_path,
-                                "file_name": os.path.basename(r.file_path),
-                            },
-                        ),
-                        score=float(r.score),
-                    )
-                    for r in results.docs
-                ]
-            except:
-                retrieved_nodes = [
-                    NodeWithScore(
-                        node=TextNode(id=r.id, text=r.text), score=float(r.score)
-                    )
-                    for r in results.docs
-                ]
+            retrieved_nodes = simplify_nodes(results)
 
             # retrieved_nodes = self.retriever.retrieve(query)
             if self.use_reranker:
@@ -634,7 +597,6 @@ class KeywordRetriever(dspy.Module):
             else:
                 nodes = retrieved_nodes
 
-            nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -646,7 +608,7 @@ class KeywordRetriever(dspy.Module):
             )
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(
-                result=result, internal_result={"ids": {r.id for r in results.docs}}
+                result=result, internal_result={"ids": {node.id for node in nodes}}
             )
 
             # See notes about summarizer above
