@@ -1,13 +1,12 @@
 import os
 import mimetypes
 import datetime
-import nest_asyncio
 import uuid
 import json
 import argparse
 from llama_index.core import SimpleDirectoryReader
-from llama_index.readers.file import UnstructuredReader, PptxReader, DocxReader
-from llama_index.core.schema import TextNode
+from llama_index.readers.file import UnstructuredReader
+from llama_index.core.schema import TextNode, BaseNode
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.readers.base import BaseReader
@@ -20,21 +19,18 @@ import pandas as pd
 from openpyxl import load_workbook
 
 
-# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
-import unstructured.file_utils.filetype
-from custom_filetype_detect import custom_detect_filetype
-
-# Override auto partation
-import unstructured.partition.auto
-from custom_partation import partition
-
-nest_asyncio.apply()
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-
-unstructured.partition.auto.partition = partition
+def _import_data(nodes_path: str) -> list:
+    with open(nodes_path, "r") as f:
+        datas = json.load(f)
+    return [TextNode.from_dict(data) for data in datas]
 
 
-def nodes_to_dicts(nodes: list):
+def _write_data(nodes_path: str, data: list):
+    with open(nodes_path, "w") as f:
+        json.dump(data, f)
+
+
+def nodes_to_dicts(nodes: list) -> dict:
     result = {
         "ids": [],
         "texts": [],
@@ -142,7 +138,6 @@ class XlsxReader(BaseReader):
     def load_data(
         self, file: Path, extra_info: Optional[Dict] = None
     ) -> List[Document]:
-        docs = []
         metadata = {
             "file_name": file.name,
             "file_path": str(file),
@@ -153,7 +148,7 @@ class XlsxReader(BaseReader):
         return [Document(text=self.xlsx_load(file), metadata=metadata or {})]
 
 
-def write_changes(data_dir: str, new_files: list[str], removed_files: list[str]):
+def write_changes(data_dir: str, added_files: set[str], removed_files: set[str]):
     log_path = os.path.join(data_dir, "log.json")
 
     with open(log_path, "r") as file:
@@ -163,13 +158,13 @@ def write_changes(data_dir: str, new_files: list[str], removed_files: list[str])
         if file in removed_files:
             log["file_paths"].remove(file)
 
-    log["file_paths"].extend(new_files)
+    log["file_paths"].extend(added_files)
 
     with open(log_path, "w") as file:
         json.dump(log, file)
 
 
-def read_changes(data_dir: str):
+def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
     log_path = os.path.join(data_dir, "log.json")
 
     # Load previous file paths from log
@@ -197,13 +192,13 @@ def read_changes(data_dir: str):
             current_files.append(os.path.abspath(file_path))
 
     # Compute added and removed files
-    added_files = list(set(current_files) - set(previous_files))
-    removed_files = list(set(previous_files) - set(current_files))
+    added_files = set(current_files) - set(previous_files)
+    removed_files = set(previous_files) - set(current_files)
 
     return added_files, removed_files
 
 
-def read_pdf(file_paths: list[str], user_id):
+def read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     total_nodes = []
     llama_parse_api_key = "llx-c3nm6yxbViR52YQhdE0H7yozobV879U7TXW05cxJ2inPGH3u"
 
@@ -247,7 +242,7 @@ def read_pdf(file_paths: list[str], user_id):
     return total_nodes
 
 
-def read_non_pdf(files: list, user_id):
+def read_non_pdf(files: list, user_id) -> list[BaseNode]:
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     non_pdf_documents = SimpleDirectoryReader(
@@ -289,48 +284,62 @@ def read_non_pdf(files: list, user_id):
     return non_pdf_nodes
 
 
-def update(data_dir, user_id):
+def update(data_dir: str, user_id: str, verbose: bool = False):
     added_files, removed_files = read_changes(data_dir)
+    nodes_path = os.path.join(data_dir, "nodes.json")
 
-    if len(added_files) > 0:
+    total_nodes = []
+
+    if verbose:
+        print(f"Files to be added: {added_files}")
+        print(f"Files to be removed: {removed_files}")
+
+    if removed_files:
+        old_nodes = _import_data(nodes_path)
+
+        for node in old_nodes:
+            if node.metadata["file_name"] in removed_files:
+                continue
+            total_nodes.append(node)
+
+        old_nodes_dict = [node.to_dict() for node in total_nodes]
+
+        print("Documents removal done!")
+
+    elif added_files:
+        if not total_nodes:
+            if os.path.exists(nodes_path):
+                total_nodes = _import_data(nodes_path)
 
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
-
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
-        total_nodes = []
-
-        if len(non_pdf_files) > 0:
+        if non_pdf_files:
             non_pdf_nodes = read_non_pdf(non_pdf_files, user_id)
-
             total_nodes += non_pdf_nodes
 
-        if len(pdf_files) > 0:
+        if pdf_files:
             pdf_nodes = read_pdf(pdf_files, user_id)
-
             total_nodes += pdf_nodes
-        nodes_dicts = [node.to_dict() for node in total_nodes]
-        with open(os.path.join(data_dir, "nodes.json"), "w") as f:
-            json.dump(nodes_dicts, f)
 
-        print("Documents load Done!")
-        # print("Example:")
-        # print(
-        #     f"id:{nodes['ids'][0]}\ntext:{nodes['texts'][0]}\nmetadatas:{nodes['metadatas'][0]}"
-        # )
-        #
+        nodes_dicts = [node.to_dict() for node in total_nodes]
+
+        _write_data(nodes_path, nodes_dicts)
+
+        print("Documents add done!")
+
     else:
-        print("No changes to be done.")
+        print("No changes to be done!")
     write_changes(data_dir, added_files, removed_files)
 
 
-def main(data_dir, user_id):
+def main(data_dir, user_id, verbose=False):
     if data_dir is None:
         data_dir = config.data_dir
     if user_id is None:
         user_id = "Chat_DKU"
 
-    update(data_dir, user_id)
+    update(data_dir, user_id, verbose)
 
 
 if __name__ == "__main__":
@@ -347,6 +356,9 @@ if __name__ == "__main__":
         default="Chat_DKU",
         help="ID of the user. Defaults to Chat_DKU if none given.",
     )
+    parser.add_argument(
+        "-v", type=bool, default=True, help="Whether to print extra information."
+    )
     args = parser.parse_args()
 
-    main(args.data_dir, args.user_id)
+    main(args.data_dir, args.user_id, args.v)
