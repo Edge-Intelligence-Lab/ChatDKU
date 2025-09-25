@@ -222,29 +222,30 @@ class Agent(dspy.Module):
                 if VERBOSE:
                     print(f"calls: {planner.calls}")
 
-                r = planner.tool(
-                    **planner.calls[0].params.model_dump(),
-                    internal_memory=self.internal_memory,
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                )
-                result, internal_result = r.result, r.internal_result
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
+                for i in range(len(planner.calls)):
+                    r = planner.tool(
+                        **planner.calls[i].params.model_dump(),
+                        internal_memory=self.internal_memory,
+                        user_id=user_id,
+                        search_mode=search_mode,
+                        files=files,
                     )
+                    result, internal_result = r.result, r.internal_result
+                    if "ids" in internal_result:
+                        self.internal_memory["ids"] = (
+                            self.internal_memory.get("ids", set()) | internal_result["ids"]
+                        )
 
-                if VERBOSE:
-                    print(f"result: {result}")
+                    if VERBOSE:
+                        print(f"result: {result}")
 
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    calls=planner.calls,
-                    result=result,
-                    max_history_size=limits["tool_history"],
-                )
+                    self.tool_memory(
+                        current_user_message=current_user_message,
+                        conversation_memory=self.conversation_memory,
+                        calls=planner.calls,
+                        result=result,
+                        max_history_size=limits["tool_history"],
+                    )
 
                 if VERBOSE:
                     print(f"tool_memory.history: {self.tool_memory.history_str()}")
