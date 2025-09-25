@@ -127,7 +127,7 @@ def load_conversation(history:list[tuple[str,str]])->list[tuple[str,str]]:
         past_messages=[]
 
         for user_msg,bot_msg in zip(history,history[1:]):
-            if user_msg[0]=='User' and bot_msg[0]=='Bot':
+            if str(user_msg[0]).lower()=='user' and str(bot_msg[0]).lower()=='bot':
                 user_message=user_msg[1]
                 bot_message=bot_msg[1]
                 past_messages.append(tuple([user_message,bot_message]))

@@ -76,7 +76,7 @@ def chat(request):
                 title=message_content
         # Create a new Agent instance per request
 
-        conversation=(load_conversation(request.user,chatHistoryId))
+        conversation=load_conversation(request.user,chatHistoryId)
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
             current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
@@ -85,7 +85,6 @@ def chat(request):
             session.title=title
             session.save()
 
-        clean_empty_sessions.delay()  
 
         def generate():
             response_text = ""

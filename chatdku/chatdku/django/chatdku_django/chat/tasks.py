@@ -129,7 +129,7 @@ def delete_locust_logs():
 def clean_admin_session():
     try:
         admin_session=os.getenv("UID",'chatdku_admin')
-        hashed_id=hash_netid(admin_session)
+        hashed_id=hash_netid(admin_session) if "admin" not in admin_session else admin_session 
         query=UserSession.objects.filter(user__username=hashed_id).delete()
 
     except Exception as e:
