@@ -68,8 +68,7 @@ class MyUser(HttpUser):
 
     def generate_chat(self):
         '''Simulate Different Modes'''
-        chat_history_id = random.randint(1, 100)
-        mode = random.choices(['default', 'agent'], weights=[0.7, 0.3], k=1)[0]
+        mode = "default"
         message = random.choice(self.messages)
         docs = self.get_doc_list()
 
@@ -80,7 +79,7 @@ class MyUser(HttpUser):
             sources = random.choices(docs, k=k)
 
         return {
-            "chatHistoryId": chat_history_id,
+            "chatHistoryId": self.session,
             "mode": mode,
             "messages": [message],  
             "sources": sources,    
@@ -92,6 +91,7 @@ class MyUser(HttpUser):
         '''Chat request test'''
         try:
             payload = self.generate_chat()
+            
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
             logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}\n")
         except Exception as e:
