@@ -261,8 +261,10 @@ class VectorRetriever(dspy.Module):
     ):
         self.retriever_top_k = retriever_top_k
         self.use_reranker = use_reranker
-        if use_reranker:
+        if self.use_reranker:
             self.reranker = get_reranker(reranker_top_n)
+        else:
+            self.reranker=None
 
         db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
         self.collection = db.get_collection(
@@ -453,9 +455,11 @@ class KeywordRetriever(dspy.Module):
         #     docstore=docstore, similarity_top_k=retriever_top_k
         # )
 
-        if use_reranker:
-            self.reranker = get_reranker(reranker_top_n)
         self.use_reranker = use_reranker
+        if self.use_reranker:
+            self.reranker = get_reranker(reranker_top_n)
+        else:
+            self.reranker=None
 
         # self.summarizer = DocumentSummarizer()
 

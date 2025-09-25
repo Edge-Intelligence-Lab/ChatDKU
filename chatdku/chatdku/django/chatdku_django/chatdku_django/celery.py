@@ -52,11 +52,11 @@ app.conf.beat_schedule={
     },
     "session-clean-admin-1day":{
         "task":"chat.tasks.clean_admin_session",
-        "schedule":crontab(minute=00,hour='*/22') # Every 22hr
+        "schedule":crontab(minute=00,hour='*/12') # Every 22hr
     },
     "session-clean-empty":{
         "task":"chat.tasks.clean_empty_sessions",
-        "schedule":crontab(minute=00,hour='*/3') #Every 3 hour everyday
+        "schedule":crontab(minute=00,hour='*/1') #Every 1 hour everyday
     },
     "oss-test-30min":{
         "task":"chat.tasks.oss_test",
