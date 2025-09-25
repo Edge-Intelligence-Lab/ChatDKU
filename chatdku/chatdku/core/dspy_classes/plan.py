@@ -268,12 +268,13 @@ class Planner(dspy.Module):
 
             plan_strs = plan_str_all.strip().split("\n")
             plan_strs = [s.strip() for s in plan_strs]
-            plan_strs = plan_filter(plan_strs)
+            # plan_strs = plan_filter(plan_strs)
 
             calls = []
 
             for i, c in enumerate(plan_strs, 1):
-                calls.append(self.name_to_model[c.name](name=c.name, params=c.params))
+                call = NameParams.model_validate_json(c)
+                calls.append(self.name_to_model[call.name](name=call.name, params=call.params))
 
             span.set_attributes(
                 {
