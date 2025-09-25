@@ -160,33 +160,33 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
-            for (name, model), tool in zip(
-                self.planner.name_to_model.items(), self.planner.tools
-            ):
-                r = tool(
-                    query=current_user_message,
-                    internal_memory=self.internal_memory,
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                )
-                first_ite_result, internal_result = r.result, r.internal_result
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
-                    )
-                if VERBOSE:
-                    print(f"result: {first_ite_result}")
-
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    calls=[model(name=name, params={"query": current_user_message})],
-                    result=first_ite_result,
-                    max_history_size=limits["tool_history"],
-                )
-                if VERBOSE:
-                    print(f"tool memory: {self.tool_memory.history_str()}")
+            # for (name, model), tool in zip(
+            #     self.planner.name_to_model.items(), self.planner.tools
+            # ):
+            #     r = tool(
+            #         query=current_user_message,
+            #         internal_memory=self.internal_memory,
+            #         user_id=user_id,
+            #         search_mode=search_mode,
+            #         files=files,
+            #     )
+            #     first_ite_result, internal_result = r.result, r.internal_result
+            #     if "ids" in internal_result:
+            #         self.internal_memory["ids"] = (
+            #             self.internal_memory.get("ids", set()) | internal_result["ids"]
+            #         )
+            #     if VERBOSE:
+            #         print(f"result: {first_ite_result}")
+            #
+            #     self.tool_memory(
+            #         current_user_message=current_user_message,
+            #         conversation_memory=self.conversation_memory,
+            #         calls=[model(name=name, params={"query": current_user_message})],
+            #         result=first_ite_result,
+            #         max_history_size=limits["tool_history"],
+            #     )
+            #     if VERBOSE:
+            #         print(f"tool memory: {self.tool_memory.history_str()}")
 
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -195,44 +195,12 @@ class Agent(dspy.Module):
                 streaming=self.streaming,
             )
 
+        query = current_user_message
         # The subsequent rounds of tool calling
         for i in range(self.max_iterations - 1):
-            # TODO: Could feed the intermediate response to judge
-            # TODO: Could also try to make this async/threaded, so the output
-            # with the user would be done simultaneous with the execution of the
-            # next round. However, this would be contradictory to the previous
-            # todo.
-            if self.get_intermediate:
-                with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                    result = self.synthesizer(**synthesizer_args)
-                yield result
-
+            if VERBOSE:
+                print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                if VERBOSE:
-                    print(f"iteration: {i}")
-                judgement = self.judge(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    tool_memory=self.tool_memory,
-                ).judgement
-                if VERBOSE:
-                    print(f"Judge: {judgement}")
-                if judgement:
-                    break
-
-                if self.rewrite_query:
-                    # TODO: This could be merged with `Planner` depends on how well the
-                    # LLM understood its task.
-                    query = self.queryrewriter(
-                        current_user_message=current_user_message,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                    ).rewritten_query
-                    if VERBOSE:
-                        print(f"rewritten query:{query}")
-                else:
-                    query = current_user_message
-
                 try:
                     planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
@@ -269,6 +237,7 @@ class Agent(dspy.Module):
 
                 if VERBOSE:
                     print(f"result: {result}")
+
                 self.tool_memory(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
@@ -276,8 +245,42 @@ class Agent(dspy.Module):
                     result=result,
                     max_history_size=limits["tool_history"],
                 )
-                # if VERBOSE:
-                #     print(f"tool_memory.history: {self.tool_memory.history_str()}")
+
+                if VERBOSE:
+                    print(f"tool_memory.history: {self.tool_memory.history_str()}")
+
+                judgement = self.judge(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    tool_memory=self.tool_memory,
+                ).judgement
+
+                if VERBOSE:
+                    print(f"Judge: {judgement}")
+                if judgement:
+                    break
+
+                if self.rewrite_query:
+                    # TODO: This could be merged with `Planner` depends on how well the
+                    # LLM understood its task.
+                    query = self.queryrewriter(
+                        current_user_message=current_user_message,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                    ).rewritten_query
+                    if VERBOSE:
+                        print(f"rewritten query:{query}")
+
+            # TODO: Could feed the intermediate response to judge
+            # TODO: Could also try to make this async/threaded, so the output
+            # with the user would be done simultaneous with the execution of the
+            # next round. However, this would be contradictory to the previous
+            # todo.
+            if self.get_intermediate:
+                with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                    result = self.synthesizer(**synthesizer_args)
+                yield result
+
 
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             self.prev_response = self.synthesizer(

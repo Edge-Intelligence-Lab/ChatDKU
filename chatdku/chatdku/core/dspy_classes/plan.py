@@ -227,7 +227,6 @@ class Planner(dspy.Module):
                 plan_str_all = pred.current_tool_plan
                 plan_strs = plan_str_all.strip().split("\n")
                 plan_strs = [s.strip() for s in plan_strs]
-                plan_strs = plan_filter(plan_strs)
 
                 if 5 > len(plan_strs) >= 1:
                     calls_unvalidated = []
