@@ -274,7 +274,9 @@ class Planner(dspy.Module):
 
             for i, c in enumerate(plan_strs, 1):
                 call = NameParams.model_validate_json(c)
-                calls.append(self.name_to_model[call.name](name=call.name, params=call.params))
+                calls.append(
+                    self.name_to_model[call.name](name=call.name, params=call.params)
+                )
 
             span.set_attributes(
                 {
@@ -297,5 +299,5 @@ class Planner(dspy.Module):
             print("----Planner END----")
             return dspy.Prediction(
                 calls=calls,
-                tool=name_to_tool[calls[0].name],
+                tool=name_to_tool,
             )

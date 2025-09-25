@@ -34,7 +34,7 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
-        previous_conversation:list=None
+        previous_conversation: list = None,
     ):
         """
         Args:
@@ -67,22 +67,16 @@ class Agent(dspy.Module):
 
         try:
             if previous_conversation:
-                past_conversations= load_conversation(previous_conversation)
+                past_conversations = load_conversation(previous_conversation)
 
                 for conversation in past_conversations:
-                    user,bot=conversation[0],conversation[1]
+                    user, bot = conversation[0], conversation[1]
+                    self.conversation_memory.register_history(role="user", content=user)
                     self.conversation_memory.register_history(
-                            role="user",
-                            content=user
-                    )
-                    self.conversation_memory.register_history(
-                            role="assistant",
-                            content=bot
-
+                        role="assistant", content=bot
                     )
         except Exception as e:
             print(f"error encountered in loading conversation: {e}")
-
 
         self.tool_memory = ToolMemory()
 
@@ -197,7 +191,7 @@ class Agent(dspy.Module):
 
         query = current_user_message
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations - 1):
+        for i in range(self.max_iterations):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
@@ -230,10 +224,12 @@ class Agent(dspy.Module):
                         search_mode=search_mode,
                         files=files,
                     )
+
                     result, internal_result = r.result, r.internal_result
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
-                            self.internal_memory.get("ids", set()) | internal_result["ids"]
+                            self.internal_memory.get("ids", set())
+                            | internal_result["ids"]
                         )
 
                     if VERBOSE:
@@ -281,7 +277,6 @@ class Agent(dspy.Module):
                 with use_span(span) if hasattr(config, "tracer") else nullcontext():
                     result = self.synthesizer(**synthesizer_args)
                 yield result
-
 
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             self.prev_response = self.synthesizer(
@@ -359,8 +354,8 @@ def main():
     )
 
     dspy.configure(lm=lm)
-    #To disable cache:
-    
+    # To disable cache:
+
     # dspy.configure_cache(
     # enable_disk_cache=False,
     # enable_memory_cache=False
