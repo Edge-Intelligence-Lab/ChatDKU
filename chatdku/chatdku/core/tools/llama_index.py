@@ -3,7 +3,7 @@ from enum import Enum
 from collections.abc import Iterator, Mapping
 from pydantic import Field
 import os
-
+import pandas as pd
 import dspy
 
 from contextlib import nullcontext
@@ -26,10 +26,6 @@ from nltk.tokenize import word_tokenize
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
-# import llama_index
-
-# from llama_index.vector_stores.chroma import ChromaVectorStore
-# from llama_index.core import VectorStoreIndex
 from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
 from llama_index.core.node_parser.text.token import TokenTextSplitter
@@ -119,7 +115,6 @@ def get_reranker(top_n: int):
     )
 
 
-import pandas as pd
 
 df = pd.read_csv(config.url_csv_path)
 # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
@@ -249,38 +244,26 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
     )
 
 
-class VectorRetriever(dspy.Module):
+def VectorRetriever(
+):
     """Retrieve texts from the database that are semantically similar to the query."""
 
-    def __init__(
-        self,
+    retriever_top_k = 5,
+    use_reranker = False,
+    reranker_top_n = 3,
+    if use_reranker:
+        reranker = get_reranker(reranker_top_n)
 
-        retriever_top_k: int = 5,
-        use_reranker: bool = False,
-        reranker_top_n: int = 3,
+    db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
+    collection = db.get_collection(
+        name=config.chroma_collection,
+        # name=config.chroma_collection,
+        embedding_function=HuggingFaceEmbeddingServer(
+            url=config.tei_url + "/" + config.embedding + "/embed"
+        ),
+    )
 
-    ):
-        self.retriever_top_k = retriever_top_k
-        self.use_reranker = use_reranker
-        self.reranker = get_reranker(reranker_top_n)
-
-        db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-        self.collection = db.get_collection(
-            name=config.chroma_collection,
-            # name=config.chroma_collection,
-            embedding_function=HuggingFaceEmbeddingServer(
-                url=config.tei_url + "/" + config.embedding + "/embed"
-            ),
-        )
-
-        # vector_store = ChromaVectorStore(chroma_collection=chatdku_collection)
-
-        # self.index = VectorStoreIndex.from_vector_store(vector_store)
-        # self.retriever = TransformRetriever(
-        #     retriever=index.as_retriever(similarity_top_k=retriever_top_k),
-        #     query_transform=HyDEQueryTransform(include_original=True),
-        # )
-        # self.summarizer = DocumentSummarizer()
+    # self.summarizer = DocumentSummarizer()
 
     def forward(
         self,
