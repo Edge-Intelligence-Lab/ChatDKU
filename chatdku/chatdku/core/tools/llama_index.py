@@ -26,7 +26,8 @@ import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
 from llama_index.core.postprocessor import SentenceTransformerRerank
-from llama_index.core.schema import TextNode, NodeWithScore # MetadataMode
+from llama_index.core.schema import TextNode, NodeWithScore  # MetadataMode
+
 # from llama_index.core.node_parser.text.token import TokenTextSplitter
 
 
@@ -108,7 +109,6 @@ from chatdku.config import config
 #         keep_retrieval_score=True,
 #         device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
 #     )
-
 
 
 df = pd.read_csv(config.url_csv_path)
@@ -245,10 +245,10 @@ def VectorRetrieverOuter(
     user_id: str = "Chat_DKU",
     search_mode: int = 0,
     files: list = None,
+    retriever_top_k: int = 5,
+    use_reranker: bool = False,
+    reranker_top_n: int = 3,
 ):
-    retriever_top_k = 5,
-    use_reranker = False,
-    reranker_top_n = 3,
 
     # if use_reranker:
     #     reranker = get_reranker(reranker_top_n)
@@ -286,7 +286,6 @@ def VectorRetrieverOuter(
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
-
 
             # See https://docs.trychroma.com/docs/querying-collections/metadata-filtering
             # to understand the logic of the filters
@@ -374,10 +373,11 @@ def VectorRetrieverOuter(
             )
             span.set_status(Status(StatusCode.OK))
 
-        internal_result={"ids": [node.id for node in nodes]}
+        internal_result = {"ids": [node.node_id for node in nodes]}
         return (result, internal_result)
 
     return VectorRetriever
+
 
 def KeywordRetrieverOuter(
     internal_memory: dict,
@@ -421,6 +421,7 @@ def KeywordRetrieverOuter(
         ],
     ) -> tuple[dict, dict]:
         """Retrieve texts from the database that contain the same keywords in the query."""
+
         # Escape all punctuations, e.g. "can't" -> "can\'t"
         def _escape_strs(strs: list[str]):
             pattern = f"[{re.escape(string.punctuation)}]"
@@ -541,12 +542,9 @@ def KeywordRetrieverOuter(
             # results = self.client.ft("idx:test").search(query_cmd, params)
 
             query_cmd = (
-                Query(query_str)
-                .scorer("BM25")
-                .paging(0, retriever_top_k)
-                .with_scores()
+                Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
-            results =client.ft(index_name).search(query_cmd)
+            results = client.ft(index_name).search(query_cmd)
             retrieved_nodes = simplify_nodes(results)
 
             # if use_reranker:
@@ -574,12 +572,13 @@ def KeywordRetrieverOuter(
             )
             span.set_status(Status(StatusCode.OK))
 
-        internal_result={"ids": [node.id for node in nodes]}
+        internal_result = {"ids": [node.node_id for node in nodes]}
 
         return result, internal_result
 
-            # See notes about summarizer above
-            # return dspy.Prediction(
-            #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-            # )
+        # See notes about summarizer above
+        # return dspy.Prediction(
+        #     result=self.summarizer(documents=reranked_nodes, query=query).summary
+        # )
+
     return KeywordRetriever
