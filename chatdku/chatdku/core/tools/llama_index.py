@@ -4,7 +4,6 @@ from collections.abc import Iterator, Mapping
 from pydantic import Field
 import os
 import pandas as pd
-import dspy
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -27,8 +26,8 @@ import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
 from llama_index.core.postprocessor import SentenceTransformerRerank
-from llama_index.core.schema import TextNode, NodeWithScore, MetadataMode
-from llama_index.core.node_parser.text.token import TokenTextSplitter
+from llama_index.core.schema import TextNode, NodeWithScore # MetadataMode
+# from llama_index.core.node_parser.text.token import TokenTextSplitter
 
 
 from redis import Redis
@@ -51,59 +50,55 @@ from chatdku.config import config
 # then what they currently output.
 
 
-class DocumentSummarizerSignature(dspy.Signature):
-    """Update the summary with information in the documents that are relevant to the query."""
-
-    previous_summary = dspy.InputField(
-        desc="The previously generated summary of relevant information. May be empty."
-    )
-    documents = dspy.InputField(
-        desc="The documents to extract relevant information from.",
-        format=lambda x: "##########\n" + x + "\n##########",
-    )
-    query = dspy.InputField(desc="The query that the summary should answer.")
-    current_summary = dspy.OutputField(
-        desc="The combined summary of relevant information in Previous Summary and Documents.",
-    )
-
-
-class DocumentSummarizer(dspy.Module):
-    # FIXME: We should not use fixed chunk sizes, but adjust them according to
-    # the context window of the LLM and the size of the prompt.
-    CHUNK_SIZE = 4096
-    CHUNK_OVERLAP = 256
-
-    def __init__(self):
-        super().__init__()
-        self.summarizer = dspy.ChainOfThought(DocumentSummarizerSignature)
-        self.text_splitter = TokenTextSplitter(
-            chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP
-        )
-
-    def forward(self, documents: list[NodeWithScore], query: str):
-        # FIXME: This has the problem that the metadata of a document would
-        # lie in only the first chunk suppose that document is split across
-        # multiple chunks. However, this is how LlamaIndex's synthesizers
-        # currently work (via `PromptHelper`).
-        # Reference: https://github.com/run-llama/llama_index/blob/d3abf789800f4366fec7f607be15804a4a72ee52/llama-index-core/llama_index/core/indices/prompt_helper.py#L263-L280
-        #
-        # I recommend using `MetadataAwareTextSplitter.split_text_metadata_aware()`
-        # in the future.
-        texts = [node.get_content(MetadataMode.LLM) for node in documents]
-        repacked = self.text_splitter.split_text("\n\n".join(texts))
-        summary = ""
-        for chunk in repacked:
-            summary = self.summarizer(
-                previous_summary=summary, documents=chunk, query=query
-            ).current_summary
-        return dspy.Prediction(summary=summary)
+# class DocumentSummarizerSignature(dspy.Signature):
+#     """Update the summary with information in the documents that are relevant to the query."""
+#
+#     previous_summary = dspy.InputField(
+#         desc="The previously generated summary of relevant information. May be empty."
+#     )
+#     documents = dspy.InputField(
+#         desc="The documents to extract relevant information from.",
+#         format=lambda x: "##########\n" + x + "\n##########",
+#     )
+#     query = dspy.InputField(desc="The query that the summary should answer.")
+#     current_summary = dspy.OutputField(
+#         desc="The combined summary of relevant information in Previous Summary and Documents.",
+#     )
+#
+#
+# class DocumentSummarizer(dspy.Module):
+#     # FIXME: We should not use fixed chunk sizes, but adjust them according to
+#     # the context window of the LLM and the size of the prompt.
+#     CHUNK_SIZE = 4096
+#     CHUNK_OVERLAP = 256
+#
+#     def __init__(self):
+#         super().__init__()
+#         self.summarizer = dspy.ChainOfThought(DocumentSummarizerSignature)
+#         self.text_splitter = TokenTextSplitter(
+#             chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP
+#         )
+#
+#     def forward(self, documents: list[NodeWithScore], query: str):
+#         # FIXME: This has the problem that the metadata of a document would
+#         # lie in only the first chunk suppose that document is split across
+#         # multiple chunks. However, this is how LlamaIndex's synthesizers
+#         # currently work (via `PromptHelper`).
+#         # Reference: https://github.com/run-llama/llama_index/blob/d3abf789800f4366fec7f607be15804a4a72ee52/llama-index-core/llama_index/core/indices/prompt_helper.py#L263-L280
+#         #
+#         # I recommend using `MetadataAwareTextSplitter.split_text_metadata_aware()`
+#         # in the future.
+#         texts = [node.get_content(MetadataMode.LLM) for node in documents]
+#         repacked = self.text_splitter.split_text("\n\n".join(texts))
+#         summary = ""
+#         for chunk in repacked:
+#             summary = self.summarizer(
+#                 previous_summary=summary, documents=chunk, query=query
+#             ).current_summary
+#         return dspy.Prediction(summary=summary)
 
 
 # ------------------
-
-
-# FIXME: It might be necessary/safer to set a token limit in case some really
-# ridiculously long nodes blow up the context window.
 
 
 def get_reranker(top_n: int):
@@ -246,6 +241,7 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
 
 
 def VectorRetrieverOuter(
+    internal_memory: dict,
     user_id: str = "Chat_DKU",
     search_mode: int = 0,
     files: list = None,
@@ -267,15 +263,14 @@ def VectorRetrieverOuter(
 
     def VectorRetriever(
         query: str,
-        internal_memory: dict,
-    ):
+    ) -> tuple[dict, dict]:
         """Retrieve texts from the database that are semantically similar to the query."""
         with (
             config.tracer.start_as_current_span("Vector Retriever")
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            exclude = list(internal_memory.get("ids", set()))
+            exclude = internal_memory.get("ids")
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
@@ -378,59 +373,55 @@ def VectorRetrieverOuter(
             )
             span.set_status(Status(StatusCode.OK))
 
-            internal_result = {"ids": {r.node_id for r in nodes}}
+        internal_result={"ids": [node.id for node in nodes]}
+        return (result, internal_result)
 
-            return (result, internal_result)
     return VectorRetriever
 
-class KeywordRetriever(dspy.Module):
-    """Retrieve texts from the database that contain the same keywords in the query."""
+def KeywordRetrieverOuter(
+    internal_memory: dict,
+    retriever_top_k: int = 5,
+    use_reranker: bool = False,
+    reranker_top_n: int = 3,
+    user_id: str = "Chat_DKU",
+    search_mode: int = 0,
+    files: list = [],
+):
 
-    def __init__(
-        self,
-        retriever_top_k: int = 5,
-        use_reranker: bool = False,
-        reranker_top_n: int = 3,
-    ):
-        self.client = Redis(
-            host=config.redis_host,
-            port=6379,
-            username="default",
-            password=config.redis_password,
-            db=0,
-        )
-        self.retriever_top_k = retriever_top_k
+    client = Redis(
+        host=config.redis_host,
+        port=6379,
+        username="default",
+        password=config.redis_password,
+        db=0,
+    )
 
-        schema = IndexSchema.from_yaml(
-            os.path.join(config.module_root_dir, "custom_schema.yaml")
-        )
-        self.index_name = schema.index.name
+    schema = IndexSchema.from_yaml(
+        os.path.join(config.module_root_dir, "custom_schema.yaml")
+    )
+    index_name = schema.index.name
 
-        # docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
-        # self.retriever = BM25Retriever.from_defaults(
-        #     docstore=docstore, similarity_top_k=retriever_top_k
-        # )
+    # docstore = SimpleDocumentStore.from_persist_path(config.docstore_path)
+    # self.retriever = BM25Retriever.from_defaults(
+    #     docstore=docstore, similarity_top_k=retriever_top_k
+    # )
 
-        self.reranker = get_reranker(reranker_top_n)
-        self.use_reranker = use_reranker
+    if use_reranker:
+        reranker = get_reranker(reranker_top_n)
 
-        # self.summarizer = DocumentSummarizer()
+    # self.summarizer = DocumentSummarizer()
 
-    def forward(
-        self,
+    def KeywordRetriever(
         query: Annotated[
             str,
             Field(
                 description="Keywords that might appear in the answer to the question."
             ),
         ],
-        internal_memory: dict,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        files: list = [],
-    ):
+    ) -> tuple[dict, dict]:
+        """Retrieve texts from the database that contain the same keywords in the query."""
         # Escape all punctuations, e.g. "can't" -> "can\'t"
-        def escape_strs(strs: list[str]):
+        def _escape_strs(strs: list[str]):
             pattern = f"[{re.escape(string.punctuation)}]"
             return [
                 re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
@@ -441,7 +432,7 @@ class KeywordRetriever(dspy.Module):
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            exclude = list(internal_memory.get("ids", set()))
+            exclude = internal_memory.get("ids")
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
@@ -470,7 +461,7 @@ class KeywordRetriever(dspy.Module):
             orig_keywords = list(
                 filter(lambda token: token not in string.punctuation, tokens)
             )
-            orig_keywords = escape_strs(orig_keywords)
+            orig_keywords = _escape_strs(orig_keywords)
 
             # FIXME: Hack for improving performance with multiple keywords.
             # There ought to be better ways than this.
@@ -499,7 +490,7 @@ class KeywordRetriever(dspy.Module):
             )
             query_str = "@text:(" + text_str + ")"
 
-            exclude = escape_strs(exclude)
+            exclude = _escape_strs(exclude)
             exclude_str = " ".join([f"-@id:({e})" for e in exclude])
             if exclude_str:
                 query_str += " " + exclude_str
@@ -551,19 +542,18 @@ class KeywordRetriever(dspy.Module):
             query_cmd = (
                 Query(query_str)
                 .scorer("BM25")
-                .paging(0, self.retriever_top_k)
+                .paging(0, retriever_top_k)
                 .with_scores()
             )
-            results = self.client.ft(self.index_name).search(query_cmd)
+            results =client.ft(index_name).search(query_cmd)
             retrieved_nodes = simplify_nodes(results)
 
-            # retrieved_nodes = self.retriever.retrieve(query)
-            if self.use_reranker:
+            if use_reranker:
                 tokenizer = AutoTokenizer.from_pretrained(
                     "cross-encoder/ms-marco-MiniLM-L6-v2"
                 )
 
-                nodes = self.reranker.postprocess_nodes(
+                nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
                     query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
@@ -581,11 +571,13 @@ class KeywordRetriever(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
-            return dspy.Prediction(
-                result=result, internal_result={"ids": {node.id for node in nodes}}
-            )
+
+        internal_result={"ids": [node.id for node in nodes]}
+
+        return result, internal_result
 
             # See notes about summarizer above
             # return dspy.Prediction(
             #     result=self.summarizer(documents=reranked_nodes, query=query).summary
             # )
+    return KeywordRetriever
