@@ -101,13 +101,13 @@ from chatdku.config import config
 # ------------------
 
 
-def get_reranker(top_n: int):
-    return SentenceTransformerRerank(
-        top_n=top_n,
-        model="cross-encoder/ms-marco-MiniLM-L6-v2",
-        keep_retrieval_score=True,
-        device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
-    )
+# def get_reranker(top_n: int):
+#     return SentenceTransformerRerank(
+#         top_n=top_n,
+#         model="cross-encoder/ms-marco-MiniLM-L6-v2",
+#         keep_retrieval_score=True,
+#         device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
+#     )
 
 
 
@@ -250,8 +250,8 @@ def VectorRetrieverOuter(
     use_reranker = False,
     reranker_top_n = 3,
 
-    if use_reranker:
-        reranker = get_reranker(reranker_top_n)
+    # if use_reranker:
+    #     reranker = get_reranker(reranker_top_n)
 
     db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
     collection = db.get_collection(
@@ -349,18 +349,19 @@ def VectorRetrieverOuter(
 
             retrieved_nodes = chroma_result_to_nodes(query_result)
 
-            if use_reranker:
-                tokenizer = AutoTokenizer.from_pretrained(
-                    "cross-encoder/ms-marco-MiniLM-L6-v2"
-                )
-
-                nodes = reranker.postprocess_nodes(
-                    retrieved_nodes,
-                    # BERT token limit is 512, however, we should leave some space for special tokens
-                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
-                )
-            else:
-                nodes = retrieved_nodes
+            # if use_reranker:
+            #     tokenizer = AutoTokenizer.from_pretrained(
+            #         "cross-encoder/ms-marco-MiniLM-L6-v2"
+            #     )
+            #
+            #     nodes = reranker.postprocess_nodes(
+            #         retrieved_nodes,
+            #         # BERT token limit is 512, however, we should leave some space for special tokens
+            #         query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
+            #     )
+            # else:
+            #     nodes = retrieved_nodes
+            nodes = retrieved_nodes
 
             result = nodes_to_dicts(nodes)
 
@@ -406,8 +407,8 @@ def KeywordRetrieverOuter(
     #     docstore=docstore, similarity_top_k=retriever_top_k
     # )
 
-    if use_reranker:
-        reranker = get_reranker(reranker_top_n)
+    # if use_reranker:
+    #     reranker = get_reranker(reranker_top_n)
 
     # self.summarizer = DocumentSummarizer()
 
@@ -548,18 +549,19 @@ def KeywordRetrieverOuter(
             results =client.ft(index_name).search(query_cmd)
             retrieved_nodes = simplify_nodes(results)
 
-            if use_reranker:
-                tokenizer = AutoTokenizer.from_pretrained(
-                    "cross-encoder/ms-marco-MiniLM-L6-v2"
-                )
-
-                nodes = reranker.postprocess_nodes(
-                    retrieved_nodes,
-                    # BERT token limit is 512, however, we should leave some space for special tokens
-                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
-                )
-            else:
-                nodes = retrieved_nodes
+            # if use_reranker:
+            #     tokenizer = AutoTokenizer.from_pretrained(
+            #         "cross-encoder/ms-marco-MiniLM-L6-v2"
+            #     )
+            #
+            #     nodes = reranker.postprocess_nodes(
+            #         retrieved_nodes,
+            #         # BERT token limit is 512, however, we should leave some space for special tokens
+            #         query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
+            #     )
+            # else:
+            #     nodes = retrieved_nodes
+            nodes = retrieved_nodes
 
             result = nodes_to_dicts(nodes)
 
