@@ -245,40 +245,31 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
     )
 
 
-def VectorRetriever(
+def VectorRetrieverOuter(
+    user_id: str = "Chat_DKU",
+    search_mode: int = 0,
+    files: list = None,
 ):
-    """Retrieve texts from the database that are semantically similar to the query."""
-
     retriever_top_k = 5,
     use_reranker = False,
     reranker_top_n = 3,
+
     if use_reranker:
         reranker = get_reranker(reranker_top_n)
 
     db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
     collection = db.get_collection(
         name=config.chroma_collection,
-        # name=config.chroma_collection,
         embedding_function=HuggingFaceEmbeddingServer(
             url=config.tei_url + "/" + config.embedding + "/embed"
         ),
     )
 
-    # self.summarizer = DocumentSummarizer()
-
-    def forward(
-        self,
-        query: Annotated[
-            str,
-            Field(
-                description="Texts that might be semantically similar to the real answer to the question."
-            ),
-        ],
+    def VectorRetriever(
+        query: str,
         internal_memory: dict,
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        files: list = None,
     ):
+        """Retrieve texts from the database that are semantically similar to the query."""
         with (
             config.tracer.start_as_current_span("Vector Retriever")
             if hasattr(config, "tracer")
@@ -301,13 +292,6 @@ def VectorRetriever(
                 }
             )
 
-            # Before the upgrade (just for convenience's sake)
-            # filters = MetadataFilters(
-            #     filters=[
-            #         MetadataFilter(key="id", value=i, operator=FilterOperator.NE)
-            #         for i in exclude
-            #     ]
-            # )
 
             # See https://docs.trychroma.com/docs/querying-collections/metadata-filtering
             # to understand the logic of the filters
@@ -362,24 +346,20 @@ def VectorRetriever(
                         ]
                     }
 
-            query_result = self.collection.query(
-                # FIXME: bge-m3 has a max token limit of 8192. However, I do not know
-                # what would happen if that is exceeded. Also, we should use it tokenizer
-                # to get the accurate token count. This is just a temporary safety
-                # measure for now.
+            query_result = collection.query(
                 query_texts=truncate_tokens(query, 7000),
-                n_results=self.retriever_top_k,
+                n_results=retriever_top_k,
                 where=filters,
             )
 
             retrieved_nodes = chroma_result_to_nodes(query_result)
 
-            if self.use_reranker:
+            if use_reranker:
                 tokenizer = AutoTokenizer.from_pretrained(
                     "cross-encoder/ms-marco-MiniLM-L6-v2"
                 )
 
-                nodes = self.reranker.postprocess_nodes(
+                nodes = reranker.postprocess_nodes(
                     retrieved_nodes,
                     # BERT token limit is 512, however, we should leave some space for special tokens
                     query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
@@ -387,7 +367,6 @@ def VectorRetriever(
             else:
                 nodes = retrieved_nodes
 
-            # nodes = simplify_nodes(nodes)
             result = nodes_to_dicts(nodes)
 
             span.set_attributes(nodes_to_openinference(nodes))
@@ -398,16 +377,11 @@ def VectorRetriever(
                 }
             )
             span.set_status(Status(StatusCode.OK))
-            return dspy.Prediction(
-                result=result,
-                internal_result={"ids": {r.node_id for r in nodes}},
-            )
 
-            # See notes about summarizer above
-            # return dspy.Prediction(
-            #     result=self.summarizer(documents=reranked_nodes, query=query).summary
-            # )
+            internal_result = {"ids": {r.node_id for r in nodes}}
 
+            return (result, internal_result)
+    return VectorRetriever
 
 class KeywordRetriever(dspy.Module):
     """Retrieve texts from the database that contain the same keywords in the query."""
