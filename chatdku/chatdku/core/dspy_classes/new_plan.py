@@ -1,49 +1,64 @@
 import dspy
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
-from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
-from chatdku.config import config
-from chatdku.setup import use_phoenix, setup
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import token_limit_ratio_to_count
 
 
 class PlannerSignature(dspy.Signature):
     "Plan the appropiate tool calls to answer the given user question."
 
-    question: str = dspy.InputField()
+    current_user_message: str = dspy.InputField()
     max_calls: int = dspy.InputField()
     tools: list[dspy.Tool] = dspy.InputField()
-    # tool_history: str = dspy.InputField(
-    #     desc= "Your previous tool calls in JSON Lines format. "
-    #     "It would be empty if you have not called any tools previously."
-    # )
-    # previous_tool_plan: dspy.ToolCalls = dspy.InputField()
-    # conversation_history: dspy.History = dspy.InputField()
+    tool_history: str = dspy.InputField(
+        desc= "Your previous tool calls in JSON Lines format. "
+        "It would be empty if you have not called any tools previously."
+    )
+    previous_tool_plan: dspy.ToolCalls = dspy.InputField()
+    conversation_history: dspy.History = dspy.InputField()
 
     tool_plan: dspy.ToolCalls = dspy.OutputField()
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools: list[dspy.Tool]):
+    def __init__(self):
         super().__init__()
+        self.planner = dspy.ChainOfThought(PlannerSignature)
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 15,
+            "conversation_history": 2 / 15,
+            "conversation_summary": 1 / 15,
+            "tool_history": 5 / 15,
+            "tool_summary": 1 / 15,
+            "previous_tool_plan": 1 / 15,
+        }
 
-        self.tools = tools
-
-        self.plan = dspy.ChainOfThought(PlannerSignature)
+    def get_token_limits(self, tools: list[dspy.Tool]) -> dict[str, int]:
+        template_len = len(
+            get_template(
+                self.planner,
+                tools = tools,
+                max_calls=str(1),
+            )
+        )
+        return token_limit_ratio_to_count(self.token_ratios, template_len)
 
     def forward(
         self,
-        user_message: str,
-        # conversation_history: dspy.History,
-        # tool_memory: ToolMemory,
+        current_user_message: str, 
+        tools: list[dspy.Tool],
+        conversation_history: dspy.History,
+        tool_memory: ToolMemory,
         max_calls: int = 5,
     ) -> dspy.Prediction:
 
-        planner = self.plan(
-            question=user_message,
+        planner = self.planner(
+            current_user_message=current_user_message,
             max_calls=max_calls,
-            tools=self.tools,
-            # tool_history = tool_memory.history_str(),
-            # previous_tool_plan = tool_memory.plan,
-            # conversation_history = conversation_history
+            tools=tools,
+            tool_history = tool_memory.history_str(),
+            previous_tool_plan = tool_memory.plan,
+            conversation_history = conversation_history
         )
 
         tool_plan = planner.tool_plan
@@ -52,57 +67,20 @@ class Planner(dspy.Module):
 
     async def aforward(
         self,
-        user_message: str,
+        current_user_message: str,
+        tools: list[dspy.Tool],
         conversation_history: dspy.History,
         tool_memory: ToolMemory,
         max_calls: int = 5,
     ) -> dspy.Prediction:
 
-        planner = await self.plan.acall(
-            question=user_message,
+        planner = await self.planner.acall(
+            current_user_message=current_user_message,
             max_calls=max_calls,
-            tools=self.tools,
+            tools=tools,
             tool_history=tool_memory.history_str(),
             previous_tool_plan=tool_memory.plan,
             conversation_history=conversation_history,
         )
 
         return dspy.Prediction(tool_plan=planner.tool_plan)
-
-
-def main(input: str):
-    tools = {
-        "VectorRetriever": dspy.Tool(VectorRetrieverOuter({})),
-        "KeywordRetriever": dspy.Tool(KeywordRetrieverOuter({})),
-    }
-
-    planner = Planner(tools)
-    tool_calls = planner(user_message=input, max_calls=5).tool_plan
-
-    print(tool_calls)
-    print(tool_calls.tool_calls[0])
-    for tool in tool_calls.tool_calls:
-        if tool.name in tools:
-            result = tools[tool.name](**tool.args)
-            print(f"Tool: {tool.name}")
-            print(f"Args: {tool.args}")
-            print(f"Result: {result}")
-
-
-if __name__ == "__main__":
-    setup(False, False)
-    use_phoenix()
-
-    lm = dspy.LM(
-        model="openai/" + config.llm,
-        api_base=config.llm_url,
-        api_key=config.llm_api_key,
-        model_type="chat",
-        max_tokens=config.context_window,
-        temperature=config.llm_temperature,
-        launch_kwargs={
-            "TopP": 0.95,
-        },
-    )
-    dspy.configure(lm=lm)
-    main(input("Enter question: "))
