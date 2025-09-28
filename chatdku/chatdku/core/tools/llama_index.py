@@ -423,11 +423,14 @@ def KeywordRetrieverOuter(
         """Retrieve texts from the database that contain the same keywords in the query."""
 
         # Escape all punctuations, e.g. "can't" -> "can\'t"
-        def _escape_strs(strs: list[str]):
-            pattern = f"[{re.escape(string.punctuation)}]"
-            return [
-                re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
-            ]
+        def _escape_strs(strs: list[str] | None):
+            if strs:
+                pattern = f"[{re.escape(string.punctuation)}]"
+                return [
+                    re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
+                ]
+            else:
+                return []
 
         with (
             config.tracer.start_as_current_span("Keyword Retriever")
