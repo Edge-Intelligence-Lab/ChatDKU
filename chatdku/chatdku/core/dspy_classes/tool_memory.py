@@ -52,7 +52,7 @@ class CompressToolMemorySignature(dspy.Signature):
     "Use Markdown in Summary. "
     # "Store the sources that you retrieved these information from."
     current_user_message: str = dspy.InputField()
-    conversation_history: dspy.History = dspy.InputField()
+    conversation_history: str = dspy.InputField()
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     history_to_discard: str = dspy.InputField(
                 desc=(
