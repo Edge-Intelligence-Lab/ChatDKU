@@ -71,7 +71,7 @@ class Planner(dspy.Module):
         )
 
         planner_inputs = truncate_tokens_all(
-            planner_inputs, self.get_token_limits()
+            planner_inputs, self.get_token_limits(list(tools.values()))
         )
 
         # Function to check whether the planner output is valid
