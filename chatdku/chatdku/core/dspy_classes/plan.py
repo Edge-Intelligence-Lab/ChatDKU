@@ -2,10 +2,7 @@ import dspy
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_common import get_template
-from chatdku.core.utils import (
-    token_limit_ratio_to_count,
-    truncate_tokens_all
-)
+from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 from chatdku.core.dspy_classes.prompt_settings import (
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
@@ -43,12 +40,7 @@ class Planner(dspy.Module):
         }
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(
-            get_template(
-                self.planner,
-                **kwargs
-            )
-        )
+        template_len = len(get_template(self.planner, **kwargs))
         return token_limit_ratio_to_count(self.token_ratios, template_len)
 
     def forward(
@@ -69,18 +61,6 @@ class Planner(dspy.Module):
             conversation_summary=conversation_memory.summary,
         )
 
-        planner_inputs = truncate_tokens_all(
-            planner_inputs, self.get_token_limits(
-                current_user_message=current_user_message,
-                tools="\n".join([str(tool.model_json_schema()) for tool in tools.values()]),
-                tool_history=tool_memory.history_str(),
-                tool_summary=tool_memory.summary,
-                previous_tool_plan=tool_memory.plan,
-                conversation_history=conversation_memory.history_str(),
-                conversation_summary=conversation_memory.summary,
-            )
-        )
-
         # Function to check whether the planner output is valid
         def _check_errors(args, pred: dspy.Prediction) -> float:
             score = 1.0
@@ -98,9 +78,7 @@ class Planner(dspy.Module):
         )
 
         planner = refined_planner(
-            max_calls=max_calls,
-            tools=list(tools.values()),
-            **planner_inputs
+            max_calls=max_calls, tools=list(tools.values()), **planner_inputs
         )
 
         tool_plan = planner.tool_plan

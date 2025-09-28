@@ -147,7 +147,6 @@ class Agent(dspy.Module):
             limits = self.planner.get_token_limits(
                 conversaton_history=self.conversation_memory.history_str(),
                 conversaton_summary=self.conversation_memory.summary,
-                tools=list(self.tools.values())
             )
 
             # Reset tool memory for each user message
