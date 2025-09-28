@@ -28,8 +28,6 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
         signature=signature, demos=demos, inputs=inputs
     )
 
-    print(str(template))
-
     return str(template)
 
 

@@ -145,8 +145,14 @@ class Agent(dspy.Module):
             # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
             # TODO: We could notify user when their input is too long.
             limits = self.planner.get_token_limits(
-                conversaton_history=self.conversation_memory.history_str(),
-                conversaton_summary=self.conversation_memory.summary,
+                current_user_message=current_user_message,
+                tool_history=self.tool_memory.history_str(),
+                tool_summary=self.tool_memory.summary,
+                previous_tool_plan=str(self.tool_memory.plan),
+                conversation_history=self.conversation_memory.history_str(),
+                conversation_summary=self.conversation_memory.summary,
+                tools=str(list(self.tools.values())),
+                max_calls=str(2),
             )
 
             # Reset tool memory for each user message

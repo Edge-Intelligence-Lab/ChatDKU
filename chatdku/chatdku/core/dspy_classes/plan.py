@@ -32,11 +32,10 @@ class Planner(dspy.Module):
         self.planner = dspy.ChainOfThought(PlannerSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
-            "conversation_history": 2 / 15,
+            "conversation_history": 3 / 15,
             "conversation_summary": 1 / 15,
             "tool_history": 5 / 15,
             "tool_summary": 1 / 15,
-            "previous_tool_plan": 1 / 15,
         }
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
@@ -56,9 +55,22 @@ class Planner(dspy.Module):
             current_user_message=current_user_message,
             tool_history=tool_memory.history_str(),
             tool_summary=tool_memory.summary,
-            previous_tool_plan=tool_memory.plan,
             conversation_history=conversation_memory.history_str(),
             conversation_summary=conversation_memory.summary,
+        )
+
+        planner_inputs = truncate_tokens_all(
+            planner_inputs,
+            self.get_token_limits(
+                current_user_message=current_user_message,
+                tool_history=tool_memory.history_str(),
+                tool_summary=tool_memory.summary,
+                previous_tool_plan=str(tool_memory.plan),
+                conversation_history=conversation_memory.history_str(),
+                conversation_summary=conversation_memory.summary,
+                tools=str(list(tools.values())),
+                max_calls=str(2),
+            ),
         )
 
         # Function to check whether the planner output is valid
