@@ -72,6 +72,7 @@ class Planner(dspy.Module):
         planner_inputs = truncate_tokens_all(
             planner_inputs, self.get_token_limits(
                 current_user_message=current_user_message,
+                tools="\n".join([str(tool.model_json_schema()) for tool in tools.values()]),
                 tool_history=tool_memory.history_str(),
                 tool_summary=tool_memory.summary,
                 previous_tool_plan=tool_memory.plan,
