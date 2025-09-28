@@ -42,12 +42,11 @@ class Planner(dspy.Module):
             "previous_tool_plan": 1 / 15,
         }
 
-    def get_token_limits(self, tools: list[dspy.Tool]) -> dict[str, int]:
+    def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(
             get_template(
                 self.planner,
-                tools=tools,
-                max_calls=str(1),
+                **kwargs
             )
         )
         return token_limit_ratio_to_count(self.token_ratios, template_len)
@@ -71,7 +70,14 @@ class Planner(dspy.Module):
         )
 
         planner_inputs = truncate_tokens_all(
-            planner_inputs, self.get_token_limits(list(tools.values()))
+            planner_inputs, self.get_token_limits(
+                current_user_message=current_user_message,
+                tool_history=tool_memory.history_str(),
+                tool_summary=tool_memory.summary,
+                previous_tool_plan=tool_memory.plan,
+                conversation_history=conversation_memory.history_str(),
+                conversation_summary=conversation_memory.summary,
+            )
         )
 
         # Function to check whether the planner output is valid
