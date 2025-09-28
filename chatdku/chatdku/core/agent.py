@@ -6,7 +6,7 @@ from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieve
 # from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
 # from chatdku.core.dspy_classes.plan import Planner
-from chatdku.core.dspy_classes.new_plan import Planner
+from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
