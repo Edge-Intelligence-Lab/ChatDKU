@@ -7,7 +7,6 @@ from chatdku.core.utils import (
     truncate_tokens_all,
 )
 from chatdku.core.dspy_common import get_template
-from chatdku.core.dspy_classes.prompt_settings import ROLE_PROMPT
 import dspy
 
 from contextlib import nullcontext
@@ -28,49 +27,30 @@ class ConversationMemoryEntry(BaseModel):
     content: str
 
 
-def make_compress_conversation_memory_signature():
-    fields = {
-        "history_to_discard": (
-            str,
-            dspy.InputField(
+class CompressConversationMemorySignature(dspy.Signature):
+    "You have a Conversation History storing all the conversations between user "
+    "and you, the assistant."
+    "Your Conversation History has become too long, so the oldest entries have to be discarded. "
+    "You keep a Summary of the discarded conversation history. "
+    "Given the History To Discard and Previous Summary, update the Summary. "
+    "Use Markdown in Summary. "
+    history_to_discard: str = dspy.InputField(
                 desc=(
                     "The conversation messages that would be removed from your Conversation History in JSON Lines format. "
                     "Each line specifies the role and content of the message."
                 )
-            ),
-        ),
-        "previous_summary": (
-            str,
-            dspy.InputField(
+            )
+        
+    previous_summary: str = dspy.InputField(
                 desc="Previous summary of the discarded Conversation History. Might be empty.",
                 format=lambda x: x,
-            ),
-        ),
-        "current_summary": (
-            str,
-            dspy.OutputField(
-                desc="Your updated summary.",
-            ),
-        ),
-    }
+            )
+        
+    current_summary: str = dspy.OutputField(
+            desc="Your updated summary.",
+        )
+    
 
-    instruction = (
-        "You have a Conversation History storing all the conversations between user "
-        "and you, the assistant."
-        "Your Conversation History has become too long, so the oldest entries have to be discarded. "
-        "You keep a Summary of the discarded conversation history. "
-        "Given the History To Discard and Previous Summary, update the Summary. "
-        "Use Markdown in Summary. "
-    )
-
-    return dspy.make_signature(
-        fields,
-        ROLE_PROMPT + "\n\n" + instruction,
-        "CompressConversationMemorySignature",
-    )
-
-
-CompressConversationMemorySignature = make_compress_conversation_memory_signature()
 
 
 class ConversationMemory(dspy.Module):

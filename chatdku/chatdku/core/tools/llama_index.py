@@ -17,8 +17,8 @@ from openinference.semconv.trace import (
 from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
-import torch
-from transformers import AutoTokenizer
+# import torch
+# from transformers import AutoTokenizer
 
 # import nltk
 from nltk.tokenize import word_tokenize
