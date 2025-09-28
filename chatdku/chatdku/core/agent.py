@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import dspy
 
-from chatdku.core.tools.llama_index import VectorRetriever, KeywordRetriever
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
+from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
 
+# from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
+
+# from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
@@ -34,7 +36,7 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
-        previous_conversation:list=None
+        previous_conversation: list = None,
     ):
         """
         Args:
@@ -55,34 +57,22 @@ class Agent(dspy.Module):
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
 
-        self.planner = Planner(
-            [
-                VectorRetriever(),
-                KeywordRetriever(),
-                # QueryCurriculumDB(),
-            ],
-        )
+        self.planner = Planner()
 
         self.conversation_memory = ConversationMemory()
 
         try:
             if previous_conversation:
-                past_conversations= load_conversation(previous_conversation)
+                past_conversations = load_conversation(previous_conversation)
 
                 for conversation in past_conversations:
-                    user,bot=conversation[0],conversation[1]
+                    user, bot = conversation[0], conversation[1]
+                    self.conversation_memory.register_history(role="user", content=user)
                     self.conversation_memory.register_history(
-                            role="user",
-                            content=user
-                    )
-                    self.conversation_memory.register_history(
-                            role="assistant",
-                            content=bot
-
+                        role="assistant", content=bot
                     )
         except Exception as e:
             print(f"error encountered in loading conversation: {e}")
-
 
         self.tool_memory = ToolMemory()
 
@@ -110,10 +100,27 @@ class Agent(dspy.Module):
         search_mode: int,
         files: list,
     ):
-        # I cannot use the span as a context manager that wraps around the entire function
-        # due to that this is a generator.
-        # More about the issue regarding the use of `with` in generators:
-        # https://stackoverflow.com/questions/41881731/is-it-safe-to-combine-with-and-yield-in-python
+        # Define the tools here. Wrap them in dspy.Tool()
+        # Currently only supports functions.
+        self.tools = {
+            "VectorRetriever": dspy.Tool(
+                VectorRetrieverOuter(
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                    internal_memory=self.internal_memory,
+                )
+            ),
+            "KeywordRetriever": dspy.Tool(
+                KeywordRetrieverOuter(
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                    internal_memory=self.internal_memory,
+                )
+            ),
+        }
+
         if hasattr(config, "tracer"):
             span = config.tracer.start_span("Agent")
             span.set_attributes(
@@ -137,7 +144,16 @@ class Agent(dspy.Module):
             # Technically this only ensures that these memories would fit sufficiently
             # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
             # TODO: We could notify user when their input is too long.
-            limits = self.planner.get_token_limits()
+            limits = self.planner.get_token_limits(
+                current_user_message=current_user_message,
+                tool_history=self.tool_memory.history_str(),
+                tool_summary=self.tool_memory.summary,
+                previous_tool_plan=str(self.tool_memory.plan),
+                conversation_history=self.conversation_memory.history_str(),
+                conversation_summary=self.conversation_memory.summary,
+                tools=str(list(self.tools.values())),
+                max_calls=str(2),
+            )
 
             # Reset tool memory for each user message
             # Need to make this an attribute so that DSPy can optimize it
@@ -160,34 +176,6 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
-            for (name, model), tool in zip(
-                self.planner.name_to_model.items(), self.planner.tools
-            ):
-                r = tool(
-                    query=current_user_message,
-                    internal_memory=self.internal_memory,
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                )
-                first_ite_result, internal_result = r.result, r.internal_result
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
-                    )
-                if VERBOSE:
-                    print(f"result: {first_ite_result}")
-
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    calls=[model(name=name, params={"query": current_user_message})],
-                    result=first_ite_result,
-                    max_history_size=limits["tool_history"],
-                )
-                if VERBOSE:
-                    print(f"tool memory: {self.tool_memory.history_str()}")
-
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -195,26 +183,64 @@ class Agent(dspy.Module):
                 streaming=self.streaming,
             )
 
+        query = current_user_message
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations - 1):
-            # TODO: Could feed the intermediate response to judge
-            # TODO: Could also try to make this async/threaded, so the output
-            # with the user would be done simultaneous with the execution of the
-            # next round. However, this would be contradictory to the previous
-            # todo.
-            if self.get_intermediate:
-                with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                    result = self.synthesizer(**synthesizer_args)
-                yield result
-
+        for i in range(self.max_iterations):
+            if VERBOSE:
+                print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                try:
+                    planner = self.planner(
+                        # Only using the rewritten query here but not for updating memory
+                        # as the memory is not always updated for every iteration.
+                        # Also, the memory should concern answering the overarching
+                        # user question, while the planner can focus more on the current iteration.
+                        current_user_message=query,
+                        tools=self.tools,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                        # FIXME: Change this number when we add more tools
+                        max_calls=2,
+                    )
+                    if VERBOSE:
+                        print(f"Planner:{planner}")
+                except Exception as e:
+                    if VERBOSE:
+                        print(e)
+                    break
+
                 if VERBOSE:
-                    print(f"iteration: {i}")
+                    print(f"calls: {planner.tool_plan}")
+
+                for tool in planner.tool_plan.tool_calls:
+                    result, internal_result = self.tools[tool.name](**tool.args)
+
+                    if "ids" in internal_result:
+                        self.internal_memory["ids"] = (
+                            self.internal_memory.get("ids", set())
+                            | internal_result["ids"]
+                        )
+
+                    if VERBOSE:
+                        print(f"result: {result}")
+
+                    self.tool_memory(
+                        current_user_message=current_user_message,
+                        conversation_memory=self.conversation_memory,
+                        call=tool,
+                        result=result,
+                        max_history_size=limits["tool_history"],
+                    )
+
+                if VERBOSE:
+                    print(f"tool_memory.history: {self.tool_memory.history_str()}")
+
                 judgement = self.judge(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
                     tool_memory=self.tool_memory,
                 ).judgement
+
                 if VERBOSE:
                     print(f"Judge: {judgement}")
                 if judgement:
@@ -230,54 +256,16 @@ class Agent(dspy.Module):
                     ).rewritten_query
                     if VERBOSE:
                         print(f"rewritten query:{query}")
-                else:
-                    query = current_user_message
 
-                try:
-                    planner = self.planner(
-                        # Only using the rewritten query here but not for updating memory
-                        # as the memory is not always updated for every iteration.
-                        # Also, the memory should concern answering the overarching
-                        # user question, while the planner can focus more on the current iteration.
-                        current_user_message=query,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                        max_calls=self.max_iterations - i,
-                    )
-                    if VERBOSE:
-                        print(f"Planner:{planner}")
-                except Exception as e:
-                    if VERBOSE:
-                        print(e)
-                    break
-
-                if VERBOSE:
-                    print(f"calls: {planner.calls}")
-
-                r = planner.tool(
-                    **planner.calls[0].params.model_dump(),
-                    internal_memory=self.internal_memory,
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                )
-                result, internal_result = r.result, r.internal_result
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
-                    )
-
-                if VERBOSE:
-                    print(f"result: {result}")
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    calls=planner.calls,
-                    result=result,
-                    max_history_size=limits["tool_history"],
-                )
-                # if VERBOSE:
-                #     print(f"tool_memory.history: {self.tool_memory.history_str()}")
+            # TODO: Could feed the intermediate response to judge
+            # TODO: Could also try to make this async/threaded, so the output
+            # with the user would be done simultaneous with the execution of the
+            # next round. However, this would be contradictory to the previous
+            # todo.
+            if self.get_intermediate:
+                with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                    result = self.synthesizer(**synthesizer_args)
+                yield result
 
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
             self.prev_response = self.synthesizer(
@@ -355,8 +343,8 @@ def main():
     )
 
     dspy.configure(lm=lm)
-    #To disable cache:
-    
+    # To disable cache:
+
     # dspy.configure_cache(
     # enable_disk_cache=False,
     # enable_memory_cache=False

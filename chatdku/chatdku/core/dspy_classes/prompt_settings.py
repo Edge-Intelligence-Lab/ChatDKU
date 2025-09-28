@@ -13,13 +13,12 @@ CONVERSATION_HISTORY_FIELD = dspy.InputField(
     format=lambda x: x,
 )
 CONVERSATION_SUMMARY_FIELD = dspy.InputField(
-    desc="Summary of old and discarded Conversation History. Might be empty.",
+    desc="Summary of old Conversation History. Might be empty.",
     format=lambda x: x,
 )
 TOOL_HISTORY_FIELD = dspy.InputField(
     desc=(
         "Your previous tool calls in JSON Lines format. "
-        "Each line specifies the name and parameters of the tool and its result. "
         "It would be empty if you have not called any tools previously."
     ),
     format=lambda x: x,

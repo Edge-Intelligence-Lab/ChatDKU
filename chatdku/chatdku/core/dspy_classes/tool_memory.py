@@ -15,16 +15,12 @@ from openinference.semconv.trace import (
 
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
-    NameParams,
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
 from chatdku.core.dspy_classes.prompt_settings import (
-    CURRENT_USER_MESSAGE_FIELD,
-    CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
-    ROLE_PROMPT,
 )
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 
@@ -41,59 +37,38 @@ def filter_judge(judge_str: str):
 
 class ToolMemoryEntry(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name_params: NameParams
+    name_params: dspy.ToolCalls.ToolCall
     result: Any
 
 
-def make_compress_tool_memory_signature():
-    fields = {
-        "current_user_message": (str, CURRENT_USER_MESSAGE_FIELD),
-        "conversation_history": (str, CONVERSATION_HISTORY_FIELD),
-        "conversation_summary": (str, CONVERSATION_SUMMARY_FIELD),
-        "history_to_discard": (
-            str,
-            dspy.InputField(
+class CompressToolMemorySignature(dspy.Signature):
+    "You have a Tool History storing all the tool calls you made for answering "
+    "the Current User Message. "
+    "Your Tool History has become too long, so the oldest entries have to be discarded. "
+    "You keep a Summary of the discarded tool history. "
+    "Given the History To Discard and Previous Summary, update the Summary. "
+    "Remove the information not relevant to answer the Current User Message "
+    "and keep all the relevant information if possible. "
+    "Use Markdown in Summary. "
+    # "Store the sources that you retrieved these information from."
+    current_user_message: str = dspy.InputField()
+    conversation_history: str = dspy.InputField()
+    conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    history_to_discard: str = dspy.InputField(
                 desc=(
-                    "The tool calls that would be removed from your Tool History in JSON Lines format. "
+                    "The tool calls that would be removed from your Tool History"
                     "Each line specifies the name and parameters of the tool and its result. "
                     "You should extract relevant information from these tool calls."
                 ),
-                format=lambda x: x,
-            ),
-        ),
-        "previous_summary": (
-            str,
-            dspy.InputField(
-                desc="Previous summary of the discarded Tool History. Might be empty.",
-                format=lambda x: x,
-            ),
-        ),
-        "current_summary": (
-            str,
-            dspy.OutputField(
-                desc="Your updated summary.",
-            ),
-        ),
-    }
-
-    instruction = (
-        "You have a Tool History storing all the tool calls you made for answering "
-        "the Current User Message. "
-        "Your Tool History has become too long, so the oldest entries have to be discarded. "
-        "You keep a Summary of the discarded tool history. "
-        "Given the History To Discard and Previous Summary, update the Summary. "
-        "Remove the information not relevant to answer the Current User Message "
-        "and keep all the relevant information if possible. "
-        "Use Markdown in Summary. "
-        "Store the sources that you retrieved these information from."
-    )
-
-    return dspy.make_signature(
-        fields, ROLE_PROMPT + "\n\n" + instruction, "CompressToolMemorySignature"
-    )
-
-
-CompressToolMemorySignature = make_compress_tool_memory_signature()
+            )
+        
+    previous_summary: str = dspy.InputField(
+            desc="Previous summary of the discarded Tool History. Might be empty.",
+        )
+    
+    current_summary: str = dspy.OutputField(
+            desc="Your updated summary.",
+        )
 
 
 class ToolMemory(dspy.Module):
@@ -101,7 +76,7 @@ class ToolMemory(dspy.Module):
         # Tools already called, with names, parameters, and results
         self.history: list[ToolMemoryEntry] = []
         # Tools planned to be called, with names and parameters
-        self.plan: list[NameParams] = []
+        self.plan: list[dspy.ToolCalls.ToolCall] = []
         # Summary of old history that exceeds `MAX_HISTORY_SIZE`
         self.summary: str = ""
 
@@ -131,7 +106,7 @@ class ToolMemory(dspy.Module):
         self,
         current_user_message: str,
         conversation_memory: ConversationMemory,
-        calls: list[NameParams],
+        call: dspy.ToolCalls.ToolCall,
         result: str,
         max_history_size: int,
     ):
@@ -144,18 +119,19 @@ class ToolMemory(dspy.Module):
                 SpanAttributes.OPENINFERENCE_SPAN_KIND,
                 OpenInferenceSpanKindValues.CHAIN.value,
             )
-            new_entry = ToolMemoryEntry(name_params=calls[0], result=result)
+            new_entry = ToolMemoryEntry(name_params=call, result=result)
             self.history.append(new_entry)
+            # Save the tool call
+            self.plan.append(call)
             span.set_attributes(
                 {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(new_entry.model_dump()),
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(new_entry.model_dump_json()),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
             # FIXME: There were reports that the max_history_size must be set here to avoid issues
             max_history_size = 13000
-            self.plan = calls[1:].copy()
             min_index = strs_fit_max_tokens_reverse(
                 [i.model_dump_json() for i in self.history],
                 "\n",
@@ -177,10 +153,6 @@ class ToolMemory(dspy.Module):
                 self.summary = filter_judge(self.summary)
                 self.history = self.history[min_index:-1]
 
-            # print("\n\n\n\n\n")
-            # print(type(self.history))
-            # print(self.history)
-            # print("\n\n\n\n\n")
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
