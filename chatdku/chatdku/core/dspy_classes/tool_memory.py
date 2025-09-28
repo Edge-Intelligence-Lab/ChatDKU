@@ -64,11 +64,11 @@ class CompressToolMemorySignature(dspy.Signature):
         
     previous_summary: str = dspy.InputField(
             desc="Previous summary of the discarded Tool History. Might be empty.",
-        ),
+        )
     
     current_summary: str = dspy.OutputField(
             desc="Your updated summary.",
-        ),
+        )
 
 
 class ToolMemory(dspy.Module):
