@@ -17,6 +17,7 @@ from openinference.semconv.trace import (
 from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import truncate_tokens
+
 # import torch
 # from transformers import AutoTokenizer
 
@@ -270,7 +271,7 @@ def VectorRetrieverOuter(
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            exclude = internal_memory.get("ids")
+            exclude = list(internal_memory.get("ids", set()))
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
@@ -373,7 +374,7 @@ def VectorRetrieverOuter(
             )
             span.set_status(Status(StatusCode.OK))
 
-        internal_result = {"ids": [node.node_id for node in nodes]}
+        internal_result = {"ids": {node.node_id for node in nodes}}
         return (result, internal_result)
 
     return VectorRetriever
@@ -423,11 +424,12 @@ def KeywordRetrieverOuter(
         """Retrieve texts from the database that contain the same keywords in the query."""
 
         # Escape all punctuations, e.g. "can't" -> "can\'t"
-        def _escape_strs(strs: list[str] | None):
+        def _escape_strs(strs: list[str]):
             if strs:
                 pattern = f"[{re.escape(string.punctuation)}]"
                 return [
-                    re.sub(pattern, lambda match: f"\\{match.group(0)}", s) for s in strs
+                    re.sub(pattern, lambda match: f"\\{match.group(0)}", s)
+                    for s in strs
                 ]
             else:
                 return []
@@ -437,7 +439,7 @@ def KeywordRetrieverOuter(
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            exclude = internal_memory.get("ids")
+            exclude = list(internal_memory.get("ids", set()))
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
@@ -575,7 +577,7 @@ def KeywordRetrieverOuter(
             )
             span.set_status(Status(StatusCode.OK))
 
-        internal_result = {"ids": [node.node_id for node in nodes]}
+        internal_result = {"ids": {node.node_id for node in nodes}}
 
         return result, internal_result
 

@@ -43,7 +43,7 @@ class Planner(dspy.Module):
         template_len = len(
             get_template(
                 self.planner,
-                tools = tools,
+                tools=tools,
                 max_calls=str(1),
             )
         )
@@ -51,7 +51,7 @@ class Planner(dspy.Module):
 
     def forward(
         self,
-        current_user_message: str, 
+        current_user_message: str,
         tools: dict[str, dspy.Tool],
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
@@ -65,17 +65,19 @@ class Planner(dspy.Module):
             for tool in output.tool_calls:
                 if tool.name not in tools:
                     score = -0.1
-                    print(f'"{tool.name}" is not a valid tool. Available tools are: {list(tools.values())}')
+                    print(
+                        f'"{tool.name}" is not a valid tool. Available tools are: {list(tools.values())}'
+                    )
             return score
 
         refined_planner = dspy.Refine(
-                self.planner, N=3, reward_fn=_check_errors, threshold=1.0
-)
+            self.planner, N=3, reward_fn=_check_errors, threshold=1.0
+        )
 
         planner = refined_planner(
             current_user_message=current_user_message,
             max_calls=max_calls,
-            tools=list(tools.value()),
+            tools=list(tools.values()),
             tool_history=tool_memory.history_str(),
             tool_summary=tool_memory.summary,
             previous_tool_plan=tool_memory.plan,

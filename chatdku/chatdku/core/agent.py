@@ -2,6 +2,7 @@
 import dspy
 
 from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
+
 # from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
 # from chatdku.core.dspy_classes.plan import Planner
@@ -102,18 +103,22 @@ class Agent(dspy.Module):
         # Define the tools here. Wrap them in dspy.Tool()
         # Currently only supports functions.
         self.tools = {
-            "VectorRetriever": dspy.Tool(VectorRetrieverOuter(
-                user_id=user_id,
-                search_mode=search_mode,
-                files=files,
-                internal_memory=self.internal_memory
-            )),
-            "KeywordRetriever": dspy.Tool(KeywordRetrieverOuter(
-                user_id=user_id,
-                search_mode=search_mode,
-                files=files,
-                internal_memory=self.internal_memory
-            )),
+            "VectorRetriever": dspy.Tool(
+                VectorRetrieverOuter(
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                    internal_memory=self.internal_memory,
+                )
+            ),
+            "KeywordRetriever": dspy.Tool(
+                KeywordRetrieverOuter(
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                    internal_memory=self.internal_memory,
+                )
+            ),
         }
 
         if hasattr(config, "tracer"):
@@ -162,7 +167,6 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
-
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
@@ -201,10 +205,10 @@ class Agent(dspy.Module):
 
                 for tool in planner.tool_plan.tool_calls:
                     result, internal_result = self.tools[tool.name](**tool.args)
-                    
+
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
-                            self.internal_memory.get("ids", list())
+                            self.internal_memory.get("ids", set())
                             | internal_result["ids"]
                         )
 
