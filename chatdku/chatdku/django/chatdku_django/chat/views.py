@@ -65,7 +65,7 @@ def chat(request):
 
     try:
         message_content = messages[-1]["content"]
-        ChatMessages.objects.create(session=session,role='User',message=message_content)
+        ChatMessages.objects.create(session=session,role=ChatMessages.USER,message=message_content)
         if not session.title:
 
             try:
@@ -76,7 +76,7 @@ def chat(request):
                 title=message_content
         # Create a new Agent instance per request
 
-        conversation=(load_conversation(request.user,chatHistoryId))
+        conversation=load_conversation(request.user,chatHistoryId)
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
             current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
@@ -85,7 +85,6 @@ def chat(request):
             session.title=title
             session.save()
 
-        clean_empty_sessions.delay()  
 
         def generate():
             response_text = ""
@@ -94,7 +93,7 @@ def chat(request):
                 response_text+=response
                 yield response  
 
-            ChatMessages.objects.create(session=session,role="Bot",message=response_text)
+            ChatMessages.objects.create(session=session,role=ChatMessages.BOT,message=response_text)
         return StreamingHttpResponse(generate(), content_type="text/plain")
 
     except Exception as e:

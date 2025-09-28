@@ -241,6 +241,7 @@ def nodes_to_openinference(nodes: list[NodeWithScore]) -> dict[str, Any]:
     )
 
 
+
 def VectorRetrieverOuter(
     internal_memory: dict,
     user_id: str = "Chat_DKU",
@@ -380,6 +381,7 @@ def VectorRetrieverOuter(
     return VectorRetriever
 
 
+
 def KeywordRetrieverOuter(
     internal_memory: dict,
     retriever_top_k: int = 5,
@@ -408,8 +410,10 @@ def KeywordRetrieverOuter(
     #     docstore=docstore, similarity_top_k=retriever_top_k
     # )
 
-    # if use_reranker:
-    #     reranker = get_reranker(reranker_top_n)
+    if use_reranker:
+        reranker = get_reranker(reranker_top_n)
+    else:
+        reranker = None
 
     # self.summarizer = DocumentSummarizer()
 
@@ -549,22 +553,21 @@ def KeywordRetrieverOuter(
             query_cmd = (
                 Query(query_str).scorer("BM25").paging(0, retriever_top_k).with_scores()
             )
+
             results = client.ft(index_name).search(query_cmd)
             retrieved_nodes = simplify_nodes(results)
-
-            # if use_reranker:
-            #     tokenizer = AutoTokenizer.from_pretrained(
-            #         "cross-encoder/ms-marco-MiniLM-L6-v2"
-            #     )
-            #
-            #     nodes = reranker.postprocess_nodes(
-            #         retrieved_nodes,
-            #         # BERT token limit is 512, however, we should leave some space for special tokens
-            #         query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
-            #     )
-            # else:
-            #     nodes = retrieved_nodes
-            nodes = retrieved_nodes
+            if use_reranker:
+                tokenizer = AutoTokenizer.from_pretrained(
+                    "cross-encoder/ms-marco-MiniLM-L6-v2"
+                )
+            
+                nodes = reranker.postprocess_nodes(
+                    retrieved_nodes,
+                    # BERT token limit is 512, however, we should leave some space for special tokens
+                    query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
+                )
+            else:
+                nodes = retrieved_nodes
 
             result = nodes_to_dicts(nodes)
 
