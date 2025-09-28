@@ -90,7 +90,10 @@ class Planner(dspy.Module):
         )
 
         planner = refined_planner(
-            max_calls=max_calls, tools=list(tools.values()), **planner_inputs
+            max_calls=max_calls,
+            tools=list(tools.values()),
+            previous_tool_plan=tool_memory.plan,
+            **planner_inputs,
         )
 
         tool_plan = planner.tool_plan
