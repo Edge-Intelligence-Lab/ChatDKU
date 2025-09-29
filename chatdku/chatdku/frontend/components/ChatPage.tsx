@@ -35,48 +35,58 @@ const parseMarkdown = (content: string): string => {
 const streamText = async (
   text: string,
   elementContainer: HTMLElement,
-  delay = 5,
+  chunkDelayMs = 60,
 ) => {
   const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
-  let currentText = "";
+
+  // Ensure streaming styles exist (fade-in)
+  if (!document.getElementById("stream-style")) {
+    const style = document.createElement("style");
+    style.id = "stream-style";
+    style.innerHTML = `
+      .stream-chunk { opacity: 0; transform: translateY(2px); transition: opacity 120ms ease-out, transform 120ms ease-out; }
+      .stream-chunk.visible { opacity: 1; transform: translateY(0); }
+    `;
+    document.head.appendChild(style);
+  }
+
   const streamContainer = document.createElement("div");
   streamContainer.className =
     "text-foreground  break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
   elementContainer.appendChild(streamContainer);
 
-  const cursor = document.createElement("span");
-  cursor.className = "typing-cursor";
-  cursor.innerHTML = "▌";
-  cursor.style.animation = "cursor-blink 1s infinite";
-  streamContainer.appendChild(cursor);
+  // Prefer paragraph chunks; fallback to sentences if only one paragraph
+  const paragraphs = cleanedText
+    .split(/\n{2,}/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
-  if (!document.getElementById("cursor-style")) {
-    const style = document.createElement("style");
-    style.id = "cursor-style";
-    style.innerHTML = `
-      @keyframes cursor-blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0; }
-      }
-      .typing-cursor {
-        display: inline-block;
-        margin-left: 1px;
-      }
-    `;
-    document.head.appendChild(style);
+  let chunks: string[] = [];
+  if (paragraphs.length > 1) {
+    chunks = paragraphs;
+  } else {
+    const sentences = cleanedText.match(/[^\r\n.!?]+[.!?]*(?:\s+|$)/g) || [cleanedText];
+    chunks = sentences.map((s) => s.trim()).filter((s) => s.length > 0);
   }
 
-  const tokens = cleanedText.split(/(?<=[\s.,;:!?])/);
+  // Stream each chunk as parsed markdown with a quick fade-in
+  for (const chunk of chunks) {
+    const chunkHTML = parseMarkdown(chunk);
+    const chunkDiv = document.createElement("div");
+    chunkDiv.className = "stream-chunk";
+    chunkDiv.innerHTML = chunkHTML;
+    streamContainer.appendChild(chunkDiv);
 
-  for (const token of tokens) {
-    currentText += token;
-    streamContainer.textContent = currentText;
-    streamContainer.appendChild(cursor);
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    // trigger transition
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    chunkDiv.offsetHeight;
+    requestAnimationFrame(() => {
+      chunkDiv.classList.add("visible");
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, chunkDelayMs));
   }
 
-  cursor.remove();
-  streamContainer.innerHTML = parseMarkdown(cleanedText);
   return streamContainer;
 };
 
@@ -146,7 +156,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                 : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
             }
             <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
-              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""}">${sanitizedContent}</div>
+              <div class="text-foreground break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""}">${sanitizedContent}</div>
             </div>
           </div>
         </div>
@@ -171,7 +181,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
           "#stream-container",
         ) as HTMLElement;
         if (streamContainer) {
-          streamText(content, streamContainer, isDev ? 10 : 5);
+          streamText(content, streamContainer, isDev ? 90 : 60);
         }
 
         return messageElement.querySelector(".flex.flex-col");
@@ -329,7 +339,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                   throw new Error("Failed to create stream container");
 
                 const data = await response.text();
-                await streamText(data, streamContainer as HTMLElement, isDev ? 10 : 5);
+                await streamText(data, streamContainer as HTMLElement, isDev ? 90 : 60);
 
                 if (messageDiv) {
                   const feedbackDiv = document.createElement("div");
