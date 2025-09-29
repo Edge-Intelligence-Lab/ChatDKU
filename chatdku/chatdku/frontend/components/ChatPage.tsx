@@ -1,0 +1,488 @@
+"use client";
+import { useState, useCallback, useEffect, SetStateAction } from "react";
+import { marked } from "marked";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { getNewSession, getCurrentSessionId, getStoredEndpoint, getSessionMessages } from "@/lib/convosNew";
+import { AIInput } from "@/components/ui/ai-input";
+import { Navbar } from "@/components/navbar";
+import { PromptRecs } from "@/components/prompt_recs";
+import WelcomeBanner from "@/components/WelcomeBanner";
+import Side from "@/components/side";
+import { DocumentManager } from "@/components/doc-manager";
+
+type ChatPageProps = {
+  isDev?: boolean;
+};
+
+const configureMarked = () => {
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+};
+
+const parseMarkdown = (content: string): string => {
+  if (!content) return "";
+  const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const parsed = marked.parse(cleanedContent) as any;
+  if (typeof parsed?.then === "function") {
+    return cleanedContent;
+  }
+  return typeof parsed === "string" && parsed.trim().length > 0 ? parsed : cleanedContent;
+};
+
+const streamText = async (
+  text: string,
+  elementContainer: HTMLElement,
+  delay = 5,
+) => {
+  const cleanedText = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  let currentText = "";
+  const streamContainer = document.createElement("div");
+  streamContainer.className =
+    "text-foreground  break-words overflow-wrap-anywhere markdown-content text-[0.9375rem]";
+  elementContainer.appendChild(streamContainer);
+
+  const cursor = document.createElement("span");
+  cursor.className = "typing-cursor";
+  cursor.innerHTML = "▌";
+  cursor.style.animation = "cursor-blink 1s infinite";
+  streamContainer.appendChild(cursor);
+
+  if (!document.getElementById("cursor-style")) {
+    const style = document.createElement("style");
+    style.id = "cursor-style";
+    style.innerHTML = `
+      @keyframes cursor-blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      .typing-cursor {
+        display: inline-block;
+        margin-left: 1px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const tokens = cleanedText.split(/(?<=[\s.,;:!?])/);
+
+  for (const token of tokens) {
+    currentText += token;
+    streamContainer.textContent = currentText;
+    streamContainer.appendChild(cursor);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  cursor.remove();
+  streamContainer.innerHTML = parseMarkdown(cleanedText);
+  return streamContainer;
+};
+
+export default function ChatPage({ isDev = false }: ChatPageProps) {
+  const [showStarter, setShowStarter] = useState(true);
+  const [isChatboxCentered, setIsChatboxCentered] = useState(true);
+  const [chatHistoryId, setChatHistoryId] = useState("");
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [thinkingMode, setThinkingMode] = useState(false);
+  const [searchMode, setSearchMode] = useState("");
+  const [inputValue, setInputValue] = useState("");
+  const [apiEndpoint, setApiEndpoint] = useState(getStoredEndpoint());
+  const router = useRouter();
+  const [showDocumentManager, setShowDocumentManager] = useState(false);
+
+  useEffect(() => {
+    configureMarked();
+    const termsAccepted = Cookies.get("terms_accepted");
+    if (!termsAccepted) {
+      router.push("/landing");
+    } else {
+      const currentSession = getCurrentSessionId();
+      if (!currentSession) {
+        getNewSession();
+      }
+    }
+  }, [router]);
+
+  const handleFeedback = useCallback(
+    async (userInput: any, answer: any, reason: any) => {
+      try {
+        await fetch("/api/feedback", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userInput,
+            botAnswer: answer,
+            feedbackReason: reason,
+            chatHistoryId,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save feedback:", error);
+      }
+    },
+    [chatHistoryId],
+  );
+
+  const addMessageToChat = useCallback(
+    (role: string, content: any, className: any, shouldStream = false) => {
+      const chatLog = document.getElementById("chat-log");
+      const messageElement = document.createElement("div");
+      const isUser = role === "user";
+      messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
+
+      if (isUser || !shouldStream) {
+        const sanitizedContent = content ? parseMarkdown(content).trim() : "";
+
+        messageElement.innerHTML = `
+        <div class="flex flex-col ${isUser ? (isDev ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-end max-w-[95%] sm:max-w-[85%]") : "items-start w-full sm:max-w-[85%]"}">
+          <div class="flex flex-col ${isUser ? "lg:flex-row-reverse" : "lg:flex-row"} gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+            ${
+              isUser
+                ? ""
+                : '<div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>'
+            }
+            <div class="${isUser ? "text-right" : "text-left"} overflow-hidden">
+              <div class="text-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere markdown-content ${!isUser ? "text-[0.9375rem]" : ""}">${sanitizedContent}</div>
+            </div>
+          </div>
+        </div>
+      `;
+        chatLog?.appendChild(messageElement);
+        chatLog?.scrollTo(0, chatLog.scrollHeight);
+        return messageElement.querySelector(".flex.flex-col");
+      } else {
+        messageElement.innerHTML = `
+        <div class="flex flex-col items-start w-full sm:max-w-[85%]">
+          <div class="flex flex-col lg:flex-row gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+            <div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>
+            <div class="text-left overflow-hidden" id="stream-container">
+            </div>
+          </div>
+        </div>
+      `;
+        chatLog?.appendChild(messageElement);
+        chatLog?.scrollTo(0, chatLog.scrollHeight);
+
+        const streamContainer = messageElement.querySelector(
+          "#stream-container",
+        ) as HTMLElement;
+        if (streamContainer) {
+          streamText(content, streamContainer, isDev ? 10 : 5);
+        }
+
+        return messageElement.querySelector(".flex.flex-col");
+      }
+    },
+    [isDev],
+  );
+
+  return (
+    <>
+      <Side
+        onDocumentManager={() => {
+          setShowDocumentManager(true);
+        }}
+        onEndpointChange={setApiEndpoint}
+        currentEndpoint={apiEndpoint}
+        currentSessionId={currentSessionId}
+        onNewChat={async () => {
+          setShowStarter(true);
+          setIsChatboxCentered(true);
+          const newSessionId = await getNewSession();
+          if (newSessionId) {
+            setCurrentSessionId(newSessionId);
+            setChatHistoryId(newSessionId);
+          }
+          const chatLog = document.getElementById("chat-log");
+          if (chatLog) {
+            chatLog.innerHTML = "";
+          }
+        }}
+        onConversationSelect={async (sessionId) => {
+          setShowStarter(false);
+          setIsChatboxCentered(false);
+          setCurrentSessionId(sessionId);
+          setChatHistoryId(sessionId);
+
+          const chatLog = document.getElementById("chat-log");
+          if (chatLog) {
+            chatLog.innerHTML = "";
+          }
+
+          const messages = await getSessionMessages(sessionId);
+          messages.forEach((msg) => {
+            addMessageToChat(
+              msg.role.toLowerCase(),
+              msg.content,
+              "text-sm",
+              false,
+            );
+          });
+        }}
+      />
+      <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
+      <header className="sticky top-0 z-20 w-full">
+        <Navbar />
+      </header>
+
+      <main className="flex-1 w-full flex flex-col items-center pt-16">
+        <div
+          id="chat-log"
+          className="w-full max-w-3xl mx-auto space-y-4 p-4 pb-42 overflow-y-auto"
+        ></div>
+      </main>
+
+      <div
+        className={`w-full max-w-[95vw] p-2 pt-0 transition-all duration-300 ${
+          isChatboxCentered
+            ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            : "fixed bottom-0 left-1/2 -translate-x-1/2 rounded-t-3xl backdrop-blur-md md:backdrop-blur-none z-10"
+        }`}
+      >
+        {showStarter && (
+          <div className="w-full flex justify-center">
+            <div className="flex flex-col items-center p-4 w-4/5 md:max-w-1/2 sm:max-w-4/5">
+              <WelcomeBanner />
+            </div>
+          </div>
+        )}
+        <div>
+          <AIInput
+            thinkingMode={thinkingMode}
+            onThinkingModeChange={(value) => setThinkingMode(value)}
+            searchMode={searchMode}
+            onSearchModeChange={(value: SetStateAction<string>) =>
+              setSearchMode(value)
+            }
+            onInputChange={(value) => setInputValue(value)}
+            onEndpointChange={setApiEndpoint}
+            onSubmit={async (value) => {
+              if (!value.trim()) return;
+
+              setShowStarter(false);
+              setIsChatboxCentered(false);
+
+              const currentSessionId = getCurrentSessionId();
+
+              addMessageToChat(
+                "user",
+                value,
+                "bg-muted/50 dark:bg-muted/50 text-sm",
+              );
+
+              const botMessage = addMessageToChat(
+                "assistant",
+                "Searching relevant documents for you, please wait...",
+                "text-sm",
+              );
+
+              try {
+                let response: any;
+                if (value.trim().toLowerCase() === "test") {
+                  response = await fetch("/mdtest.md");
+                } else {
+                  if (isDev) {
+                    response = await fetch(apiEndpoint, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        messages: [{ role: "user", content: value }],
+                        chatHistoryId: currentSessionId,
+                        mode: thinkingMode ? "agent" : "",
+                        searchMode: searchMode,
+                      }),
+                    });
+                  } else {
+                    response = await fetch("https://chatdku.dukekunshan.edu.cn/api/chat", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        messages: [{ role: "user", content: value }],
+                        chatHistoryId: currentSessionId,
+                        mode: thinkingMode ? "agent" : "",
+                        searchMode: searchMode,
+                      }),
+                    });
+                  }
+                }
+
+                if (!response.ok) throw new Error("Failed to fetch response");
+
+                if (botMessage) {
+                  botMessage.remove();
+                }
+
+                const messageDiv = addMessageToChat(
+                  "assistant",
+                  "",
+                  "text-sm",
+                  true,
+                );
+
+                const streamContainer =
+                  messageDiv?.querySelector("#stream-container");
+                if (!streamContainer)
+                  throw new Error("Failed to create stream container");
+
+                const data = await response.text();
+                await streamText(data, streamContainer as HTMLElement, isDev ? 10 : 5);
+
+                if (messageDiv) {
+                  const feedbackDiv = document.createElement("div");
+                  feedbackDiv.className = "ml-4 mb-2";
+                  const feedbackContent = `
+                    <div class="flex items-center gap-2 text-left">
+                      <span class="text-sm text-muted-foreground">Was this response helpful?</span>
+                      <button class="feedback-yes px-2 py-1 text-sm rounded-md bg-secondary/50 hover:bg-secondary">Yes</button>
+                      <button class="feedback-no px-2 py-1 text-sm rounded-md bg-secondary/50 transition-all duration-300 hover:bg-red-600 hover:text-white">No</button>
+                    </div>
+                  `;
+                  feedbackDiv.innerHTML = feedbackContent;
+
+                  const yesButton = feedbackDiv.querySelector(".feedback-yes");
+                  const noButton = feedbackDiv.querySelector(".feedback-no");
+
+                  yesButton?.addEventListener("click", () => {
+                    handleFeedback(value, data, "helpful");
+                    feedbackDiv.innerHTML =
+                      '<span class="text-sm text-muted-foreground">Thanks for your feedback!</span>';
+                  });
+
+                  noButton?.addEventListener("click", () => {
+                    feedbackDiv.innerHTML = `
+                      <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
+                        <div class="fixed inset-0 flex items-center justify-center">
+                          <div class="dialog bg-background border shadow-lg rounded-lg w-[90%] max-w-md p-6">
+                            <h3 class="text-lg font-semibold mb-4">Sorry to hear that. Can you tell us why?</h3>
+                            <div class="feedback-options space-y-2" id="reason-options">
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_correct">Not Correct</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_clear">Not Clear</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="not_relevant">Not Relevant</button>
+                              <button class="reason-btn w-full text-left px-3 py-2 rounded-md border hover:bg-accent text-foreground" data-reason="other">Other</button>
+                            </div>
+                            <textarea id="custom-reason" class="w-full mt-4 p-2 rounded-md border bg-background text-foreground hidden" rows="5" placeholder="Please describe the issue"></textarea>
+                            <div class="flex justify-end mt-6 space-x-2">
+                              <button id="submit-feedback" class="btn px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Submit</button>
+                              <button id="cancel-feedback" class="btn px-4 py-2 text-sm rounded-md bg-secondary text-secondary-foreground hover:bg-destructive hover:text-destructive-foreground">Cancel</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+
+                    const optionButtons =
+                      feedbackDiv.querySelectorAll(".reason-btn");
+                    const customReason = feedbackDiv.querySelector(
+                      "#custom-reason",
+                    ) as HTMLTextAreaElement;
+                    const submitBtn =
+                      feedbackDiv.querySelector("#submit-feedback");
+                    const cancelBtn =
+                      feedbackDiv.querySelector("#cancel-feedback");
+
+                    let selectedReason: string | null = null;
+
+                    optionButtons.forEach((btn) => {
+                      btn.addEventListener("click", () => {
+                        selectedReason =
+                          (btn as HTMLElement).dataset.reason || null;
+
+                        optionButtons.forEach((b) =>
+                          b.classList.remove("bg-secondary", "text-white"),
+                        );
+                        btn.classList.add("bg-secondary", "text-black");
+
+                        if (selectedReason === "other") {
+                          customReason.classList.remove("hidden");
+                        } else {
+                          customReason.classList.add("hidden");
+                        }
+                      });
+                    });
+
+                    submitBtn?.addEventListener("click", () => {
+                      if (!selectedReason) return;
+
+                      let reasonToSend =
+                        selectedReason === "other"
+                          ? customReason.value.trim()
+                          : selectedReason;
+
+                      if (selectedReason === "other" && !reasonToSend) {
+                        customReason.classList.add("border-destructive");
+                        customReason.placeholder = "Please write something!";
+                        return;
+                      }
+
+                      handleFeedback(value, data, reasonToSend);
+                      feedbackDiv.innerHTML = `<span class=\"text-sm text-muted-foreground\">Thanks for your feedback!</span>`;
+                    });
+
+                    cancelBtn?.addEventListener("click", () => {
+                      feedbackDiv.innerHTML = `<span class=\"text-sm text-muted-foreground\">Feedback canceled.</span>`;
+                    });
+                  });
+
+                  messageDiv.appendChild(feedbackDiv);
+                }
+              } catch (error) {
+                if (botMessage) {
+                  botMessage.remove();
+                }
+                addMessageToChat(
+                  "assistant",
+                  `Error: ${error instanceof Error ? error.message : "An unknown error occurred"}`,
+                  "bg-destructive/10 dark:bg-destructive/20",
+                );
+              }
+            }}
+          />
+          {isChatboxCentered && (
+            <div
+              className={`transition-all duration-300 ${inputValue ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-96"}`}
+            >
+              <PromptRecs
+                onPromptSelect={(prompt) => {
+                  const aiInput = document.getElementById(
+                    "ai-input",
+                  ) as HTMLTextAreaElement;
+                  if (aiInput) {
+                    aiInput.value = prompt;
+                    const inputEvent = new Event("input", { bubbles: true });
+                    aiInput.dispatchEvent(inputEvent);
+                    const enterEvent = new KeyboardEvent("keydown", {
+                      key: "Enter",
+                      code: "Enter",
+                      bubbles: true,
+                      cancelable: true,
+                      shiftKey: false,
+                    });
+                    aiInput.dispatchEvent(enterEvent);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </div>
+        {!isChatboxCentered && (
+          <p className="text-center text-[11px]/3 pb-1 sm:py-0 sm:leading-1 leading-3 tracking-tight text-muted-foreground drop-shadow-background drop-shadow-xl">
+            {isDev
+              ? "This is an unreleased testing site for development purposes only."
+              : "AI responses may contain errors. Please verify with your advisor/and or Academic Services if anything is unclear."}
+          </p>
+        )}
+      </div>
+      <DocumentManager
+        open={showDocumentManager}
+        onOpenChange={setShowDocumentManager}
+      />
+      </div>
+    </>
+  );
+}
+
+
