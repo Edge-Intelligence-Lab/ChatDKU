@@ -14,12 +14,16 @@ from chatdku.core.dspy_classes.prompt_settings import (
 class PlannerSignature(dspy.Signature):
     "Plan the appropiate tool calls to answer the given user question."
 
+    "The question may be complex and require multiple-hops of tools with different kinds of parameters."
+
     current_user_message: str = dspy.InputField()
     max_calls: int = dspy.InputField()
     tools: list[dspy.Tool] = dspy.InputField()
     tool_history: str = TOOL_HISTORY_FIELD
     tool_summary: str = TOOL_SUMMARY_FIELD
-    previous_tool_plan: list[dspy.ToolCalls.ToolCall] = dspy.InputField()
+    previous_tool_plan: list[dspy.ToolCalls.ToolCall] = dspy.InputField(
+        desc="The tool plans you previously planned."
+    )
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
 
