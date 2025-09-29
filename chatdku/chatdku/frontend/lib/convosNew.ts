@@ -104,11 +104,27 @@ export async function getSessionMessages(sessionId: string): Promise<Message[]> 
 
     const data = await response.json();
 
-    return data.map((msg: any) => ({
-      role: msg.role,
-      content: msg.content,
-      timestamp: msg.timestamp,
-    }));
+    return data.map((msg: any) => {
+      const rawRole = (msg?.role ?? '').toString().toLowerCase();
+      const role = rawRole === 'bot' || rawRole === 'assistant' ? 'assistant' : 'user';
+
+      // Prefer `content` if present; fall back to backend's `message` field
+      let contentValue: any = (msg as any)?.content ?? (msg as any)?.message;
+      if (Array.isArray(contentValue)) {
+        contentValue = contentValue
+          .map((part) => (typeof part === 'string' ? part : (part?.text ?? part?.content ?? '')))
+          .join('\n');
+      } else if (typeof contentValue === 'object' && contentValue !== null) {
+        contentValue = contentValue.text ?? contentValue.content ?? contentValue.message ?? '';
+      }
+      const content = typeof contentValue === 'string' ? contentValue : String(contentValue ?? '');
+
+      return {
+        role,
+        content,
+        timestamp: msg?.timestamp,
+      };
+    });
   } catch (error) {
     console.error('Error getting session messages:', error);
     return [];

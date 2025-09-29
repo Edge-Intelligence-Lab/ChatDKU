@@ -20,9 +20,10 @@ import { ComboBoxResponsive } from "./ui/combobox";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ScrollArea } from "./ui/scroll-area";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Convo, getConversations } from "@/lib/convosNew";
+import { Convo, getConversations, getSessionMessages } from "@/lib/convosNew";
+import { Input } from "./ui/input";
 
 import { cn } from "@/components/utils";
 
@@ -50,6 +51,10 @@ export default function Side({
   const pathname = usePathname();
   const isDevRoute = pathname === "/dev" || pathname === "/dev/";
   const [conversations, setConversations] = useState<Convo[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [messagesIndex, setMessagesIndex] = useState<Record<string, string>>({});
+  const [filteredConversations, setFilteredConversations] = useState<Convo[]>([]);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -58,6 +63,64 @@ export default function Side({
     };
     loadConversations();
   }, []);
+
+  // Keep filtered list in sync with base conversations when no search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+    }
+  }, [conversations, searchQuery]);
+
+  // Debounced search that matches title and message contents
+  useEffect(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return;
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(async () => {
+      const titleMatches = conversations.filter((c) =>
+        c.title.toLowerCase().includes(query),
+      );
+
+      // For conversations we haven't indexed yet, fetch messages lazily
+      const toIndex = conversations.filter(
+        (c) => messagesIndex[c.id] === undefined,
+      );
+
+      if (toIndex.length > 0) {
+        try {
+          const results = await Promise.all(
+            toIndex.map(async (c) => {
+              const msgs = await getSessionMessages(c.id);
+              const combined = msgs.map((m) => m.content).join("\n").toLowerCase();
+              return [c.id, combined] as const;
+            }),
+          );
+          setMessagesIndex((prev) => {
+            const next = { ...prev };
+            for (const [id, text] of results) next[id] = text;
+            return next;
+          });
+        } catch (e) {
+          // ignore fetch errors here; search will just rely on titles
+        }
+      }
+
+      // After ensuring index (best-effort), compute final matches
+      const contentMatches = conversations.filter((c) => {
+        const indexed = messagesIndex[c.id];
+        return indexed ? indexed.includes(query) : false;
+      });
+
+      const byId: Record<string, Convo> = {};
+      [...titleMatches, ...contentMatches].forEach((c) => (byId[c.id] = c));
+      setFilteredConversations(Object.values(byId));
+    }, 250);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [searchQuery, conversations, messagesIndex]);
 
   return (
     <div className="fixed z-50">
@@ -117,11 +180,17 @@ export default function Side({
             <p className="ml-2 mt-4 text-sm text-muted-foreground">
               Chat History
             </p>
-            <ScrollArea className="flex-1 min-h-0 px-4">
-
+            <ScrollArea className="flex-1 min-h-0 px-2">
+              <div className="pb-2">
+                <Input
+                  placeholder="Search chats"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
               <div className="space-y-1 pb-4">
-                {conversations.length > 0 ? (
-                  conversations.map((conversation) => (
+                {(searchQuery.trim() ? filteredConversations : conversations).length > 0 ? (
+                  (searchQuery.trim() ? filteredConversations : conversations).map((conversation) => (
                     <Button
                       key={conversation.id}
                       variant="ghost"
@@ -145,7 +214,7 @@ export default function Side({
                   ))
                 ) : (
                   <div className="text-sm text-sidebar-foreground/60 text-center py-4">
-                    No conversations yet
+                    {searchQuery.trim() ? "No matches" : "No conversations yet"}
                   </div>
                 )}
               </div>
