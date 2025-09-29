@@ -339,6 +339,7 @@ def main():
         temperature=config.llm_temperature,
         launch_kwargs={
             "TopP": 0.95,
+            "enable_thinking": False,
         },
     )
 
