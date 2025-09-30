@@ -247,8 +247,6 @@ class Agent(dspy.Module):
                     break
 
                 if self.rewrite_query:
-                    # TODO: This could be merged with `Planner` depends on how well the
-                    # LLM understood its task.
                     query = self.queryrewriter(
                         current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,

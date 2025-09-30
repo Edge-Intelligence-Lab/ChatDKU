@@ -28,29 +28,28 @@ class ConversationMemoryEntry(BaseModel):
 
 
 class CompressConversationMemorySignature(dspy.Signature):
-    "You have a Conversation History storing all the conversations between user "
+    "You have a Conversation History storing all the conversations between user"
+
     "and you, the assistant."
     "Your Conversation History has become too long, so the oldest entries have to be discarded. "
     "You keep a Summary of the discarded conversation history. "
     "Given the History To Discard and Previous Summary, update the Summary. "
     "Use Markdown in Summary. "
     history_to_discard: str = dspy.InputField(
-                desc=(
-                    "The conversation messages that would be removed from your Conversation History in JSON Lines format. "
-                    "Each line specifies the role and content of the message."
-                )
-            )
-        
-    previous_summary: str = dspy.InputField(
-                desc="Previous summary of the discarded Conversation History. Might be empty.",
-                format=lambda x: x,
-            )
-        
-    current_summary: str = dspy.OutputField(
-            desc="Your updated summary.",
+        desc=(
+            "The conversation messages that would be removed from your Conversation History in JSON Lines format. "
+            "Each line specifies the role and content of the message."
         )
-    
+    )
 
+    previous_summary: str = dspy.InputField(
+        desc="Previous summary of the discarded Conversation History. Might be empty.",
+        format=lambda x: x,
+    )
+
+    current_summary: str = dspy.OutputField(
+        desc="Your updated summary.",
+    )
 
 
 class ConversationMemory(dspy.Module):
@@ -69,9 +68,9 @@ class ConversationMemory(dspy.Module):
             r = len(self.history)
         return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r]])
 
-    def get_token_limits(self) -> dict[str, int]:
+    def get_token_limits(self, **kwargs) -> dict[str, int]:
         return token_limit_ratio_to_count(
-            self.token_ratios, len(get_template(self.compressor))
+            self.token_ratios, len(get_template(self.compressor, **kwargs))
         )
 
     def forward(self, role: str, content: str, max_history_size: int = 1000):
@@ -104,7 +103,7 @@ class ConversationMemory(dspy.Module):
                     previous_summary=self.summary,
                 )
                 compressor_inputs = truncate_tokens_all(
-                    compressor_inputs, self.get_token_limits()
+                    compressor_inputs, self.get_token_limits(**compressor_inputs)
                 )
                 self.summary = self.compressor(**compressor_inputs).current_summary
                 self.history = self.history[min_index:]
@@ -125,6 +124,3 @@ class ConversationMemory(dspy.Module):
     def register_history(self, role: str, content: str):
         new_entry = ConversationMemoryEntry(role=role, content=content)
         self.history.append(new_entry)
-
-
-
