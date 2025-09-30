@@ -17,6 +17,8 @@ import asyncio
 from chat.tasks import clean_empty_sessions
 from chat.utils import load_conversation
 from django.db.models import Q
+from core.apps import model_response
+
 
 import logging
 logger=logging.getLogger(__name__)
@@ -77,7 +79,7 @@ def chat(request):
         # Create a new Agent instance per request
 
         conversation=load_conversation(request.user,chatHistoryId)
-        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
+        agent = model_response(Agent,max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
         responses_gen = agent(
             current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
         )
