@@ -288,6 +288,7 @@ class Agent(dspy.Module):
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list = None,
+        lm:dspy.LM=None
     ):
         """
         current_user_message: user query
@@ -296,6 +297,8 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
+        dspy.settings.configure(lm=lm)
+
         if files is None:
             files = []
 
@@ -329,8 +332,8 @@ def main():
     use_phoenix()
 
     lm = dspy.LM(
-        model="openai/" + config.llm,
-        api_base=config.llm_url,
+        model="openai/" + config.backup_llm,
+        api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
         max_tokens=config.context_window,
@@ -340,8 +343,6 @@ def main():
             "enable_thinking": False,
         },
     )
-
-    dspy.configure(lm=lm)
     # To disable cache:
 
     # dspy.configure_cache(
@@ -371,6 +372,7 @@ def main():
                 user_id=user_id,
                 search_mode=search_mode,
                 files=[],
+                lm=lm
             )
             first_token = True
             print("Response:")

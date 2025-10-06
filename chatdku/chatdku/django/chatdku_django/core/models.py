@@ -109,3 +109,8 @@ class UploadedFile(models.Model):
             os.remove(filepath)
 
         super().delete(*args,**kwargs)
+
+
+class ActiveLM(models.Model):
+    name=models.CharField(max_length=100,default="primary")
+    updated_at=models.DateTimeField(auto_now=True)

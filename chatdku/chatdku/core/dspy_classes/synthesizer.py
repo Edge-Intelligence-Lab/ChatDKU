@@ -17,6 +17,8 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
+from typing import ClassVar
+
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.prompt_settings import (
@@ -91,8 +93,7 @@ class SynthesizerSignature(dspy.Signature):
     tool_history: str = TOOL_HISTORY_FIELD
     tool_summary: str = TOOL_SUMMARY_FIELD
     response: str = dspy.OutputField(desc="You response to the Current User Message.")
-
-    current_date = date.today()
+    current_date:ClassVar[date]= date.today()
 
 
 class ResponseGen:

@@ -3,6 +3,10 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
+from core.models import ActiveLM
+from chatdku.config import config
+import dspy
+
 
 from django.db.models import Q
 from chatdku.config import config
@@ -22,12 +26,13 @@ class FeedbackSignature(dspy.Signature):
     Output the summary and evidence in valid HTML format.
     - Wrap the summary in a <p> tag.
     - For evidence, use <ul> lists grouped under <h3> headings for each theme.
+    - Wrap your answer between <answer> and </answer> tags for both summary and evidence
     """
 
     feedback_text:str=dspy.InputField(desc="A corpus of feedback dating from last 30 days")
 
     summary:str=dspy.OutputField(desc="A summary of all the Feedback, including the most frequently occuring, beginning with <answer> and ending with </answer>")
-    evidence:dict[str,list[str]]=dspy.OutputField(desc="Evidence for frequently occuring feedback beginning with <reason> and ending with </reason>")
+    evidence:str=dspy.OutputField(desc="A short evidence for frequently occuring feedback.")
 
 
 
@@ -71,17 +76,18 @@ def feedback_summary():
         api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
-        max_tokens=1000,
+        max_tokens=30000,
         stop=["<|im_end|>"]
     )
     dspy.configure(lm=new_lm)
 
 
-    summary=summarizer(feedback_text)
-    text=summary.summary
+    summary_all=summarizer(feedback_text)
+    text=summary_all.summary
+    evidence=summary_all.evidence
     import re
-    answer=re.findall(r'<answer>(.*?)</answer>',text,re.DOTALL)[-1]
-    reason=re.findall(r'<reason>(.*?)</reason>',text,re.DOTALL)
+    answer=re.findall(r'<answer>(.*?)</answer>',text,re.DOTALL)
+    reason=re.findall(r'<answer>(.*?)</answer>',evidence,re.DOTALL)
     answer_text=''.join([a for a in answer])
     reason_text=''.join([b for b in reason])
     email_text=answer_text+'\n'+reason_text
@@ -152,3 +158,29 @@ def load_conversation(user,session_id):
     return return_message
 
 
+
+def model_response(module,**kwargs):
+    active=ActiveLM.objects.first()
+    if active and active.name=="backup":
+         lm = dspy.LM(
+            model="openai/" + config.backup_llm,
+            api_base=config.backup_llm_url,
+            api_key=config.llm_api_key,
+            model_type="chat",
+            max_tokens=config.context_window,
+            temperature=config.llm_temperature,
+        )
+         
+    else:
+        lm = dspy.LM(
+            model="openai/" + config.llm,
+            api_base=config.llm_url,
+            api_key=config.llm_api_key,
+            model_type="chat",
+            max_tokens=config.context_window,
+            temperature=config.llm_temperature,
+        )
+
+    with dspy.context(lm=lm):
+        return module(lm=lm,**kwargs)
+    
