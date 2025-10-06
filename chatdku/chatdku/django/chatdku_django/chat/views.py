@@ -2,22 +2,19 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
-from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chat.models import Feedback
-from chatdku.backend.user_data_interface import update
 from chatdku_django.celery import redis_client
 from chat.serializer import SourceSerializer,ChatMessageSerializer,SessionSerializer,SessionVerifierSerializer
 from chat.models import UserSession, ChatMessages
 from django.contrib.auth import get_user_model
 from chat.utils import title_gen
 import asyncio
-from chat.tasks import clean_empty_sessions
 from chat.utils import load_conversation
 from django.db.models import Q
-from core.apps import model_response
+from chat.utils import model_response
 
 
 import logging
@@ -48,7 +45,7 @@ def chat(request):
     session=UserSession.objects.get(id=chatHistoryId)
 
     mode = request.data.get("mode", "default")
-    max_iteration = 2 if mode == "agent" else 1
+    max_iteration = 3 if mode == "agent" else 2
     serializer=SourceSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     search_mode,docs=serializer.validated_data['search_mode'],serializer.validated_data['docs']
@@ -79,8 +76,8 @@ def chat(request):
         # Create a new Agent instance per request
 
         conversation=load_conversation(request.user,chatHistoryId)
-        agent = model_response(Agent,max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
-        responses_gen = agent(
+        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
+        responses_gen = model_response(agent,
             current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
         )
         if not session.title:

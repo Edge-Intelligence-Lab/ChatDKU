@@ -142,7 +142,8 @@ def clean_empty_sessions():
     except Exception as e:
         logger.error(f"Error cleaning empty sessions: {e}")
 
-@shared_task(bind=True, max_retries=5)
+
+# @shared_task(bind=True, max_retries=5)
 def oss_test(self):
     try:
         chat_response = ping_oss("What can you do?")
@@ -150,7 +151,7 @@ def oss_test(self):
     except Exception as e:
         if self.request.retries >= self.max_retries:
             if not cache.get("oss_test:fail"):
-                cache.set("oss_test:fail", 1, timeout=60*60*3)
+                cache.set("oss_test:fail", 1, timeout=60*60*5)
 
                 from_email = os.getenv("EMAIL_HOST_USER")
                 to_email = os.getenv("EMAIL_TO")

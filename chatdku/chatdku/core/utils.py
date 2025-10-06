@@ -11,6 +11,7 @@ from transformers import PreTrainedTokenizerBase
 from functools import partial
 
 from chatdku.config import config
+import numpy as np
 
 
 class NameParams(BaseModel):
@@ -87,7 +88,7 @@ def truncate_tokens(
         tokenizer = partial(tokenizer.encode, add_special_tokens=False)
 
     splitter = TokenTextSplitter(
-        chunk_size=max_tokens, chunk_overlap=0, tokenizer=tokenizer
+        chunk_size=int(np.abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
     )
     return splitter.split_text(s)[0]
 

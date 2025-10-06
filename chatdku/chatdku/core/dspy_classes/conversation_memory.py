@@ -66,7 +66,8 @@ class ConversationMemory(dspy.Module):
     def history_str(self, l: int = 0, r: Optional[int] = None):
         if r is None:
             r = len(self.history)
-        return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r]])
+
+        return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r] if not isinstance(i,dict)])
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         return token_limit_ratio_to_count(
@@ -93,7 +94,7 @@ class ConversationMemory(dspy.Module):
             )
 
             min_index = strs_fit_max_tokens_reverse(
-                [i.model_dump_json() for i in self.history],
+                [i.model_dump_json() for i in self.history if not isinstance(i,dict)],
                 "\n",
                 max_history_size,
             )
@@ -112,7 +113,7 @@ class ConversationMemory(dspy.Module):
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
                         dict(
-                            history=[i.model_dump() for i in self.history],
+                            history = [i.model_dump() for i in self.history if not isinstance(i, dict)],
                             summary=self.summary,
                         )
                     ),
