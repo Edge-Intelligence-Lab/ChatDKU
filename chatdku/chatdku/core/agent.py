@@ -179,7 +179,7 @@ class Agent(dspy.Module):
                 self.tool_memory(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
-                    call=tool_calls.tool_calls,
+                    call=tool_calls.tool_calls[0],
                     result=result,
                     max_history_size=limits["tool_history"],
                 )
