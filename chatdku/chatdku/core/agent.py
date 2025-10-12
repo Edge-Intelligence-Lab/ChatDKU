@@ -162,20 +162,10 @@ class Agent(dspy.Module):
             # Clear internal memory for each user message
             self.internal_memory.clear()
 
-            tool_calls = dspy.ToolCalls.from_dict_list(
-                [
-                    {
-                        "name": "VectorRetriever",
-                        "args": {"query": current_user_message},
-                    },
-                    {
-                        "name": "KeywordRetriever",
-                        "args": {"query": current_user_message},
-                    },
-                ]
-            )
-
-            for i, tool in enumerate(self.tools.values()):
+            for tool in self.tools.values():
+                tool_calls = dspy.ToolCalls.from_dict_list(
+                    [{"name": tool.name, "args": {"query": current_user_message}}]
+                )
                 result, internal_result = tool(query=current_user_message)
 
                 if "ids" in internal_result:
@@ -189,7 +179,7 @@ class Agent(dspy.Module):
                 self.tool_memory(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
-                    call=tool_calls[i],
+                    call=tool_calls,
                     result=result,
                     max_history_size=limits["tool_history"],
                 )
