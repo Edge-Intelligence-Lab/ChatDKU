@@ -162,6 +162,25 @@ class Agent(dspy.Module):
             # Clear internal memory for each user message
             self.internal_memory.clear()
 
+            for tool in self.tools.values():
+                result, internal_result = tool(query=current_user_message)
+
+                if "ids" in internal_result:
+                    self.internal_memory["ids"] = (
+                        self.internal_memory.get("ids", set()) | internal_result["ids"]
+                    )
+
+                if VERBOSE:
+                    print(f"result: {result}")
+
+                self.tool_memory(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    call=tool,
+                    result=result,
+                    max_history_size=limits["tool_history"],
+                )
+
             # Add previous response to conversation memory
             if self.prev_response is not None:
                 if self.streaming:
@@ -189,6 +208,17 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                judgement = self.judge(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    tool_memory=self.tool_memory,
+                ).judgement
+
+                if VERBOSE:
+                    print(f"Judge: {judgement}")
+                if judgement:
+                    break
+
                 try:
                     planner = self.planner(
                         # Only using the rewritten query here but not for updating memory
@@ -235,17 +265,6 @@ class Agent(dspy.Module):
                 if VERBOSE:
                     print(f"tool_memory.history: {self.tool_memory.history_str()}")
 
-                judgement = self.judge(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    tool_memory=self.tool_memory,
-                ).judgement
-
-                if VERBOSE:
-                    print(f"Judge: {judgement}")
-                if judgement:
-                    break
-
                 if self.rewrite_query:
                     query = self.queryrewriter(
                         current_user_message=current_user_message,
@@ -288,7 +307,7 @@ class Agent(dspy.Module):
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list = None,
-        lm:dspy.LM=None
+        lm: dspy.LM = None,
     ):
         """
         current_user_message: user query
@@ -372,7 +391,7 @@ def main():
                 user_id=user_id,
                 search_mode=search_mode,
                 files=[],
-                lm=lm
+                lm=lm,
             )
             first_token = True
             print("Response:")
