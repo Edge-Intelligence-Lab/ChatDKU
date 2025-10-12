@@ -319,7 +319,7 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-        dspy.settings.configure(lm=lm)
+        dspy.configure(lm=lm)
 
         if files is None:
             files = []
@@ -361,6 +361,7 @@ def main():
         max_tokens=10000,
         temperature=config.llm_temperature,
     )
+    dspy.configure(lm=lm)
     # To disable cache:
 
     # dspy.configure_cache(
