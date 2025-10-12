@@ -358,12 +358,8 @@ def main():
         api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
-        max_tokens=config.context_window,
+        max_tokens=10000,
         temperature=config.llm_temperature,
-        launch_kwargs={
-            "TopP": 0.95,
-            "enable_thinking": False,
-        },
     )
     # To disable cache:
 
