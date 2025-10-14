@@ -207,7 +207,7 @@ class Agent(dspy.Module):
 
         query = current_user_message
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations):
+        for i in range(self.max_iterations - 1):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
@@ -372,7 +372,7 @@ def main():
     import time
 
     agent = Agent(
-        max_iterations=2,
+        max_iterations=3,
         streaming=True,
         get_intermediate=False,
     )
