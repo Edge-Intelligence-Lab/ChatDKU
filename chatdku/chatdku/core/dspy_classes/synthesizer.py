@@ -91,7 +91,7 @@ class SynthesizerSignature(dspy.Signature):
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     tool_history: str = TOOL_HISTORY_FIELD
     tool_summary: str = TOOL_SUMMARY_FIELD
-    current_date: date = date.today()
+    current_date: date = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     response: str = dspy.OutputField(desc="You response to the Current User Message.")
 
@@ -234,6 +234,7 @@ class Synthesizer(dspy.Module):
             synthesizer_args = truncate_tokens_all(
                 synthesizer_args, self.get_token_limits()
             )
+            synthesizer_args["current_date"] = date.today()
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(synthesizer_args),
