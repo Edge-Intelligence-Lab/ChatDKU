@@ -87,13 +87,13 @@ class SynthesizerSignature(dspy.Signature):
     "   - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).\n"
     "   - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.\n"
     "---\n\n"
-    current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     tool_history: str = TOOL_HISTORY_FIELD
     tool_summary: str = TOOL_SUMMARY_FIELD
+    current_date: date = date.today()
+    current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     response: str = dspy.OutputField(desc="You response to the Current User Message.")
-    current_date:ClassVar[date]= date.today()
 
 
 class ResponseGen:
