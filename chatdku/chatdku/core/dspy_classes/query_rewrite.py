@@ -28,10 +28,13 @@ from chatdku.config import config
 
 class QueryRewriteSignature(dspy.Signature):
     # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
-    "You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information and ultimately answers the user's question precisely and accurately."
-    "Please understand the information gap between the currently known information and the target problem. "
-    "Your task is to generate a query in the form of question for next retrieval step directly. "
-    "DON\’T generate thought which has been retrieved. "
+    """
+    You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information and ultimately answers the user's question precisely and accurately.
+    Please understand the information gap between the currently known information and the target problem.
+    Your task is to generate a query in the form of question for next retrieval step directly.
+    DON\’T generate thought which has been retrieved.
+
+    """
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD

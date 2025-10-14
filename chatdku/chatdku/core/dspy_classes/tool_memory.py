@@ -42,33 +42,35 @@ class ToolMemoryEntry(BaseModel):
 
 
 class CompressToolMemorySignature(dspy.Signature):
-    "You have a Tool History storing all the tool calls you made for answering "
-    "the Current User Message. "
-    "Your Tool History has become too long, so the oldest entries have to be discarded. "
-    "You keep a Summary of the discarded tool history. "
-    "Given the History To Discard and Previous Summary, update the Summary. "
-    "Remove the information not relevant to answer the Current User Message "
-    "and keep all the relevant information if possible. "
-    "Use Markdown in Summary. "
+    """
+    You have a Tool History storing all the tool calls you made for answering the Current User Message.
+    Your Tool History has become too long, so the oldest entries have to be discarded.
+    You keep a Summary of the discarded tool history.
+    Given the History To Discard and Previous Summary, update the Summary.
+    Remove the information not relevant to answer the Current User Message
+    and keep all the relevant information if possible.
+    Use Markdown in Summary.
+    """
+
     # "Store the sources that you retrieved these information from."
     current_user_message: str = dspy.InputField()
     conversation_history: str = dspy.InputField()
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     history_to_discard: str = dspy.InputField(
-                desc=(
-                    "The tool calls that would be removed from your Tool History"
-                    "Each line specifies the name and parameters of the tool and its result. "
-                    "You should extract relevant information from these tool calls."
-                ),
-            )
-        
+        desc=(
+            "The tool calls that would be removed from your Tool History"
+            "Each line specifies the name and parameters of the tool and its result. "
+            "You should extract relevant information from these tool calls."
+        ),
+    )
+
     previous_summary: str = dspy.InputField(
-            desc="Previous summary of the discarded Tool History. Might be empty.",
-        )
-    
+        desc="Previous summary of the discarded Tool History. Might be empty.",
+    )
+
     current_summary: str = dspy.OutputField(
-            desc="Your updated summary.",
-        )
+        desc="Your updated summary.",
+    )
 
 
 class ToolMemory(dspy.Module):
@@ -125,7 +127,9 @@ class ToolMemory(dspy.Module):
             self.plan.append(call)
             span.set_attributes(
                 {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(new_entry.model_dump_json()),
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                        new_entry.model_dump_json()
+                    ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )

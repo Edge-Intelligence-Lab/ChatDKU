@@ -12,8 +12,10 @@ from chatdku.core.dspy_classes.prompt_settings import (
 
 
 class PlannerSignature(dspy.Signature):
-    "Plan the appropiate tool calls to answer the given user question."
-    "The question may be complex and require multiple-hops of tools with different kinds of parameters."
+    """
+    Plan the appropiate tool calls to answer the given user question.
+    The question may be complex and require multiple-hops of tools with different kinds of parameters.
+    """
 
     current_user_message: str = dspy.InputField()
     max_calls: int = dspy.InputField()
