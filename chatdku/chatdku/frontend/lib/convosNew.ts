@@ -29,6 +29,26 @@ interface RawConversation {
 /**
  * Get a new session from the backend
  */
+function setCookie(name: string, value: string, days = 1) {
+  if (typeof document === 'undefined') return;
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.split('; ').find(row => row.startsWith(`${encodeURIComponent(name)}=`));
+  if (!match) return null;
+  return decodeURIComponent(match.split('=')[1] || '');
+}
+
+function deleteCookie(name: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
+
+
+
 export async function getNewSession(): Promise<string | null> {
   try {
     const response = await fetch(API_ENDPOINTS.NEW_SESSION, {
@@ -49,7 +69,7 @@ export async function getNewSession(): Promise<string | null> {
     
     if (sessionId) {
       // Store session_id in localStorage
-      localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+      setCookie(SESSION_STORAGE_KEY, sessionId);
       console.log('New session created and stored:', sessionId);
     }
     
@@ -65,7 +85,7 @@ export async function getNewSession(): Promise<string | null> {
  */
 export function getCurrentSessionId(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(SESSION_STORAGE_KEY);
+  return getCookie(SESSION_STORAGE_KEY);
 }
 
 /**
@@ -73,7 +93,7 @@ export function getCurrentSessionId(): string | null {
  */
 export function setCurrentSessionId(sessionId: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+  setCookie(SESSION_STORAGE_KEY, sessionId);
 }
 
 /**
@@ -81,7 +101,7 @@ export function setCurrentSessionId(sessionId: string): void {
  */
 export function clearSessionId(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(SESSION_STORAGE_KEY);
+  deleteCookie(SESSION_STORAGE_KEY);
 }
 
 /**

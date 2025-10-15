@@ -2,20 +2,30 @@
 import About from "@/components/about";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { getNewSession} from "@/lib/convosNew";
 import { useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function AboutPage() {
+	  
+
 	const [termsAccepted, setTermsAccepted] = useState(false);
+	
 	const router = useRouter();
 
-	const handleProceed = () => {
+	const handleProceed = async () => {
 		if (termsAccepted) {
 			// Set cookie for terms acceptance - expires in 30 days
 			Cookies.set("terms_accepted", "true", { expires: 30 });
 			// Navigate to the main app
+			try{
+
+				await getNewSession();
+			}catch (e){
+				console.error("session create failed")
+			}
 			router.push("/");
 		}
 	};
