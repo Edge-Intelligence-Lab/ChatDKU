@@ -36,7 +36,7 @@ const branches: Branch[] = [
   },
   {
     chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/inp/chat",
-    label: "integrated_new_prompt",
+    label: "Artemis",
   },
   {
     chatEndpoint: "https://chatdku.dukekunshan.edu.cn/dev/ant/chat",
@@ -60,13 +60,16 @@ export function ComboBoxResponsive({
   const [open, setOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  
   // Initialize with stored endpoint or default
-  const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(() => {
-    const storedEndpoint = getStoredEndpoint();
-    return branches.find(branch => branch.chatEndpoint === storedEndpoint) || branches[0];
-  });
-
+  const [selectedStatus, setSelectedStatus] = React.useState<Branch | null>(
+    () => {
+      const storedEndpoint = getStoredEndpoint();
+      return (
+        branches.find((branch) => branch.chatEndpoint === storedEndpoint) ||
+        branches[0]
+      );
+    },
+  );
 
   // Update endpoint when selected status changes
   React.useEffect(() => {
@@ -74,7 +77,6 @@ export function ComboBoxResponsive({
       onEndpointChange(selectedStatus.chatEndpoint);
 
       setStoredEndpoint(selectedStatus.chatEndpoint);
-
     }
   }, [selectedStatus, onEndpointChange]);
 
