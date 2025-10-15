@@ -63,10 +63,12 @@ def load_chroma(
     chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
 
     if reset:
-        if collection in chroma_db.list_collections():
-            chroma_db.delete_collection(
-                collection
-            )  # Clear previously stored data in vector database
+        for col in chroma_db.list_collections():
+            if collection == col.name:
+                print(f"Deleting collection {collection}")
+                chroma_db.delete_collection(
+                    collection
+                )  # Clear previously stored data in vector database
 
     collection = chroma_db.get_or_create_collection(
         name=collection,

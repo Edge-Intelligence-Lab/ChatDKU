@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,8 @@ import { PromptRecs } from "@/components/prompt_recs";
 import WelcomeBanner from "@/components/WelcomeBanner";
 import Side from "@/components/side";
 import { DocumentManager } from "@/components/doc-manager";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ChatPageProps = {
   isDev?: boolean;
@@ -30,6 +33,67 @@ const parseMarkdown = (content: string): string => {
     return cleanedContent;
   }
   return typeof parsed === "string" && parsed.trim().length > 0 ? parsed : cleanedContent;
+};
+
+// Inject styles for the fancy AI loader once per document
+const ensureSearchLoaderStyles = () => {
+  if (typeof document === "undefined") return;
+  if (document.getElementById("search-loader-style")) return;
+  const style = document.createElement("style");
+  style.id = "search-loader-style";
+  style.innerHTML = `
+    @keyframes iconCycle {
+      0% { opacity: 0; transform: scale(0.92) translateY(2px) rotate(-2deg); }
+      12% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+      28% { opacity: 1; transform: scale(1.02) translateY(0) rotate(0.5deg); }
+      40% { opacity: 0; transform: scale(0.98) translateY(-1px) rotate(2deg); }
+      100% { opacity: 0; }
+    }
+    @keyframes dotPulse {
+      0%, 20% { opacity: 0.2; }
+      50% { opacity: 1; }
+      80%, 100% { opacity: 0.2; }
+    }
+    .cdku-loader .icon-cycle { animation: iconCycle 2400ms linear infinite; }
+    .cdku-loader .icon-1 { animation-delay: 0ms; }
+    .cdku-loader .icon-2 { animation-delay: 480ms; }
+    .cdku-loader .icon-3 { animation-delay: 960ms; }
+    .cdku-loader .icon-4 { animation-delay: 1440ms; }
+    .cdku-loader .icon-5 { animation-delay: 1920ms; }
+    .cdku-loader .dot { width: 3px; height: 3px; border-radius: 9999px; background-color: currentColor; display: inline-block; margin-left: 3px; opacity: 0.2; animation: dotPulse 1200ms ease-in-out infinite; }
+    .cdku-loader .dot:nth-child(2) { animation-delay: 150ms; }
+    .cdku-loader .dot:nth-child(3) { animation-delay: 300ms; }
+  `;
+  document.head.appendChild(style);
+};
+
+// Returns HTML string for the fancy loader using inline Lucide-like SVGs
+const getSearchLoaderHTML = (): string => {
+  const search = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="absolute inset-0 icon-cycle icon-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+  const fileSearch = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="absolute inset-0 icon-cycle icon-2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="m13.3 16.3 1.7 1.7"/></svg>';
+  const compass = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="absolute inset-0 icon-cycle icon-3"><circle cx="12" cy="12" r="10"/><path d="m16 8-4 8-4-4 8-4Z"/></svg>';
+  const radar = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="absolute inset-0 icon-cycle icon-4"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M22 12a10 10 0 1 1-10-10"/><path d="M14.31 8.69 21 2"/><circle cx="12" cy="12" r="0.5"/></svg>';
+  const sparkles = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="absolute inset-0 icon-cycle icon-5"><path d="M12 3l1.9 3.9L18 9l-4.1 2.1L12 15l-1.9-3.9L6 9l4.1-2.1Z"/><path d="M20 17l.95 1.95L23 20l-1.95.95L20 23l-.95-2.05L17 20l2.05-.95Z"/><path d="M4 17l.95 1.95L7 20l-1.95.95L4 23l-.95-2.05L1 20l2.05-.95Z"/></svg>';
+
+  return `
+    <div class="cdku-loader flex items-center gap-2 sm:gap-2.5 text-foreground/80">
+      <div class="relative inline-flex items-center justify-center align-middle" style="width:1em;height:1em;">
+        ${search}
+        ${fileSearch}
+        ${compass}
+        ${radar}
+        ${sparkles}
+      </div>
+      <div class="text-xs sm:text-sm leading-none tracking-tight">
+        <span class="opacity-80">Searching relevant documents</span>
+        <span class="ml-1 inline-flex align-middle">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </span>
+      </div>
+    </div>
+  `;
 };
 
 const streamText = async (
@@ -101,19 +165,86 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
   const [apiEndpoint, setApiEndpoint] = useState(getStoredEndpoint());
   const router = useRouter();
   const [showDocumentManager, setShowDocumentManager] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   useEffect(() => {
     configureMarked();
-    const termsAccepted = Cookies.get("terms_accepted");
-    if (!termsAccepted) {
-      router.push("/landing");
-    } else {
-      const currentSession = getCurrentSessionId();
-      if (!currentSession) {
-        getNewSession();
+    let isMounted = true;
+
+    const prepareSession = async () => {
+      const termsAccepted = Cookies.get("terms_accepted");
+      if (!termsAccepted) {
+        setIsSessionLoading(false);
+        router.push("/landing");
+        return;
+
       }
-    }
+
+      setSessionError(null);
+      setIsSessionLoading(true);
+
+      try {
+        const storedSession = getCurrentSessionId();
+        if (storedSession) {
+          if (isMounted) {
+            setCurrentSessionId(storedSession);
+            setChatHistoryId(storedSession);
+          }
+        } else {
+          const newSession = await getNewSession();
+          if (!isMounted) return;
+          if (newSession) {
+            setCurrentSessionId(newSession);
+            setChatHistoryId(newSession);
+          } else {
+            setSessionError("We couldn't start a chat session. Please try again.");
+          }
+        }
+      } catch (error) {
+        console.error("Error preparing session:", error);
+        if (isMounted) {
+          setSessionError("We couldn't start a chat session. Please refresh the page.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsSessionLoading(false);
+        }
+      }
+    };
+
+    void prepareSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
+
+  const handleRetrySession = useCallback(async () => {
+    setSessionError(null);
+    setIsSessionLoading(true);
+    try {
+      const newSessionId = await getNewSession();
+      if (newSessionId) {
+        setCurrentSessionId(newSessionId);
+        setChatHistoryId(newSessionId);
+      } else {
+        setSessionError("We couldn't start a chat session. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error retrying session:", error);
+      setSessionError("We couldn't start a chat session. Please try again.");
+    } finally {
+      setIsSessionLoading(false);
+    }
+  }, []);
+
+  const isSessionReady = Boolean(currentSessionId) && !isSessionLoading && !sessionError;
+  const sessionPlaceholder = isSessionLoading
+    ? "Preparing your chat session..."
+    : sessionError
+      ? "Session unavailable. Please try again."
+      : "Type your message...";
 
   const handleFeedback = useCallback(
     async (userInput: any, answer: any, reason: any) => {
@@ -145,7 +276,12 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
       messageElement.className = `flex ${isUser ? "justify-end" : ""} w-full`;
 
       if (isUser || !shouldStream) {
-        const sanitizedContent = content ? parseMarkdown(content).trim() : "";
+        const isRawHtml = typeof content === "string" && content.startsWith("<");
+        const sanitizedContent = content
+          ? isRawHtml
+            ? content
+            : parseMarkdown(content).trim()
+          : "";
 
         messageElement.innerHTML = `
         <div class="flex flex-col ${isUser ? (isDev ? "items-end max-w-[85%] sm:max-w-[80%]" : "items-end max-w-[95%] sm:max-w-[85%]") : "items-start w-full sm:max-w-[85%]"}">
@@ -190,6 +326,26 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
     [isDev],
   );
 
+  // Inserts a special assistant message rendered from raw HTML (no markdown parsing)
+  const addAssistantRawHtml = useCallback((html: string, className: string) => {
+    const chatLog = document.getElementById("chat-log");
+    const messageElement = document.createElement("div");
+    messageElement.className = "flex w-full";
+    messageElement.innerHTML = `
+      <div class="flex flex-col items-start w-full sm:max-w-[85%]">
+        <div class="flex flex-col lg:flex-row gap-3 px-4 py-2 ${className} rounded-3xl w-full overflow-hidden">
+          <div class="flex-shrink-0"><div class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center"><img src="/logos/new_logo.svg" class="block dark:hidden p-1.5" alt="Logo"/><img src="/logos/new_logo.svg" class="hidden dark:block p-1.5" alt="Logo"/></div></div>
+          <div class="text-left overflow-hidden">
+            ${html}
+          </div>
+        </div>
+      </div>
+    `;
+    chatLog?.appendChild(messageElement);
+    chatLog?.scrollTo(0, chatLog.scrollHeight);
+    return messageElement.querySelector(".flex.flex-col");
+  }, []);
+
   return (
     <>
       <Side
@@ -199,17 +355,29 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         onEndpointChange={setApiEndpoint}
         currentEndpoint={apiEndpoint}
         currentSessionId={currentSessionId}
+        disabled={!isSessionReady}
         onNewChat={async () => {
           setShowStarter(true);
           setIsChatboxCentered(true);
-          const newSessionId = await getNewSession();
-          if (newSessionId) {
-            setCurrentSessionId(newSessionId);
-            setChatHistoryId(newSessionId);
-          }
-          const chatLog = document.getElementById("chat-log");
-          if (chatLog) {
-            chatLog.innerHTML = "";
+          setSessionError(null);
+          setIsSessionLoading(true);
+          try {
+            const newSessionId = await getNewSession();
+            if (newSessionId) {
+              setCurrentSessionId(newSessionId);
+              setChatHistoryId(newSessionId);
+              const chatLog = document.getElementById("chat-log");
+              if (chatLog) {
+                chatLog.innerHTML = "";
+              }
+            } else {
+              setSessionError("We couldn't start a new chat session. Please try again.");
+            }
+          } catch (error) {
+            console.error("Error starting new chat:", error);
+            setSessionError("We couldn't start a new chat session. Please try again.");
+          } finally {
+            setIsSessionLoading(false);
           }
         }}
         onConversationSelect={async (sessionId) => {
@@ -235,9 +403,26 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         }}
       />
       <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
-      <header className="sticky top-0 z-20 w-full">
-        <Navbar />
-      </header>
+        {(isSessionLoading || sessionError) && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
+            {isSessionLoading ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                <p className="text-sm text-muted-foreground">Preparing your chat session...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground max-w-xs text-center">
+                  {sessionError}
+                </p>
+                <Button onClick={handleRetrySession}>Try again</Button>
+              </>
+            )}
+          </div>
+        )}
+        <header className="sticky top-0 z-20 w-full">
+          <Navbar />
+        </header>
 
       <main className="flex-1 w-full flex flex-col items-center pt-16">
         <div
@@ -262,6 +447,8 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         )}
         <div>
           <AIInput
+            disabled={!isSessionReady}
+            placeholder={sessionPlaceholder}
             thinkingMode={thinkingMode}
             onThinkingModeChange={(value) => setThinkingMode(value)}
             searchMode={searchMode}
@@ -276,7 +463,18 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
               setShowStarter(false);
               setIsChatboxCentered(false);
 
-              const currentSessionId = getCurrentSessionId();
+              const activeSessionId = currentSessionId || getCurrentSessionId() || "";
+              if (!activeSessionId) {
+                setSessionError("We couldn't find an active chat session. Please try again.");
+                return;
+              }
+
+              if (currentSessionId !== activeSessionId) {
+                setCurrentSessionId(activeSessionId);
+              }
+              if (chatHistoryId !== activeSessionId) {
+                setChatHistoryId(activeSessionId);
+              }
 
               addMessageToChat(
                 "user",
@@ -284,11 +482,8 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                 "bg-muted/50 dark:bg-muted/50 text-sm",
               );
 
-              const botMessage = addMessageToChat(
-                "assistant",
-                "Searching relevant documents for you, please wait...",
-                "text-sm",
-              );
+              ensureSearchLoaderStyles();
+              const botMessage = addAssistantRawHtml(getSearchLoaderHTML(), "text-sm");
 
               try {
                 let response: any;
@@ -301,7 +496,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         messages: [{ role: "user", content: value }],
-                        chatHistoryId: currentSessionId,
+                        chatHistoryId: activeSessionId,
                         mode: thinkingMode ? "agent" : "",
                         searchMode: searchMode,
                       }),
@@ -312,7 +507,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         messages: [{ role: "user", content: value }],
-                        chatHistoryId: currentSessionId,
+                        chatHistoryId: activeSessionId,
                         mode: thinkingMode ? "agent" : "",
                         searchMode: searchMode,
                       }),
