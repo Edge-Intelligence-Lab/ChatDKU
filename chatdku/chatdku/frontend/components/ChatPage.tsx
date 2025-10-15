@@ -169,6 +169,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
     if (!termsAccepted) {
       router.push("/landing");
     } else {
+      
       const currentSession = getCurrentSessionId();
       if (!currentSession) {
         getNewSession();
