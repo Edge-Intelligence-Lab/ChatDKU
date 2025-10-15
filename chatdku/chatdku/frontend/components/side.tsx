@@ -20,7 +20,7 @@ import { ComboBoxResponsive } from "./ui/combobox";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ScrollArea } from "./ui/scroll-area";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Convo, getConversations, getSessionMessages } from "@/lib/convosNew";
 import { Input } from "./ui/input";
@@ -35,6 +35,7 @@ interface SidebarProps {
   onConversationSelect: (sessionId: string) => void;
 
   currentEndpoint?: string;
+  disabled?: boolean;
 
 }
 
@@ -46,6 +47,7 @@ export default function Side({
   onConversationSelect,
 
   currentEndpoint,
+  disabled = false,
 
 }: SidebarProps) {
   const pathname = usePathname();
@@ -57,12 +59,13 @@ export default function Side({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (!currentSessionId) return;
     const loadConversations = async () => {
       const convos = await getConversations();
       setConversations(convos);
     };
     loadConversations();
-  }, []);
+  }, [currentSessionId]);
 
   // Keep filtered list in sync with base conversations when no search
   useEffect(() => {
@@ -144,6 +147,7 @@ export default function Side({
               variant="inChatbox"
               className="w-full justify-start"
               onClick={onNewChat}
+              disabled={disabled}
             >
               <SquarePen />
               New Chat
@@ -154,6 +158,7 @@ export default function Side({
                 variant="inChatbox"
                 onClick={onDocumentManager}
                 className="w-full justify-start"
+                disabled={disabled}
               >
                 <FileText />
                 Document Manager
@@ -162,7 +167,11 @@ export default function Side({
             </div>
 
             <Link href="/about">
-              <Button variant="inChatbox" className="w-full justify-start">
+              <Button
+                variant="inChatbox"
+                className="w-full justify-start"
+                disabled={disabled}
+              >
                 <MessageCircleQuestion />
                 About ChatDKU
               </Button>
@@ -186,6 +195,7 @@ export default function Side({
                   placeholder="Search chats"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  disabled={disabled}
                 />
               </div>
               <div className="space-y-1 pb-4">
@@ -195,6 +205,7 @@ export default function Side({
                       key={conversation.id}
                       variant="ghost"
                       onClick={() => onConversationSelect(conversation.id)}
+                      disabled={disabled}
                       className={cn(
                         "w-full justify-start gap-3 text-left h-auto p-3 text-sidebar-foreground hover:bg-sidebar-accent",
                         currentSessionId === conversation.id &&

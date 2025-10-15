@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useCallback, useEffect, SetStateAction } from "react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,8 @@ import { PromptRecs } from "@/components/prompt_recs";
 import WelcomeBanner from "@/components/WelcomeBanner";
 import Side from "@/components/side";
 import { DocumentManager } from "@/components/doc-manager";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ChatPageProps = {
   isDev?: boolean;
@@ -162,20 +165,86 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
   const [apiEndpoint, setApiEndpoint] = useState(getStoredEndpoint());
   const router = useRouter();
   const [showDocumentManager, setShowDocumentManager] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   useEffect(() => {
     configureMarked();
-    const termsAccepted = Cookies.get("terms_accepted");
-    if (!termsAccepted) {
-      router.push("/landing");
-    } else {
-      
-      const currentSession = getCurrentSessionId();
-      if (!currentSession) {
-        getNewSession();
+    let isMounted = true;
+
+    const prepareSession = async () => {
+      const termsAccepted = Cookies.get("terms_accepted");
+      if (!termsAccepted) {
+        setIsSessionLoading(false);
+        router.push("/landing");
+        return;
+
       }
-    }
+
+      setSessionError(null);
+      setIsSessionLoading(true);
+
+      try {
+        const storedSession = getCurrentSessionId();
+        if (storedSession) {
+          if (isMounted) {
+            setCurrentSessionId(storedSession);
+            setChatHistoryId(storedSession);
+          }
+        } else {
+          const newSession = await getNewSession();
+          if (!isMounted) return;
+          if (newSession) {
+            setCurrentSessionId(newSession);
+            setChatHistoryId(newSession);
+          } else {
+            setSessionError("We couldn't start a chat session. Please try again.");
+          }
+        }
+      } catch (error) {
+        console.error("Error preparing session:", error);
+        if (isMounted) {
+          setSessionError("We couldn't start a chat session. Please refresh the page.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsSessionLoading(false);
+        }
+      }
+    };
+
+    void prepareSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
+
+  const handleRetrySession = useCallback(async () => {
+    setSessionError(null);
+    setIsSessionLoading(true);
+    try {
+      const newSessionId = await getNewSession();
+      if (newSessionId) {
+        setCurrentSessionId(newSessionId);
+        setChatHistoryId(newSessionId);
+      } else {
+        setSessionError("We couldn't start a chat session. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error retrying session:", error);
+      setSessionError("We couldn't start a chat session. Please try again.");
+    } finally {
+      setIsSessionLoading(false);
+    }
+  }, []);
+
+  const isSessionReady = Boolean(currentSessionId) && !isSessionLoading && !sessionError;
+  const sessionPlaceholder = isSessionLoading
+    ? "Preparing your chat session..."
+    : sessionError
+      ? "Session unavailable. Please try again."
+      : "Type your message...";
 
   const handleFeedback = useCallback(
     async (userInput: any, answer: any, reason: any) => {
@@ -286,17 +355,29 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         onEndpointChange={setApiEndpoint}
         currentEndpoint={apiEndpoint}
         currentSessionId={currentSessionId}
+        disabled={!isSessionReady}
         onNewChat={async () => {
           setShowStarter(true);
           setIsChatboxCentered(true);
-          const newSessionId = await getNewSession();
-          if (newSessionId) {
-            setCurrentSessionId(newSessionId);
-            setChatHistoryId(newSessionId);
-          }
-          const chatLog = document.getElementById("chat-log");
-          if (chatLog) {
-            chatLog.innerHTML = "";
+          setSessionError(null);
+          setIsSessionLoading(true);
+          try {
+            const newSessionId = await getNewSession();
+            if (newSessionId) {
+              setCurrentSessionId(newSessionId);
+              setChatHistoryId(newSessionId);
+              const chatLog = document.getElementById("chat-log");
+              if (chatLog) {
+                chatLog.innerHTML = "";
+              }
+            } else {
+              setSessionError("We couldn't start a new chat session. Please try again.");
+            }
+          } catch (error) {
+            console.error("Error starting new chat:", error);
+            setSessionError("We couldn't start a new chat session. Please try again.");
+          } finally {
+            setIsSessionLoading(false);
           }
         }}
         onConversationSelect={async (sessionId) => {
@@ -322,9 +403,26 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         }}
       />
       <div className="flex flex-col min-h-screen relative selection:bg-zinc-800 selection:text-white dark:selection:bg-white dark:selection:text-black">
-      <header className="sticky top-0 z-20 w-full">
-        <Navbar />
-      </header>
+        {(isSessionLoading || sessionError) && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
+            {isSessionLoading ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                <p className="text-sm text-muted-foreground">Preparing your chat session...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground max-w-xs text-center">
+                  {sessionError}
+                </p>
+                <Button onClick={handleRetrySession}>Try again</Button>
+              </>
+            )}
+          </div>
+        )}
+        <header className="sticky top-0 z-20 w-full">
+          <Navbar />
+        </header>
 
       <main className="flex-1 w-full flex flex-col items-center pt-16">
         <div
@@ -349,6 +447,8 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
         )}
         <div>
           <AIInput
+            disabled={!isSessionReady}
+            placeholder={sessionPlaceholder}
             thinkingMode={thinkingMode}
             onThinkingModeChange={(value) => setThinkingMode(value)}
             searchMode={searchMode}
@@ -363,7 +463,18 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
               setShowStarter(false);
               setIsChatboxCentered(false);
 
-              const currentSessionId = getCurrentSessionId();
+              const activeSessionId = currentSessionId || getCurrentSessionId() || "";
+              if (!activeSessionId) {
+                setSessionError("We couldn't find an active chat session. Please try again.");
+                return;
+              }
+
+              if (currentSessionId !== activeSessionId) {
+                setCurrentSessionId(activeSessionId);
+              }
+              if (chatHistoryId !== activeSessionId) {
+                setChatHistoryId(activeSessionId);
+              }
 
               addMessageToChat(
                 "user",
@@ -385,7 +496,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         messages: [{ role: "user", content: value }],
-                        chatHistoryId: currentSessionId,
+                        chatHistoryId: activeSessionId,
                         mode: thinkingMode ? "agent" : "",
                         searchMode: searchMode,
                       }),
@@ -396,7 +507,7 @@ export default function ChatPage({ isDev = false }: ChatPageProps) {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         messages: [{ role: "user", content: value }],
-                        chatHistoryId: currentSessionId,
+                        chatHistoryId: activeSessionId,
                         mode: thinkingMode ? "agent" : "",
                         searchMode: searchMode,
                       }),
