@@ -191,7 +191,7 @@ class ResponseGen:
 class Synthesizer(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.synthesizer = dspy.Predict(SynthesizerSignature)
+        self.synthesizer = dspy.ChainOfThought(SynthesizerSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,

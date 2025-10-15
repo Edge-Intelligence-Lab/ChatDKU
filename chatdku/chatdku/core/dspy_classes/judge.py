@@ -64,7 +64,7 @@ class JudgeSignature(dspy.Signature):
 class Judge(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.judge = dspy.Predict(JudgeSignature)
+        self.judge = dspy.ChainOfThought(JudgeSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
