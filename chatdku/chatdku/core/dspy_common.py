@@ -28,7 +28,7 @@ def get_template(predict_module: dspy.Module, **kwargs) -> str:
         signature=signature, demos=demos, inputs=inputs
     )
 
-    return str(template)
+    return str(template[0])
 
 
 custom_cot_rationale = dspy.OutputField(
