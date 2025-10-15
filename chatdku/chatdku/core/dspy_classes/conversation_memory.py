@@ -28,13 +28,16 @@ class ConversationMemoryEntry(BaseModel):
 
 
 class CompressConversationMemorySignature(dspy.Signature):
-    "You have a Conversation History storing all the conversations between user"
+    """
+    You have a Conversation History storing all the conversations between user
 
-    "and you, the assistant."
-    "Your Conversation History has become too long, so the oldest entries have to be discarded. "
-    "You keep a Summary of the discarded conversation history. "
-    "Given the History To Discard and Previous Summary, update the Summary. "
-    "Use Markdown in Summary. "
+    and you, the assistant.
+    Your Conversation History has become too long, so the oldest entries have to be discarded.
+    You keep a Summary of the discarded conversation history.
+    Given the History To Discard and Previous Summary, update the Summary.
+    Use Markdown in Summary.
+    """
+
     history_to_discard: str = dspy.InputField(
         desc=(
             "The conversation messages that would be removed from your Conversation History in JSON Lines format. "
@@ -67,7 +70,13 @@ class ConversationMemory(dspy.Module):
         if r is None:
             r = len(self.history)
 
-        return "\n".join([i.model_dump_json(indent=4) for i in self.history[l:r] if not isinstance(i,dict)])
+        return "\n".join(
+            [
+                i.model_dump_json(indent=4)
+                for i in self.history[l:r]
+                if not isinstance(i, dict)
+            ]
+        )
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         return token_limit_ratio_to_count(
@@ -94,7 +103,7 @@ class ConversationMemory(dspy.Module):
             )
 
             min_index = strs_fit_max_tokens_reverse(
-                [i.model_dump_json() for i in self.history if not isinstance(i,dict)],
+                [i.model_dump_json() for i in self.history if not isinstance(i, dict)],
                 "\n",
                 max_history_size,
             )
@@ -113,7 +122,11 @@ class ConversationMemory(dspy.Module):
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
                         dict(
-                            history = [i.model_dump() for i in self.history if not isinstance(i, dict)],
+                            history=[
+                                i.model_dump()
+                                for i in self.history
+                                if not isinstance(i, dict)
+                            ],
                             summary=self.summary,
                         )
                     ),
