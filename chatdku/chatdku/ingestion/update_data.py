@@ -149,13 +149,13 @@ class XlsxReader(BaseReader):
 
 
 def write_changes(data_dir: str, added_files: set[str], removed_files: set[str]):
-    '''
+    """
     Write the changes that has happened to the log.json.
     Args:
         data_dir: The directory that log.json and all the data is in.
         added_files: Set of added files, that was returned from read_changes()
         removed_files: Set of removed files, that was returned from read_changes()
-    '''
+    """
     log_path = os.path.join(data_dir, "log.json")
 
     with open(log_path, "r") as file:
@@ -172,14 +172,14 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
 
 
 def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
-    '''
+    """
     Read the log.json file and read which files are turned into nodes.
     Will skip files with suffixes ".json", and "pkl".
     Args:
         data_dir: The directory that log.json and all the data is in.
     Returns:
         tuple(added_files, removed_files): A tuple of sets with the added files and removed files.
-    '''
+    """
     log_path = os.path.join(data_dir, "log.json")
 
     # Load previous file paths from log
@@ -215,7 +215,7 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
 
 def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     total_nodes = []
-    llama_parse_api_key = "llx-c3nm6yxbViR52YQhdE0H7yozobV879U7TXW05cxJ2inPGH3u"
+    llama_parse_api_key = "llx-6IAg1KqUtB2S3nfMrlWujujfSEU9N3kCerJDXHQrDKtkVcs7"
 
     parser = SentenceSplitter(
         chunk_size=1024,
