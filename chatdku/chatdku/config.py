@@ -1,12 +1,27 @@
 import os
 import dotenv
-from urllib.parse import quote
+from typing import Any, Mapping, Optional
 
 dotenv.load_dotenv()
-redis_host = os.getenv("REDIS_HOST")
-redis_password = os.getenv("REDIS_PASSWORD")
 
-llm_api_key = os.getenv("LLM_API_KEY")
+
+def _env(name: str, default: Optional[str] = None) -> Optional[str]:
+    return os.getenv(name, default)
+
+
+class _WriteProtectedDict(dict):
+    """
+    A dict that raises on item assignment to discourage bypassing the Config API.
+    Use Config.set / Config.update / attribute assignment instead.
+    """
+
+    def __setitem__(self, key, value):
+        raise TypeError(
+            "Direct mutation is disabled. Use Config.set(...) or attribute assignment."
+        )  # noqa
+
+    def update(self, *args, **kwargs):
+        raise TypeError("Direct mutation is disabled. Use Config.update(...).")  # noqa
 
 
 class Config:
@@ -14,61 +29,120 @@ class Config:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._config = {
-                # about settings.py
+            inst = super().__new__(cls)
+            # initialize once
+            object.__setattr__(inst, "_store", {})  # raw mutable store, private
+            object.__setattr__(
+                inst, "_frozen_view", _WriteProtectedDict()
+            )  # read-only view
+            inst._initialize_defaults()
+            cls._instance = inst
+        return cls._instance
+
+    # Internal: initialize defaults once
+    def _initialize_defaults(self):
+        llm_api_key = _env("LLM_API_KEY")
+        redis_host = _env("REDIS_HOST")
+        redis_password = _env("REDIS_PASSWORD")
+
+        self._store.update(
+            {
                 "llm": "openai/gpt-oss-20b",
                 "llm_url": "http://dku-vcm-3831.vm.duke.edu:3000/v1",
                 "llm_api_key": llm_api_key,
                 "backup_llm": "Qwen/Qwen3-8B",
                 "backup_llm_url": "http://localhost:18083/v1",
-                "llm_temperature": 0.6,
+                "llm_temperature": 0.7,
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
                 "context_window": 20000,
-                # about ingestion
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
-                "url_csv_path": "/datapool/url_csv/url_database.csv",  # Store URL info of dku websites
+                "url_csv_path": "/datapool/url_csv/url_database.csv",
                 "update": False,
                 "redis_host": redis_host,
                 "redis_password": redis_password,
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
-                # about query
-                "index_name": "chat_dku_advising",  # TODO change name
-                # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
+                "index_name": "chat_dku_advising",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
-                # about graphrag
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
                 "response_type": "Multiple Paragraphs",
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
             }
-        return cls._instance
+        )
+        # refresh read-only view
+        self._refresh_view()
 
-    def __getattr__(self, key):
-        if key in self._config:
-            return self._config[key]
+    def _refresh_view(self):
+        # Rebuild the read-only mapping so callers can inspect without mutating.
+        object.__setattr__(
+            self, "_frozen_view", _WriteProtectedDict(self._store.copy())
+        )
+
+    # Attribute access
+
+    def __getattr__(self, key: str) -> Any:
+        # Called when normal attribute lookup fails
+        if key in self._store:
+            return self._store[key]
+        raise AttributeError(f"{type(self).__name__} has no attribute '{key}'")
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        # Allow internal attributes to be set normally
+        if key in {"_store", "_frozen_view"}:
+            return object.__setattr__(self, key, value)
+        # Route public assignments into the store
+        self._store[key] = value
+        self._refresh_view()
+
+    def __delattr__(self, key: str) -> None:
+        if key in {"_store", "_frozen_view"}:
+            return object.__delattr__(self, key)
+        if key in self._store:
+            del self._store[key]
+            self._refresh_view()
         else:
-            return super().__getattr__(key)
+            raise AttributeError(f"{type(self).__name__} has no attribute '{key}'")
 
-    def __setattr__(self, key, value):
-        # Treat changing internal attributes differently from changing settings
-        if key in ["_config", "_instance"]:
-            super().__setattr__(key, value)
-        else:
-            self._config[key] = value
+    # Dict-like API (preferred for bulk ops)
 
-    def __delattr__(self, key):
-        if key in self._config:
-            del self._config[key]
-        else:
-            super().__delattr__(key)
+    def get(self, key: str, default: Any = None) -> Any:
+        return self._store.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        self._store[key] = value
+        self._refresh_view()
+
+    def update(self, mapping: Mapping[str, Any] = None, **kwargs) -> None:
+        if mapping:
+            self._store.update(dict(mapping))
+        if kwargs:
+            self._store.update(kwargs)
+        self._refresh_view()
+
+    def as_dict(self) -> dict:
+        # Return a shallow copy to prevent external mutation
+        return dict(self._store)
+
+    def view(self) -> Mapping[str, Any]:
+        # Read-only mapping to inspect at runtime
+        return self._frozen_view
 
 
+# Singleton instance
 config = Config()
+
+# EXAMPLES:
+# config.llm_temperature = 0.3
+# config.set("index_name", "chat_dku_advising_v2")
+# config.update({"backup_llm_url": "http://localhost:18083/v1"}, response_type="Concise")
+# reading safely:
+# temp = config.llm_temperature
+# all_values = config.as_dict()
+# read-only view (raises on mutation): ro = config.view()
