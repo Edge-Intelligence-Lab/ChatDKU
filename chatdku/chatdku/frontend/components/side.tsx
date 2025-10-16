@@ -36,7 +36,6 @@ interface SidebarProps {
 
   currentEndpoint?: string;
   disabled?: boolean;
-
 }
 
 export default function Side({
@@ -48,14 +47,17 @@ export default function Side({
 
   currentEndpoint,
   disabled = false,
-
 }: SidebarProps) {
   const pathname = usePathname();
   const isDevRoute = pathname === "/dev" || pathname === "/dev/";
   const [conversations, setConversations] = useState<Convo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [messagesIndex, setMessagesIndex] = useState<Record<string, string>>({});
-  const [filteredConversations, setFilteredConversations] = useState<Convo[]>([]);
+  const [messagesIndex, setMessagesIndex] = useState<Record<string, string>>(
+    {},
+  );
+  const [filteredConversations, setFilteredConversations] = useState<Convo[]>(
+    [],
+  );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -95,7 +97,10 @@ export default function Side({
           const results = await Promise.all(
             toIndex.map(async (c) => {
               const msgs = await getSessionMessages(c.id);
-              const combined = msgs.map((m) => m.content).join("\n").toLowerCase();
+              const combined = msgs
+                .map((m) => m.content)
+                .join("\n")
+                .toLowerCase();
               return [c.id, combined] as const;
             }),
           );
@@ -142,7 +147,6 @@ export default function Side({
           </SheetHeader>
 
           <div className="px-2 flex flex-col space-y-1.5 h-full">
-
             <Button
               variant="inChatbox"
               className="w-full justify-start"
@@ -183,33 +187,37 @@ export default function Side({
               </p>
               <ComboBoxResponsive
                 inputValue={currentEndpoint || ""}
-                onEndpointChange={onEndpointChange ?? (() => {})}
+                onEndpointChange={onEndpointChange ?? (() => { })}
               />
             </div>
             <p className="ml-2 mt-4 text-sm text-muted-foreground">
               Chat History
             </p>
+            <div className="pb-2">
+              <Input
+                placeholder="Search chats"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={disabled}
+              />
+            </div>
             <ScrollArea className="flex-1 min-h-0 px-2">
-              <div className="pb-2">
-                <Input
-                  placeholder="Search chats"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  disabled={disabled}
-                />
-              </div>
               <div className="space-y-1 pb-4">
-                {(searchQuery.trim() ? filteredConversations : conversations).length > 0 ? (
-                  (searchQuery.trim() ? filteredConversations : conversations).map((conversation) => (
+                {(searchQuery.trim() ? filteredConversations : conversations)
+                  .length > 0 ? (
+                  (searchQuery.trim()
+                    ? filteredConversations
+                    : conversations
+                  ).map((conversation) => (
                     <Button
                       key={conversation.id}
                       variant="ghost"
                       onClick={() => onConversationSelect(conversation.id)}
                       disabled={disabled}
                       className={cn(
-                        "w-full justify-start gap-3 text-left h-auto p-3 text-sidebar-foreground hover:bg-sidebar-accent",
+                        "w-[95%] justify-start gap-3 text-left h-auto text-sidebar-foreground hover:bg-sidebar-accent",
                         currentSessionId === conversation.id &&
-                          "bg-sidebar-accent",
+                        "bg-sidebar-accent",
                       )}
                     >
                       <MessageCircle className="h-4 w-4 shrink-0" />

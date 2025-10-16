@@ -319,8 +319,6 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-        dspy.configure(lm=lm)
-
         if files is None:
             files = []
 
