@@ -409,7 +409,6 @@ def main():
                 user_id=user_id,
                 search_mode=search_mode,
                 files=[],
-                lm=lm,
             )
             first_token = True
             print("Response:")
