@@ -222,31 +222,64 @@ class Agent(dspy.Module):
                 if judgement:
                     break
 
-                try:
-                    planner = self.planner(
-                        # Only using the rewritten query here but not for updating memory
-                        # as the memory is not always updated for every iteration.
-                        # Also, the memory should concern answering the overarching
-                        # user question, while the planner can focus more on the current iteration.
-                        current_user_message=query,
-                        tools=self.tools,
+                # FIXME: Uncomment for true agentic functionality
+                # try:
+                #     planner = self.planner(
+                #         # Only using the rewritten query here but not for updating memory
+                #         # as the memory is not always updated for every iteration.
+                #         # Also, the memory should concern answering the overarching
+                #         # user question, while the planner can focus more on the current iteration.
+                #         current_user_message=query,
+                #         tools=self.tools,
+                #         conversation_memory=self.conversation_memory,
+                #         tool_memory=self.tool_memory,
+                #         # FIXME: Change this number when we add more tools
+                #         max_calls=2,
+                #     )
+                #     if VERBOSE:
+                #         print(f"Planner:{planner}")
+                # except Exception as e:
+                #     if VERBOSE:
+                #         print(e)
+                #     break
+                #
+                # if VERBOSE:
+                #     print(f"calls: {planner.tool_plan}")
+                #
+                # for tool in planner.tool_plan.tool_calls:
+                #     result, internal_result = self.tools[tool.name](**tool.args)
+                #
+                #     if "ids" in internal_result:
+                #         self.internal_memory["ids"] = (
+                #             self.internal_memory.get("ids", set())
+                #             | internal_result["ids"]
+                #         )
+                #
+                #     if VERBOSE:
+                #         print(f"result: {result}")
+                #
+                #     self.tool_memory(
+                #         current_user_message=current_user_message,
+                #         conversation_memory=self.conversation_memory,
+                #         call=tool,
+                #         result=result,
+                #         max_history_size=limits["tool_history"],
+                #     )
+                if self.rewrite_query:
+                    query = self.queryrewriter(
+                        current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
-                        # FIXME: Change this number when we add more tools
-                        max_calls=2,
+                    ).rewritten_query
+                    if VERBOSE:
+                        print(f"rewritten query:{query}")
+
+                # FIXME: Delete this after we add more tools/for true agentic functionality
+                for tool in self.tools.values():
+                    tool_calls = dspy.ToolCalls.from_dict_list(
+                        [{"name": tool.name, "args": {"query": query}}]
                     )
-                    if VERBOSE:
-                        print(f"Planner:{planner}")
-                except Exception as e:
-                    if VERBOSE:
-                        print(e)
-                    break
-
-                if VERBOSE:
-                    print(f"calls: {planner.tool_plan}")
-
-                for tool in planner.tool_plan.tool_calls:
-                    result, internal_result = self.tools[tool.name](**tool.args)
+                    result, internal_result = tool(query=query)
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
@@ -260,22 +293,12 @@ class Agent(dspy.Module):
                     self.tool_memory(
                         current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,
-                        call=tool,
+                        call=tool_calls.tool_calls[0],
                         result=result,
                         max_history_size=limits["tool_history"],
                     )
-
-                if VERBOSE:
-                    print(f"tool_memory.history: {self.tool_memory.history_str()}")
-
-                if self.rewrite_query:
-                    query = self.queryrewriter(
-                        current_user_message=current_user_message,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                    ).rewritten_query
                     if VERBOSE:
-                        print(f"rewritten query:{query}")
+                        print(f"tool_memory.history: {self.tool_memory.history_str()}")
 
             # TODO: Could feed the intermediate response to judge
             # TODO: Could also try to make this async/threaded, so the output
@@ -310,7 +333,6 @@ class Agent(dspy.Module):
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list = None,
-        lm: dspy.LM = None,
     ):
         """
         current_user_message: user query
@@ -347,8 +369,6 @@ class Agent(dspy.Module):
 
 def main():
     setup()
-    # TODO: Might try integration with DSPy instead of LlamaIndex for better traces
-    # See: https://docs.arize.com/phoenix/tracing/integrations-tracing/dspy
     use_phoenix()
 
     lm = dspy.LM(

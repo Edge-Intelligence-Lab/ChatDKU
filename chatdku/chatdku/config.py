@@ -62,7 +62,6 @@ class Config:
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
-                "update": False,
                 "redis_host": redis_host,
                 "redis_password": redis_password,
                 "chroma_db_port": 12400,
