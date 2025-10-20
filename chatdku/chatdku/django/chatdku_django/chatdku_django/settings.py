@@ -34,7 +34,7 @@ FIELD_ENCRYPTION_KEY = os.getenv("FIELD_ENCRYPTION_KEY", field_key)
 SECRET_KEY = os.getenv("SECRET_KEY", "hsafgb289yubdkbvq28yor2yq734ti14")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 # Media
