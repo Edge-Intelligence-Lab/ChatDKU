@@ -9,9 +9,12 @@ import hashlib
 from diskcache import Cache
 
 
-LLM = "openai/gpt-oss-20b"
-LLM_URL = "http://dku-vcm-3831.vm.duke.edu:3000/v1"
-LLM_API_KEY = os.environ["LLM_API_KEY"]
+# LLM = "openai/gpt-oss-20b"
+LLM = "Qwen/Qwen3-8B"
+# LLM_URL = "http://dku-vcm-3831.vm.duke.edu:3000/v1"
+LLM_URL = "http://localhost:18082/v1"
+# LLM_API_KEY = os.environ["LLM_API_KEY"]
+LLM_API_KEY = ""
 
 # cache = Cache("./scraper/scraper/__pycache__")
 
@@ -21,18 +24,19 @@ client = OpenAI(
 )
 
 PROMPT_TEMPLATE=(
+    "Return ONLY a single word: keep or drop.\n"
     "You are a 'strict' web content filter for students in Duke Kunshan University (DKU).\n"
     "Your task: Decide if the given page is **LONG-TERM USEFUL** for DKU students.\n" \
     "RULES:\n" 
-    "- Be very strict. default to dropping pages unless they clearly match the useful criteria.\n"
+    "- Be as STRICT as possible. Default to dropping pages unless they clearly match the useful criteria.\n"
     "- Only keep pages that are directly and permanently helpful to DKU students.\n"
     "KEEP ONLY if the page is one of these:\n"
     "1. Official department / academic program / athletics introduction / career development or home pages.\n"
     "2. Technical or how-to guides (IT, VPN, Library login, course-registration instructions).\n"
-    "3. Appointment, coaching, services or resource-booking portals that students regularly need.\n"
+    "3. Appointment, services or resource-booking portals that students regularly need.\n"
     "\n"
     "DROP if the page is any of these (or similar):\n"
-    "- News, announcements, competitions, temporary notices, events.\n"
+    "- News, announcements, sharing stories, competitions, temporary notices, events, workshops.\n"
     "- Empty pages, placeholder pages, login or sign-up screens.\n"
     "- Anything not clearly and permanently useful to students.\n"
     "Return ONLY a single word: keep or drop.\n"
@@ -53,6 +57,43 @@ def html_to_text(html):
     # print("[DEBUG]",lines[:10])
     return "\n".join(lines)
 
+def parse_llm_decision(raw: str) -> str:
+    """
+    Robustly parse LLM output to extract final keep/drop decision.
+    - Only the LAST non-empty line matters
+    - Strip thinking content
+    - Fail-safe: default to DROP
+    """
+    if not raw:
+        return "drop"
+
+    # remove <think> tags or similar garbage
+    cleaned = raw.replace("<think>", "").replace("</think>", "").strip()
+
+    # split into lines and only check last meaningful line
+    lines = [line.strip().lower() for line in cleaned.splitlines() if line.strip()]
+    if not lines:
+        return "drop"
+    
+    last_line = lines[-1]  # Real final answer should be here
+
+    # reduce noise like "answer: keep", "**drop**", etc.
+    tokens = last_line.replace("*", "").replace("answer:", "").strip()
+    print(tokens)
+
+    if tokens == "keep":
+        return "keep"
+    if tokens == "drop":
+        return "drop"
+
+    # extra safety: exact word match only
+    if tokens.startswith("keep"):
+        return "keep"
+    if tokens.startswith("drop"):
+        return "drop"
+
+    print(f"[LLM FILTER WARNING] Failed to parse decision from: {raw}")
+    return "drop"
 
 class RateLimiter:
     def __init__(self, rate_per_sec: float):
@@ -83,9 +124,8 @@ async def filter_page(html: str, url: str, args) -> bool:
 
     # 截断
     full_text = html_to_text(html)
-    snippet = full_text[:500]
+    snippet = full_text[:300]
     prompt = PROMPT_TEMPLATE.format(url=url, snippet=snippet)
-
     # 速率限制
     await rate_limiter.wait()
     try:
@@ -95,20 +135,14 @@ async def filter_page(html: str, url: str, args) -> bool:
                 client.chat.completions.create,
                 model=LLM,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
+                max_tokens=1200,
                 temperature=0,
             )
         )
         # print("[LLM RAW]", resp)
         msg = resp.choices[0].message.content
-        if not msg:
-            print("LLM returned empty content, defaulting to keep page.")
-            return True 
-        decision = msg.strip()
-        print(f"[LLM FILTER] result: {decision}")
-        keep = decision.startswith("keep")
-        # cache[cache_key] = keep
-        return keep
+        llm_result = parse_llm_decision(msg)
+        return llm_result == "keep"
     except Exception as e:
         print(f"[Filter Error] {url}: {e}")
         return True  # 出错默认保留
