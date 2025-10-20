@@ -16,6 +16,7 @@ from dataclass_csv import DataclassWriter
 from pathlib import Path
 from http.cookiejar import CookieJar
 from utils import Status, DownloadInfo, print_summary
+from filter_llm import filter_page
 import logging
 
 logger = logging.getLogger("scrap_logger")
@@ -265,7 +266,13 @@ async def scrape_site(
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     try:
-        if ty[0] == "text":
+        if ty[0] == "text" and ty[1] == "html":
+            print(f"[LLM FILTER] about to evaluate {canonical_url}")
+            if not await filter_page(content, str(canonical_url), args):
+                tried[url].status = Status.EXCLUDED
+                if args.verbose >= 1:
+                    print(f"Filtered out by LLM: {canonical_url}")
+                return
             with open(file_path, "w", encoding="utf-8") as file:
                 file.write(content)
         else:
@@ -341,6 +348,15 @@ async def peroidic_report() -> None:
 
         dump_info()
 
+def remove_empty_dirs(root: Path) -> None:
+    for dirpath, dirnames, filenames in os.walk(root, topdown=False):
+        if not dirnames and not filenames:
+            try:
+                Path(dirpath).rmdir()
+                if args.verbose >= 1:
+                    print(f"Removed empty directory: {dirpath}")
+            except OSError:
+                pass
 
 async def main() -> None:
     headers = {"User-Agent": args.user_agent}
@@ -479,6 +495,11 @@ if __name__ == "__main__":
         metavar=("saml_username", "saml_password"),
         help="Login with SAML 2.0/Shibboleth-based SSO (provide username and password)",
     )
+    parser.add_argument(
+        "--use-llm",
+        action="store_true",
+        help="Enable LLM filtering of pages."
+    )
     args = parser.parse_args()
 
     if args.saml:
@@ -491,5 +512,6 @@ if __name__ == "__main__":
         print("----------------DOWNLOAD INTERRUPTED----------------")
 
     print_summary(tried.values())
-
+    
     dump_info()
+    remove_empty_dirs(Path(args.output_root))
