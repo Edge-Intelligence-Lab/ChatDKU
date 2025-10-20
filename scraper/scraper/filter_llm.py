@@ -29,7 +29,7 @@ PROMPT_TEMPLATE=(
     "KEEP ONLY if the page is one of these:\n"
     "1. Official department / academic program / athletics introduction / career development or home pages.\n"
     "2. Technical or how-to guides (IT, VPN, Library login, course-registration instructions).\n"
-    "3. Appointment or resource-booking portals that students regularly need.\n"
+    "3. Appointment, coaching, services or resource-booking portals that students regularly need.\n"
     "\n"
     "DROP if the page is any of these (or similar):\n"
     "- News, announcements, competitions, temporary notices, events.\n"
