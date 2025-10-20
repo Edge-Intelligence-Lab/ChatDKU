@@ -48,7 +48,7 @@ class Config:
         self._store.update(
             {
                 "llm": "openai/gpt-oss-20b",
-                "llm_url": "http://dku-vcm-3831.vm.duke.edu:3000/v1",
+                "llm_url": "http://localhost:18082/v1",
                 "llm_api_key": llm_api_key,
                 "backup_llm": "Qwen/Qwen3-8B",
                 "backup_llm_url": "http://localhost:18083/v1",
@@ -56,7 +56,7 @@ class Config:
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
-                "context_window": 20000,
+                "context_window": 32000,
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",

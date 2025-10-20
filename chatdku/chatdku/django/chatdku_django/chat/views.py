@@ -14,7 +14,8 @@ from chat.utils import title_gen
 import asyncio
 from chat.utils import load_conversation
 from django.db.models import Q
-from chat.utils import model_response
+from drf_spectacular.utils import extend_schema_view,OpenApiExample, OpenApiParameter, extend_schema,OpenApiResponse
+
 
 
 import logging
@@ -22,9 +23,80 @@ logger=logging.getLogger(__name__)
 
 User = get_user_model()
 
+PARAMETERS=[
+            OpenApiParameter(
+                name='UID',
+                location=OpenApiParameter.HEADER,
+                description='NetID of the user',
+                required=True,
+                type=str
+            ),
+            OpenApiParameter(
+                name='X-DisplayName',
+                location=OpenApiParameter.HEADER,
+                description='Display Name of the user',
+                required=False,
+                type=str
+            )
+        ]
 
+# Create your views here
+@extend_schema_view(
+        post=extend_schema(description="chat route for ChatDKU. This is responsible for answering the query.",
+        parameters=PARAMETERS,
+        request={
+            'application/json':{
+                "type":'object',
+                'properties':{
+                    'mode':{
+                        'type':'string'
+                    },
+                    'messages':{
+                        'type':'array',
+                        'items':{
+                            'type':'object',
+                            'properties':{
+                                'content':{'type':'string'}
+                            },
+                            'required':['content']
+                        }
+                    },
 
-# Create your views here.
+                    'chatHistoryId':{
+                        'type':'string',
+                        'format':'uuid'
+                    }
+                },
+                'required':['mode','messages','chatHistoryId']
+            }
+        },
+        responses={
+            200: OpenApiResponse(response={
+                    'type':'string'
+                }  
+                )
+            },
+        examples=[
+            OpenApiExample(
+                "Request Example",
+                value={
+                                    
+                    "mode":"default",
+                    "messages":[{"content":"How do I cr/nc??"}],
+                    "chatHistoryId":"692f...."
+
+                }
+            ),
+            OpenApiExample(
+                "Response Example",
+                value=(
+                    "To change a course to **Credit/No Credit (CR/NC)** at "
+                    "Duke Kunshan University (DKU), follow these steps..."
+                ),
+            )
+        ]
+        )
+)
 @api_view(['POST'])
 def chat(request):
     
@@ -45,7 +117,7 @@ def chat(request):
     session=UserSession.objects.get(id=chatHistoryId)
 
     mode = request.data.get("mode", "default")
-    max_iteration = 3 if mode == "agent" else 2
+    max_iteration = 2 if mode == "agent" else 1
     serializer=SourceSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     search_mode,docs=serializer.validated_data['search_mode'],serializer.validated_data['docs']
@@ -77,7 +149,7 @@ def chat(request):
 
         conversation=load_conversation(request.user,chatHistoryId)
         agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
-        responses_gen = model_response(agent,
+        responses_gen =agent(
             current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
         )
         if not session.title:
@@ -99,7 +171,44 @@ def chat(request):
         logger.error(f"Error Occured in chat: {str(e)}")
         return Response({"error": str(e)}, status=500)
 
-
+@extend_schema_view(
+    post=extend_schema(
+        description="Post fot feedback",
+        parameters=PARAMETERS,
+        request={
+            "application/json":{
+                "type":"object",
+                "properties":{
+                    'userInput':{
+                        'type':'string'
+                    },
+                    'botAnswer':{
+                        'type':'string'
+                    },
+                    'feedbackReason':{
+                        'type':'string'
+                    },
+                    'chatHistoryId':{
+                        'type':'string',
+                        'format':'uuid'
+                    }
+                }
+            }
+        },
+        responses = {
+            201: OpenApiResponse(
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {'type': 'string'},
+                    },
+                    'example': {'message': 'Chat created successfully.'}
+                },
+                description='Successful chat creation response.'
+            )
+        }
+    )
+)
 @api_view(['POST'])
 def save_feedback(request):
     try:
@@ -120,7 +229,24 @@ def save_feedback(request):
     except Exception as e:
         logger.error(f"Error occured in Feedback {str(e)}")
         return Response({'message': str(e)}, status=500)
-    
+
+@extend_schema_view(
+        get=extend_schema(
+            description="GET request for session",
+            parameters=PARAMETERS,
+            responses={
+                200:OpenApiResponse(response={
+                    'type':'object',
+                    'properties':{
+                        'session_id':{
+                            'type':'string',
+                            'format':'uuid'
+                        }
+                    }
+                })
+            }
+        )   
+)
 @api_view(['GET'])
 def get_session(request):
     try:
@@ -133,14 +259,49 @@ def get_session(request):
 
 
 class SessionViewSet(viewsets.ModelViewSet):
+    serializer_class=SessionSerializer
+    http_method_names = ["get", "head", "options"]
+
+
+    @extend_schema(
+            description="All the session_id for a user",
+            parameters=PARAMETERS
+    )
     def get_queryset(self):
         return UserSession.objects.filter(Q(user=self.request.user)).exclude(Q(title='')|Q(title__isnull=True)).order_by('-created_at')
     
+    @extend_schema(
+            parameters=PARAMETERS
+    )
     def create(self,*args, **kwargs):
         raise MethodNotAllowed("Cannot Create a Session!")
 
-    serializer_class=SessionSerializer
 
+    @extend_schema(
+            description="Messages from a session_id",
+            parameters=PARAMETERS,
+            responses={
+                200:OpenApiResponse(response={
+                    'type':'object',
+                    "properties":{
+                        'id':{
+                            'type':'integer'
+                        },
+                        'role':{
+                            'type':'string',
+                        },
+                        'message':{
+                            'type':'string'
+                        },
+                        "created_at":{
+                            'type':'string',
+                            'format':'date-time'
+                        }
+                        
+                    }
+                })
+            }
+    )
     @action(methods=['GET'],detail=True)
     def messages(self,request,pk=None):
         session=self.get_object()

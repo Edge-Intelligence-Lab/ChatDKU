@@ -34,7 +34,7 @@ FIELD_ENCRYPTION_KEY = os.getenv("FIELD_ENCRYPTION_KEY", field_key)
 SECRET_KEY = os.getenv("SECRET_KEY", "hsafgb289yubdkbvq28yor2yq734ti14")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 # Media
@@ -95,7 +95,7 @@ logging.config.dictConfig(
 ALLOWED_HOSTS = [
     "chatdku.dukekunshan.edu.cn",
     "10.200.14.82",
-    "localhost"
+    "localhost",
     "127.0.0.1:8009",
     "localhost:8009",
 ]
@@ -119,6 +119,8 @@ INSTALLED_APPS = [
     "chat",
     "django_celery_results",
     "django_celery_beat",
+    "drf_spectacular",
+    'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
@@ -165,6 +167,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_SCHEMA_CLASS":'drf_spectacular.openapi.AutoSchema',
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     # "PAGE_SIZE":20
 }
@@ -232,8 +235,12 @@ LOCALE_PATHS = [
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_URL = "https://chatdku.dukekunshan.edu.cn/django_static/"
-STATIC_ROOT = os.path.join("/var/www/chatdku_backend/", "django_staticfiles")
+if DEBUG:
+    STATIC_URL="/static/"
+    STATIC_ROOT=os.path.join(BASE_DIR,"staticfiles")
+else:
+    STATIC_URL = "https://chatdku.dukekunshan.edu.cn/django_static/"
+    STATIC_ROOT = os.path.join("/var/www/chatdku_backend/", "django_staticfiles")
 
 
 # Default primary key field type
@@ -270,4 +277,16 @@ CACHES={
             "CLIENT_CLASS":"django_redis.client.DefaultClient"
         }
     }
+}
+
+
+#OpenAPI Setup with drf-spectacular
+SPECTACULAR_SETTINGS = {
+    'SWAGGER_UI_DIST': 'SIDECAR',  # shorthand to use the sidecar instead
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    'TITLE': 'ChatDKU',
+    'DESCRIPTION': 'ChatDKU',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }

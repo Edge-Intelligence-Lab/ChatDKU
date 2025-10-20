@@ -181,6 +181,8 @@ def model_response(module,**kwargs):
             temperature=config.llm_temperature,
         )
 
-    with dspy.context(lm=lm):
-        return module(lm=lm,**kwargs)
+    with dspy.context():
+        return module(**kwargs)
+    
+
     
