@@ -54,7 +54,7 @@ class Config:
                 "backup_llm_url": "http://localhost:18085/v1",
                 "llm_temperature": 0.7,
                 "embedding": "BAAI/bge-m3",
-                "tokenizer": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
+                "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
                 "context_window": 32000,
                 "data_dir": "/datapool/chat_dku_advising",
