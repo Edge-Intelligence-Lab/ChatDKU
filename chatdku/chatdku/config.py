@@ -50,7 +50,7 @@ class Config:
                 "llm": "openai/gpt-oss-20b",
                 "llm_url": "http://localhost:18082/v1",
                 "llm_api_key": llm_api_key,
-                "backup_llm": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
+                "backup_llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "backup_llm_url": "http://localhost:18085/v1",
                 "llm_temperature": 0.7,
                 "embedding": "BAAI/bge-m3",
