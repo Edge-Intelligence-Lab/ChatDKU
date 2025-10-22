@@ -18,7 +18,7 @@ class CoreConfig(AppConfig):
         setup()
         use_phoenix()
         lm = dspy.LM(
-        model="openai/" + config.backup_llm,
+        model="openai/" + config.llm,
         api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
@@ -26,3 +26,8 @@ class CoreConfig(AppConfig):
         temperature=config.llm_temperature,
         )
         dspy.configure(lm=lm)
+        
+        dspy.configure_cache(
+        enable_disk_cache=True,
+        enable_memory_cache=True
+        )

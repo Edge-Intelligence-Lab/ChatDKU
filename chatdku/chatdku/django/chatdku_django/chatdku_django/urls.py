@@ -44,6 +44,6 @@ urlpatterns+=[
 #drf spectacular routes
 urlpatterns+= [
     path('doc/schema/', SpectacularAPIView.as_view(permission_classes=[IsAdminUser]), name='schema'),
-    path('doc/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('doc/schema/view/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     # path('doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema',), name='redoc'),
 ]
