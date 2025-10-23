@@ -31,7 +31,6 @@ class QueryRewriteSignature(dspy.Signature):
     """
     You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
     Please understand the information gap between the currently known information and the target problem.
-    Your task is to generate a query in the form of question for next retrieval step directly.
     DON\’T generate queries which has been retrieved or answered.
     """
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
