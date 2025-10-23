@@ -162,28 +162,6 @@ class Agent(dspy.Module):
             # Clear internal memory for each user message
             self.internal_memory.clear()
 
-            for tool in self.tools.values():
-                tool_calls = dspy.ToolCalls.from_dict_list(
-                    [{"name": tool.name, "args": {"query": current_user_message}}]
-                )
-                result, internal_result = tool(query=current_user_message)
-
-                if "ids" in internal_result:
-                    self.internal_memory["ids"] = (
-                        self.internal_memory.get("ids", set()) | internal_result["ids"]
-                    )
-
-                if VERBOSE:
-                    print(f"result: {result}")
-
-                self.tool_memory(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    call=tool_calls.tool_calls[0],
-                    result=result,
-                    max_history_size=limits["tool_history"],
-                )
-
             # Add previous response to conversation memory
             if self.prev_response is not None:
                 if self.streaming:
@@ -207,10 +185,47 @@ class Agent(dspy.Module):
 
         query = current_user_message
         # The subsequent rounds of tool calling
-        for i in range(self.max_iterations - 1):
+        for i in range(self.max_iterations):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
+                if self.rewrite_query:
+                    query = self.queryrewriter(
+                        current_user_message=query,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                    ).rewritten_query
+                    if VERBOSE:
+                        print(f"rewritten query:{query}")
+
+                for tool in self.tools.values():
+                    tool_calls = dspy.ToolCalls.from_dict_list(
+                        [{"name": tool.name, "args": {"query": query}}]
+                    )
+                    result, internal_result = tool(query=query)
+
+                    if "ids" in internal_result:
+                        self.internal_memory["ids"] = (
+                            self.internal_memory.get("ids", set())
+                            | internal_result["ids"]
+                        )
+
+                    if VERBOSE:
+                        print(f"result: {result}")
+
+                    self.tool_memory(
+                        current_user_message=current_user_message,
+                        conversation_memory=self.conversation_memory,
+                        call=tool_calls.tool_calls[0],
+                        result=result,
+                        max_history_size=limits["tool_history"],
+                    )
+                    if VERBOSE:
+                        print(f"tool_memory.history: {self.tool_memory.history_str()}")
+
+                if i == self.max_iterations - 1:
+                    break
+
                 judgement = self.judge(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
@@ -265,40 +280,6 @@ class Agent(dspy.Module):
                 #         result=result,
                 #         max_history_size=limits["tool_history"],
                 #     )
-                if self.rewrite_query:
-                    query = self.queryrewriter(
-                        current_user_message=current_user_message,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                    ).rewritten_query
-                    if VERBOSE:
-                        print(f"rewritten query:{query}")
-
-                # FIXME: Delete this after we add more tools/for true agentic functionality
-                for tool in self.tools.values():
-                    tool_calls = dspy.ToolCalls.from_dict_list(
-                        [{"name": tool.name, "args": {"query": query}}]
-                    )
-                    result, internal_result = tool(query=query)
-
-                    if "ids" in internal_result:
-                        self.internal_memory["ids"] = (
-                            self.internal_memory.get("ids", set())
-                            | internal_result["ids"]
-                        )
-
-                    if VERBOSE:
-                        print(f"result: {result}")
-
-                    self.tool_memory(
-                        current_user_message=current_user_message,
-                        conversation_memory=self.conversation_memory,
-                        call=tool_calls.tool_calls[0],
-                        result=result,
-                        max_history_size=limits["tool_history"],
-                    )
-                    if VERBOSE:
-                        print(f"tool_memory.history: {self.tool_memory.history_str()}")
 
             # TODO: Could feed the intermediate response to judge
             # TODO: Could also try to make this async/threaded, so the output
@@ -390,7 +371,7 @@ def main():
     import time
 
     agent = Agent(
-        max_iterations=3,
+        max_iterations=1,
         streaming=True,
         get_intermediate=False,
     )
