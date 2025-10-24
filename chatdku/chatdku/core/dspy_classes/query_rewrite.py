@@ -29,7 +29,8 @@ from chatdku.config import config
 class QueryRewriteSignature(dspy.Signature):
     # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
     """
-    You goal is to rewrite the current user's message in a way that fixes errors, embeds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
+    You goal is to rewrite the current user's message in a way that fixes errors, adds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
+    Your rewritten query will be used to fetch information with search tools such as semantic search and keyword search.
     Please understand the information gap between the currently known information and the target problem.
     DON\’T generate queries which has been retrieved or answered.
     """
@@ -46,7 +47,7 @@ class QueryRewriteSignature(dspy.Signature):
 class QueryRewrite(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.rewritten_query = dspy.ChainOfThought(QueryRewriteSignature)
+        self.rewritten_query = dspy.Predict(QueryRewriteSignature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
