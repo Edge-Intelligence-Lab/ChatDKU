@@ -6,17 +6,12 @@ import time
 import asyncio
 import functools
 import hashlib
-from diskcache import Cache
+from chatdku.chatdku.config import config
 
 
-# LLM = "openai/gpt-oss-20b"
-LLM = "Qwen/Qwen3-8B"
-# LLM_URL = "http://dku-vcm-3831.vm.duke.edu:3000/v1"
-LLM_URL = "http://localhost:18082/v1"
-# LLM_API_KEY = os.environ["LLM_API_KEY"]
+LLM = config.llm
+LLM_URL = config.llm_url
 LLM_API_KEY = ""
-
-# cache = Cache("./scraper/scraper/__pycache__")
 
 client = OpenAI(
     base_url=LLM_URL,
