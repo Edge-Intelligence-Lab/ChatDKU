@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 
 from django.db.models import Q
 from core.models import hash_netid
-from chat.utils import ping_oss
+from chat.utils import ping_lm
 
 dotenv.load_dotenv()
 
@@ -85,7 +85,7 @@ def chat_load_test_daily():
         runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
         logger.info("Daily Chat Test Successful")
         
-
+    #TODO: Consider response length
     except subprocess.CalledProcessError as e:
         failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
 
@@ -144,9 +144,9 @@ def clean_empty_sessions():
 
 
 # @shared_task(bind=True, max_retries=5)
-def oss_test(self):
+def lm_test(self):
     try:
-        chat_response = ping_oss("What can you do?")
+        chat_response = ping_lm("What can you do?")
         return "Pass"
     except Exception as e:
         if self.request.retries >= self.max_retries:
@@ -155,15 +155,15 @@ def oss_test(self):
 
                 from_email = os.getenv("EMAIL_HOST_USER")
                 to_email = os.getenv("EMAIL_TO")
-                subject = "Error in OSS Model"
+                subject = "Error in Primary LLM"
                 body_html = (
-                    f"<h2>Issue Identified: GPT-OSS</h2>"
+                    f"<h2>Issue Identified: LLM</h2>"
                     f"<p>GPT OSS has stopped responding since {datetime.datetime.now()}."
                     f" Please look into it!</p>"
                 )
                 body_text = (
-                    f"Issue Identified: GPT-OSS\n"
-                    f"GPT OSS has stopped responding since {datetime.datetime.now()}."
+                    f"Issue Identified: LLM\n"
+                    f"Primary LLM has stopped responding since {datetime.datetime.now()}."
                     f" Please look into it!"
                 )
 

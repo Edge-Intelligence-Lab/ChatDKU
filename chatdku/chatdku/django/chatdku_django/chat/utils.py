@@ -131,7 +131,7 @@ async def title_gen(user_query):
     return chat_response.choices[0].message.content
 
 
-def ping_oss(message:str):
+def ping_lm(message:str):
     response=client.chat.completions.create(
                 model=config.llm,
                 messages=[{"role": "system", "content": "This is a ping test."},
@@ -146,7 +146,7 @@ def ping_oss(message:str):
                     "chat_template_kwargs": {"enable_thinking": False},
                 },
             )
-    return response
+    return response.choices[0].message.content
 
 
 def load_conversation(user,session_id):
@@ -158,7 +158,7 @@ def load_conversation(user,session_id):
     return return_message
 
 
-
+# NOTE: This function is not being used
 def model_response(module,**kwargs):
     active=ActiveLM.objects.first()
     if active and active.name=="backup":

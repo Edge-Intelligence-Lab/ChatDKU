@@ -66,6 +66,10 @@ app.conf.beat_schedule={
     "lm-check":{
         "task":"core.tasks.ping_llm",
         "schedule":crontab(minute="*/10")
+    },
+    "load_redis_daily":{
+        "task":"core.tasks.load_redis_task",
+        "schedule":crontab(minute=00,hour=00) #run at 8:00 am China Time
     }
 }
 
