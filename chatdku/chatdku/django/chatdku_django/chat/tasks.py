@@ -82,10 +82,27 @@ def chat_load_test_daily():
     try:
         file_conf=os.path.join(settings.BASE_DIR,"locust_daily.conf")
         locust_path=os.getenv("LOCUST_PATH")
-        runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
+        runner=subprocess.Popen([locust_path,"--config",file_conf],stderr=subprocess.PIPE,stdout=subprocess.PIPE, text=True)
         logger.info("Daily Chat Test Successful")
         
-    #TODO: Consider response length
+        for line in runner.stderr:
+            if "ResponseLengthError" in line:
+                failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
+                if failures==1:
+                    cache.set(COUNTER_KEY,1,timeout=60*60) #1hr
+                if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
+                    from_email=os.getenv("EMAIL_HOST_USER")
+                    to_email=os.getenv("EMAIL_TO")
+                    subject="Error in ChatDKU Response"
+                    body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n"
+                    body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+
+                    EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+                    logger.info("Email sent on: ",datetime.datetime.now())
+                    cache.delete(COUNTER_KEY)
+                    return
+
+
     except subprocess.CalledProcessError as e:
         failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
 
@@ -106,6 +123,7 @@ def chat_load_test_daily():
 
             logger.info("Email sent on: ",datetime.datetime.now())
             cache.delete(COUNTER_KEY)
+            return 
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')

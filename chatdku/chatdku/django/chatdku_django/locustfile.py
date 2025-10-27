@@ -12,10 +12,18 @@ logger = logging.getLogger(__name__)
 # Load .env
 dotenv.load_dotenv()
 
+
+class ResponseLengthError(Exception):
+    def __init__(self,length,min_length=100):
+        self.min_length=min_length
+        self.length=length
+        super().__init__(f"The length of Response is less than the min-length: {self.min_length}. Length: {self.length}")
+
 class MyUser(HttpUser):
     wait_time = between(5, 10)
     host=os.getenv('HOST')
     session_id=''
+    min_length=100
 
     messages = [
         {"content": "What is chatDKU?"},
@@ -93,7 +101,11 @@ class MyUser(HttpUser):
             payload = self.generate_chat()
             
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
-            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}\n")
+            message=response.text
+            if len(message)<self.min_length:
+                raise ResponseLengthError(len(message),self.min_length)
+            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {len(message)}\n")
         except Exception as e:
             logger.error(f'Chat Error: {str(e)}')
+            raise
 
