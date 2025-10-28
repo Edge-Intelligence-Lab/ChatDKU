@@ -1,7 +1,7 @@
-# **Django Backend For Chatdku**
+# **Django Backend For ChatDKU**
 
 ## About 
-The Django Backend supplements the Flask backend previously used in ChatDKU. It features all the funcitonality from the prior system along side some additional features.
+The Django Backend supplements the Flask backend previously used in ChatDKU. It features all the funcitonality from the prior system alongside some additional features.
 
 Websocket funcionality, however, is not translated into this current version. `speech-to-text` runs on flask backend.
 
@@ -22,7 +22,12 @@ The current version of ChatDKU uses the following packages for Django Backend. Y
     "celery~=5.5.3",
     "django-redis~=6.0.0",
     "pandas~=2.2.3",
-    "redis~=5.2.1"
+    "redis~=5.2.1",
+    "psycopg2-binary>=2.9.10",
+    "dotenv>=0.9.9",
+    "locust>=2.39.0",
+    "drf-spectacular[sidecar]",
+
 ```
 ## Project Structure
 ```
@@ -61,19 +66,19 @@ chatdku_django/
 ├── locustfile.py
 
 ```
-- `chat/` is the chatapp for query and feedback.
-- `core/` is the user app for everything related to the 
+- [`chat/`](./chatdku_django/chat) is the chatapp for query and feedback.
+- [`core/`](./chatdku_django/core) is the user app for everything related to the 
 user.
 - `*/views.py` contains routes for respective apps.
 - `*/middleware.py` checks for netid in the header.
 - `*/models.py` model for each app.
 - `*/admin.py` handles admin for the respective app
-- `chatdku_django/celery.py` uses `celery` for automation. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
+- [`chatdku_django/celery.py`](./chatdku_django/chatdku_django/celery.py) uses `celery` for automation. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
 - `*/tasks.py` contains celery tasks for each app.
-- `locustfile.py` contains load test script for the app.
-- `chat/mail.py` contains mailing feature for app. Currently it is configured to send email per error and weekly email for load test results and feedback.
+- [`locustfile.py`](./chatdku_django/locustfile.py) contains load test script for the app.
+- [`chat/mail.py`](./chatdku_django/chat/mail.py) contains mailing feature for app. Currently it is configured to send email per error and weekly email for load test results and feedback.
  
-> You can check `chatdku_django/urls.py` for all the routes used in this project. 
+> You can check [`chatdku_django/urls.py`](./chatdku_django/chatdku_django/urls.py)  for all the routes used in this project. 
 
 ## Running the Project
 When running the project, make sure you are in the same dir as `manage.py`.
@@ -88,37 +93,45 @@ To run the backend, make sure you have `.env` file in the same directory as `man
 Make sure your `.env` file contains the following:
 
 ```bash
-SECRET_KEY= <secret key>
-FIELD_ENCRYPTION_KEY= <encryption key> # Has not been used 
-UPLOAD_PATH=<doc upload path>
-WHISPER_MODEL_URI="http://10.200.14.82:8002"
+SECRET_KEY=<SECRET KEY>
+FIELD_ENCRYPTION_KEY=<ENCRYPTION KEY> #Is not used
+UPLOAD_PATH=<Upload Path dir>
+WHISPER_MODEL_URI=<WHISPER_MODEL_URI>
 
 #DB
 USERNAME_DB="chatdku_user"
 NAME_DB="chatdku_db"
-PASSWORD_DB= <dbpassword>
+PASSWORD_DB=<PASSWORD>
 HOST_DB="localhost"
 PORT_DB="5432"
 
-MEDIA_ROOT= <Media Root>
+MEDIA_ROOT="/datapool/chatdku_user_storage/uploads"
 
 #Redis
-REDIS_PASSWORD= <password>
+REDIS_PASSWORD= <REDIS PASSWORD>
 REDIS_HOST="127.0.0.1"
 
+
+
 #Locust
-UID=<testing netid>
-DISPLAY_NAME= <testing Display Name>
-HOST= <host>
-LOCUST_PATH= <.venv_path/locust>
+UID="chatdku_admin"
+DISPLAY_NAME="Admin"
+HOST='http://10.200.14.82:8000'
+LOCUST_PATH=<LOCUST PATH>  #Example: "/home/abc/test/ChatDKU/chatdku/.venv/bin/locust"
 
 #Email
-EMAIL_HOST= <duke smtp>
-EMAIL_PORT= <email port>
+EMAIL_HOST="smtp.duke.edu"
+EMAIL_PORT=<:PORT>
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER= <host email>
-# Sender Email should be a string of lists. Eg: '["abc.xyz.com","abc.example.com"]' 
-EMAIL_TO= <sender email> 
+EMAIL_HOST_USER="chatdku@dukekunshan.edu.cn"
+# EMAIL_HOST_PASSWORD=""
+EMAIL_TO=<LIST> #Example '['abc@xyz.com','bcd@wxy.com']'
+
+
+LLM_API_KEY=<:API-KEY>
+
+
+
 ```
 
 
@@ -153,11 +166,7 @@ This will run the server in port `<port>`. The default port for django is `8000`
 Once you run the sever, you can view it via `<server ip>:<port>`. Go to `/admin` route to check the **admin dashboard**.
 
 ### Running Celery
-All the Celery Configurations are already set up in the project itself in [`celery.py`](./chatdku_django/chatdku_django/celery.py) and [`settings.py`](./chatdku_django/chatdku_django/settings.py). The project uses Celery to:
-- Schedule file and embedding cleaning
-- Schedule daily and weekly load test
-- Schedule weekly loadtest email / error emails
-
+All the Celery Configurations are already set up in the project itself in [`celery.py`](./chatdku_django/chatdku_django/celery.py) and [`settings.py`](./chatdku_django/chatdku_django/settings.py). 
 To run celery for development, run
 ```bash
 celery -A chatdku_django worker --beat -l INFO
@@ -183,13 +192,19 @@ nohup gunicorn -b <server ip>:<port> chatdku_django.wsgi:application --timeout <
 
 ```
 The current apache configuration supports `8009` as the port.
-- `--timeout` defines the timeout time for the server.
-- `--workers` define the number of worker for the backend.
+- `--timeout` defines the timeout time for the server (in seconds).
+- `--workers` define the number of worker for the backend (int).
 - `--nohup`: logs are saved in `nohup.out` file. To inspect it, run
+- `--threads` : define the number of threads (int).
 ```bash
 tail -f nohup.out
 ```
 Besides, logs are also saved in `log/chatdku.log` file. 
+
+The current backend runs via following configuration:
+```
+nohup gunicorn -b <SERVER:IP:8000> chatdku_django.wsgi:application --timeout 500 --workers 8 --threads 3 --preload &
+```
 
 ### Running Celery
 Celery worker and beats is run using system service.You can check it via
