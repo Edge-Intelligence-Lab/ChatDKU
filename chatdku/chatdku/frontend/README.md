@@ -6,7 +6,9 @@ Last updated by Anar Nyambayar, October 2025
 
 We're using the Next.js framework for its quick development opportunities and rich open-source community. Since our backend is handled by Django, we are serving the website as a static site using `next build`.
 
-We're using the 'shadcn/ui' open-source UI library. This is a widely used, simple and customizable UI library that uses Tailwind CSS for globally consistent styling.
+We're using the [shadcn/ui](https://ui.shadcn.com/) open-source UI library. This is a widely used, simple, and customizable UI library that uses Tailwind CSS for globally consistent styling.
+
+Try to stick to these shadcn/ui components as much as possible, and only create custom components when necessary. This is to keep accessibility standards and consistency.
 
 ## Development Guide:
 
