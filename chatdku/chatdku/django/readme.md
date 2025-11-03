@@ -93,22 +93,25 @@ To run the backend, make sure you have `.env` file in the same directory as `man
 Make sure your `.env` file contains the following:
 
 ```bash
-SECRET_KEY=<SECRET KEY>
-FIELD_ENCRYPTION_KEY=<ENCRYPTION KEY> #Is not used
-UPLOAD_PATH=<Upload Path dir>
-WHISPER_MODEL_URI=<WHISPER_MODEL_URI>
+SECRET_KEY="87FADA452AC71F829EE92A8A8C67D"
+FIELD_ENCRYPTION_KEY="mHOL0Jbs4DWvOakOYFXt92TJZL1JJZ95B8aCOC_eqdw="
+UPLOAD_PATH="/datapool/chatdku_user_storage/uploads"
+WHISPER_MODEL_URI="http://10.200.14.82:8002"
+
+
+
 
 #DB
 USERNAME_DB="chatdku_user"
 NAME_DB="chatdku_db"
-PASSWORD_DB=<PASSWORD>
+PASSWORD_DB="securepassword123"
 HOST_DB="localhost"
 PORT_DB="5432"
 
 MEDIA_ROOT="/datapool/chatdku_user_storage/uploads"
 
 #Redis
-REDIS_PASSWORD= <REDIS PASSWORD>
+REDIS_PASSWORD= 'YPpVXycZ6xsjCLHLnaSC'
 REDIS_HOST="127.0.0.1"
 
 
@@ -117,18 +120,19 @@ REDIS_HOST="127.0.0.1"
 UID="chatdku_admin"
 DISPLAY_NAME="Admin"
 HOST='http://10.200.14.82:8000'
-LOCUST_PATH=<LOCUST PATH>  #Example: "/home/abc/test/ChatDKU/chatdku/.venv/bin/locust"
+LOCUST_PATH=".venv/bin/locust" #Use your env for this part. Example: venv/bin/locust
 
 #Email
 EMAIL_HOST="smtp.duke.edu"
-EMAIL_PORT=<:PORT>
+EMAIL_PORT=25
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER="chatdku@dukekunshan.edu.cn"
 # EMAIL_HOST_PASSWORD=""
-EMAIL_TO=<LIST> #Example '['abc@xyz.com','bcd@wxy.com']'
+EMAIL_TO='["abc@xyz.com","def@ghi.com"]'
 
 
-LLM_API_KEY=<:API-KEY>
+LLM_API_KEY="sk-n77qYaWSg4wAMtHfromHA0fcbpI41MjPNzsmqlacgMtdmysP"
+
 
 
 
