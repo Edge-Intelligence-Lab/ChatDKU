@@ -1,6 +1,6 @@
 # ChatDKU Core Development Guide
 
-This guide assumes that you know how DSPy works. If you do not, please look at [this guide](https://dspy.ai/learn/) first.
+This guide assumes that you know how DSPy works. If you do not, please take a look at [this guide](https://dspy.ai/learn/) first.
 
 ***
 
@@ -65,7 +65,7 @@ https://github.com/Glitterccc/ChatDKU/blob/ea80410cf8ebfce0b72bbe576ba8dbb4d0875
 
 ### Judge
 
-The Judge is there to check if the retrieved **context** are enough to answer the **user query**. 
+The Judge is there to check if the retrieved **context** is enough to answer the **user query**. 
 
 If it is **NOT** enough, the above mentioned sub-modules are called again to retrieve more **context**. This will loop for however many times the `max_iterations` is set to until the Judge deems the **context** is enough OR the loop ends.
 
