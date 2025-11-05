@@ -63,6 +63,8 @@ The current tools are here:
 
 https://github.com/Glitterccc/ChatDKU/blob/ea80410cf8ebfce0b72bbe576ba8dbb4d0875fea/chatdku/chatdku/core/agent.py#L105-L122
 
+To create a tool please look at this issue https://github.com/Glitterccc/ChatDKU/issues/122.
+
 ### Judge
 
 The Judge is there to check if the retrieved **context** is enough to answer the **user query**. 
