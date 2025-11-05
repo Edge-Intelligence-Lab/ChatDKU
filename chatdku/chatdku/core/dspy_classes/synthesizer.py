@@ -17,8 +17,6 @@ from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
 )
 
-from typing import ClassVar
-
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.prompt_settings import (
