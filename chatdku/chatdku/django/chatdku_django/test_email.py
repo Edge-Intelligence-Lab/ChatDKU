@@ -8,11 +8,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chatdku_django.settings")
 django.setup()
 
 from chat.mail import EmailUtil
-from chatdku_django import settings
+# from chatdku_django import settings
 
 def test_email():
-    from_email = settings.EMAIL_HOST_USER
-    to_email = ["zl457@duke.edu"]
+    from_email = os.getenv("EMAIL_HOST_USER")
+    to_email = os.getenv("EMAIL_TO")
     subject = "[ChatDKU Test] Django Email Connection"
     message = "This is a test email sent from Django."
     
