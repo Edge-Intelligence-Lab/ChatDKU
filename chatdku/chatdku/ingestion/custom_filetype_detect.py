@@ -1,8 +1,7 @@
 import os
-from typing import IO, Optional
+from typing import IO, Optional, Any
 from unstructured.file_utils.encoding import format_encoding_str
 from unstructured.logger import logger
-from unstructured.partition.common import exactly_one
 from unstructured.file_utils.filetype import (
     FileType,
     STR_TO_FILETYPE,
@@ -17,6 +16,22 @@ from unstructured.file_utils.filetype import (
     _check_eml_from_buffer,
     _detect_filetype_from_octet_stream,
 )
+
+
+def exactly_one(**kwargs: Any) -> None:
+    """
+    Verify arguments; exactly one of all keyword arguments must not be None.
+
+    Example:
+        >>> exactly_one(filename=filename, file=file, text=text, url=url)
+    """
+    if sum([(arg is not None and arg != "") for arg in kwargs.values()]) != 1:
+        names = list(kwargs.keys())
+        if len(names) > 1:
+            message = f"Exactly one of {', '.join(names[:-1])} and {names[-1]} must be specified."
+        else:
+            message = f"{names[0]} must be specified."
+        raise ValueError(message)
 
 
 def custom_detect_filetype(

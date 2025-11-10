@@ -3,6 +3,7 @@ import os
 import dotenv
 import logging
 import random
+import json
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -11,9 +12,18 @@ logger = logging.getLogger(__name__)
 # Load .env
 dotenv.load_dotenv()
 
+
+class ResponseLengthError(Exception):
+    def __init__(self,length,min_length=100):
+        self.min_length=min_length
+        self.length=length
+        super().__init__(f"The length of Response is less than the min-length: {self.min_length}. Length: {self.length}")
+
 class MyUser(HttpUser):
-    wait_time = between(1, 3)
+    wait_time = between(5, 10)
     host=os.getenv('HOST')
+    session_id=''
+    min_length=100
 
     messages = [
         {"content": "What is chatDKU?"},
@@ -35,6 +45,10 @@ class MyUser(HttpUser):
         {"content": "How can I use the resources at DKU (academic, mental health, and advising) to create a personalized 4-year roadmap for research and career preparation?"}
     ]
 
+    def get_session(self):
+        response=self.client.get('/api/get_session',headers=self.headers)
+        return response.text
+    
 
     def on_start(self):
         '''To Bypasss Authentication Middleware'''
@@ -42,7 +56,11 @@ class MyUser(HttpUser):
                 "UID": os.getenv("UID"),               
                 "X-DisplayName": os.getenv("DISPLAY_NAME"),      
                 "Content-Type": "application/json",
-    }
+        
+        }
+
+        self.session=json.loads(self.get_session())['session_id']
+
 
     def get_doc_list(self):
         '''Get User Docs'''
@@ -58,8 +76,7 @@ class MyUser(HttpUser):
 
     def generate_chat(self):
         '''Simulate Different Modes'''
-        chat_history_id = random.randint(1, 100)
-        mode = random.choices(['default', 'agent'], weights=[0.7, 0.3], k=1)[0]
+        mode = "default"
         message = random.choice(self.messages)
         docs = self.get_doc_list()
 
@@ -70,10 +87,11 @@ class MyUser(HttpUser):
             sources = random.choices(docs, k=k)
 
         return {
-            "chatHistoryId": chat_history_id,
+            "chatHistoryId": self.session,
             "mode": mode,
             "messages": [message],  
-            "sources": sources       
+            "sources": sources,    
+            "session_id":self.session   
         }
 
     @task
@@ -81,8 +99,13 @@ class MyUser(HttpUser):
         '''Chat request test'''
         try:
             payload = self.generate_chat()
+            
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
-            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {response.text}\n")
+            message=response.text
+            if len(message)<self.min_length:
+                raise ResponseLengthError(len(message),self.min_length)
+            logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {len(message)}\n")
         except Exception as e:
             logger.error(f'Chat Error: {str(e)}')
+            raise
 

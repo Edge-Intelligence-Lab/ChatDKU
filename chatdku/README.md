@@ -2,7 +2,7 @@
 
 ## Overview
 
-- `chatdku.core`: Core agent and RAG logic.
+- `chatdku.core`: Core agent and RAG logic. [Core](./chatdku/core)
   - `chatdku.core.agent`: The main agent logic. You can directly execute it for a simple CLI that asks you for a query and gives a response.
   - `chatdku.core.compile`: (WIP) Uses DSPy for automatic prompt optimization.
   - `chatdku.core.llamaindex_tools`: The vector retriever uses LlamaIndex and ChromaDB, while the keyword retriever directly uses Redis (should consider putting it into a separate module).
@@ -10,12 +10,12 @@
   - `chatdku.core.dspy_patch`: Patches the internals of DSPy to adapt it to our project.
   - `chatdku.core.utils`: Utility functions.
 
-- `chatdku/frontend`: The HTML, CSS, and JavaScript web frontend.
+- `chatdku/frontend`: The HTML, CSS, and JavaScript web frontend. [Frontend](./chatdku/frontend)
 
-- `chatdku.backend`: Backend Flask apps.
+- `chatdku.backend`: Backend Flask apps. [Flask Backend](./chatdku/backend)
   - `backend.stt_app`: Speech-to-Text app
   - `backend.whisper_model`: Whisper API using Flask
-- `chatdku.django`: Django Based Backend 
+- `chatdku.django`: Django-based backend and apps[Django Backend](./chatdku/django) 
 ## Setup
 
 ### Embedding Model and LLM

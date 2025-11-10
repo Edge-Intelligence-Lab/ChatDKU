@@ -1,37 +1,30 @@
-# How to develop the frontend
+# ChatDKU Website Developer Documentation
 
-## Install dependencies
+Last updated by Anar Nyambayar, October 2025
 
-Make sure you have Node JS installed.
+## Our Stack:
 
-## Set up the development environment
+We're using the Next.js framework for its quick development opportunities and rich open-source community. Since our backend is handled by Django, we are serving the website as a static site using `next build`.
 
-Inside the `frontend/` folder, use `npm ci` to clean-install all the dependencies.
+We're using the [shadcn/ui](https://ui.shadcn.com/) open-source UI library. This is a widely used, simple, and customizable UI library that uses Tailwind CSS for globally consistent styling.
 
-Run `npm run dev` to load a hot-reloading development build on your local machine. This allows you to quickly see changes you make to the website.
+Try to stick to these shadcn/ui components as much as possible, and only create custom components when necessary. This is to keep accessibility standards and consistency.
 
-Please note that API calls may not work in a dev instance due to SSL requirements.
+## Development Guide:
 
-## Updating deployment
+### Dependencies:
 
-1. Before changing anything in the deployment, locally test `npm run build`.It should successfully build a static export in the `frontend/out/` directory.
+- The latest Node.js LTS runtime must be installed on the machine you're using to develop.
 
-2. Push your changes to the repo
+### Development flow:
 
-3. Pull the repo on GPU3 (or use `sftp` to copy the `frontend/` folder into a directory on GPU3, which can be faster than trying to use `git pull`).
+1. Run `npm install` in the frontend directory to install Node dependencies.
+2. Run `npm run dev` to spin up a localhost server and navigate to http://localhost:3000/ to see the homepage. The dev server will hot-reload whenever you save.
+3. Make necessary edits, and review changes on both a desktop screen and a mobile screen. Test with many aspect ratios to make sure nothing clips or looks broken. You can also enter "test" in the chat box to test proper markdown rendering (this is important as users must be able to read ChatDKU's responses easily).
+4. Check that `npm run build` succeeds before pushing to the main branch.
 
-4. Inside your `frontend/` folder on GPU3, run `npm ci` and then `npm run build`. If this succeeds, you should see a `out/` folder inside the `frontend/` directory.
+### Deploying to production:
 
-5. Sync the build:
-
-    ```bash
-    sudo rsync -av --delete out/ /var/www/chatdku/
-    ```
-
-6. Reload Apache:
-
-    ```bash
-    sudo apachectl configtest && sudo systemctl reload apache2
-    ```
-
-7. Test it by going to <https://chatdku.dukekunshan.edu.cn/> on incognito mode in any browser.
+1. Run `npm run build`. If successful, a folder called `out/` will have been compiled.
+2. Run the command `sudo rsync -av --delete out/ /var/www/chatdku/` on the server to update the frontend files on deployment.
+3. Visit [ChatDKU](chatdku.dukekunshan.edu.cn) in incognito mode. Make sure the chat responses are clear and legible.

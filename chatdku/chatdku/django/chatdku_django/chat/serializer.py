@@ -1,7 +1,11 @@
 from rest_framework import serializers
+from chat.models import UserSession,ChatMessages
+from django.contrib.auth import get_user_model
 
 
-from rest_framework import serializers
+
+User=get_user_model()
+
 
 class SourceSerializer(serializers.Serializer):
 
@@ -26,3 +30,27 @@ class SourceSerializer(serializers.Serializer):
         data['search_mode'] = search_mode
         data['docs']=docs
         return data
+
+class SessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=UserSession
+        fields=['id', 'title', 'created_at']
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ChatMessages
+        fields=['id', 'role', 'message', 'created_at']
+
+class SessionVerifierSerializer(serializers.Serializer):
+    chatHistoryId = serializers.CharField()
+
+    def validate(self, data):
+        user = self.context['user']  
+        chatHistoryId = data.get('chatHistoryId')
+
+        exists = user.usersession.filter(id=chatHistoryId).exists()
+        if exists:
+            return data
+        else:
+            raise serializers.ValidationError("Session ID not found")

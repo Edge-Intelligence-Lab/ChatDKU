@@ -1,10 +1,12 @@
-from core.models import UploadedFile, UserModel
+from core.models import UploadedFile, UserModel, ActiveLM
 from celery import shared_task
 from django.db import transaction
 from chatdku.backend.user_data_interface import update
 from core.set_lock import redis_lock
 from chatdku_django.celery import redis_client
-
+from chat.utils import ping_lm
+import sys
+import subprocess
 
 import json
 
@@ -34,7 +36,7 @@ def remove_from_db(filename):
 
 
 
-@shared_task
+# @shared_task
 def remove_files():
     db_filenames=set(UploadedFile.objects.values_list('filename',flat=True))
 
@@ -56,7 +58,7 @@ def remove_files():
                 except Exception as e:
                     logger.warning(f'Failed to delete {file_path}: {e}')
 
-@shared_task
+# @shared_task
 def update_user_embedding():
     try:
         query=UserModel.objects.values_list('username','folder')
@@ -116,9 +118,61 @@ def update_user_chroma(self, netid):
         redis_client.delete(f"processing:{netid}")
 
 
-                
+@shared_task()
+def ping_llm():
+    try:
+        ping_lm("ping")
+        ActiveLM.objects.update_or_create(id=1,defaults={"name":"primary"})
+
+    except Exception as e:
+        ActiveLM.objects.update_or_create(id=1,defaults={"name":"backup"})
+
+# @shared_task(bind=True,max_retries=5)
+def load_redis_task(self,script_path=None,python_bin=None):
+    """
+    Run a python script for ingestion
+    args:
+        - script_path: path for load redis (def: `ChatDKU/chatdku/ingestion/load_redis.py`)
+        - python_bin: path for python executable (def: `sys.executable`)
+
+    """
+
+    if script_path is None:
+        script_path=os.path.join(os.path.dirname(__file__),"..","..","..","ingestion","load_redis.py")
+    python_exe=python_bin or sys.executable
+
+    if not os.path.isfile(script_path):
+        logger.error("[Ingestion] Script not found: %s", script_path)
+        raise 
 
 
-    
+
+    cmd=[python_exe,script_path]
+    env=os.environ.copy()
+
+    try:
+        #Run subprocess for the script and capture output, errors
+        process=subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        logger.info("[Ingestion] Load redis activated stdout: %s",process.stdout)
+        return process.stdout
+    except subprocess.CalledProcessError as e:
+        logger.error(
+            "[Ingestion] Script failed (exit %s). stdout: %s stderr: %s",
+            e.returncode,
+            getattr(e, "stdout", ""),
+            getattr(e, "stderr", ""),
+        )        
+        raise self.retry(exc=e,countdown=5)
+    except Exception as e:
+        logger.error("[Ingestion] Error occured during Ingestion")
+        raise self.retry(exc=e,countdown=5)
+
 
 

@@ -15,18 +15,9 @@ import json
 from llama_index.core import Settings
 from chatdku.setup import setup
 
-# Override detect_filetype so that html files containing JavaScript code are loaded in html format.
-import unstructured.file_utils.filetype
-from .custom_filetype_detect import custom_detect_filetype
 
 
-# Override auto partation
-import unstructured.partition.auto
-from .custom_partation import partition
 from chatdku.config import config
-
-unstructured.file_utils.filetype.detect_filetype = custom_detect_filetype
-unstructured.partition.auto.partition = partition
 
 
 def clean_file_name(file_name: str) -> str:

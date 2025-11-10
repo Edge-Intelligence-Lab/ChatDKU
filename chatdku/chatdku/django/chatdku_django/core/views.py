@@ -10,6 +10,7 @@ from core.serializers import UploadFileSerializer
 from django.core.files.storage import default_storage
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
+from drf_spectacular.utils import extend_schema_view,OpenApiExample, OpenApiParameter, extend_schema,OpenApiResponse
 
 
 from core.tasks import update_user_chroma
@@ -25,10 +26,45 @@ load_dotenv()
 
 
 ALLOWED_EXTENSIONS = ['.pdf']
+PARAMETERS=[
+            OpenApiParameter(
+                name='UID',
+                location=OpenApiParameter.HEADER,
+                description='NetID of the user',
+                required=True,
+                type=str
+            ),
+            OpenApiParameter(
+                name='X-DisplayName',
+                location=OpenApiParameter.HEADER,
+                description='Display Name of the user',
+                required=False,
+                type=str
+            )
+        ]
 
 def allowed_file(filename):
     return filename.lower().endswith(tuple(ALLOWED_EXTENSIONS))
 
+
+@extend_schema_view(
+        post=extend_schema(
+            parameters=PARAMETERS,
+            request=UploadFileSerializer,
+            responses = {
+                201: OpenApiResponse(
+                    response={
+                        'type': 'object',
+                        'properties': {
+                            'message': {'type': 'string'},
+                        },
+                    }
+                )
+            },
+            description="Uploads files for a given user"
+
+        )
+)
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
 def upload(request):
@@ -64,7 +100,27 @@ def upload(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-
+@extend_schema_view(
+        get=extend_schema(
+            parameters=PARAMETERS,
+            responses={
+                200:OpenApiResponse(response={
+                    'type':'object',
+                    'properties':{
+                        'netid':{
+                            'type':'string',
+                        },
+                        'document':{
+                            'type':'array',
+                            'items': {'type': 'string'}
+                        }
+                    }
+                    
+                })
+            },
+            description="Returns files for a given user"
+        )   
+)
 @api_view(['GET'])
 def get_user_files(request):
     try:

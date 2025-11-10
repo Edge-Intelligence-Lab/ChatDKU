@@ -9,8 +9,8 @@ class NetIDMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        path_parts = request.path.strip('/').split('/')
-        if  "admin" in path_parts:
+        path_parts = [p for p in request.path.strip('/').split('/')]
+        if   any(part in ("admin","doc") for part in path_parts):
             return self.get_response(request)
 
         netid = request.META.get("HTTP_UID") or request.session.get("netid")

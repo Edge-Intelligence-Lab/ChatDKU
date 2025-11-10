@@ -26,30 +26,38 @@ redis_client=Redis(host=redis_host,port=6379,username="default",password=redis_p
 
 #schedule apps
 app.conf.beat_schedule={
-    "remove-files-every-1day":{
-        "task":"core.tasks.remove_files",
-        "schedule":crontab(minute=0,hour=16) #12 a.m ocal time 
-    },
-    "update-user-log-every-1day":{
-        "task":"core.tasks.update_user_embedding",
-        "schedule":crontab(minute=20,hour=16) #12:20 am local time
-    },
+
     "chat-load-test-every-sunday":{
         "task":"chat.tasks.chat_load_test_weekly",
-        "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 4:20 local time
+        "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 
     },
     "delete-load-test-logs-every-sunday":{
         "task":"chat.tasks.delete_locust_logs",
-        "schedule":crontab(minute=20, hour=19,day_of_week=0) #Every Sunday 3:20 local time
+        "schedule":crontab(minute=20, hour=19,day_of_week=0) #Every Sunday 
     },
     "email-load-test-every-sunday":{
         "task":"chat.tasks.email_weekly_load",
-        "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 5:20 local time
+        "schedule":crontab(minute=20, hour=21,day_of_week=0) #Every Sunday 
     },
-    "chat-test-every-12hr":{
+    "chat-test-every-2hr":{
         "task":"chat.tasks.chat_load_test_daily",
-        "schedule":crontab(minute=00, hour='*/12') # 12hr, everyday
-    }
+        "schedule":crontab(minute=00, hour='*/2') # 2hr, everyday
+    },
+    "session-clean-admin-1day":{
+        "task":"chat.tasks.clean_admin_session",
+        "schedule":crontab(minute=00,hour='*/12') # Every 22hr
+    },
+    "session-clean-empty":{
+        "task":"chat.tasks.clean_empty_sessions",
+        "schedule":crontab(minute=00,hour='*/1') #Every 1 hour everyday
+    },
+
+
+    "lm-check":{
+        "task":"core.tasks.ping_llm",
+        "schedule":crontab(minute="*/10")
+    },
+
 }
 
 app.autodiscover_tasks()

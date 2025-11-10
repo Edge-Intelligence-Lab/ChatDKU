@@ -9,11 +9,18 @@ from django.template.loader import render_to_string
 from chat.mail import EmailUtil
 import os
 from django.core.cache import cache
+from chat.models import UserSession
+from django.contrib.auth import get_user_model
 
+from django.db.models import Q
+from core.models import hash_netid
+from chat.utils import ping_lm
 
 dotenv.load_dotenv()
 
 logger=logging.getLogger(__name__)
+
+User=get_user_model()
 
 
 
@@ -75,9 +82,26 @@ def chat_load_test_daily():
     try:
         file_conf=os.path.join(settings.BASE_DIR,"locust_daily.conf")
         locust_path=os.getenv("LOCUST_PATH")
-        runner=subprocess.run([locust_path,"--config",file_conf],check=True, capture_output=True, text=True)
+        runner=subprocess.Popen([locust_path,"--config",file_conf],stderr=subprocess.PIPE,stdout=subprocess.PIPE, text=True)
         logger.info("Daily Chat Test Successful")
         
+        for line in runner.stderr:
+            if "ResponseLengthError" in line:
+                failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
+                if failures==1:
+                    cache.set(COUNTER_KEY,1,timeout=60*60) #1hr
+                if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
+                    from_email=os.getenv("EMAIL_HOST_USER")
+                    to_email=os.getenv("EMAIL_TO")
+                    subject="Error in ChatDKU Response"
+                    body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n"
+                    body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+
+                    EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+                    logger.info("Email sent on: ",datetime.datetime.now())
+                    cache.delete(COUNTER_KEY)
+                    return
+
 
     except subprocess.CalledProcessError as e:
         failures=cache.incr(COUNTER_KEY,1) if cache.get(COUNTER_KEY) else 1
@@ -99,6 +123,7 @@ def chat_load_test_daily():
 
             logger.info("Email sent on: ",datetime.datetime.now())
             cache.delete(COUNTER_KEY)
+            return 
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
@@ -117,3 +142,59 @@ def delete_locust_logs():
 
     except Exception as e:
         logger.error(f"Error in deleting locust logs: {str(e)}")
+
+@shared_task
+def clean_admin_session():
+    try:
+        admin_session=os.getenv("UID",'chatdku_admin')
+        hashed_id=hash_netid(admin_session) if "admin" not in admin_session else admin_session 
+        query=UserSession.objects.filter(user__username=hashed_id).delete()
+
+    except Exception as e:
+        logger.error(f"Error occured while cleaning admin session: {e}")
+
+@shared_task
+def clean_empty_sessions():
+    try:
+        query=UserSession.objects.all().filter(Q(title='')|Q(title__isnull=True)).delete()
+    except Exception as e:
+        logger.error(f"Error cleaning empty sessions: {e}")
+
+
+# @shared_task(bind=True, max_retries=5)
+def lm_test(self):
+    try:
+        chat_response = ping_lm("What can you do?")
+        return "Pass"
+    except Exception as e:
+        if self.request.retries >= self.max_retries:
+            if not cache.get("oss_test:fail"):
+                cache.set("oss_test:fail", 1, timeout=60*60*5)
+
+                from_email = os.getenv("EMAIL_HOST_USER")
+                to_email = os.getenv("EMAIL_TO")
+                subject = "Error in Primary LLM"
+                body_html = (
+                    f"<h2>Issue Identified: LLM</h2>"
+                    f"<p>GPT OSS has stopped responding since {datetime.datetime.now()}."
+                    f" Please look into it!</p>"
+                )
+                body_text = (
+                    f"Issue Identified: LLM\n"
+                    f"Primary LLM has stopped responding since {datetime.datetime.now()}."
+                    f" Please look into it!"
+                )
+
+                EmailUtil.send_mail(
+                    from_email=from_email,
+                    to_email=to_email,
+                    subject=subject,
+                    content_text=body_text,
+                    content_html=body_html,
+                )
+
+                logger.info(f"Email sent on: {datetime.datetime.now()}")
+            raise e
+        raise self.retry(exc=e, countdown=5)
+
+

@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { getUser } from "@/components/hooks/user";
+import { getNewSession } from "@/lib/convosNew";
 
 export default function WelcomeBanner() {
 	const [me, setMe] = useState<{ eppn: string; displayName: string } | null>(
 		null,
 	);
 
-	useEffect(() => {
-		getUser().then(setMe);
-	}, []);
+	// useEffect(() => {
+	// 	getUser().then(async (user) => {
+	// 		setMe(user);
+	// 		// Create a new session when user is successfully loaded
+	// 		if (user) {
+	// 			await getNewSession();
+	// 		}
+	// 	});
+	// }, []);
 
 	if (!me)
 		return (

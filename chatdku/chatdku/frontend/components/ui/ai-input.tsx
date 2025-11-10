@@ -1,14 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Brain, CornerRightUp, Mic } from "lucide-react";
+import { CornerRightUp, Mic } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/components/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
 import { io } from "socket.io-client";
-import { UploadSheet } from "../UploadSheet";
-import { Button } from "@/components/ui/button";
 
 export function AIInput({
   id = "ai-input",
@@ -21,6 +19,7 @@ export function AIInput({
   thinkingMode,
   onThinkingModeChange,
   onEndpointChange,
+  disabled = false,
 }: {
   id?: string;
   placeholder?: string;
@@ -34,6 +33,7 @@ export function AIInput({
   onThinkingModeChange?: (value: boolean) => void;
   onEndpointChange?: (endpoint: string) => void;
   onSearchModeChange?: (value: string) => void;
+  disabled?: boolean;
 }) {
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,
@@ -84,12 +84,14 @@ export function AIInput({
   }, []);
 
   const toggleThinkingMode = () => {
+    if (disabled) return;
     const newValue = !isThinking;
     setIsThinking(newValue);
     onThinkingModeChange?.(newValue);
   };
 
   const startRecording = async () => {
+    if (disabled) return;
     if (!navigator?.mediaDevices?.getUserMedia) {
       console.error("Media Devices API not supported");
       alert("Your browser does not support audio recording");
@@ -178,6 +180,7 @@ export function AIInput({
     if (!textarea) return;
 
     const handleInput = (e: Event) => {
+      if (disabled) return;
       const target = e.target as HTMLTextAreaElement;
       setInputValue(target.value);
       onInputChange?.(target.value);
@@ -186,9 +189,10 @@ export function AIInput({
 
     textarea.addEventListener("input", handleInput);
     return () => textarea.removeEventListener("input", handleInput);
-  }, [textareaRef, adjustHeight, onInputChange]);
+  }, [textareaRef, adjustHeight, onInputChange, disabled]);
 
   const toggleRecording = async () => {
+    if (disabled) return;
     if (isRecording) {
       stopRecording();
     } else {
@@ -197,6 +201,7 @@ export function AIInput({
   };
 
   const handleReset = () => {
+    if (disabled) return;
     if (!inputValue.trim()) return;
     onSubmit?.(inputValue);
     setInputValue("");
@@ -256,6 +261,7 @@ export function AIInput({
             ref={textareaRef}
             value={inputValue}
             onChange={(e) => {
+              if (disabled) return;
               const newValue = e.target.value;
               setInputValue(newValue);
               onInputChange?.(newValue);
@@ -266,11 +272,13 @@ export function AIInput({
               }
             }}
             onKeyDown={(e) => {
+              if (disabled) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleReset();
               }
             }}
+            disabled={disabled}
           />
           {/* <div className={cn(isDevRoute && "hidden")}> */}
           <div>
@@ -282,6 +290,7 @@ export function AIInput({
                   "bg-red-500 border border-foreground/10 hover:mask-bg-secondary/50 text-secondary",
               )}
               onClick={toggleRecording}
+              disabled={disabled}
             >
               <Mic className="cursor-pointer w-5 h-5" />
             </button>
@@ -295,6 +304,7 @@ export function AIInput({
                   ? "opacity-100 scale-100"
                   : "hidden opacity-0 scale-50",
               )}
+              disabled={disabled}
             >
               <CornerRightUp className="w-5 h-5" />
             </button>

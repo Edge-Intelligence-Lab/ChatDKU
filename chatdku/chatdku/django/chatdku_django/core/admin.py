@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import UserModel,UploadedFile
+from core.models import UserModel,UploadedFile,ActiveLM
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -39,3 +39,11 @@ class UploadedFileAdmin(admin.ModelAdmin):
     def delete_queryset(self, request, queryset):
         for obj in queryset:
             obj.delete()  
+
+@admin.register(ActiveLM)
+class ActiveLMAdmin(admin.ModelAdmin):
+    list_display=("name","updated_at")
+
+    def has_change_permission(self, request, obj=None):
+            return False
+

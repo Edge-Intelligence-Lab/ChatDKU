@@ -11,6 +11,7 @@ from transformers import PreTrainedTokenizerBase
 from functools import partial
 
 from chatdku.config import config
+import numpy as np
 
 
 class NameParams(BaseModel):
@@ -87,7 +88,7 @@ def truncate_tokens(
         tokenizer = partial(tokenizer.encode, add_special_tokens=False)
 
     splitter = TokenTextSplitter(
-        chunk_size=max_tokens, chunk_overlap=0, tokenizer=tokenizer
+        chunk_size=int(np.abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
     )
     return splitter.split_text(s)[0]
 
@@ -112,3 +113,26 @@ def token_limit_ratio_to_count(
     """
     remain = config.context_window - template_length - reserved
     return {k: int(v * remain) for k, v in ratios.items()}
+
+
+def load_conversation(history:list[tuple[str,str]])->list[tuple[str,str]]:
+        """
+        convert (role,content) to (content_bot,content_bot) from past conversation. This method is applicable only for backend.
+
+        Args:
+            history: List on tuple containing role and content.
+        
+        """
+        
+
+        past_messages=[]
+
+        for user_msg,bot_msg in zip(history,history[1:]):
+            if str(user_msg[0]).lower()=='user' and str(bot_msg[0]).lower()=='bot':
+                user_message=user_msg[1]
+                bot_message=bot_msg[1]
+                past_messages.append(tuple([user_message,bot_message]))
+        return past_messages
+
+
+
