@@ -15,8 +15,8 @@ class Config:
             cls._instance = super().__new__(cls)
             cls._instance._config = {
                 # about settings.py
-                "llm": "openai/gpt-oss-20b",
-                "llm_url": "http://dku-vcm-3831.vm.duke.edu:3000/v1",
+                "llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+                "llm_url":  "http://localhost:18085/v1",
                 "llm_api_key":llm_api_key,
                 "llm_temperature": 0.6,
                 "embedding": "BAAI/bge-m3",
@@ -24,19 +24,23 @@ class Config:
                 "tei_url": "http://localhost:18080",
                 "context_window": 50000,
                 # about ingestion
-                "data_dir": "/datapool/chat_dku_advising",
+                # "data_dir": "/datapool/chat_dku_advising",
+                "data_dir": "/datapool/chat_dku_advising_test/Course_List",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
-                "nodes_path": "/datapool/chat_dku_advising/nodes.json",
+                # "nodes_path": "/datapool/chat_dku_advising/nodes.json",
+                "nodes_path": "/datapool/chat_dku_advising_test/Course_List/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",  # Store URL info of dku websites
                 "update": False,
                 "redis_host": redis_host,
                 "redis_password": redis_password,
                 "chroma_db_port": 12400,
-                "chroma_collection": "dku_html_pdf",
+                # "chroma_collection": "dku_html_pdf",
+                "chroma_collection": "student_website_test",
                 "user_uploads_collection": "user_uploads",
                 # about query
-                "index_name": "chat_dku_advising",  # TODO change name
+                # "index_name": "chat_dku_advising",  # TODO change name
+                "index_name": "student_website_test",
                 # "nodes_path": "./nodes/nodes_{str(embedding_model_type)}_bge.pkl",
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 # about graphrag
