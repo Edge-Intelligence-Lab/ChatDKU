@@ -30,10 +30,10 @@ class EmailUtil:
                 subject=subject,
                 body=content_text,
                 from_email=from_email,
-                to=json.loads(to_email),
+                to=json.loads(to_email) if isinstance(to_email, str) else to_email,
             )
-
-            email.attach_alternative(content_html,mimetype=mimetype)
+            if content_html:
+                email.attach_alternative(content_html,mimetype=mimetype)
             
             if add_logo:
             #Add the logo for every email as an attachment
