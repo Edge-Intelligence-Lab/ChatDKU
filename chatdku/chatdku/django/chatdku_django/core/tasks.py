@@ -36,7 +36,7 @@ def remove_from_db(filename):
 
 
 
-@shared_task
+# @shared_task
 def remove_files():
     db_filenames=set(UploadedFile.objects.values_list('filename',flat=True))
 
@@ -58,7 +58,7 @@ def remove_files():
                 except Exception as e:
                     logger.warning(f'Failed to delete {file_path}: {e}')
 
-@shared_task
+# @shared_task
 def update_user_embedding():
     try:
         query=UserModel.objects.values_list('username','folder')
@@ -127,7 +127,7 @@ def ping_llm():
     except Exception as e:
         ActiveLM.objects.update_or_create(id=1,defaults={"name":"backup"})
 
-@shared_task(bind=True,max_retries=5)
+# @shared_task(bind=True,max_retries=5)
 def load_redis_task(self,script_path=None,python_bin=None):
     """
     Run a python script for ingestion
