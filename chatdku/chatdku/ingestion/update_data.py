@@ -109,9 +109,28 @@ class XlsxReader(BaseReader):
                     for row in range(min_row, max_row + 1):
                         sub_wb.cell(row=row, column=col, value=cell_value)
 
-            data = wb[sheet_name].values
-            columns = next(data)[0:]  # 获取第一行作为列名
-            df = pd.DataFrame(data, columns=columns)
+            data = list(sub_wb.values)
+            header_rows = 1
+            if len(data) > 1 and any(data[1]):
+                header_rows = 2
+
+            if header_rows == 2:
+                combined_header = []
+                for h1, h2 in zip(data[0], data[1]):
+                    if h1 and h2:
+                        combined_header.append(f"{h1.strip()} - {h2.strip()}")
+                    elif h1:
+                        combined_header.append(h1.strip())
+                    elif h2:
+                        combined_header.append(h2.strip())
+                    else:
+                        combined_header.append("Unnamed")
+                df = pd.DataFrame(data[2:], columns=combined_header)
+            else:
+                columns = [c if c else "Unnamed" for c in data[0]]
+                df = pd.DataFrame(data[1:], columns=columns)
+                # columns = next(data)[0:]  # 获取第一行作为列名
+                # df = pd.DataFrame(data, columns=columns)
 
             # 处理 DataFrame 中的回车符
             df = df.map(
@@ -127,11 +146,17 @@ class XlsxReader(BaseReader):
             df.dropna(how="all", inplace=True)
             df.dropna(axis=1, how="all", inplace=True)
 
+            structured_rows = []
+            for _, row in df.iterrows():
+                row_text = "; ".join([f"{col}: {row[col]}" for col in df.columns if pd.notna(row[col])])
+                structured_rows.append(row_text)
+
             # 将 DataFrame 转换为 Markdown 格式
-            markdown_output = df.to_markdown(index=False)
-            markdown_menu += sheet_name + "菜单：\n"
-            markdown_menu += markdown_output
-            markdown_menu += "\n\n\n\n"
+            # markdown_output = df.to_markdown(index=False)
+            # markdown_menu += sheet_name + "菜单：\n"
+            # markdown_menu += markdown_output
+            # markdown_menu += "\n\n\n\n"
+            markdown_menu += f"Work Sheet {sheet_name}:\n" + "\n".join(structured_rows) + "\n\n"
 
         return markdown_menu
 
