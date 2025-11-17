@@ -1,6 +1,7 @@
 import os
 import dotenv
 from typing import Any, Mapping, Optional
+from urllib.parse import quote_plus
 
 dotenv.load_dotenv()
 
@@ -44,9 +45,16 @@ class Config:
         llm_api_key = _env("LLM_API_KEY")
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
+        SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'\
+            .format(os.environ.get('DB_USER'),
+                    quote_plus(os.environ.get('DB_PASSWORD')),
+                    os.environ.get('DB_HOST'),
+                    os.environ.get('DB_PORT'),
+                    os.environ.get('DB_NAME'))
 
         self._store.update(
             {
+                # Core
                 "llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "llm_url": "http://localhost:18085/v1",
                 "llm_api_key": llm_api_key,
@@ -57,17 +65,23 @@ class Config:
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
                 "tei_url": "http://localhost:18080",
                 "context_window": 32000,
+                # Documents
                 "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "documents_path": "/datapool/chat_dku_advising/parsed.pkl", # This is Deprecated use nodes instead
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
+                # Redis
                 "redis_host": redis_host,
                 "redis_password": redis_password,
+                "index_name": "chat_dku_advising",
+                # Chroma
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
-                "index_name": "chat_dku_advising",
+                # PSQL
+                "psql_uri": SQLALCHEMY_DATABASE_URI,
+                # MISC
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",

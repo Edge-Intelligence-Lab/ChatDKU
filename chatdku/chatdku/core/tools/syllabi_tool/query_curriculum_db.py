@@ -2,6 +2,7 @@ import dspy
 import re
 from pydantic import Field
 from typing import Annotated, Any
+from setup import DB
 from chatdku.core.tools.syllabi_tool.sql_agent import GenerateSQL
 import psycopg2
 
@@ -9,6 +10,7 @@ import psycopg2
 from os import getenv
 
 
+# NOTE: You don't need this anymore. Can delete.
 def remove_think_section(text: str) -> str:
     """
     Removes the first <think>...</think> section (including the tags) from the string.
@@ -50,15 +52,16 @@ class QueryCurriculumDB(dspy.Module):
         self,
     ):
         # Establish the connection
-        self.connection = psycopg2.connect(
-            database="chatdku_db",  # Your database name
-            user="chatdku_user",  # Your username
-            password=getenv("DB_PWD"),  # Your password
-            host="localhost",  # Host address (often "localhost")
-            port="5432",  # Default PostgreSQL port
-        )
+        self.db = DB()
+        # self.connection = psycopg2.connect(
+        #     database="chatdku_db",  # Your database name
+        #     user="chatdku_user",  # Your username
+        #     password=getenv("DB_PWD"),  # Your password
+        #     host="localhost",  # Host address (often "localhost")
+        #     port="5432",  # Default PostgreSQL port
+        # )
 
-        self.cursor = self.connection.cursor()
+        # self.cursor = self.connection.cursor()
 
     def forward(
         self,
@@ -74,20 +77,10 @@ class QueryCurriculumDB(dspy.Module):
         search_mode: int = 0,
     ):
         try:
-            self.cursor.execute("SELECT version();")
-            record = self.cursor.fetchone()
-            print("You are connected to -", record)
+            # self.cursor.execute("SELECT version();")
+            # record = self.cursor.fetchone()
+            # print("You are connected to -", record)
 
-            # lm = dspy.LM("ollama_chat/qwen3:4b", api_base="http://localhost:11434", api_key="")
-            # new_lm = dspy.OpenAI(
-            #     model="Qwen/Qwen3-8B",
-            #     api_base="http://127.0.0.1:18082/v1/",
-            #     api_key="dummy",
-            #     model_type="chat",
-            #     max_tokens=40960,
-            #     stop=["<|im_end|>"],
-            # )
-            # dspy.configure(lm=new_lm)
             sql_agent = GenerateSQL()
             print("Executing agent...")
 
@@ -96,7 +89,7 @@ class QueryCurriculumDB(dspy.Module):
             )
             print("\033[34mFinal SQL:", final_sql, "\033[0m")
             try:
-                self.cursor.execute(final_sql)
+                self.db.execute(final_sql)
                 tool_out = str(self.cursor.fetchall())
             except Exception as e:
                 print("Improper query:", e)
