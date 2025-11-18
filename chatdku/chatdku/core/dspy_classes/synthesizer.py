@@ -74,13 +74,6 @@ class SynthesizerSignature(dspy.Signature):
     7. **Never mention internal tools**:
        - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).
        - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.
-    8. **Course Information Rule**:
-       - If the user asks for **specific course details** (e.g., who teaches MATH 206 in Spring 2026, course schedule, meeting times, sections, instructors),
-         you **must check and use whatever course information exists in the available course lists stored in our database**.
-       - If exact information is not available, provide:
-         - what is available in the database, and  
-         - a brief clarification about which part is not present.
-       - Do **not** default to “I don't have this” when partial data exists.
     """
 
     conversation_history: str = CONVERSATION_HISTORY_FIELD
