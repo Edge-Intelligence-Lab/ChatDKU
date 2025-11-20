@@ -5,19 +5,8 @@ DROP TYPE IF EXISTS attribute;
 
 CREATE TYPE season AS ENUM('spring', 'summer', 'fall');
 CREATE TYPE first_or_second AS ENUM('first', 'second', 'third', 'fourth', 'mini-term');
-CREATE TYPE attribute AS ENUM(
-        'two-credit-writing', 
-        'ah-foundations', 
-        'chinese-student-requirements',
-        'common-core',
-        'language',
-        'ns-foundations',
-        'quantitative-reasoning',
-        'ss-foundations',
-        'signature-projects'
-);
 
-CREATE TABLE classes (
+CREATE TABLE curriculum (
     class_id SERIAL PRIMARY KEY,
     course_code VARCHAR(20) NOT NULL,
     course_title VARCHAR(255),
@@ -29,7 +18,7 @@ CREATE TABLE classes (
     attributes attribute,
     -- Maybe we can create instructors table
     instructor_email VARCHAR(255),
-    instructor_name VARCHAR(255),
+    instructor_name VARCHAR(255)[],
     office_location VARCHAR(32),
     office_hours VARCHAR(255),
     -- This can be left as a TEXT
