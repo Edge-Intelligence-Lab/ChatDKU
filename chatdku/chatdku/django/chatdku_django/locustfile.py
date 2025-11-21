@@ -14,10 +14,11 @@ dotenv.load_dotenv()
 
 
 class ResponseLengthError(Exception):
-    def __init__(self,length,min_length=100):
+    def __init__(self,length,min_length=100,*args):
         self.min_length=min_length
         self.length=length
-        super().__init__(f"The length of Response is less than the min-length: {self.min_length}. Length: {self.length}")
+        
+        super().__init__(f"The length of Response is less than the min-length: {self.min_length}. Length: {self.length}. Other information: {args[0]}")
 
 class MyUser(HttpUser):
     wait_time = between(5, 10)
@@ -103,7 +104,7 @@ class MyUser(HttpUser):
             response = self.client.post('/api/chat', json=payload, headers=self.headers)
             message=response.text
             if len(message)<self.min_length:
-                raise ResponseLengthError(len(message),self.min_length)
+                raise ResponseLengthError(len(message),self.min_length,response.text)
             logger.info(f"POST /dev/django/chat | Status: {response.status_code} | Response: {len(message)}\n")
         except Exception as e:
             logger.error(f'Chat Error: {str(e)}')
