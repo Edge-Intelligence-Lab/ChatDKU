@@ -8,7 +8,8 @@ The full pipeline consists of two major stages:
 - Update nodes.json and log.json
 - Output is a clean, complete set of nodes ready for embedding
 
-2. Vector Indexing
+2. Vector Indexing  
+
 You may load the processed nodes into either or both vector stores:
 - ChromaDB: Local persistent vector store used for keyword + vector hybrid search
 - Redis (RediSearch + Vectors): In-memory vector index used for fast runtime retrieval
@@ -61,9 +62,9 @@ This will:
 - Load into config.chroma_collection
 - Reset the existing collection (reset=True by default)  
 
-Do not use this default mode when testing.
+**Do not use this default mode when testing.**
 
-2. Usage for Testing (Recommended)
+2. Usage for Testing **(Recommended)**  
 When testing, you must avoid overwriting the main production vector store.
 Always provide your own test nodes path and a test collection name.
 
@@ -103,7 +104,7 @@ This provides the vector-search backend for course planning and other retrieval 
 ### Basic Usage
 
 1. Load into the Default Index (Production)
-If you want to overwrite the default production collection:
+If you want to **overwrite the default production** collection:
 
 ```bash
 python -m chatdku.chatdku.ingestion.load_redis
@@ -112,11 +113,11 @@ This will:
 - Read from config.nodes_path
 - Load into config.index_name
 
-Do not use this default mode when testing.
+**Do not use this default mode when testing.**
 
-2. Usage for Testing (Recommended)
-When testing, you must avoid overwriting the main production vector store.
-Always provide your own test nodes path and a test collection name.
+2. Usage for Testing (**Recommended**)  
+When testing, you must **avoid overwriting the main production vector store.**
+Always **provide your own test nodes path and a test collection name.**
 
 Example:
 ```bash
