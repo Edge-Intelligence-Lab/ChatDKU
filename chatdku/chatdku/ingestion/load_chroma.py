@@ -22,7 +22,7 @@ def nodes_to_dicts(nodes: list):
         "metadatas": [],
     }
     for node in nodes:
-        if node.text == "":
+        if not node.text or not isinstance(node.text, str):
             continue
         result["ids"].append(node.node_id)
         result["texts"].append(node.text)
@@ -158,7 +158,7 @@ def load_chroma(
 
 def main(nodes_path=None, collection_name=None):
     load_chroma(
-        reset=True,
+        reset=False,
         nodes_path=nodes_path,
         collection=collection_name,
     )

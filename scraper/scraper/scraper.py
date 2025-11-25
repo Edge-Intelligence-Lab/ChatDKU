@@ -15,8 +15,8 @@ from yarl import URL
 from dataclass_csv import DataclassWriter
 from pathlib import Path
 from http.cookiejar import CookieJar
-from utils import Status, DownloadInfo, print_summary
-from filter_llm import filter_page
+from ChatDKU.scraper.scraper.utils import Status, DownloadInfo, print_summary
+from ChatDKU.scraper.scraper.filter_llm import filter_page
 import logging
 
 logger = logging.getLogger("scrap_logger")
