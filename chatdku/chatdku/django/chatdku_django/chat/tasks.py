@@ -94,8 +94,8 @@ def chat_load_test_daily():
                     from_email=os.getenv("EMAIL_HOST_USER")
                     to_email=os.getenv("EMAIL_TO")
                     subject="Error in ChatDKU Response"
-                    body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n"
-                    body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+                    body=f"<h1>Test Error: Error Identified</h1><p>Error Occured When completing ChatDKU Test at {datetime.datetime.now()}</p><h3>The response length does not meet the requirement set by the admin.</h3> <code>{line}</code>"
+                    body_text=f"Test Error: Error Identified\nError Occured When completing ChatDKU Test at {datetime.datetime.now()}.\n The response length does not meet the requirement set by the admin. Output:\n {line}"
 
                     EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
                     logger.info("Email sent on: ",datetime.datetime.now())
@@ -116,8 +116,8 @@ def chat_load_test_daily():
             from_email=os.getenv("EMAIL_HOST_USER")
             to_email=os.getenv("EMAIL_TO")
             subject="Error in ChatDKU"
-            body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
-            body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
+            body=f"<h1>Test Error: Error Identified</h1><p>Error Occured When completing ChatDKU Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
+            body_text=f"Test Error: Error Identified\nError Occured When completing ChatDKU Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
 
             EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
 
@@ -127,8 +127,6 @@ def chat_load_test_daily():
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
-
-
 
 #Delete Logs
 @shared_task

@@ -1,16 +1,18 @@
+import dotenv
+dotenv.load_dotenv()
+
 import os
 import sys
 import time
 import json
 import logging
 import redis
-import dotenv
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
+
 from ChatDKU.chatdku.chatdku.config import config
 from ChatDKU.chatdku.chatdku.core.tools.email.email_tool import EmailTools  
 
-dotenv.load_dotenv()
 
 # ------------ Redis 连接配置 ------------
 REDIS_HOST = config.redis_host
@@ -42,6 +44,11 @@ last_email_time = datetime.now()
 
 EMAIL_INTERVAL = 300  # 秒（5分钟）
 
+redis_down = False                 
+redis_down_alert_sent = False      
+redis_down_logs = []               
+MAX_DOWN_LOGS = 5
+
 buffer_lock = threading.Lock()
 
 def flush_email_summary():
@@ -51,15 +58,19 @@ def flush_email_summary():
     with buffer_lock:
         if not deleted_keys_buffer:
             return
-        keys_summary = "\n".join(deleted_keys_buffer)
+        total = len(deleted_keys_buffer)
+        index = deleted_keys_buffer[0].split(":")[0]
         deleted_keys_buffer = []
         last_email_time = datetime.now()
 
     subject = f"[ChatDKU Alert] Redis Deleted Keys Summary ({datetime.now().strftime('%Y-%m-%d %H:%M')})"
-    message = f"The following keys were deleted in the last 5 minutes:\n\n{keys_summary}"
+    message = (
+            f"{total} Redis keys from {index} were deleted in the last 5 minutes.\n"
+            "Keys are omitted from email for safety."
+        )
     try:
         send_email_alert(message, subject_override=subject)
-        logger.info(f"Summary email sent for {len(keys_summary.splitlines())} deleted keys.")
+        logger.info(f"Summary email sent for {total} deleted keys.")
     except Exception as e:
         logger.error(f"Error sending summary email: {e}")
 
@@ -125,6 +136,7 @@ def send_email_alert(key_name: str = None, subject_override: str = None):
 
 # ------------ 主循环 ------------
 def run_listener():
+    global redis_down, redis_down_alert_sent, redis_down_logs
     logger.info("Starting Redis Key Event Listener...")
 
     while True:
@@ -139,6 +151,13 @@ def run_listener():
             )
 
             r.ping()
+            if redis_down:
+                logger.info("Redis connection restored.")
+                # 重置状态
+                redis_down = False
+                redis_down_alert_sent = False
+                redis_down_logs = []
+
             logger.info(f"Connected to Redis {REDIS_HOST}:{REDIS_PORT}")
 
             ensure_notify_keyspace_events(r)
@@ -166,8 +185,30 @@ def run_listener():
                             deleted_keys_buffer.append(key)
 
         except redis.exceptions.ConnectionError as e:
+            if not redis_down:
+                redis_down = True
+                redis_down_alert_sent = False 
+            if len(redis_down_logs) < MAX_DOWN_LOGS:
+                redis_down_logs.append(str(e))
+            
             logger.warning(f"Redis connection error: {e}. Reconnecting in 5s...")
+            if not redis_down_alert_sent:
+                subject = "[ChatDKU Alert] Redis DOWN"
+                msg = (
+                    "Redis connection lost.\n\n"
+                    "Recent error logs (up to 5):\n" +
+                    "\n".join(redis_down_logs)
+                )
+                try:
+                    send_email_alert(msg, subject_override=subject)
+                    redis_down_alert_sent = True
+                    logger.warning("Redis down alert email sent.")
+                except Exception as mail_err:
+                    logger.error(f"Error sending Redis down email: {mail_err}")
+
             time.sleep(5)
+
+            
         except Exception as e:
             logger.error(f"Listener error: {e}. Reconnecting in 5s...")
             time.sleep(5)

@@ -4,6 +4,9 @@ This guide assumes that you know how DSPy works. If you do not, please take a lo
 
 ***
 
+# Running Agent
+You can run `agent.py` to directly talk with out agent. In the first two arguments it asks `UserID` and `Files`, you can just enter and input blank.
+
 # About Agent
 
 The agent consists of 6 big DSPy sub-modules:
