@@ -167,7 +167,10 @@ def cut(path: str) -> str:
 
 def is_included(url: URL) -> bool:
     """Check if URL is included for scraping according to constraints such as domain rules."""
-
+    LOGIN_HOSTS = ["shib.oit.duke.edu", "idp.dku.edu.cn"]
+    if url.host in LOGIN_HOSTS:
+        return True
+    
     # Include all URLs if neither constraints were specified
     if not (args.domains or args.subdomains_of):
         return True
@@ -264,15 +267,17 @@ async def scrape_site(
 
     # Save the content
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    print("Saving:", canonical_url, "Length:", len(content))
 
     try:
         if ty[0] == "text" and ty[1] == "html":
-            print(f"[LLM FILTER] about to evaluate {canonical_url}")
-            if not await filter_page(content, str(canonical_url), args):
-                tried[url].status = Status.EXCLUDED
-                if args.verbose >= 1:
-                    print(f"Filtered out by LLM: {canonical_url}")
-                return
+            if args.use_llm:
+                print(f"[LLM FILTER] about to evaluate {canonical_url}")
+                if not await filter_page(content, str(canonical_url), args):
+                    tried[url].status = Status.EXCLUDED
+                    if args.verbose >= 1:
+                        print(f"Filtered out by LLM: {canonical_url}")
+                    return
             with open(file_path, "w", encoding="utf-8") as file:
                 file.write(content)
         else:
