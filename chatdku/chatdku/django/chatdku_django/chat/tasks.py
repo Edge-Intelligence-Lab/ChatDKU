@@ -128,8 +128,6 @@ def chat_load_test_daily():
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
 
-
-
 #Delete Logs
 @shared_task
 def delete_locust_logs():

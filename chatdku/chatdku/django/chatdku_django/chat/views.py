@@ -16,6 +16,7 @@ from chat.utils import load_conversation
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_view,OpenApiExample, OpenApiParameter, extend_schema,OpenApiResponse
 
+from openinference.instrumentation import suppress_tracing, using_attributes
 
 
 import logging
@@ -115,6 +116,7 @@ def chat(request):
     chatHistoryId = serializer.validated_data["chatHistoryId"]
 
     session=UserSession.objects.get(id=chatHistoryId)
+    test=request.data.get("test",False)
 
     mode = request.data.get("mode", "default")
     max_iteration = 2 if mode == "agent" else 1
@@ -148,10 +150,17 @@ def chat(request):
         # Create a new Agent instance per request
 
         conversation=load_conversation(request.user,chatHistoryId)
-        agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
-        responses_gen =agent(
-            current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
-        )
+        if test:
+            with suppress_tracing():    
+                agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
+                responses_gen =agent(
+                    current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
+                )
+        else:
+            agent = Agent(max_iterations=max_iteration, streaming=True, get_intermediate=False,previous_conversation=conversation)
+            responses_gen =agent(
+                current_user_message=message_content, question_id=chatHistoryId, search_mode=search_mode, user_id=str(user_id), files=docs
+                )
         if not session.title:
             session.title=title
             session.save()
