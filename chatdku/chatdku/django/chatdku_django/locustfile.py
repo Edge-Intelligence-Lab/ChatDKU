@@ -92,7 +92,8 @@ class MyUser(HttpUser):
             "mode": mode,
             "messages": [message],  
             "sources": sources,    
-            "session_id":self.session   
+            "session_id":self.session,
+            "test":True
         }
 
     @task
