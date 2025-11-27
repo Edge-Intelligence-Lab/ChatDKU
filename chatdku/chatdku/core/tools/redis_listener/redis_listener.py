@@ -49,6 +49,11 @@ redis_down_alert_sent = False
 redis_down_logs = []               
 MAX_DOWN_LOGS = 5
 
+REDIS_DOWN_START = None
+DOWN_ALERT_AFTER = 180  # 3 分钟
+
+MAX_BUFFER = 5000
+
 buffer_lock = threading.Lock()
 
 def flush_email_summary():
@@ -60,25 +65,29 @@ def flush_email_summary():
             return
         total = len(deleted_keys_buffer)
         index = deleted_keys_buffer[0].split(":")[0]
+        normalized_prefix = index.replace("_doc", "")
         deleted_keys_buffer = []
         last_email_time = datetime.now()
 
     subject = f"[ChatDKU Alert] Redis Deleted Keys Summary ({datetime.now().strftime('%Y-%m-%d %H:%M')})"
     message = (
-            f"{total} Redis keys from {index} were deleted in the last 5 minutes.\n"
+            f"{total} Redis keys from {normalized_prefix} were deleted in the last 5 minutes.\n"
             "Keys are omitted from email for safety."
         )
-    try:
-        send_email_alert(message, subject_override=subject)
-        logger.info(f"Summary email sent for {total} deleted keys.")
-    except Exception as e:
-        logger.error(f"Error sending summary email: {e}")
+    if (normalized_prefix == config.index_name):
+        try:
+            send_email_alert(message, subject_override=subject)
+            logger.info(f"Summary email sent for {total} deleted keys.")
+        except Exception as e:
+            logger.error(f"Error sending summary email: {e}")
 
 def schedule_email_flush():
     """后台线程定期检查并发送汇总邮件"""
     while True:
         now = datetime.now()
         if (now - last_email_time).total_seconds() >= EMAIL_INTERVAL:
+            flush_email_summary()
+        elif len(deleted_keys_buffer) >= MAX_BUFFER:
             flush_email_summary()
         time.sleep(30)  # 每30秒检查一次
 
@@ -136,7 +145,7 @@ def send_email_alert(key_name: str = None, subject_override: str = None):
 
 # ------------ 主循环 ------------
 def run_listener():
-    global redis_down, redis_down_alert_sent, redis_down_logs
+    global redis_down, redis_down_alert_sent, redis_down_logs, REDIS_DOWN_START
     logger.info("Starting Redis Key Event Listener...")
 
     while True:
@@ -157,6 +166,7 @@ def run_listener():
                 redis_down = False
                 redis_down_alert_sent = False
                 redis_down_logs = []
+                REDIS_DOWN_START = None
 
             logger.info(f"Connected to Redis {REDIS_HOST}:{REDIS_PORT}")
 
@@ -185,24 +195,32 @@ def run_listener():
                             deleted_keys_buffer.append(key)
 
         except redis.exceptions.ConnectionError as e:
+            now = datetime.now()
+            if REDIS_DOWN_START is None:
+                REDIS_DOWN_START = now  # 第一次检测到掉线
+                logger.warning("Redis connection error. Starting downtime counter...")
+
+            down_seconds = (now - REDIS_DOWN_START).total_seconds()
+
             if not redis_down:
                 redis_down = True
                 redis_down_alert_sent = False 
+
             if len(redis_down_logs) < MAX_DOWN_LOGS:
                 redis_down_logs.append(str(e))
             
             logger.warning(f"Redis connection error: {e}. Reconnecting in 5s...")
-            if not redis_down_alert_sent:
-                subject = "[ChatDKU Alert] Redis DOWN"
+            if down_seconds >= DOWN_ALERT_AFTER and not redis_down_alert_sent:
+                subject = "[ChatDKU Alert] Redis DOWN (3+ minutes)"
                 msg = (
-                    "Redis connection lost.\n\n"
+                    f"Redis has been DOWN for {int(down_seconds)} seconds.\n\n"
                     "Recent error logs (up to 5):\n" +
                     "\n".join(redis_down_logs)
                 )
                 try:
                     send_email_alert(msg, subject_override=subject)
                     redis_down_alert_sent = True
-                    logger.warning("Redis down alert email sent.")
+                    logger.warning("Redis down alert email sent after 3 minutes.")
                 except Exception as mail_err:
                     logger.error(f"Error sending Redis down email: {mail_err}")
 
