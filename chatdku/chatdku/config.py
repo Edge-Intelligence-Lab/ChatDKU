@@ -46,11 +46,11 @@ class Config:
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
         SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'\
-            .format(os.environ.get('DB_USER'),
-                    quote_plus(os.environ.get('DB_PASSWORD')),
-                    os.environ.get('DB_HOST'),
-                    os.environ.get('DB_PORT'),
-                    os.environ.get('DB_NAME'))
+            .format(os.environ.get('DB_USER', ''),
+                    quote_plus(os.environ.get('DB_PASSWORD', '')),
+                    os.environ.get('DB_HOST', ''),
+                    os.environ.get('DB_PORT', ''),
+                    os.environ.get('DB_NAME', ''))
 
         self._store.update(
             {

@@ -22,24 +22,27 @@ def remove_think_section(text: str) -> str:
 def fetch_schema(conn):
     # print("Fetching schema...")
     cur = conn.cursor()
+    # cur.execute(
+    #     """
+    #     SELECT table_name
+    #     FROM information_schema.tables
+    #     WHERE table_name = 'classes';
+    # """
+    # )
+    # tables = [row[0] for row in cur.fetchall()]
+    schema = {}
+    # for table in tables:
+
+    # TODO: Change table variable to 'ay_2025_2026' after ingesting new syllabi
+    table = 'classes'
     cur.execute(
-        """
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_name = 'classes';
+        f"""
+        SELECT column_name, data_type
+        FROM information_schema.columns
+        WHERE table_name = '{table}';
     """
     )
-    tables = [row[0] for row in cur.fetchall()]
-    schema = {}
-    for table in tables:
-        cur.execute(
-            f"""
-            SELECT column_name, data_type
-            FROM information_schema.columns
-            WHERE table_name = '{table}';
-        """
-        )
-        schema[table] = {col: dtype for col, dtype in cur.fetchall()}
+    schema[table] = {col: dtype for col, dtype in cur.fetchall()}
     # print("Schema fetched!")
     # print(schema)
     return str(schema)
