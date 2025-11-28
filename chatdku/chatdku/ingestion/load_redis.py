@@ -10,6 +10,7 @@ from llama_index.core.schema import TextNode
 import os
 import argparse
 import json
+import datetime
 
 ######
 from llama_index.core import Settings
@@ -19,6 +20,44 @@ from chatdku.setup import setup
 
 from chatdku.config import config
 
+def cleanup_expired_events(redis_client, index_name):
+    """Delete expired event nodes from Redis index."""
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+
+    # RedisVectorStore key prefix: {index_name}_doc:{node_id}
+    prefix = f"{index_name}_doc"
+
+    keys = redis_client.keys(f"{prefix}:*")
+
+    deleted = 0
+    for k in keys:
+        data = redis_client.hgetall(k)
+        if not data:
+            continue
+
+        metadata = {}
+        for kk, vv in data.items():
+            key_str = kk.decode() if isinstance(kk, bytes) else kk
+
+            # vector bytes 不要 decode
+            if key_str == "vector":
+                metadata[key_str] = vv
+                continue
+
+            # 普通字段正常 decode
+            try:
+                metadata[key_str] = vv.decode() if isinstance(vv, bytes) else vv
+            except UnicodeDecodeError:
+                # 跳过不可解码字段
+                continue
+
+        if metadata.get("is_event") == "True":
+            expire_at = metadata.get("expire_at")
+            if expire_at and expire_at < now:
+                redis_client.delete(k)
+                deleted += 1
+
+    print(f"[cleanup] Deleted {deleted} expired events")
 
 def clean_file_name(file_name: str) -> str:
     return os.path.splitext(file_name)[0]
@@ -59,6 +98,11 @@ def load_redis(
     for node in nodes:
         file_name = node.metadata["file_name"]
         node.metadata["file_name"] = clean_file_name(file_name)
+
+        # normalize boolean metadata → strings
+        for k, v in list(node.metadata.items()):
+            if isinstance(v, bool):
+                node.metadata[k] = "true" if v else "false"
 
     if index_name is None:
         index_name = config.index_name
@@ -105,6 +149,9 @@ def load_redis(
     )
 
     custom_schema.to_yaml(os.path.join(config.module_root_dir, "custom_schema.yaml"))
+
+    if not reset:
+        cleanup_expired_events(redis_client, index_name)
 
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=custom_schema, overwrite=reset

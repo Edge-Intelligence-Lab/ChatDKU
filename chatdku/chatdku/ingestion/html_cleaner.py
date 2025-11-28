@@ -27,18 +27,6 @@ class HtmlCleaner(BaseReader):
             "source_file_name": os.path.basename(file),
             "source_file_path": str(file),
         }
-        # ---- event detection ----
-        fp = str(file).lower()
-        if "calendar.dukekunshan.edu.cn" in fp or "event" in fp:
-            metadata["is_event"] = True
-        else:
-            metadata["is_event"] = False
-
-        # expire only for event
-        if metadata["is_event"]:
-            metadata["expire_at"] = (datetime.datetime.now() +
-                                    datetime.timedelta(days=7)
-                                    ).isoformat() + "Z"
         if extra_info:
             metadata.update(extra_info)
 
