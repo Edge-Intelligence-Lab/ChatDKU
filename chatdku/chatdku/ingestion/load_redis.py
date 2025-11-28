@@ -103,6 +103,8 @@ def load_redis(
         for k, v in list(node.metadata.items()):
             if isinstance(v, bool):
                 node.metadata[k] = "true" if v else "false"
+            if v is None:
+                node.metadata[k] = "None"
 
     if index_name is None:
         index_name = config.index_name

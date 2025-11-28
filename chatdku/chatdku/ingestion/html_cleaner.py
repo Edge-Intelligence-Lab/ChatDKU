@@ -15,11 +15,12 @@ class HtmlCleaner(BaseReader):
             return []
 
         soup = BeautifulSoup(html, "lxml")
-
+        
         self._remove_noise_tags(soup)
         self._remove_keywords_nodes(soup)
         self._remove_empty_tags(soup)
 
+        self._preserve_links(soup)
         main_text = self._extract_main_text(soup)
         main_text = self._clean_text(main_text)
 
@@ -57,6 +58,17 @@ class HtmlCleaner(BaseReader):
             text = tag.get_text(strip=True)
             if not text:
                 tag.decompose()
+    
+    def _preserve_links(self, soup):
+        KEEP_LINK_PATTERNS = [
+            "calendar.dukekunshan.edu.cn/event",  # canonical event page
+            ]
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            if any(pattern in href for pattern in KEEP_LINK_PATTERNS):
+                a.replace_with(f"{a.get_text(strip=True)} ({href})")
+            else:
+                a.unwrap()  
 
     def _extract_main_text(self, soup):
         main_candidate = (
