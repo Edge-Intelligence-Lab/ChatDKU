@@ -52,11 +52,14 @@ class SynthesizerSignature(dspy.Signature):
        - Check if you used the documents when answering to the question:
            - If you used the documents to articulate your answer, there has be a reference list at the end of the answer.
            - However, if you did not use any documents, you don't have to include a reference list.
+       - **Metadata Usage Requirements**:
+           - **If a document or event metadata contains a URL, the URL must be included in the reference.**
+           - **If event information is used in your answer, each event must have its URL included (if the metadata provides one).**
        - **For every source reference using the format below**:
          Reference:
          - {Insert the source document name here}: {Present the URL here. Say 'No URL' if the source has no URL} {Follow up with page number}
 
-       - Remember to add the URL if the source has an URL.
+       - Remember to add the URL if the source (or its metadata) has an URL.
        - Never modify or change the source name or the source URL.
        - If there are duplicate resources, use only one of the duplicates.
        - Discard unused or irrelevant resources.

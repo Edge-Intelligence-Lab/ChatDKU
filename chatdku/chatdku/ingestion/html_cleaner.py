@@ -15,6 +15,12 @@ class HtmlCleaner(BaseReader):
             return []
 
         soup = BeautifulSoup(html, "lxml")
+
+            # ---- extract canonical link ----
+        canonical = None
+        canonical_tag = soup.find("link", rel="canonical")
+        if canonical_tag and canonical_tag.get("href"):
+            canonical = canonical_tag["href"]
         
         self._remove_noise_tags(soup)
         self._remove_keywords_nodes(soup)
@@ -28,6 +34,8 @@ class HtmlCleaner(BaseReader):
             "source_file_name": os.path.basename(file),
             "source_file_path": str(file),
         }
+        if canonical:
+            metadata["URL"] = canonical
         if extra_info:
             metadata.update(extra_info)
 
