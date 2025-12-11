@@ -35,7 +35,7 @@ class HtmlCleaner(BaseReader):
             "source_file_path": str(file),
         }
         if canonical:
-            metadata["URL"] = canonical
+            metadata["event_url"] = canonical
         if extra_info:
             metadata.update(extra_info)
 
