@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DKU Class Schedule Schema",
+  "type": "object",
+  "description": "Structured representation of a DKU class schedule entry extracted from the DKU course schedule CSV.",
+  "properties": {
+    "term": {
+      "type": "string",
+      "description": "Academic term code (e.g., 2261)."
+    },
+    "session": {
+      "type": "string",
+      "description": "Term session number (e.g., 1, 7W1, 7W2)."
+    },
+    "subject": {
+      "type": "string",
+      "description": "Subject code (e.g., GERMAN, KOREAN, DKU)."
+    },
+    "catalog": {
+      "type": "string",
+      "description": "Course catalog number (e.g., 102, 391)."
+    },
+    "section": {
+      "type": "string",
+      "description": "Section number (e.g., 001, 002)."
+    },
+    "instructor_name": {
+      "type": "string",
+      "description": "Instructor name in 'Last,First' format."
+    },
+    "course_title": {
+      "type": "string",
+      "description": "Short course title or description."
+    },
+    "facility_id": {
+      "type": "string",
+      "description": "Classroom or facility name (e.g., BALLROOM)."
+    },
+    "meeting_start": {
+      "type": "string",
+      "description": "Start time, format 'H:MM:SS AM/PM'."
+    },
+    "meeting_end": {
+      "type": "string",
+      "description": "End time, format 'H:MM:SS AM/PM'."
+    },
+    "days": {
+      "type": "array",
+      "description": "List of days when the class meets.",
+      "items": {
+        "type": "string",
+        "enum": ["Mon", "Tues", "Wed", "Thurs", "Fri"]
+      }
+    },
+    "max_units": {
+      "type": "number",
+      "description": "Maximum credit units for the course."
+    },
+    "class_type": {
+      "type": "string",
+      "description": "Course format indicator (e.g., CAMP)."
+    },
+    "instructor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Instructor email address."
+    },
+    "preferred": {
+      "type": "boolean",
+      "description": "Whether the instructor prefers this email (Y/N → true/false)."
+    }
+  },
+  "required": [
+    "term",
+    "session",
+    "subject",
+    "catalog",
+    "section",
+    "instructor_name",
+    "course_title",
+    "meeting_start",
+    "meeting_end",
+    "days"
+  ],
+  "additionalProperties": false
+}

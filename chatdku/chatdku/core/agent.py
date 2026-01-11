@@ -14,6 +14,8 @@ from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.judge import Judge
 
+from chatdku.core.tools.sql_outer_agent import SQLAgentOuter
+
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
 import traceback
@@ -119,6 +121,9 @@ class Agent(dspy.Module):
                     internal_memory=self.internal_memory,
                 )
             ),
+            "SQLAgent": dspy.Tool(
+                SQLAgentOuter(internal_memory=self.internal_memory)
+            )
         }
 
         if hasattr(config, "tracer"):
