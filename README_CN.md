@@ -5,7 +5,7 @@
 <h1 align="center">ChatDKU</h1>
 
 <p align="center">
-  <strong>🎓 The First Open-Source Agentic RAG System Designed for Campus Scenarios</strong>
+  <strong>🎓 首个专为校园场景设计的开源 Agentic RAG 系统</strong>
 </p>
 
 <p align="center">
@@ -27,81 +27,81 @@
 </p>
 
 <p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-data-ingestion">Data Ingestion</a> •
-  <a href="#-contributing">Contributing</a>
+  <a href="#-功能特性">功能特性</a> •
+  <a href="#-系统架构">系统架构</a> •
+  <a href="#-快速开始">快速开始</a> •
+  <a href="#-数据导入">数据导入</a> •
+  <a href="#-贡献指南">贡献指南</a>
 </p>
 
 ---
 
-## ✨ Features
+## ✨ 功能特性
 
-ChatDKU is a **DSPy-based Agentic RAG system** specifically designed for university campus scenarios, providing intelligent Q&A services.
+ChatDKU 是一个基于 **DSPy** 的 Agentic RAG 系统，专为大学校园场景设计，提供智能问答服务。
 
-### 🤖 Agentic RAG Core
+### 🤖 Agentic RAG 核心
 
-Unlike traditional RAG systems, ChatDKU adopts an **Agentic RAG** architecture where the Agent can:
+不同于传统的 RAG 系统，ChatDKU 采用 **Agentic RAG** 架构，Agent 能够：
 
-- **Autonomous Planning**: Automatically decide retrieval strategies based on user queries
-- **Quality Assessment**: Judge module evaluates retrieval results and decides if additional retrieval is needed
-- **Iterative Retrieval**: Supports multi-round retrieval until sufficient context is obtained
-- **Tool Calling**: Extensible tools including SQL queries, API calls, etc.
+- **自主规划**：根据用户问题自动决策检索策略
+- **质量评估**：Judge 模块评估检索结果，决定是否需要补充检索
+- **多轮检索**：支持迭代检索，直到获得足够的上下文信息
+- **工具调用**：支持扩展工具，如 SQL 查询、API 调用等
 
 ```
-User Query → Query Rewrite → Retrieval → Judge Assessment → Need More Info? 
-                                ↑                              ↓ Yes
-                                └──────────────────────────────┘
-                                         ↓ No
-                                Synthesizer → Response
+用户问题 → Query Rewrite → 检索 → Judge评估 → 需要更多信息? 
+                              ↑                    ↓ Yes
+                              └────────────────────┘
+                                       ↓ No
+                              Synthesizer → 回答
 ```
 
-### 🔍 Hybrid Retrieval System
+### 🔍 混合检索系统
 
-ChatDKU employs a **Vector + Keyword** hybrid retrieval architecture:
+ChatDKU 采用 **向量检索 + 关键词检索** 的混合检索架构：
 
-| Retrieval Type | Tech Stack | Characteristics |
-|----------------|------------|-----------------|
-| **Vector Search** | ChromaDB + HuggingFace Embeddings | Semantic similarity matching, understands synonyms and context |
-| **Keyword Search** | Redis + BM25 | Exact matching, handles proper nouns and abbreviations |
-| **Result Fusion** | Re-ranking | Combined ranking for improved retrieval accuracy |
+| 检索方式 | 技术栈 | 特点 |
+|---------|--------|------|
+| **向量检索** | ChromaDB + HuggingFace Embeddings | 语义相似度匹配，理解同义词和上下文 |
+| **关键词检索** | Redis + BM25 | 精确匹配，处理专有名词和缩写 |
+| **结果融合** | Re-ranking | 综合排序，提升检索准确率 |
 
-### 🎓 Campus-Specific Tools
+### 🎓 校园特化工具
 
-- **Course Syllabus Query**: SQL Agent-based course database queries
-- **Campus Document Q&A**: Supports PDF, Word, PPT, Excel and more
-- **User Document Upload**: Users can upload private documents for Q&A
-- **Voice Input**: Integrated Whisper model for speech-to-text
+- **课程大纲查询**：基于 SQL Agent 的课程数据库查询
+- **校园文档问答**：支持 PDF、Word、PPT、Excel 等多种格式
+- **用户文档上传**：支持用户上传私有文档进行问答
+- **语音输入**：集成 Whisper 模型，支持语音转文字
 
-### 📊 Observability
+### 📊 可观测性
 
-- **Phoenix Integration**: Complete LLM call tracing
-- **OpenTelemetry**: Standardized monitoring metrics
-- **Performance Analysis**: Token usage, latency analysis, cost statistics
+- **Phoenix 集成**：完整的 LLM 调用链路追踪
+- **OpenTelemetry**：标准化监控指标
+- **性能分析**：Token 使用量、延迟分析、成本统计
 
 ---
 
-## 🏗 Architecture
+## 🏗 系统架构
 
-### System Overview
+### 整体架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        ChatDKU System Architecture                       │
+│                           ChatDKU 系统架构                               │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                        Frontend (Next.js)                        │   │
-│  │  • Responsive Chat UI      • Markdown Render    • Voice Input    │   │
-│  │  • File Upload             • Dark/Light Theme   • Mobile Ready   │   │
+│  │  • 响应式聊天界面      • Markdown 渲染      • 语音输入           │   │
+│  │  • 文件上传           • 深色/浅色主题       • 移动端适配          │   │
 │  └───────────────────────────────┬─────────────────────────────────┘   │
 │                                  │ REST API                             │
 │                                  ▼                                      │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                     Backend (Django + Flask)                     │   │
-│  │  • User Auth              • Session Mgmt       • File Processing │   │
-│  │  • API Routing            • Streaming          • STT (Whisper)   │   │
+│  │  • 用户认证           • 会话管理           • 文件处理            │   │
+│  │  • API 路由           • 流式响应           • 语音转写 (Whisper)  │   │
 │  └───────────────────────────────┬─────────────────────────────────┘   │
 │                                  │                                      │
 │                                  ▼                                      │
@@ -110,7 +110,7 @@ ChatDKU employs a **Vector + Keyword** hybrid retrieval architecture:
 │  │                                                                   │   │
 │  │   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │   │
 │  │   │Query Rewriter│───▶│   Planner    │───▶│    Judge     │      │   │
-│  │   │              │    │              │    │              │      │   │
+│  │   │  查询重写     │    │   任务规划    │    │  质量评估     │      │   │
 │  │   └──────────────┘    └──────────────┘    └──────┬───────┘      │   │
 │  │                                                   │              │   │
 │  │         ┌─────────────────────────────────────────┤              │   │
@@ -118,9 +118,9 @@ ChatDKU employs a **Vector + Keyword** hybrid retrieval architecture:
 │  │         ▼                                         ▼              │   │
 │  │   ┌──────────────┐                         ┌──────────────┐      │   │
 │  │   │   Tools      │                         │ Synthesizer  │      │   │
-│  │   │ • RAG        │                         │              │      │   │
-│  │   │ • SQL Query  │                         └──────────────┘      │   │
-│  │   │ • API Call   │                                               │   │
+│  │   │ • RAG检索    │                         │   答案生成    │      │   │
+│  │   │ • SQL查询    │                         └──────────────┘      │   │
+│  │   │ • API调用    │                                               │   │
 │  │   └──────────────┘                                               │   │
 │  │                                                                   │   │
 │  └───────────────────────────────┬─────────────────────────────────┘   │
@@ -129,382 +129,381 @@ ChatDKU employs a **Vector + Keyword** hybrid retrieval architecture:
 │          ▼                       ▼                       ▼             │
 │    ┌──────────┐           ┌──────────┐           ┌──────────┐         │
 │    │ ChromaDB │           │  Redis   │           │ Postgres │         │
-│    │ Vectors  │           │ BM25 Idx │           │ Courses  │         │
+│    │ 向量存储  │           │ BM25索引  │           │ 课程数据  │         │
 │    └──────────┘           └──────────┘           └──────────┘         │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                    Observability (Phoenix)                       │   │
-│  │             LLM Tracing • Token Stats • Latency Analysis         │   │
+│  │           LLM 调用追踪 • Token 统计 • 延迟分析                    │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Agent Workflow
+### Agent 工作流程
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                         Agent Processing Flow                            │
+│                         Agent 处理流程                                    │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  1. User Input                                                           │
+│  1. 用户输入                                                              │
 │     │                                                                    │
 │     ▼                                                                    │
-│  2. Load Conversation History (Conversation Memory)                      │
+│  2. 加载历史对话 (Conversation Memory)                                    │
 │     │                                                                    │
 │     ▼                                                                    │
-│  3. Query Rewriting (Query Rewriter)                                     │
-│     • Fix spelling errors                                                │
-│     • Add conversation context                                           │
-│     • Generate retrieval-optimized query                                 │
+│  3. 查询重写 (Query Rewriter)                                            │
+│     • 修正拼写错误                                                        │
+│     • 结合对话历史补充上下文                                               │
+│     • 生成检索优化的查询                                                   │
 │     │                                                                    │
 │     ▼                                                                    │
-│  4. Parallel Retrieval                                                   │
+│  4. 并行检索                                                              │
 │     ├─── KeywordRetriever (Redis BM25) ───┐                             │
-│     │                                      ├──▶ Fusion + Re-rank        │
+│     │                                      ├──▶ 结果融合 + Re-rank       │
 │     └─── VectorRetriever (ChromaDB) ──────┘                             │
 │     │                                                                    │
 │     ▼                                                                    │
-│  5. Quality Assessment (Judge)                                           │
+│  5. 质量评估 (Judge)                                                      │
 │     │                                                                    │
-│     ├─── Context Sufficient ──▶ Go to Step 6                            │
+│     ├─── 上下文充分 ──▶ 进入第6步                                        │
 │     │                                                                    │
-│     └─── Context Insufficient ──▶ Back to Step 3                        │
-│          (use internal_memory to avoid duplicate retrieval)              │
-│          (max iterations: max_iterations)                                │
-│     │                                                                    │
-│     ▼                                                                    │
-│  6. Answer Generation (Synthesizer)                                      │
-│     • Combine retrieved context                                          │
-│     • Reference conversation history                                     │
-│     • Generate structured response                                       │
+│     └─── 上下文不足 ──▶ 返回第3步，使用 internal_memory 避免重复检索       │
+│                        （最多迭代 max_iterations 次）                     │
 │     │                                                                    │
 │     ▼                                                                    │
-│  7. Conversation Memory Update                                           │
-│     • Summarize current conversation                                     │
-│     • Store to conversation_history                                      │
+│  6. 答案生成 (Synthesizer)                                               │
+│     • 结合检索上下文                                                      │
+│     • 参考对话历史                                                        │
+│     • 生成结构化回答                                                      │
 │     │                                                                    │
 │     ▼                                                                    │
-│  8. Return Response to User                                              │
+│  7. 对话记忆更新                                                          │
+│     • 总结本轮对话                                                        │
+│     • 存储到 conversation_history                                        │
+│     │                                                                    │
+│     ▼                                                                    │
+│  8. 返回回答给用户                                                        │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Core Components
+### 核心组件说明
 
-| Component | Function | Implementation |
-|-----------|----------|----------------|
-| **Query Rewriter** | Fix spelling, add conversation context | DSPy Module |
-| **Planner** | Plan tool calling strategy (multi-tool) | DSPy Module |
-| **Judge** | Evaluate retrieval quality, decide continuation | DSPy Refine |
-| **VectorRetriever** | Semantic similarity search | ChromaDB + BGE-M3 |
-| **KeywordRetriever** | BM25 keyword search | Redis RediSearch |
-| **Synthesizer** | Generate final answer based on context | DSPy Module |
-| **Syllabi Tool** | SQL Agent for course database queries | Postgres + DSPy |
+| 组件 | 功能 | 技术实现 |
+|------|------|----------|
+| **Query Rewriter** | 清理拼写错误，添加对话上下文 | DSPy Module |
+| **Planner** | 规划工具调用策略（多工具时启用） | DSPy Module |
+| **Judge** | 评估检索质量，决定是否继续检索 | DSPy Refine |
+| **VectorRetriever** | 语义相似度检索 | ChromaDB + BGE-M3 |
+| **KeywordRetriever** | BM25 关键词检索 | Redis RediSearch |
+| **Synthesizer** | 基于上下文生成最终回答 | DSPy Module |
+| **Syllabi Tool** | SQL Agent 查询课程数据库 | Postgres + DSPy |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Prerequisites
+### 环境要求
 
 - Python 3.10+
 - Node.js 18+ (LTS)
 - Redis 7+
-- Docker & Docker Compose (recommended)
+- Docker & Docker Compose（推荐）
 
-### Option 1: Docker Deployment (Recommended)
+### 方式一：Docker 部署（推荐）
 
 ```bash
-# 1. Clone the repository
+# 1. 克隆项目
 git clone https://github.com/xxx/ChatDKU.git
 cd ChatDKU
 
-# 2. Copy and edit configuration
+# 2. 复制并编辑配置文件
 cp docker/.env.example docker/.env
-vim docker/.env  # Set LLM API Key, etc.
+vim docker/.env  # 设置 LLM API Key 等
 
-# 3. Start all services
+# 3. 启动所有服务
 docker-compose -f docker/docker-compose.yml up -d
 
-# 4. Check service status
+# 4. 查看服务状态
 docker-compose -f docker/docker-compose.yml ps
 
-# 5. Access the application
-# Frontend: http://localhost:3000
+# 5. 访问应用
+# 前端: http://localhost:3000
 # Phoenix: http://localhost:6006
 ```
 
-### Option 2: Local Development
+### 方式二：本地开发
 
 ```bash
-# 1. Clone the repository
+# 1. 克隆项目
 git clone https://github.com/xxx/ChatDKU.git
 cd ChatDKU
 
-# 2. Create Python virtual environment
+# 2. 创建 Python 虚拟环境
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
 
-# 3. Install Python dependencies
+# 3. 安装 Python 依赖
 cd chatdku
 pip install -e ".[dev]"
 
-# 4. Start Redis
+# 4. 启动 Redis
 redis-server
 
-# 5. Start backend service
+# 5. 启动后端服务
 python chatdku/core/agent.py
 
-# 6. Start frontend (new terminal)
+# 6. 启动前端（新终端）
 cd chatdku/frontend
 npm install
 npm run dev
 
-# 7. Visit http://localhost:3000
+# 7. 访问 http://localhost:3000
 ```
 
-### Configuration
+### 配置说明
 
-Main environment variables (configure in `.env` file):
+主要环境变量（在 `.env` 文件中配置）：
 
 ```bash
-# ===== LLM Configuration =====
+# ===== LLM 配置 =====
 LLM_PROVIDER=openai              # openai / vllm / ollama
-LLM_MODEL=gpt-4o                 # Model name
-LLM_URL=https://api.openai.com   # API endpoint
+LLM_MODEL=gpt-4o                 # 模型名称
+LLM_URL=https://api.openai.com   # API 地址
 LLM_API_KEY=sk-xxx               # API Key
 
-# ===== Embedding Configuration =====
-EMBEDDING_MODEL=BAAI/bge-m3      # Embedding model
-TEI_URL=http://localhost:8080    # TEI service URL (optional)
+# ===== Embedding 配置 =====
+EMBEDDING_MODEL=BAAI/bge-m3      # Embedding 模型
+TEI_URL=http://localhost:8080    # TEI 服务地址（可选）
 
-# ===== Database Configuration =====
+# ===== 数据库配置 =====
 REDIS_HOST=localhost
 REDIS_PORT=6379
 CHROMA_HOST=localhost
 CHROMA_PORT=8001
 
-# ===== Observability =====
+# ===== 可观测性 =====
 PHOENIX_PORT=6006
 ```
 
 ---
 
-## 📥 Data Ingestion
+## 📥 数据导入
 
-ChatDKU's data ingestion pipeline consists of three stages: Data Collection → Data Processing → Vector Indexing.
+ChatDKU 的数据导入流程分为三个阶段：数据采集 → 数据处理 → 向量索引。
 
-### Data Flow
+### 数据流程图
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         Data Ingestion Pipeline                          │
+│                         数据导入流程                                     │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐               │
-│  │   Scraper   │     │  Ingestion  │     │   Loading   │               │
-│  │             │────▶│             │────▶│             │               │
+│  │ 数据采集     │     │  数据处理   │     │  向量索引   │               │
+│  │ (Scraper)   │────▶│(Ingestion) │────▶│  (Loading) │               │
 │  └─────────────┘     └─────────────┘     └─────────────┘               │
 │                                                                         │
-│   • Website Crawler   • File Parsing      • ChromaDB                   │
-│   • Document Collect  • Text Chunking     • Redis BM25                 │
-│   • PDF/HTML/...      • Node Generation   • Course DB                  │
+│   • 网站爬虫          • 文件解析           • ChromaDB                   │
+│   • 文档收集          • 文本分块           • Redis BM25                 │
+│   • PDF/HTML/...      • 节点生成           • 课程数据库                  │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. Data Collection (Scraper)
+### 1. 数据采集（Scraper）
 
-Use async crawler to collect campus website content:
+使用异步爬虫采集校园网站内容：
 
 ```bash
 cd scraper
 
-# Install dependencies
+# 安装依赖
 pip install -e .
 
-# Run scraper (default: dukekunshan.edu.cn)
+# 运行爬虫（默认爬取 dukekunshan.edu.cn）
 python scraper.py
 
-# View scraping report
+# 查看爬取报告
 python report.py -s progress.pkl
 ```
 
-Output directory structure:
+输出目录结构：
 ```
 ./dku_website/
 ├── domain/
 │   └── path/
 │       ├── index.html
 │       └── ...
-└── progress.pkl  # Scraping progress record
+└── progress.pkl  # 爬取进度记录
 ```
 
-### 2. Data Processing (Ingestion)
+### 2. 数据处理（Ingestion）
 
-Convert raw files to searchable text nodes:
+将原始文件转换为可检索的文本节点：
 
 ```bash
 cd chatdku/chatdku/ingestion
 
-# Incremental update (auto-detect added/deleted files)
+# 增量更新数据（自动检测新增/删除的文件）
 python update_data.py \
     --data_dir /path/to/data \
     --user_id Chat_DKU \
     -v True
 ```
 
-**Supported file formats**: PDF, HTML, CSV, XLSX, DOCX, TXT, Markdown
+**支持的文件格式**：PDF、HTML、CSV、XLSX、DOCX、TXT、Markdown
 
-**Output files**:
-- `nodes.json` - All parsed text nodes
-- `log.json` - Record of processed files
+**输出文件**：
+- `nodes.json` - 所有解析后的文本节点
+- `log.json` - 当前已处理文件的记录
 
-### 3. Vector Indexing (Loading)
+### 3. 向量索引（Loading）
 
-Load processed nodes into vector databases:
+将处理后的节点加载到向量数据库：
 
-**Load to ChromaDB**:
+**加载到 ChromaDB**：
 ```bash
-# Production (will reset existing data)
+# 生产环境（会重置现有数据）
 python load_chroma.py
 
-# Testing (recommended)
+# 测试环境（推荐）
 python load_chroma.py \
     --nodes_path /path/to/test/nodes.json \
     --collection_name test_collection
 ```
 
-**Load to Redis**:
+**加载到 Redis**：
 ```bash
-# Production
+# 生产环境
 python -m chatdku.chatdku.ingestion.load_redis
 
-# Testing (recommended)
+# 测试环境（推荐）
 python -m chatdku.chatdku.ingestion.load_redis \
     --nodes_path /path/to/nodes.json \
     --index_name test_index \
     --reset False
 ```
 
-### 4. Course Data Import
+### 4. 课程数据导入
 
-Course syllabus data is stored in PostgreSQL:
+课程大纲数据存储在 PostgreSQL 中：
 
 ```bash
-# 1. Create database tables
+# 1. 创建数据库表
 psql -U chatdku_user -d chatdku_db -f create_table.sql
 
-# 2. Import syllabi from PDF/DOCX
+# 2. 从 PDF/DOCX 导入课程大纲
 python local_ingest.py --input_dir /path/to/syllabi
 ```
 
 ---
 
-## 🌐 Frontend & Backend
+## 🌐 前后端说明
 
-### Frontend
+### 前端（Frontend）
 
-**Tech Stack**: Next.js 15 + TailwindCSS + shadcn/ui
+**技术栈**：Next.js 15 + TailwindCSS + shadcn/ui
 
 ```bash
 cd chatdku/frontend
 
-# Development mode
+# 开发模式
 npm install
 npm run dev          # http://localhost:3000
 
-# Production build
-npm run build        # Output to out/ directory
+# 生产构建
+npm run build        # 输出到 out/ 目录
 
-# Deployment
+# 部署
 sudo rsync -av --delete out/ /var/www/chatdku/
 ```
 
-**Main Features**:
-- Responsive chat interface for desktop and mobile
-- Markdown rendering with code highlighting
-- Voice input (calls Whisper service)
-- File upload (user private documents)
-- Dark/Light theme toggle
+**主要功能**：
+- 响应式聊天界面，支持桌面和移动端
+- Markdown 渲染，支持代码高亮
+- 语音输入（调用 Whisper 服务）
+- 文件上传（支持用户私有文档）
+- 深色/浅色主题切换
 
-### Backend
+### 后端（Backend）
 
-**Tech Stack**: Django REST Framework + Flask
+**技术栈**：Django REST Framework + Flask
 
-**Django Service** (Main API):
+**Django 服务**（主 API）：
 ```bash
 cd chatdku/django
 
-# Start development server
+# 启动开发服务器
 python manage.py runserver 0.0.0.0:8000
 
-# API Documentation
+# API 文档
 # http://localhost:8000/api/docs/  (drf-spectacular)
 ```
 
-**Flask Service** (Agent + STT):
+**Flask 服务**（Agent + STT）：
 ```bash
 cd chatdku/backend
 
-# Start Agent service
+# 启动 Agent 服务
 python agent_app_parellel.py
 
-# Start Speech-to-Text service
+# 启动语音转写服务
 python stt_app.py
 ```
 
-**API Endpoints Example**:
+**API 端点示例**：
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/chat/` | POST | Send chat message |
-| `/api/chat/stream/` | POST | Streaming chat response |
-| `/api/upload/` | POST | Upload user document |
-| `/api/stt/` | POST | Speech to text |
-| `/api/sessions/` | GET | Get session list |
+| 端点 | 方法 | 描述 |
+|------|------|------|
+| `/api/chat/` | POST | 发送聊天消息 |
+| `/api/chat/stream/` | POST | 流式聊天响应 |
+| `/api/upload/` | POST | 上传用户文档 |
+| `/api/stt/` | POST | 语音转文字 |
+| `/api/sessions/` | GET | 获取会话列表 |
 
 ---
 
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 ChatDKU/
-├── chatdku/                      # Core Python package
+├── chatdku/                      # 核心 Python 包
 │   ├── chatdku/
-│   │   ├── core/                 # Agent core
-│   │   │   ├── agent.py          # Main Agent entry
-│   │   │   ├── dspy_classes/     # DSPy components
+│   │   ├── core/                 # Agent 核心
+│   │   │   ├── agent.py          # 主 Agent 入口
+│   │   │   ├── dspy_classes/     # DSPy 组件
 │   │   │   │   ├── query_rewriter.py
 │   │   │   │   ├── judge.py
 │   │   │   │   ├── synthesizer.py
 │   │   │   │   └── ...
-│   │   │   └── tools/            # Agent tools
+│   │   │   └── tools/            # Agent 工具
 │   │   │       ├── rag_tool.py
 │   │   │       └── syllabi_tool/
-│   │   ├── ingestion/            # Data ingestion
-│   │   │   ├── update_data.py    # Incremental update
-│   │   │   ├── load_chroma.py    # ChromaDB loader
-│   │   │   └── load_redis.py     # Redis loader
-│   │   ├── backend/              # Flask backend
+│   │   ├── ingestion/            # 数据导入
+│   │   │   ├── update_data.py    # 增量更新
+│   │   │   ├── load_chroma.py    # ChromaDB 加载
+│   │   │   └── load_redis.py     # Redis 加载
+│   │   ├── backend/              # Flask 后端
 │   │   │   ├── agent_app_parellel.py
 │   │   │   └── stt_app.py
 │   │   ├── django/               # Django API
 │   │   │   └── chatdku_django/
-│   │   └── frontend/             # Next.js frontend
+│   │   └── frontend/             # Next.js 前端
 │   │       ├── app/
 │   │       ├── components/
 │   │       └── public/
 │   └── pyproject.toml
-├── scraper/                      # Website scraper
-├── utils/                        # Utility scripts
-├── benchmarks/                   # Performance benchmarks
-├── docker/                       # Docker configuration
+├── scraper/                      # 网站爬虫
+├── utils/                        # 工具脚本
+├── benchmarks/                   # 性能基准测试
+├── docker/                       # Docker 配置
 │   ├── docker-compose.yml
 │   └── .env.example
-├── docs/                         # Documentation
+├── docs/                         # 文档
 ├── LICENSE
 ├── README.md
 └── CONTRIBUTING.md
@@ -512,96 +511,96 @@ ChatDKU/
 
 ---
 
-## 🧪 Development Guide
+## 🧪 开发指南
 
-### Setup
+### 环境搭建
 
 ```bash
-# Install dev dependencies
+# 安装开发依赖
 pip install -e ".[dev]"
 
-# Install pre-commit hooks
+# 安装 pre-commit hooks
 pre-commit install
 
-# Run linting
+# 运行代码检查
 ruff check .
 ruff format .
 
-# Type checking
+# 类型检查
 mypy chatdku/
 
-# Run tests
+# 运行测试
 pytest tests/ -v
 ```
 
-### Adding New Tools
+### 添加新工具
 
-See [Issue #122](https://github.com/xxx/ChatDKU/issues/122) for how to add new tools to the Agent.
+参考 [Issue #122](https://github.com/xxx/ChatDKU/issues/122) 了解如何为 Agent 添加新工具。
 
-Basic steps:
-1. Create tool module in `chatdku/core/tools/`
-2. Implement tool function returning retrieval results
-3. Register tool in `agent.py`
-4. Update Planner tool descriptions
-
----
-
-## 📊 Benchmarks
-
-| Metric | Value | Test Conditions |
-|--------|-------|-----------------|
-| Time to First Token | ~1.5s | vLLM backend, A100 GPU |
-| Retrieval Accuracy | 85%+ | DKU Q&A dataset |
-| Context Relevance | 0.82 | RAGAS evaluation |
-| End-to-End Latency | ~3s | Average query |
-
-See [benchmarks/](benchmarks/) directory for details.
+基本步骤：
+1. 在 `chatdku/core/tools/` 创建工具模块
+2. 实现工具函数，返回检索结果
+3. 在 `agent.py` 中注册工具
+4. 更新 Planner 的工具描述
 
 ---
 
-## 🤝 Contributing
+## 📊 性能基准
 
-We welcome all forms of contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+| 指标 | 数值 | 测试条件 |
+|------|------|----------|
+| 首 Token 延迟 | ~1.5s | vLLM 后端，A100 GPU |
+| 检索准确率 | 85%+ | DKU 问答数据集 |
+| 上下文相关性 | 0.82 | RAGAS 评估 |
+| 端到端延迟 | ~3s | 平均查询 |
 
-### Ways to Contribute
+详见 [benchmarks/](benchmarks/) 目录。
 
-- 🐛 **Report Bugs**: Submit Issues describing problems
-- 💡 **Feature Suggestions**: Submit Feature Requests
-- 📝 **Improve Documentation**: Help improve docs
-- 🔧 **Submit Code**: Submit Pull Requests
+---
 
-### Commit Convention
+## 🤝 贡献指南
+
+我们欢迎所有形式的贡献！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+### 贡献方式
+
+- 🐛 **报告 Bug**：提交 Issue 描述问题
+- 💡 **功能建议**：提交 Feature Request
+- 📝 **改进文档**：帮助完善文档
+- 🔧 **提交代码**：提交 Pull Request
+
+### Commit 规范
 
 ```
-feat: New feature
-fix: Bug fix
-docs: Documentation update
-refactor: Code refactoring
-test: Test related
-chore: Build/tooling related
+feat: 新功能
+fix: Bug 修复
+docs: 文档更新
+refactor: 代码重构
+test: 测试相关
+chore: 构建/工具相关
 ```
 
 ---
 
-## 📜 License
+## 📜 开源协议
 
-This project is licensed under the [Apache License 2.0](LICENSE).
-
----
-
-## 🙏 Acknowledgements
-
-- [DSPy](https://github.com/stanfordnlp/dspy) - Agent framework
-- [LlamaIndex](https://github.com/run-llama/llama_index) - RAG tooling
-- [ChromaDB](https://github.com/chroma-core/chroma) - Vector database
-- [Phoenix](https://github.com/Arize-ai/phoenix) - LLM observability
-- [shadcn/ui](https://ui.shadcn.com/) - UI component library
+本项目采用 [Apache License 2.0](LICENSE) 开源协议。
 
 ---
 
-## 📬 Contact
+## 🙏 致谢
 
-- **GitHub Issues**: [Submit Issue](https://github.com/xxx/ChatDKU/issues)
+- [DSPy](https://github.com/stanfordnlp/dspy) - Agent 框架
+- [LlamaIndex](https://github.com/run-llama/llama_index) - RAG 工具
+- [ChromaDB](https://github.com/chroma-core/chroma) - 向量数据库
+- [Phoenix](https://github.com/Arize-ai/phoenix) - LLM 可观测性
+- [shadcn/ui](https://ui.shadcn.com/) - UI 组件库
+
+---
+
+## 📬 联系方式
+
+- **GitHub Issues**: [提交问题](https://github.com/xxx/ChatDKU/issues)
 - **Email**: contact@chatdku.edu
 - **Discord**: [ChatDKU Community](https://discord.gg/xxx)
 
