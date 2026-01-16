@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="docs/images/chatdku-logo.png" alt="ChatDKU Logo" width="200"/>
-</p>
 
 <h1 align="center">ChatDKU</h1>
 
