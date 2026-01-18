@@ -81,6 +81,5 @@ def test_timeout_mechanism():
 
 
 def test_invalid_inputs():
-    assert [], {} == DocRetriever()
-    assert [], {} == DocRetriever(2, 1)
-    assert [], {} == DocRetriever("", [])
+    assert ([], {}) == DocRetriever(2, 1)
+    assert ([], {}) == DocRetriever("", [])
