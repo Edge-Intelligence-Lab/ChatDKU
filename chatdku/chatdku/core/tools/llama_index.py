@@ -541,23 +541,24 @@ def DocRetrieverOuter(
             Returns ([], {}) if query times out or fails
         """
         try:
-            # Input validation
-            if not semantic_query or not isinstance(semantic_query, str):
-                raise ValueError("semantic_query must be a non-empty string")
-
-            for i in range(len(keyword_query)):
-                keyword_query[i] = str(keyword_query[i])
+            if isinstance(keyword_query, list):
+                for i in range(len(keyword_query)):
+                    keyword_query[i] = str(keyword_query[i])
 
             # Retrieve documents with individual error handling
             try:
+                # Input validation
+                if not semantic_query or not isinstance(semantic_query, str):
+                    raise ValueError("semantic_query must be a non-empty string")
+
                 with timeout():
                     vector_result = __VectorRetriever(semantic_query)
+            except ValueError as e:
+                print(str(e))
             except QueryTimeoutError as e:
                 print(f"Vector retriever timeout: {e}")
             except Exception as e:
                 print(f"Vector retrieval failed: {e}")
-            finally:
-                vector_result = []
 
             if keyword_query:
                 try:
@@ -567,8 +568,6 @@ def DocRetrieverOuter(
                     print(f"Keyword retriever timeout: {e}")
                 except Exception as e:
                     print(f"Keyword retrieval failed: {e}")
-                finally:
-                    keyword_result = []
 
             # Check if both retrievers failed
             if not vector_result and not keyword_result:
@@ -580,13 +579,8 @@ def DocRetrieverOuter(
             internal_result = {"ids": {node.node_id for node in overall_result}}
 
             return overall_result, internal_result
-
-        except ValueError as e:
-            print(f"Invalid input: {e}")
-            return [], {}
-
         except Exception as e:
-            print(f"Unexpected error in DocumentRetriever: {e}")
+            print(f"Unexpected error: {e}")
             return [], {}
 
     return DocumentRetriever
