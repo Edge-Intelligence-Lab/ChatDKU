@@ -550,9 +550,13 @@ def DocRetrieverOuter(
 
             # Retrieve documents with individual error handling
             try:
-                vector_result = __VectorRetriever(semantic_query)
+                with timeout():
+                    vector_result = __VectorRetriever(semantic_query)
+            except QueryTimeoutError as e:
+                print(f"Vector retriever timeout: {e}")
             except Exception as e:
                 print(f"Vector retrieval failed: {e}")
+            finally:
                 vector_result = []
 
             if keyword_query:
@@ -560,10 +564,10 @@ def DocRetrieverOuter(
                     with timeout():
                         keyword_result = __KeywordRetriever(keyword_query)
                 except QueryTimeoutError as e:
-                    print(f"Keyword_retriever timeout: {e}")
-                    keyword_result = []
+                    print(f"Keyword retriever timeout: {e}")
                 except Exception as e:
                     print(f"Keyword retrieval failed: {e}")
+                finally:
                     keyword_result = []
 
             # Check if both retrievers failed
@@ -584,3 +588,5 @@ def DocRetrieverOuter(
         except Exception as e:
             print(f"Unexpected error in DocumentRetriever: {e}")
             return [], {}
+
+    return DocumentRetriever
