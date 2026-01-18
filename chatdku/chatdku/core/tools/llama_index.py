@@ -545,6 +545,9 @@ def DocRetrieverOuter(
                 for i in range(len(keyword_query)):
                     keyword_query[i] = str(keyword_query[i])
 
+            vector_result = []
+            keyword_result = []
+
             # Retrieve documents with individual error handling
             try:
                 # Input validation
