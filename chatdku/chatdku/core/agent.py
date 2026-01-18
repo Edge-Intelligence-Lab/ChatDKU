@@ -1,34 +1,29 @@
 #!/usr/bin/env python3
-import dspy
-
-from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
-
-# from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
-
-# from chatdku.core.dspy_classes.plan import Planner
-from chatdku.core.dspy_classes.plan import Planner
-from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
-from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
-from chatdku.core.dspy_classes.prompt_settings import VERBOSE
-from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.dspy_classes.judge import Judge
-
-from chatdku.core.tools.sql_outer_agent import SQLAgentOuter
-
-from contextlib import nullcontext
-from openinference.instrumentation import safe_json_dumps
 import traceback
-from opentelemetry.trace import Status, StatusCode, use_span
+from contextlib import nullcontext
+
+import dspy
+from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import (
-    SpanAttributes,
-    OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
 )
+from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
-from chatdku.setup import setup, use_phoenix
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.judge import Judge
+from chatdku.core.dspy_classes.plan import Planner
+from chatdku.core.dspy_classes.prompt_settings import VERBOSE
+from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
+from chatdku.core.dspy_classes.synthesizer import Synthesizer
+from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from chatdku.core.tools.llama_index import DocRetrieverOuter
 from chatdku.core.utils import load_conversation
+from chatdku.setup import setup, use_phoenix
+
+# from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
 
 class Agent(dspy.Module):
@@ -105,20 +100,12 @@ class Agent(dspy.Module):
         # Define the tools here. Wrap them in dspy.Tool()
         # Currently only supports functions.
         self.tools = {
-            "VectorRetriever": dspy.Tool(
-                VectorRetrieverOuter(
+            "DocumentRetriever": dspy.Tool(
+                DocRetrieverOuter(
+                    internal_memory=self.internal_memory,
                     user_id=user_id,
                     search_mode=search_mode,
                     files=files,
-                    internal_memory=self.internal_memory,
-                )
-            ),
-            "KeywordRetriever": dspy.Tool(
-                KeywordRetrieverOuter(
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                    internal_memory=self.internal_memory,
                 )
             ),
             "SQLAgent": dspy.Tool(
@@ -194,20 +181,56 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                if self.rewrite_query:
-                    query = self.queryrewriter(
+                # for tool in self.tools.values():
+                #     tool_calls = dspy.ToolCalls.from_dict_list(
+                #         [{"name": tool.name, "args": {"query": query}}]
+                #     )
+                #     result, internal_result = tool(query=query)
+                #
+                #     if "ids" in internal_result:
+                #         self.internal_memory["ids"] = (
+                #             self.internal_memory.get("ids", set())
+                #             | internal_result["ids"]
+                #         )
+                #
+                #     if VERBOSE:
+                #         print(f"result: {result}")
+                #
+                #     self.tool_memory(
+                #         current_user_message=current_user_message,
+                #         conversation_memory=self.conversation_memory,
+                #         call=tool_calls.tool_calls[0],
+                #         result=result,
+                #         max_history_size=limits["tool_history"],
+                #     )
+                #     if VERBOSE:
+                #         print(f"tool_memory.history: {self.tool_memory.history_str()}")
+
+                try:
+                    planner = self.planner(
+                        # Only using the rewritten query here but not for updating memory
+                        # as the memory is not always updated for every iteration.
+                        # Also, the memory should concern answering the overarching
+                        # user question, while the planner can focus more on the current iteration.
                         current_user_message=query,
+                        tools=self.tools,
                         conversation_memory=self.conversation_memory,
                         tool_memory=self.tool_memory,
-                    ).rewritten_query
-                    if VERBOSE:
-                        print(f"rewritten query:{query}")
-
-                for tool in self.tools.values():
-                    tool_calls = dspy.ToolCalls.from_dict_list(
-                        [{"name": tool.name, "args": {"query": query}}]
+                        # FIXME: Change this number when we add more tools
+                        max_calls=2,
                     )
-                    result, internal_result = tool(query=query)
+                    if VERBOSE:
+                        print(f"Planner:{planner}")
+                except Exception as e:
+                    if VERBOSE:
+                        print(e)
+                    break
+
+                if VERBOSE:
+                    print(f"calls: {planner.tool_plan}")
+
+                for tool in planner.tool_plan.tool_calls:
+                    result, internal_result = self.tools[tool.name](**tool.args)
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
@@ -221,12 +244,10 @@ class Agent(dspy.Module):
                     self.tool_memory(
                         current_user_message=current_user_message,
                         conversation_memory=self.conversation_memory,
-                        call=tool_calls.tool_calls[0],
+                        call=tool,
                         result=result,
                         max_history_size=limits["tool_history"],
                     )
-                    if VERBOSE:
-                        print(f"tool_memory.history: {self.tool_memory.history_str()}")
 
                 if i == self.max_iterations - 1:
                     break
@@ -242,49 +263,14 @@ class Agent(dspy.Module):
                 if judgement:
                     break
 
-                # FIXME: Uncomment for true agentic functionality
-                # try:
-                #     planner = self.planner(
-                #         # Only using the rewritten query here but not for updating memory
-                #         # as the memory is not always updated for every iteration.
-                #         # Also, the memory should concern answering the overarching
-                #         # user question, while the planner can focus more on the current iteration.
-                #         current_user_message=query,
-                #         tools=self.tools,
-                #         conversation_memory=self.conversation_memory,
-                #         tool_memory=self.tool_memory,
-                #         # FIXME: Change this number when we add more tools
-                #         max_calls=2,
-                #     )
-                #     if VERBOSE:
-                #         print(f"Planner:{planner}")
-                # except Exception as e:
-                #     if VERBOSE:
-                #         print(e)
-                #     break
-                #
-                # if VERBOSE:
-                #     print(f"calls: {planner.tool_plan}")
-                #
-                # for tool in planner.tool_plan.tool_calls:
-                #     result, internal_result = self.tools[tool.name](**tool.args)
-                #
-                #     if "ids" in internal_result:
-                #         self.internal_memory["ids"] = (
-                #             self.internal_memory.get("ids", set())
-                #             | internal_result["ids"]
-                #         )
-                #
-                #     if VERBOSE:
-                #         print(f"result: {result}")
-                #
-                #     self.tool_memory(
-                #         current_user_message=current_user_message,
-                #         conversation_memory=self.conversation_memory,
-                #         call=tool,
-                #         result=result,
-                #         max_history_size=limits["tool_history"],
-                #     )
+                if self.rewrite_query:
+                    query = self.queryrewriter(
+                        current_user_message=query,
+                        conversation_memory=self.conversation_memory,
+                        tool_memory=self.tool_memory,
+                    ).rewritten_query
+                    if VERBOSE:
+                        print(f"rewritten query:{query}")
 
             # TODO: Could feed the intermediate response to judge
             # TODO: Could also try to make this async/threaded, so the output
