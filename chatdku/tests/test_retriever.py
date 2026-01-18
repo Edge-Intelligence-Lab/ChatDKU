@@ -7,6 +7,20 @@ from chatdku.core.tools.llama_index import DocRetrieverOuter, QueryTimeoutError,
 DocRetriever = DocRetrieverOuter({})
 
 
+def test_valid_queries():
+    assert len(DocRetriever("How often should I visit my advisor?", "COMPSCI")[0]) == 10
+    assert (
+        len(
+            DocRetriever(
+                "How often should I visit my advisor?", ["COMPSCI", "ARTS AND MEDIA"]
+            )[0]
+        )
+        == 10
+    )
+    assert len(DocRetriever("How often should I visit my advisor?", "")[0]) == 5
+    assert len(DocRetriever("", "")[0]) == 0
+
+
 def test_response_time():
     """Test for response time with varying sizes of queries"""
     SEMANTIC_QUERIES = [
@@ -61,3 +75,9 @@ def test_timeout_mechanism():
     with pytest.raises(QueryTimeoutError):
         with timeout(2):
             time.sleep(5)
+
+
+def test_invalid_inputs():
+    assert [], {} == DocRetriever()
+    assert [], {} == DocRetriever(2, 1)
+    assert [], {} == DocRetriever("", [])
