@@ -577,10 +577,9 @@ def DocRetrieverOuter(
                 print("Both retrieval methods failed")
                 return [], {}
 
-            overall_result = nodes_to_dicts(vector_result + keyword_result)
-
-            internal_result = {"ids": {node.node_id for node in overall_result}}
-
+            total = vector_result + keyword_result
+            overall_result = nodes_to_dicts(total)
+            internal_result = {"ids": {node.node_id for node in total}}
             return overall_result, internal_result
         except Exception as e:
             print(f"Unexpected error: {e}")
