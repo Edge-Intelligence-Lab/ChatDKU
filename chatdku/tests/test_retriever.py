@@ -3,7 +3,10 @@ import time
 import pytest
 
 from chatdku.core.tools.llama_index import DocRetrieverOuter, QueryTimeoutError, timeout
+from chatdku.setup import setup, use_phoenix
 
+setup()
+use_phoenix()
 DocRetriever = DocRetrieverOuter({})
 
 
