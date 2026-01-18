@@ -1,8 +1,9 @@
 import os
 import re
+import signal
 import string
 from collections.abc import Iterator, Mapping
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from enum import Enum
 from itertools import combinations
 from typing import Any
@@ -41,12 +42,35 @@ from chatdku.core.utils import truncate_tokens
 #     )
 
 
-df = pd.read_csv(config.url_csv_path)
-# Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
-df["file_path_forweb"] = df["file_path"].str.extract(r"(dku_website/.*)")
+class QueryTimeoutError(Exception):
+    """Raised when a query exceeds the timeout limit."""
+
+    pass
+
+
+@contextmanager
+def timeout(seconds: int = 5):
+    """Context manager for timing out operations."""
+
+    def timeout_handler(signum, frame):
+        raise QueryTimeoutError(f"Query exceeded {seconds} second timeout")
+
+    # Set the signal handler and alarm
+    original_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        # Restore original handler and cancel alarm
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, original_handler)
 
 
 def get_url(metadata: dict):
+    df = pd.read_csv(config.url_csv_path)
+    # Since `file_path` is the absolute path, we only want the part beginning with "dku_website"
+    df["file_path_forweb"] = df["file_path"].str.extract(r"(dku_website/.*)")
+
     try:
         try:
             path = metadata["file_path"]
@@ -498,7 +522,7 @@ def DocRetrieverOuter(
     def DocumentRetriever(
         semantic_query: str,
         keyword_query: str | list[str],
-    ) -> (list, dict):
+    ) -> tuple[list, dict]:
         """
         Retrieve relevant documents using hybrid search (semantic + keyword matching).
 
@@ -510,38 +534,53 @@ def DocRetrieverOuter(
             semantic_query: Natural language query for semantic/conceptual search
             keyword_query: Specific terms or phrases for BM25 keyword matching.
                 Can be a string or list of strings.
-                Should be small.
+            timeout_seconds: Maximum time allowed for query execution (default: 5)
 
         Returns:
-            List containing matched documents
+            Tuple of (matched_documents_list, internal_result_dict)
+            Returns ([], {}) if query times out or fails
         """
+        try:
+            # Input validation
+            if not semantic_query or not isinstance(semantic_query, str):
+                raise ValueError("semantic_query must be a non-empty string")
 
-        # TODO: Error Handling
+            for i in range(len(keyword_query)):
+                keyword_query[i] = str(keyword_query[i])
 
-        # if use_reranker:
-        #     reranker = get_reranker(reranker_top_n)
-        # else:
-        #     reranker = None
+            # Retrieve documents with individual error handling
+            try:
+                vector_result = __VectorRetriever(semantic_query)
+            except Exception as e:
+                print(f"Vector retrieval failed: {e}")
+                vector_result = []
 
-        vector_result = __VectorRetriever(semantic_query)
-        keyword_result = __KeywordRetriever(keyword_query)
+            if keyword_query:
+                try:
+                    with timeout():
+                        keyword_result = __KeywordRetriever(keyword_query)
+                except QueryTimeoutError as e:
+                    print(f"Keyword_retriever timeout: {e}")
+                    keyword_result = []
+                except Exception as e:
+                    print(f"Keyword retrieval failed: {e}")
+                    keyword_result = []
 
-        overall_result = nodes_to_dicts(vector_result + keyword_result)
+            # Check if both retrievers failed
+            if not vector_result and not keyword_result:
+                print("Both retrieval methods failed")
+                return [], {}
 
-        # Probably should use the semantic_query
-        # to rerank the documents
-        # if use_reranker:
-        #     tokenizer = AutoTokenizer.from_pretrained(
-        #         "cross-encoder/ms-marco-MiniLM-L6-v2"
-        #     )
-        #
-        #     retrieved_nodes = reranker.postprocess_nodes(
-        #         overall_result,
-        #         # BERT token limit is 512,
-        #         # however, we should leave some space for special tokens
-        #         query_str=truncate_tokens(query, 500, tokenizer=tokenizer),
-        #     )
+            overall_result = nodes_to_dicts(vector_result + keyword_result)
 
-        internal_result = {"ids": {node.node_id for node in overall_result}}
+            internal_result = {"ids": {node.node_id for node in overall_result}}
 
-        return overall_result, internal_result
+            return overall_result, internal_result
+
+        except ValueError as e:
+            print(f"Invalid input: {e}")
+            return [], {}
+
+        except Exception as e:
+            print(f"Unexpected error in DocumentRetriever: {e}")
+            return [], {}
