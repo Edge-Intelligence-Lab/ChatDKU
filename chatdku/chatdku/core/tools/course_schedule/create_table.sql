@@ -1,7 +1,7 @@
 CREATE TABLE dku_class_schedule (
     id SERIAL PRIMARY KEY,
 
-    term VARCHAR(10),          -- 去掉 NOT NULL
+    term VARCHAR(20),          -- 去掉 NOT NULL
     session VARCHAR(10),
 
     subject VARCHAR(50),

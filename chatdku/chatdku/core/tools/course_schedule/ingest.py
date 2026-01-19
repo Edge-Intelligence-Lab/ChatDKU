@@ -27,6 +27,14 @@ class ScheduleIngestor:
 
     def __init__(self, args):
         self.args = args
+
+        if not args.term or not str(args.term).strip():
+            raise ValueError(
+                "Argument --term is required and cannot be empty. "
+                "Example: --term 'Spring 2026'"
+            )
+
+        self.term = args.term.strip()
         self.setup_logging()
         self.setup_database_connection()
         self.load_schema()
@@ -118,13 +126,19 @@ class ScheduleIngestor:
                 }
 
                 cleaned = self.clean_row(row_dict)
+                cleaned["term"] = self.term
+                
+                if "term" not in cleaned or not cleaned["term"]:
+                    raise RuntimeError(
+                        f"Missing term when ingesting row from {file_path}"
+                    )
                 self.store_row(cleaned)
 
     # ===== CLEANING =====
 
     def clean_row(self, row: dict) -> dict:
         EXCEL_TO_DB_COL = {
-            "Term": "term",
+            # "Term": "term",
             "Session": "session",
             "Subject": "subject",
             "Catalog": "catalog",
@@ -215,6 +229,12 @@ def main():
         "--schema",
         default="schedule_schema.json",
         help="JSON schema file",
+    )
+
+    parser.add_argument(
+        "--term",
+        default="Spring 2026",
+        help="Term of the course schedule (e.g., Spring 2026)",
     )
 
     parser.add_argument("--db-host")

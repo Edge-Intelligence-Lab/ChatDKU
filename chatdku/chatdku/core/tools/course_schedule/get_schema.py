@@ -21,7 +21,7 @@ def fetch_course_schedule_schema(conn):
     # 手动构建 schema（基于你的数据结构）
     schema_desc = """TABLE: dku_class_schedule
         DATABASE COLUMNS (use these exact names in SQL):
-        - term (TEXT) -- Academic term code (e.g., '2261')
+        - term (TEXT) -- Academic term code (e.g., 'Spring 2026')
         - session (TEXT) -- Session number
         - subject (TEXT) -- Course subject code (e.g., 'DKU', 'GERMAN', 'JAPANESE', 'MATH', 'COMPSCI')
         - catalog (TEXT) -- Course catalog number (e.g., '102', '391', '101')

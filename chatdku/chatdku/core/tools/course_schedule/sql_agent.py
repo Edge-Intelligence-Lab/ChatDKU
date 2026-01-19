@@ -309,6 +309,7 @@ class SQLAgent(dspy.Module):
                 columns=columns,
                 rows=rows,
             )
+            # print(result["raw_rows"])
             return {
                 "sql": sql,
                 "answer": result.answer,

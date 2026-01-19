@@ -6,7 +6,7 @@
   "properties": {
     "term": {
       "type": "string",
-      "description": "Academic term code (e.g., 2261)."
+      "description": "Academic term code (e.g., Spring 2026)."
     },
     "session": {
       "type": "string",

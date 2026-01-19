@@ -32,7 +32,7 @@ conn = psycopg2.connect(config.psql_uri)
 
 agent = SQLAgent(conn)
 
-question = "Which course does prof. bing luo teach and when is the meeting time? Which session does he teach?"
+question = "Which course does prof. bing luo teach in 2026 spring and when is the meeting time? Which session does he teach?"
 
 result = agent(question)
 
