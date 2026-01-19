@@ -1,6 +1,6 @@
 import dspy
 
-VERBOSE = True
+VERBOSE = False
 
 CURRENT_USER_MESSAGE_FIELD = dspy.InputField(desc="The current user message to answer.")
 CONVERSATION_HISTORY_FIELD = dspy.InputField(
