@@ -181,37 +181,8 @@ class Agent(dspy.Module):
             if VERBOSE:
                 print(f"iteration: {i}")
             with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                # for tool in self.tools.values():
-                #     tool_calls = dspy.ToolCalls.from_dict_list(
-                #         [{"name": tool.name, "args": {"query": query}}]
-                #     )
-                #     result, internal_result = tool(query=query)
-                #
-                #     if "ids" in internal_result:
-                #         self.internal_memory["ids"] = (
-                #             self.internal_memory.get("ids", set())
-                #             | internal_result["ids"]
-                #         )
-                #
-                #     if VERBOSE:
-                #         print(f"result: {result}")
-                #
-                #     self.tool_memory(
-                #         current_user_message=current_user_message,
-                #         conversation_memory=self.conversation_memory,
-                #         call=tool_calls.tool_calls[0],
-                #         result=result,
-                #         max_history_size=limits["tool_history"],
-                #     )
-                #     if VERBOSE:
-                #         print(f"tool_memory.history: {self.tool_memory.history_str()}")
-
                 try:
                     planner = self.planner(
-                        # Only using the rewritten query here but not for updating memory
-                        # as the memory is not always updated for every iteration.
-                        # Also, the memory should concern answering the overarching
-                        # user question, while the planner can focus more on the current iteration.
                         current_user_message=query,
                         tools=self.tools,
                         conversation_memory=self.conversation_memory,
@@ -230,7 +201,12 @@ class Agent(dspy.Module):
                     print(f"calls: {planner.tool_plan}")
 
                 for tool in planner.tool_plan.tool_calls:
-                    result, internal_result = self.tools[tool.name](**tool.args)
+                    result = []
+                    internal_result = {}
+                    try:
+                        result, internal_result = self.tools[tool.name](**tool.args)
+                    except Exception as e:
+                        result = str(e)
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
