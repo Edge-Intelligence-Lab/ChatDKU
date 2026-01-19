@@ -10,8 +10,8 @@ import redis
 import threading
 from datetime import datetime
 
-from ChatDKU.chatdku.chatdku.config import config
-from ChatDKU.chatdku.chatdku.core.tools.email.email_tool import EmailTools  
+from chatdku.chatdku.config import config
+from chatdku.chatdku.core.tools.email.email_tool import EmailTools  
 
 
 # ------------ Redis 连接配置 ------------
