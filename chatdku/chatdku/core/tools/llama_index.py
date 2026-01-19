@@ -6,7 +6,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, nullcontext
 from enum import Enum
 from itertools import combinations
-from typing import Any, Optional
+from typing import Any
 
 import chromadb
 import pandas as pd
@@ -521,7 +521,7 @@ def DocRetrieverOuter(
 
     def DocumentRetriever(
         semantic_query: str,
-        keyword_query: Optional(str | list[str]),
+        keyword_query: str | list[str] = None,
     ) -> tuple[list, dict]:
         """
         Retrieve relevant documents using hybrid search (semantic + keyword matching).
@@ -531,8 +531,8 @@ def DocRetrieverOuter(
         for exact term matching.
 
         Args:
-            semantic_query: Natural language query for semantic/conceptual search
-            keyword_query: Specific terms or phrases for BM25 keyword matching.
+            semantic_query (str): Natural language query for semantic/conceptual search
+            keyword_query (Optional(str | list[str])): Specific terms or phrases for BM25 keyword matching.
                 Can be a string or list of strings.
 
         Returns:
