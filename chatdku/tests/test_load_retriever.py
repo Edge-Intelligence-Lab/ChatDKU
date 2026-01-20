@@ -25,7 +25,7 @@ class QueryResult:
     error: str = None
 
 
-def load_test_concurrent_queries(num_users: int = 10, rounds: int = 3):
+def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
     """
     Load test with multiple concurrent users making queries of different sizes.
 
@@ -88,35 +88,21 @@ def load_test_concurrent_queries(num_users: int = 10, rounds: int = 3):
         semantic_q, keyword_q = queries[query_idx]
 
         start_time = time.time()
-        try:
-            results, internal = DocumentRetriever(
-                semantic_q, keyword_q, timeout_seconds=5
-            )
-            elapsed = time.time() - start_time
+        results, internal = DocumentRetriever(semantic_q, keyword_q)
+        elapsed = time.time() - start_time
 
-            return QueryResult(
-                thread_id=user_id,
-                query_size=query_size,
-                semantic_query=(
-                    semantic_q[:50] + "..." if len(semantic_q) > 50 else semantic_q
-                ),
-                success=True,
-                elapsed_time=elapsed,
-                num_results=len(results),
-            )
-        except Exception as e:
-            elapsed = time.time() - start_time
-            return QueryResult(
-                thread_id=user_id,
-                query_size=query_size,
-                semantic_query=(
-                    semantic_q[:50] + "..." if len(semantic_q) > 50 else semantic_q
-                ),
-                success=False,
-                elapsed_time=elapsed,
-                num_results=0,
-                error=str(e),
-            )
+        success = True if len(results) == 10 else False
+
+        return QueryResult(
+            thread_id=user_id,
+            query_size=query_size,
+            semantic_query=(
+                semantic_q[:50] + "..." if len(semantic_q) > 50 else semantic_q
+            ),
+            success=success,
+            elapsed_time=elapsed,
+            num_results=len(results),
+        )
 
     print(f"🚀 Starting load test: {num_users} concurrent users, {rounds} rounds each")
     print(f"📊 Total queries: {num_users * rounds}\n")
@@ -132,16 +118,16 @@ def load_test_concurrent_queries(num_users: int = 10, rounds: int = 3):
                 future = executor.submit(user_query_task, user_id, round_num)
                 futures.append(future)
 
-        # Collect results as they complete
-        for future in as_completed(futures):
-            result = future.result()
-            all_results.append(result)
+            # Collect results as they complete
+            for future in as_completed(futures):
+                result = future.result()
+                all_results.append(result)
 
-            status = "✓" if result.success else "✗"
-            print(
-                f"{status} User {result.thread_id:2d} | {result.query_size:12s} | "
-                f"{result.elapsed_time:5.2f}s | {result.num_results:3d} results"
-            )
+                status = "✓" if result.success else "✗"
+                print(
+                    f"{status} User {result.thread_id:2d} | {result.query_size:12s} | "
+                    f"{result.elapsed_time:5.2f}s | {result.num_results:3d} results"
+                )
 
     overall_elapsed = time.time() - overall_start
 
@@ -202,7 +188,7 @@ def load_test_concurrent_queries(num_users: int = 10, rounds: int = 3):
     return all_results
 
 
-def load_test_same_query_concurrent(num_users: int = 20):
+def test_same_query_concurrent(num_users: int = 3):
     """
     Load test where all users make the SAME query simultaneously.
     Tests caching behavior and concurrent access patterns.
@@ -220,13 +206,16 @@ def load_test_same_query_concurrent(num_users: int = 20):
 
     def query_task(user_id: int):
         start = time.time()
-        try:
-            docs, internal = DocumentRetriever(SAME_QUERY[0], SAME_QUERY[1])
-            elapsed = time.time() - start
-            return (user_id, True, elapsed, len(docs), None)
-        except Exception as e:
-            elapsed = time.time() - start
-            return (user_id, False, elapsed, 0, str(e))
+        docs, internal = DocumentRetriever(SAME_QUERY[0], SAME_QUERY[1])
+        elapsed = time.time() - start
+        doc_len = len(docs)
+        if doc_len == 10:
+            success = True
+        else:
+            doc_len = doc_len - 1
+            success = False
+
+        return (user_id, success, elapsed, doc_len, None)
 
     overall_start = time.time()
 

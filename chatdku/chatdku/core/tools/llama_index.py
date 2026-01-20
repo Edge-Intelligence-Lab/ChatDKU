@@ -154,7 +154,13 @@ def chroma_result_to_nodes(result: dict) -> NodeWithScore:
 
 
 def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
-    return [{"text": node.text, "metadata": node.metadata} for node in nodes]
+    result = []
+    for node in nodes:
+        if isinstance(node, NodeWithScore):
+            result.append([{"text": node.text, "metadata": node.metadata}])
+        if isinstance(node, str):
+            result.append(node)
+    return result
 
 
 # Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
@@ -558,39 +564,35 @@ def DocRetrieverOuter(
 
             # Retrieve documents with individual error handling
             try:
-                # Input validation
-                if not semantic_query or not isinstance(semantic_query, str):
-                    raise ValueError("semantic_query must be a non-empty string")
-
                 with timeout() as ctx:
-                    vector_result = ctx(__VectorRetriever, query=semantic_query)
+                    vector_result = ctx.run(__VectorRetriever, query=semantic_query)
             except ValueError as e:
-                print(str(e))
+                vector_result.append(f"semantic_query had an input error: {e}")
             except QueryTimeoutError as e:
-                print(f"Vector retriever timeout: {e}")
+                vector_result.append(f"Vector retriever timeout: {e}")
             except Exception as e:
-                print(f"Vector retrieval failed: {e}")
+                vector_result.append(f"Vector retrieval failed: {e}")
 
             if keyword_query:
                 try:
                     with timeout() as ctx:
-                        keyword_result = ctx(__KeywordRetriever, query=keyword_query)
+                        keyword_result = ctx.run(
+                            __KeywordRetriever, query=keyword_query
+                        )
                 except QueryTimeoutError as e:
-                    print(f"Keyword retriever timeout: {e}")
+                    keyword_result.append(f"Keyword retriever timeout: {e}")
                 except Exception as e:
-                    print(f"Keyword retrieval failed: {e}")
-
-            # Check if both retrievers failed
-            if not vector_result and not keyword_result:
-                print("Both retrieval methods failed")
-                return [], {}
+                    keyword_result.append(f"Keyword retrieval failed: {e}")
 
             total = vector_result + keyword_result
             overall_result = nodes_to_dicts(total)
-            internal_result = {"ids": {node.node_id for node in total}}
+            internal_result = {
+                "ids": {
+                    node.node_id for node in total if isinstance(node, NodeWithScore)
+                }
+            }
             return overall_result, internal_result
         except Exception as e:
-            print(f"Unexpected error: {e}")
-            return [], {}
+            return [f"Unexpected error: {e}"], {}
 
     return DocumentRetriever
