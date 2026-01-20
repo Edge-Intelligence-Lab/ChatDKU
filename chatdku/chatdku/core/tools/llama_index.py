@@ -1,8 +1,9 @@
 import os
 import re
-import signal
 import string
 from collections.abc import Iterator, Mapping
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import contextmanager, nullcontext
 from enum import Enum
 from itertools import combinations
@@ -50,20 +51,28 @@ class QueryTimeoutError(Exception):
 
 @contextmanager
 def timeout(seconds: int = 5):
-    """Context manager for timing out operations."""
+    """Thread-safe timeout using concurrent.futures."""
 
-    def timeout_handler(signum, frame):
-        raise QueryTimeoutError(f"Query exceeded {seconds} second timeout")
+    class TimeoutContext:
+        def __init__(self):
+            self.executor = ThreadPoolExecutor(max_workers=1)
+            self.future = None
 
-    # Set the signal handler and alarm
-    original_handler = signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(seconds)
+        def run(self, func, *args, **kwargs):
+            self.future = self.executor.submit(func, *args, **kwargs)
+            try:
+                return self.future.result(timeout=seconds)
+            except FuturesTimeoutError:
+                raise QueryTimeoutError(f"Query exceeded {seconds} second timeout")
+            finally:
+                self.executor.shutdown(wait=False)
+
+    ctx = TimeoutContext()
     try:
-        yield
+        yield ctx
     finally:
-        # Restore original handler and cancel alarm
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, original_handler)
+        if ctx.executor:
+            ctx.executor.shutdown(wait=False)
 
 
 def get_url(metadata: dict):
@@ -553,8 +562,8 @@ def DocRetrieverOuter(
                 if not semantic_query or not isinstance(semantic_query, str):
                     raise ValueError("semantic_query must be a non-empty string")
 
-                with timeout():
-                    vector_result = __VectorRetriever(semantic_query)
+                with timeout() as ctx:
+                    vector_result = ctx(__VectorRetriever, query=semantic_query)
             except ValueError as e:
                 print(str(e))
             except QueryTimeoutError as e:
@@ -564,8 +573,8 @@ def DocRetrieverOuter(
 
             if keyword_query:
                 try:
-                    with timeout():
-                        keyword_result = __KeywordRetriever(keyword_query)
+                    with timeout() as ctx:
+                        keyword_result = ctx(__KeywordRetriever, query=keyword_query)
                 except QueryTimeoutError as e:
                     print(f"Keyword retriever timeout: {e}")
                 except Exception as e:
