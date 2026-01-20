@@ -215,3 +215,6 @@ benchmarks/questions.json
 **/nohup.out
 **/dku_website
 **/locust_logs
+
+#For testing
+**/benchmarks
