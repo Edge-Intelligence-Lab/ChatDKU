@@ -150,14 +150,14 @@ def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
 
     if successful:
         times = [r.elapsed_time for r in successful]
-        print(f"\n⏱️  Response Times:")
+        print("\n⏱️  Response Times:")
         print(f"   Average: {sum(times)/len(times):.3f}s")
         print(f"   Min:     {min(times):.3f}s")
         print(f"   Max:     {max(times):.3f}s")
         print(f"   Median:  {sorted(times)[len(times)//2]:.3f}s")
 
     # Break down by query size
-    print(f"\n📏 Performance by Query Size:")
+    print("\n📏 Performance by Query Size:")
     by_size = defaultdict(list)
     for r in successful:
         by_size[r.query_size].append(r.elapsed_time)
@@ -172,7 +172,7 @@ def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
     print(f"🕐 Total time: {overall_elapsed:.2f}s")
 
     if failed:
-        print(f"\n❌ Failed Query Details:")
+        print("\n❌ Failed Query Details:")
         for r in failed[:5]:  # Show first 5 failures
             print(f"   User {r.thread_id} ({r.query_size}): {r.error}")
 
