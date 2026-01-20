@@ -83,7 +83,7 @@ def get_url(metadata: dict):
     try:
         try:
             path = metadata["file_path"]
-        except:
+        except Exception:
             path = metadata["file_directory"] + "/" + metadata["filename"]
 
         if "dku_website" in path:
@@ -163,7 +163,7 @@ def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
     return result
 
 
-# Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
+# Adapted from: https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308 # noqa: E501
 def _flatten(
     key_values: Mapping[str, Any],
 ) -> Iterator[tuple[str, AttributeValue]]:
@@ -427,10 +427,13 @@ def DocRetrieverOuter(
 
                 # FIXME: Hack for improving performance with multiple keywords.
                 # There ought to be better ways than this.
-                # Combinations of the original keywords are generated to "boost" the result,
+                # Combinations of the original keywords are generated
+                # to "boost" the result,
                 # e.g. searching for "a b" would become "a OR b OR (a AND b)".
-                # Without boosting, documents with a lot of either just "a" or "b" would be given
-                # a heavier preferences, even though we would prefer documents with both "a" and "b".
+                # Without boosting, documents with a lot of either just
+                # "a" or "b" would be given a heavier preferences,
+                # even though we would prefer documents with
+                # both "a" and "b".
                 # Larger weights are given to combinations of larger size.
                 keywords = []
                 weights = []
@@ -490,27 +493,14 @@ def DocRetrieverOuter(
                 # if len(files) == 0:
                 #     docs_str = os.path.splitext(files[0])[0]
                 # else:
-                #     docs_str = "|".join(f"{os.path.splitext(name)[0]}" for name in files)
+                #     docs_str = "|".join(
+                #         f"{os.path.splitext(name)[0]}" for name in files
+                #     )
                 #
-                # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))"
+                # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))" # noqa: E501
                 # query_str = query_str + f" {user_clause}"
 
-            # NOTE: I think it will be better to use PARAMS for security reasons.
-            # However, it appears that RediSearch has an issue using both parameters and query attributes.
-            #
-            # You can confirm this issue with:
-            # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
-            #   DIALECT 2 LIMIT 0 1 WITHSCORES EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 alpha beta"
-            # And:
-            # FT.SEARCH idx:test "@text:(($keyword_0) => { $weight: 1 } | ($keyword_1) => { $weight: 1 } | ($keyword_2) => { $weight: 2 })"
-            #   DIALECT 2 LIMIT 0 1 EXPLAINSCORE PARAMS 6 keyword_0 "alpha" keyword_1 "beta" keyword_2 "alpha beta"
-            #
-            # Using parameters would be like this:
-            # params = {f"keyword_{i}": keyword for i, keyword in enumerate(keywords)}
-            # query_str = " | ".join([f"(${param}) => {{ $weight: {weight} }}" for param, weight in zip(params, weights)])
-            # query_cmd = Query(query_str).dialect(2).scorer("BM25").paging(0, retriever_top_k).with_scores()
-            # results = self.client.ft("idx:test").search(query_cmd, params)
-
+            # See issue #175 for not using PARAMS
             query_cmd = (
                 Query(query_str)
                 .dialect(2)
