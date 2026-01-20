@@ -11,8 +11,6 @@ from django.core.files.storage import default_storage
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 from drf_spectacular.utils import extend_schema_view, OpenApiParameter, extend_schema,OpenApiResponse
-
-
 from core.tasks import update_user_chroma
 from .utils import slugify
 
@@ -48,22 +46,39 @@ def allowed_file(filename):
 
 
 @extend_schema_view(
-        post=extend_schema(
-            parameters=PARAMETERS,
-            request=UploadFileSerializer,
-            responses = {
-                201: OpenApiResponse(
-                    response={
-                        'type': 'object',
-                        'properties': {
-                            'message': {'type': 'string'},
-                        },
+    post=extend_schema(
+        description="Uploads files for a given user",
+        parameters=PARAMETERS,
+        request=UploadFileSerializer,
+        responses={
+            201: OpenApiResponse(
+                response={
+                    "type": "object",
+                    "properties": {
+                        "message": {"type": "string"}
                     }
-                )
-            },
-            description="Uploads files for a given user"
-
-        )
+                }
+            )
+        }
+    ),
+    get=extend_schema(
+        description="Returns files for a given user",
+        parameters=PARAMETERS,
+        responses={
+            200: OpenApiResponse(
+                response={
+                    "type": "object",
+                    "properties": {
+                        "netid": {"type": "string"},
+                        "document": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        }
+                    }
+                }
+            )
+        }
+    )
 )
 @parser_classes([MultiPartParser, FormParser])
 class UploadView(APIView):
@@ -104,27 +119,6 @@ class UploadView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-    @extend_schema_view(
-            get=extend_schema(
-                parameters=PARAMETERS,
-                responses={
-                    200:OpenApiResponse(response={
-                        'type':'object',
-                        'properties':{
-                            'netid':{
-                                'type':'string',
-                            },
-                            'document':{
-                                'type':'array',
-                                'items': {'type': 'string'}
-                            }
-                        }
-                        
-                    })
-                },
-                description="Returns files for a given user"
-            )   
-    )
     def get(self,request):
         try:
             docs=list(request.user.files.values_list("filename",flat=True))
