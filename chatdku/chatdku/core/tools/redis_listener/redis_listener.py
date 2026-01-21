@@ -1,7 +1,4 @@
 import dotenv
-
-dotenv.load_dotenv()
-
 import os
 import sys
 import time
@@ -14,6 +11,7 @@ from datetime import datetime
 from chatdku.chatdku.config import config
 from chatdku.chatdku.core.tools.email.email_tool import EmailTools
 
+dotenv.load_dotenv()
 
 # ------------ Redis 连接配置 ------------
 REDIS_HOST = config.redis_host
