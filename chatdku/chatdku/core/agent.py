@@ -3,7 +3,7 @@ import dspy
 
 from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
 
-# from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 
 # from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.plan import Planner
@@ -119,7 +119,16 @@ class Agent(dspy.Module):
                     internal_memory=self.internal_memory,
                 )
             ),
+            "QueryCurriculumDB": dspy.Tool(
+                QueryCurriculumOuter(
+                    internal_memory=self.internal_memory,
+                    user_id=user_id,
+                    search_mode=search_mode,
+                    files=files,
+                )
+            )
         }
+        print(f"[Agent] Tools constructed: {list(self.tools.keys())}")
 
         if hasattr(config, "tracer"):
             span = config.tracer.start_span("Agent")
@@ -202,7 +211,9 @@ class Agent(dspy.Module):
                     tool_calls = dspy.ToolCalls.from_dict_list(
                         [{"name": tool.name, "args": {"query": query}}]
                     )
+                    print(f"[Agent] Calling tool {tool.name} with query={query!r}")
                     result, internal_result = tool(query=query)
+                    print(f"[Agent] Tool {tool.name} returned (type={type(result)})")
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
