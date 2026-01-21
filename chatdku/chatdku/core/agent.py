@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import dspy
+import sys
 
 from chatdku.core.tools.llama_index import VectorRetrieverOuter, KeywordRetrieverOuter
 
@@ -27,6 +28,9 @@ from openinference.semconv.trace import (
 from chatdku.config import config
 from chatdku.setup import setup, use_phoenix
 from chatdku.core.utils import load_conversation
+
+# When `--dev` is passed to the script, enable additional debug prints in this module.
+DEBUG_DEV = False
 
 
 class Agent(dspy.Module):
@@ -128,7 +132,8 @@ class Agent(dspy.Module):
                 )
             )
         }
-        print(f"[Agent] Tools constructed: {list(self.tools.keys())}")
+        if DEBUG_DEV:
+            print(f"[Agent] Tools constructed: {list(self.tools.keys())}")
 
         if hasattr(config, "tracer"):
             span = config.tracer.start_span("Agent")
@@ -211,9 +216,11 @@ class Agent(dspy.Module):
                     tool_calls = dspy.ToolCalls.from_dict_list(
                         [{"name": tool.name, "args": {"query": query}}]
                     )
-                    print(f"[Agent] Calling tool {tool.name} with query={query!r}")
+                    if DEBUG_DEV:
+                        print(f"[Agent] Calling tool {tool.name} with query={query!r}")
                     result, internal_result = tool(query=query)
-                    print(f"[Agent] Tool {tool.name} returned (type={type(result)})")
+                    if DEBUG_DEV:
+                        print(f"[Agent] Tool {tool.name} returned (type={type(result)})")
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (
