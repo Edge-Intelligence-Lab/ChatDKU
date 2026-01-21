@@ -24,7 +24,7 @@ DB = 0
 # ------------ 监控配置 ------------
 PING_INTERVAL = 10  # 检查间隔(秒)
 SLOW_THRESHOLD = 5  # 慢响应阈值(秒)
-MAX_SLOW_COUNT = 5  # 连续慢响应次数触发报警
+MAX_SLOW_COUNT = 10  # 连续慢响应次数触发报警
 PING_TIMEOUT = 7  # ping 超时时间(秒)
 ALERT_COOLDOWN = 300  # 报警冷却时间(秒)，避免频繁发送
 
