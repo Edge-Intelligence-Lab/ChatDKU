@@ -18,12 +18,14 @@ from logging.handlers import RotatingFileHandler
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 from chatdku.setup import setup, use_phoenix
-from chatdku.core.agent import Agent, CustomClient
+from chatdku.core.agent import Agent
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_admin import Admin
 from config import Config
 import os
+from chatdku.config import config
+
 
 
 app = Flask(__name__,template_folder='templates')
@@ -45,10 +47,18 @@ migrate = Migrate(app=app,db=db)
 from app.admin import Base
 admin_config = Admin(name="Dashboard", template_mode="bootstrap4", app=app,index_view=Base())
 
+lm = dspy.LM(
+    model="openai/" + config.backup_llm,
+    api_base=config.backup_llm_url,
+    api_key=config.llm_api_key,
+    model_type="chat",
+    max_tokens=config.context_window,
+    temperature=config.llm_temperature,
+)
+
 setup()
 use_phoenix()
-llama_client = CustomClient()
-dspy.settings.configure(lm=llama_client)
+dspy.settings.configure(lm=lm)
 agent = Agent(max_iterations=5, streaming=True, get_intermediate=False)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
