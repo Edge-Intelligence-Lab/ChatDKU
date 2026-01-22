@@ -27,12 +27,15 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<link rel="icon" href="/favicon-small.png" sizes="any" />
+			</head>
 			<body className={`${inter.variable} antialiased`}>
 				<ThemeProvider
 					attribute="class"
 					defaultTheme="system"
 					enableSystem
-					// disableTransitionOnChange
+				// disableTransitionOnChange
 				>
 					{children}
 				</ThemeProvider>
