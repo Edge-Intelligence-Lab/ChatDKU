@@ -164,6 +164,8 @@ class ScheduleIngestor:
             db_col = EXCEL_TO_DB_COL.get(key)
             if db_col:
                 cleaned[db_col] = empty_to_none(value)
+        if "catalog" in cleaned and isinstance(cleaned["catalog"], str):
+            cleaned["catalog"] = cleaned["catalog"].strip()
 
         # 处理 days 列，组合 Mon-Fri
         days_list = []

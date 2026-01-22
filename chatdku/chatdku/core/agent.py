@@ -22,6 +22,7 @@ from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.tools.llama_index import DocRetrieverOuter
 from chatdku.core.utils import load_conversation
 from chatdku.setup import setup, use_phoenix
+from chatdku.core.tools.sql_outer_agent import SQLAgentOuter
 
 # from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
@@ -108,7 +109,7 @@ class Agent(dspy.Module):
                     files=files,
                 )
             ),
-            "SQLAgent": dspy.Tool(
+            "SQLAgentCallable": dspy.Tool(
                 SQLAgentOuter(internal_memory=self.internal_memory)
             )
         }
@@ -201,12 +202,14 @@ class Agent(dspy.Module):
                     print(f"calls: {planner.tool_plan}")
 
                 for tool in planner.tool_plan.tool_calls:
+                    print(f"Planner tool plan: {[tool.name for tool in planner.tool_plan.tool_calls]}")
                     result = []
                     internal_result = {}
                     try:
                         result, internal_result = self.tools[tool.name](**tool.args)
                     except Exception as e:
                         result = str(e)
+                    print(f"{tool.name} returned: {result}, internal: {internal_result}")
 
                     if "ids" in internal_result:
                         self.internal_memory["ids"] = (

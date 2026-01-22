@@ -31,7 +31,13 @@ def SQLAgentOuter(internal_memory: dict):
     sql_agent = SQLAgent(conn)
 
     def SQLAgentCallable(query: str):
-        """Execute a query and return structured results."""
+        """Query the official DKU course database.
+        Use this tool to answer questions about:
+        - which course a professor teaches
+        - course offerings by semester (e.g., Spring 2026)
+        - instructor–course assignments
+        - course session and time
+        This tool is the authoritative source for course information."""
         span = None
         if hasattr(config, "tracer"):
             span = config.tracer.start_span("SQL Agent")
