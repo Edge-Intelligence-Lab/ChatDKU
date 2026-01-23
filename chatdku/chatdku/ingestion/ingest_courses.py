@@ -39,8 +39,27 @@ def reader_worker(pdf_path, buffer: Queue):
     # Regex pattern to match course entries (same as before)
     pattern = r"((?:[A-Z]+\s+\d{3})(?:/[A-Z]+\s+\d{3})*)\s+([^\(]+?)\s*\((\d+)\s+credits?\)(.*?)(?=\n(?:[A-Z]+\s+\d{3}(?:/[A-Z]+\s+\d{3})*)\s+|$)"
 
+    # Helper to extract printed page label from page text
+    def _extract_label(txt: str) -> int | None:
+        """Return a page label if a line near the bottom consists only of digits.
+        Returns None if no such label is found.
+        """
+        lines = txt.strip().splitlines()
+        for line in reversed(lines[-5:]):  # look at last 5 lines
+            stripped = line.strip()
+            if stripped.isdigit():
+                try:
+                    return int(stripped)
+                except ValueError:
+                    continue
+        return None
+
     # Iterate with a sliding window of the current page + the next page (if any)
     for i, page_txt in enumerate(page_texts):
+        # Determine most accurate page number: printed label or fallback index
+        extracted_label = _extract_label(page_txt)
+        page_number = extracted_label if extracted_label is not None else i + 1
+
         # Build the combined text for the current window
         combined = page_txt
         if i + 1 < len(page_texts):
@@ -53,7 +72,6 @@ def reader_worker(pdf_path, buffer: Queue):
             if match.start() >= len(page_txt):
                 continue
 
-            page_number = i + 1  # PDF pages are 1‑based in PyPDF
             # Extract basic fields
             course_code = match.group(1).strip()
             course_name = match.group(2).strip()
@@ -111,7 +129,7 @@ def embed_worker(buffer: Queue):
         name=config.courses_col,
         embedding_function=HuggingFaceEmbeddingServer(
             url=config.tei_url + "/" + config.embedding + "/embed"
-        ),
+        ),  # type: ignore
     )
     while True:
         course = buffer.get()
@@ -121,19 +139,24 @@ def embed_worker(buffer: Queue):
             break
 
         log.info(f"Adding course: {course.get('course_code')}")
-        text = str(course)
+        text = str(
+            {
+                "course_code": course.get("course_code"),
+                "course_name": course.get("course_name"),
+                "credits": course.get("credits"),
+                "description": course.get("description"),
+                "prerequisites": course.get("prerequisites"),
+            }
+        )
         id = hashlib.md5(text.encode()).hexdigest()
-        reqs = course.get("prerequisites")
         collection.add(
             ids=[id],
             documents=[text],
             metadatas=[
                 {
-                    # TODO: Add URL
                     "file_name": course.get("file_name"),
                     "course_code": course.get("course_code"),
                     "course_name": course.get("course_name"),
-                    "prerequisites": reqs if reqs else "None",
                     "page_number": course.get("page_number"),
                 }
             ],

@@ -7,25 +7,31 @@ import re
 
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
+from llama_index.core.schema import NodeWithScore, TextNode
 
 from chatdku.config import config
 
 
-def chroma_result_to_nodes(result: dict) -> list[dict]:
+def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
     ids = result["ids"][0]
     texts = result["documents"][0]
     metadatas = result["metadatas"][0]
     scores = result["distances"][0]
 
     return [
-        {
-            "node": {
-                "node_id": ids[i],
-                "text": texts[i],
-                "metadata": metadatas[i],
-            },
-            "score": float(scores[i]),
-        }
+        NodeWithScore(
+            node=TextNode(
+                node_id=ids[i],
+                text=texts[i],
+                metadata={
+                    "filename": metadatas[i].get("file_name", "Not given."),
+                    # HACK: Hardcoded URL for now
+                    "url": "https://duke.box.com/s/4qez9bss1vjmkccn2rcqbhphcmh9wpxs",
+                    "page_number": metadatas[i].get("page_number", "Not given."),
+                },
+            ),
+            score=float(scores[i]),
+        )
         for i in range(len(ids))
     ]
 
@@ -38,10 +44,14 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
     and applies metadata filtering for exact matches. Text-based queries use
     semantic search via embeddings.
 
+    Will return course descriptions, prerequisites, course code, as well as
+    in which page the course is located in the student bulletin.
+
     Args:
         course_queries (list[str]): List of search queries. Can be course codes
             in format "DEPT NNN" (e.g. "BEHAVSCI 102", "COMPSCI 101") or natural language
-            queries (e.g., "introduction to programming").
+            queries (e.g., "introduction programming course"). You can also mix
+            course codes and natural language queries.
 
     Returns:
         list[dict]: Query results from ChromaDB collection. Each result contains
