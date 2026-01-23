@@ -18,6 +18,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
 	title: "ChatDKU",
 	description: "AI Chat Interface",
+	icons: {
+		icon: "/favicon-small.png",
+		apple: "/favicon-small.png",
+	},
 };
 
 export default function RootLayout({
@@ -27,9 +31,6 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<head>
-				<link rel="icon" href="/favicon-small.png" sizes="any" />
-			</head>
 			<body className={`${inter.variable} antialiased`}>
 				<ThemeProvider
 					attribute="class"
