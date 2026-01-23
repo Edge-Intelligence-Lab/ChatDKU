@@ -60,7 +60,7 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
     """
     db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
     collection = db.get_collection(
-        name=config.chroma_collection,
+        name=config.courses_col,
         embedding_function=HuggingFaceEmbeddingServer(
             url=config.tei_url + "/" + config.embedding + "/embed"
         ),
@@ -78,8 +78,6 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
             course_codes.append(query.strip())
         else:
             text_queries.append(query)
-    print("course_codes", course_codes)
-    print("text", text_queries)
 
     result = []
     # If all queries are course codes, use metadata filtering
