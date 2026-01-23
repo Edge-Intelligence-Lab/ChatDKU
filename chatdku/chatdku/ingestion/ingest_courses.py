@@ -10,7 +10,6 @@ from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 from pypdf import PdfReader
 
 from chatdku.config import config
-from chatdku.ingestion.utils import sanitize_directory
 
 logging.basicConfig(
     level=logging.INFO,
@@ -155,16 +154,12 @@ def embed_worker(buffer: Queue):
 
 
 # Main function
-def pipeline(folder: str, output_json: str = "majors.json") -> None:
+def pipeline(path: str, output_json: str = "majors.json") -> None:
     """Reader, writer pipeline using threading"""
-
-    paths = sanitize_directory(folder)
 
     buffer = Queue(maxsize=5)
 
-    output_json = Path(folder).joinpath(output_json)
-
-    reader_thread = Thread(target=reader_worker, args=(paths, buffer))
+    reader_thread = Thread(target=reader_worker, args=(path, buffer))
     embed_thread = Thread(target=embed_worker, args=(buffer,))
 
     reader_thread.start()
