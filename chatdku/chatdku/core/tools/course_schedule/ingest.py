@@ -5,9 +5,12 @@ import os
 import sys
 import json
 import logging
+import hashlib
 from pathlib import Path
+from datetime import datetime
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from chatdku.chatdku.config import config
 
@@ -37,6 +40,7 @@ class ScheduleIngestor:
         self.term = args.term.strip()
         self.setup_logging()
         self.setup_database_connection()
+        self.ensure_tracking_table()
         self.load_schema()
 
     def setup_logging(self):
@@ -72,6 +76,75 @@ class ScheduleIngestor:
         self.conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         self.logger.info(f"Connected to PostgreSQL database: {db_config['database']}")
 
+    def ensure_tracking_table(self):
+        """Create file tracking table if it doesn't exist"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ingested_files (
+                id SERIAL PRIMARY KEY,
+                file_path TEXT NOT NULL UNIQUE,
+                file_hash TEXT NOT NULL,
+                term TEXT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                row_count INTEGER DEFAULT 0
+            )
+        """)
+        cursor.close()
+        self.logger.info("File tracking table ensured")
+
+    def get_file_hash(self, file_path: Path) -> str:
+        """Calculate MD5 hash of file for change detection"""
+        hash_md5 = hashlib.md5()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+
+    def is_file_processed(self, file_path: Path) -> tuple[bool, str]:
+        """
+        Check if file has been processed before
+        Returns: (is_processed, previous_hash)
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT file_hash FROM ingested_files WHERE file_path = %s",
+            (str(file_path),)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if result:
+            return True, result[0]
+        return False, None
+
+    def mark_file_processed(self, file_path: Path, file_hash: str, row_count: int):
+        """Record file as processed in tracking table"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO ingested_files (file_path, file_hash, term, row_count)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (file_path) 
+            DO UPDATE SET 
+                file_hash = EXCLUDED.file_hash,
+                term = EXCLUDED.term,
+                ingested_at = CURRENT_TIMESTAMP,
+                row_count = EXCLUDED.row_count
+        """, (str(file_path), file_hash, self.term, row_count))
+        cursor.close()
+
+    def delete_old_data_for_file(self, file_path: Path):
+        """Delete existing data from a file before re-ingesting"""
+        # This is a simple approach - you might want to track by term instead
+        # For now, we'll assume re-processing means updating the same term
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "DELETE FROM dku_class_schedule WHERE term = %s",
+            (self.term,)
+        )
+        deleted_count = cursor.rowcount
+        cursor.close()
+        self.logger.info(f"Deleted {deleted_count} existing rows for term '{self.term}'")
+
     def load_schema(self):
         schema_path = Path(self.args.schema)
         if not schema_path.is_absolute():
@@ -83,8 +156,6 @@ class ScheduleIngestor:
         self.logger.info(f"Schema loaded from: {schema_path}")
 
     def store_row(self, row: dict, table="dku_class_schedule"):
-        from psycopg2 import sql
-
         cursor = self.conn.cursor()
         columns = list(row.keys())
         values = [row[c] for c in columns]
@@ -106,6 +177,7 @@ class ScheduleIngestor:
         self.logger.info(f"Processing schedule XLSX: {file_path}")
 
         wb = load_workbook(file_path, data_only=True)
+        total_rows = 0
 
         for sheet_name in wb.sheetnames:
             sheet = wb[sheet_name]
@@ -133,6 +205,9 @@ class ScheduleIngestor:
                         f"Missing term when ingesting row from {file_path}"
                     )
                 self.store_row(cleaned)
+                total_rows += 1
+
+        return total_rows
 
     # ===== CLEANING =====
 
@@ -148,7 +223,7 @@ class ScheduleIngestor:
             "Facil ID": "facility_id",
             "Mtg Start": "meeting_start",
             "Mtg End": "meeting_end",
-            "Max Units": "max_units",
+            "Max Units": "max_units",   
             "Type": "class_type",
             "Email": "instructor_email",
             "Preferred": "preferred"
@@ -203,12 +278,56 @@ class ScheduleIngestor:
             self.logger.info("No XLSX schedule files found")
             return
 
-        self.logger.info(f"Found {len(xlsx_files)} XLSX files to ingest")
+        self.logger.info(f"Found {len(xlsx_files)} XLSX files")
+
+        new_files = []
+        updated_files = []
+        skipped_files = []
 
         for file_path in xlsx_files:
-            self.process_xlsx(file_path)
+            current_hash = self.get_file_hash(file_path)
+            is_processed, previous_hash = self.is_file_processed(file_path)
 
-        self.logger.info("Schedule ingestion completed")
+            if is_processed:
+                if current_hash == previous_hash:
+                    self.logger.info(f"SKIPPED (unchanged): {file_path.name}")
+                    skipped_files.append(file_path)
+                    continue
+                else:
+                    self.logger.info(f"UPDATED (file changed): {file_path.name}")
+                    updated_files.append(file_path)
+                    if self.args.update_mode:
+                        # Delete old data before re-ingesting
+                        self.delete_old_data_for_file(file_path)
+            else:
+                self.logger.info(f"NEW file detected: {file_path.name}")
+                new_files.append(file_path)
+
+            # Process the file
+            row_count = self.process_xlsx(file_path)
+            self.mark_file_processed(file_path, current_hash, row_count)
+            self.logger.info(f"Ingested {row_count} rows from {file_path.name}")
+
+        # Summary
+        self.logger.info("=" * 60)
+        self.logger.info("INGESTION SUMMARY")
+        self.logger.info("=" * 60)
+        self.logger.info(f"New files processed: {len(new_files)}")
+        self.logger.info(f"Updated files processed: {len(updated_files)}")
+        self.logger.info(f"Unchanged files skipped: {len(skipped_files)}")
+        self.logger.info(f"Total files processed: {len(new_files) + len(updated_files)}")
+        
+        if new_files:
+            self.logger.info("\nNew files:")
+            for f in new_files:
+                self.logger.info(f"  - {f.name}")
+        
+        if updated_files:
+            self.logger.info("\nUpdated files:")
+            for f in updated_files:
+                self.logger.info(f"  - {f.name}")
+
+        self.logger.info("=" * 60)
 
     def cleanup(self):
         if hasattr(self, "conn"):
@@ -218,7 +337,7 @@ class ScheduleIngestor:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Ingest DKU course schedule XLSX into PostgreSQL"
+        description="Ingest DKU course schedule XLSX into PostgreSQL with update tracking"
     )
 
     parser.add_argument(
@@ -237,6 +356,12 @@ def main():
         "--term",
         default="Spring 2026",
         help="Term of the course schedule (e.g., Spring 2026)",
+    )
+
+    parser.add_argument(
+        "--update-mode",
+        action="store_true",
+        help="Enable update mode: delete old data for the term before re-ingesting",
     )
 
     parser.add_argument("--db-host")

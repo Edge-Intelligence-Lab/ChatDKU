@@ -71,7 +71,7 @@ class Config:
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
-                "course_schedule_path": "/datapool/Course Schedule",
+                "course_schedule_path": "/datapool/course_schedule",
                 # Redis
                 "redis_host": redis_host,
                 "redis_password": redis_password,
