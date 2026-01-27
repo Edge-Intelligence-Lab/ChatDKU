@@ -7,33 +7,10 @@ import re
 
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-from llama_index.core.schema import NodeWithScore, TextNode
+from common import chroma_result_to_nodes, nodes_to_dicts
+from llama_index.core.schema import NodeWithScore
 
 from chatdku.config import config
-
-
-def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
-    ids = result["ids"][0]
-    texts = result["documents"][0]
-    metadatas = result["metadatas"][0]
-    scores = result["distances"][0]
-
-    return [
-        NodeWithScore(
-            node=TextNode(
-                node_id=ids[i],
-                text=texts[i],
-                metadata={
-                    "filename": metadatas[i].get("file_name", "Not given."),
-                    # HACK: Hardcoded URL for now
-                    "url": "https://duke.box.com/s/4qez9bss1vjmkccn2rcqbhphcmh9wpxs",
-                    "page_number": metadatas[i].get("page_number", "Not given."),
-                },
-            ),
-            score=float(scores[i]),
-        )
-        for i in range(len(ids))
-    ]
 
 
 def course_retriever(course_queries: list[str]) -> list[dict]:
@@ -89,7 +66,7 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
         else:
             text_queries.append(query)
 
-    result = []
+    total = []
     # If all queries are course codes, use metadata filtering
     if course_codes:
         for course_code in course_codes:
@@ -101,12 +78,17 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
                 where=where_filter,
             )
 
-            result.extend(chroma_result_to_nodes(chroma_result))
+            total.extend(chroma_result_to_nodes(chroma_result))
 
     if text_queries:
         chroma_result = collection.query(
             query_texts=text_queries,
             n_results=3,
         )
-        result.extend(chroma_result_to_nodes(chroma_result))
-    return result
+        total.extend(chroma_result_to_nodes(chroma_result))
+
+    nodes = nodes_to_dicts(total)
+    internal_result = {
+        "ids": {node.node_id for node in total if isinstance(node, NodeWithScore)}
+    }
+    return nodes, internal_result
