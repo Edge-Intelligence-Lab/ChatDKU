@@ -109,7 +109,7 @@ class Agent(dspy.Module):
                     files=files,
                 )
             ),
-            "CourseRetriever": dspy.Tool(course_retriever),
+            "course_retriever": dspy.Tool(course_retriever),
         }
 
         if hasattr(config, "tracer"):

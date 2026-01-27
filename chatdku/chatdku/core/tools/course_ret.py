@@ -36,6 +36,16 @@ def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
     ]
 
 
+def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
+    result = []
+    for node in nodes:
+        if isinstance(node, NodeWithScore):
+            result.append([{"text": node.text, "metadata": node.metadata}])
+        if isinstance(node, str):
+            result.append(node)
+    return result
+
+
 def course_retriever(course_queries: list[str]) -> list[dict]:
     """
     Retrieve courses from ChromaDB using semantic search or metadata filtering.
@@ -89,7 +99,7 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
         else:
             text_queries.append(query)
 
-    result = []
+    total = []
     # If all queries are course codes, use metadata filtering
     if course_codes:
         for course_code in course_codes:
@@ -101,12 +111,17 @@ def course_retriever(course_queries: list[str]) -> list[dict]:
                 where=where_filter,
             )
 
-            result.extend(chroma_result_to_nodes(chroma_result))
+            total.extend(chroma_result_to_nodes(chroma_result))
 
     if text_queries:
         chroma_result = collection.query(
             query_texts=text_queries,
             n_results=3,
         )
-        result.extend(chroma_result_to_nodes(chroma_result))
-    return result
+        total.extend(chroma_result_to_nodes(chroma_result))
+
+    nodes = nodes_to_dicts(total)
+    internal_result = {
+        "ids": {node.node_id for node in total if isinstance(node, NodeWithScore)}
+    }
+    return nodes, internal_result
