@@ -1,37 +1,35 @@
-import dspy
-
 from contextlib import nullcontext
+from datetime import date
+
+import dspy
 from openinference.instrumentation import safe_json_dumps
-from opentelemetry.trace import (
-    Status,
-    StatusCode,
-    use_span,
-    get_current_span,
-    Span,
-    set_span_in_context,
+from openinference.semconv.trace import (
+    OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
 )
 from opentelemetry import context
-from openinference.semconv.trace import (
-    SpanAttributes,
-    OpenInferenceSpanKindValues,
-    OpenInferenceMimeTypeValues,
+from opentelemetry.trace import (
+    Span,
+    Status,
+    StatusCode,
+    get_current_span,
+    set_span_in_context,
+    use_span,
 )
 
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import get_template
+from chatdku.config import config
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.plan import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
-    CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+    CURRENT_USER_MESSAGE_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
 )
-from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.plan import ToolMemory
-
-from chatdku.config import config
-
-from datetime import date
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 
 
 class SynthesizerSignature(dspy.Signature):
@@ -65,7 +63,6 @@ class SynthesizerSignature(dspy.Signature):
        - If no source was used, you should not include a reference section.
     4. **Priority & Accuracy**:
        - **Prioritize DKU resources** (e.g., Bulletins, Faculty Directory, Majors page).
-       - When talking about what majors there are, always first refer to the major name and information in the website<https://ugstudies.dukekunshan.edu.cn/academics/majors/>.
        - Only cite non-DKU resources (e.g., Duke partnerships) if explicitly requested or irreplaceable for accuracy.
     5. **User Guidance**:
        - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).
