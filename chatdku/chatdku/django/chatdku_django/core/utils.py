@@ -13,7 +13,7 @@ def slugify(name: str) -> str:
 
 
 def get_admin_email():
-    admin_emails=list(User.objects.filter(email__isnull=False).exclude(email=""))
+    admin_emails=list(User.objects.filter(email__isnull=False).exclude(email="").values_list("email", flat=True))
     return admin_emails
 
 
