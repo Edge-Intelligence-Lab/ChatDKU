@@ -50,12 +50,6 @@ app.conf.beat_schedule={
         "task":"chat.tasks.clean_empty_sessions",
         "schedule":crontab(minute=00,hour='*/1') #Every 1 hour everyday
     },
-
-
-    "lm-check":{
-        "task":"core.tasks.ping_llm",
-        "schedule":crontab(minute="*/10")
-    },
 }
 
 app.autodiscover_tasks()

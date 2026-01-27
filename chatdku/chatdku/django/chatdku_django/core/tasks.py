@@ -1,10 +1,9 @@
-from core.models import UploadedFile, UserModel, ActiveLM
+from core.models import UploadedFile, UserModel
 from celery import shared_task
 from django.db import transaction
 from chatdku.backend.user_data_interface import update
 from core.set_lock import redis_lock
 from chatdku_django.celery import redis_client
-from chat.utils import ping_lm
 import sys
 import subprocess
 
@@ -118,14 +117,14 @@ def update_user_chroma(self, netid):
         redis_client.delete(f"processing:{netid}")
 
 
-@shared_task()
-def ping_llm():
-    try:
-        ping_lm("ping")
-        ActiveLM.objects.update_or_create(id=1,defaults={"name":"primary"})
+# @shared_task()
+# def ping_llm():
+#     try:
+#         ping_lm("ping")
+#         ActiveLM.objects.update_or_create(id=1,defaults={"name":"primary"})
 
-    except Exception as e:
-        ActiveLM.objects.update_or_create(id=1,defaults={"name":"backup"})
+#     except Exception as e:
+#         ActiveLM.objects.update_or_create(id=1,defaults={"name":"backup"})
 
 # @shared_task(bind=True,max_retries=5)
 def load_redis_task(self,script_path=None,python_bin=None):

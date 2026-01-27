@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import UserModel,UploadedFile,ActiveLM
+from core.models import UserModel,UploadedFile
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -9,12 +9,12 @@ admin.site.site_url="https://chatdku.dukekunshan.edu.cn"
 # Register your models here.
 @admin.register(UserModel)
 class ChatDkuUserAdmin(UserAdmin):
-    list_display = ('username', 'is_staff', 'is_active')
+    list_display = ('username', 'is_staff', 'is_active','email')
     readonly_fields = ('folder', 'last_login')
-    search_fields = ('username',)
-    ordering = ('username',)
+    search_fields = ('username','email')
+    ordering = ('username','email')
     fieldsets = (
-        (None, {'fields': ('username',)}),
+        (None, {'fields': ('username','email')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Custom Info', {'fields': ('folder', 'last_login')}),
     )
@@ -40,10 +40,5 @@ class UploadedFileAdmin(admin.ModelAdmin):
         for obj in queryset:
             obj.delete()  
 
-@admin.register(ActiveLM)
-class ActiveLMAdmin(admin.ModelAdmin):
-    list_display=("name","updated_at")
 
-    def has_change_permission(self, request, obj=None):
-            return False
 

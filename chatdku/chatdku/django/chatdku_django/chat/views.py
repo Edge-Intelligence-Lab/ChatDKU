@@ -307,7 +307,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         description="Create a new chat session",
         responses={201: OpenApiResponse(response={"session_id": "uuid"})},
     )
-    @action(methods=["POST"], detail=False)
+    @action(methods=["GET"], detail=False)
     def create_session(self, request):
         session = UserSession.objects.create(user=request.user)
         return Response(
