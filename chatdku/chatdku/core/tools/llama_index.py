@@ -1,13 +1,15 @@
 import os
 import re
 import string
+import time
 from collections.abc import Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import contextmanager, nullcontext
 from enum import Enum
 from itertools import combinations
-from typing import Any
+from typing import Any, List, Optional, Dict
+from dataclasses import dataclass
 
 import chromadb
 import pandas as pd
@@ -30,6 +32,11 @@ from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 from chatdku.core.utils import truncate_tokens
+from chatdku.core.tools.redis_listener.db_monitor import (
+    QueryOutcome,
+    record_chroma_query,
+    record_redis_query,
+)
 
 # ------------------
 
@@ -47,6 +54,12 @@ class QueryTimeoutError(Exception):
     """Raised when a query exceeds the timeout limit."""
 
     pass
+
+@dataclass
+class RetrieverResult:
+    nodes: List[NodeWithScore]
+    error: Optional[str] = None
+    timed_out: bool = False
 
 
 @contextmanager
@@ -292,48 +305,92 @@ def DocRetrieverOuter(
         Retrieve texts from the database that are
         semantically similar to the query.
         """
-        db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
-        collection = db.get_collection(
-            name=config.chroma_collection,
-            embedding_function=HuggingFaceEmbeddingServer(
-                url=config.tei_url + "/" + config.embedding + "/embed"
-            ),
-        )
-        with (
-            config.tracer.start_as_current_span("Vector Retriever")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            exclude = list(internal_memory.get("ids", set()))
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(
-                            query=query,
-                            exclude=exclude,
-                            user_id=user_id,
-                            search_mode=search_mode,
-                            files=files,
-                        )
-                    ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
-            )
-            filters = __get_chroma_filter(
-                search_mode,
-                user_id,
-                exclude,
-                files,
-            )
+        start_time = time.time()
+        outcome = QueryOutcome.UNKNOWN_ERROR
+        result_count = 0
+        error_message = None
+        retrieved_nodes = []
 
-            query_result = collection.query(
-                query_texts=truncate_tokens(query, 7000),
-                n_results=retriever_top_k,
-                where=filters,
+        try:
+            db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
+            collection = db.get_collection(
+                name=config.chroma_collection,
+                embedding_function=HuggingFaceEmbeddingServer(
+                    url=config.tei_url + "/" + config.embedding + "/embed"
+                ),
             )
+            with (
+                config.tracer.start_as_current_span("Vector Retriever")
+                if hasattr(config, "tracer")
+                else nullcontext()
+            ) as span:
+                exclude = list(internal_memory.get("ids", set()))
+                span.set_attributes(
+                    {
+                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
+                        SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                            dict(
+                                query=query,
+                                exclude=exclude,
+                                user_id=user_id,
+                                search_mode=search_mode,
+                                files=files,
+                            )
+                        ),
+                        SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    }
+                )
+                filters = __get_chroma_filter(
+                    search_mode,
+                    user_id,
+                    exclude,
+                    files,
+                )
 
-            retrieved_nodes = chroma_result_to_nodes(query_result)
+                query_result = collection.query(
+                    query_texts=truncate_tokens(query, 7000),
+                    n_results=retriever_top_k,
+                    where=filters,
+                )
+
+                retrieved_nodes = chroma_result_to_nodes(query_result)
+                result_count = len(retrieved_nodes)
+        
+                # Determine outcome
+                if result_count > 0:
+                    outcome = QueryOutcome.SUCCESS
+                else:
+                    outcome = QueryOutcome.EMPTY_RESULT
+
+        except TimeoutError as e:
+            outcome = QueryOutcome.TIMEOUT
+            error_message = str(e)
+            
+        except ConnectionError as e:
+            outcome = QueryOutcome.CONNECTION_ERROR
+            error_message = str(e)
+            
+        except ValueError as e:
+            outcome = QueryOutcome.QUERY_ERROR
+            error_message = f"Invalid query: {e}"
+            
+        except Exception as e:
+            outcome = QueryOutcome.UNKNOWN_ERROR
+            error_message = str(e)
+
+        finally:
+            # Record metrics regardless of outcome
+            latency_ms = (time.time() - start_time) * 1000
+            record_chroma_query(
+                outcome=outcome,
+                latency_ms=latency_ms,
+                result_count=result_count,
+                expected_top_k=retriever_top_k,
+                error_message=error_message,
+                query_text=query[:100],  # Truncate for privacy
+                user_id=user_id,
+                search_mode=search_mode,
+            )
 
             span.set_attributes(nodes_to_openinference(retrieved_nodes))
             span.set_attributes(
@@ -347,6 +404,7 @@ def DocRetrieverOuter(
             span.set_status(Status(StatusCode.OK))
         return retrieved_nodes
 
+        
     def __KeywordRetriever(
         query: str | list[str],
     ) -> list:
@@ -354,174 +412,221 @@ def DocRetrieverOuter(
         Retrieve texts from the database that contain the
         same keywords in the query.
         """
-        client = Redis(
-            host=config.redis_host,
-            port=6379,
-            username="default",
-            password=config.redis_password,
-            db=0,
-        )
-
-        schema = IndexSchema.from_yaml(
-            os.path.join(config.module_root_dir, "custom_schema.yaml")
-        )
-        index_name = schema.index.name
-
-        # Escape all punctuations, e.g. "can't" -> "can\'t"
-        def _escape_strs(strs: list[str]):
-            if strs:
-                pattern = f"[{re.escape(string.punctuation)}]"
-                return [
-                    re.sub(pattern, lambda match: f"\\{match.group(0)}", s)
-                    for s in strs
-                ]
-            else:
-                return []
-
-        def _extract_keywords(query):
-            tokens = word_tokenize(query.lower())
-            stop_words = set(stopwords.words("english"))
-            # Keep tokens that are not stopwords and not pure punctuation
-            keywords = [
-                t
-                for t in tokens
-                if t not in stop_words and t not in string.punctuation and len(t) > 1
-            ]
-            return keywords
-
-        with (
-            config.tracer.start_as_current_span("Keyword Retriever")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            exclude = list(internal_memory.get("ids", set()))
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(
-                            query=query,
-                            exclude=exclude,
-                            user_id=user_id,
-                            search_mode=search_mode,
-                            files=files,
-                        )
-                    ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
+        start_time = time.time()
+        outcome = QueryOutcome.UNKNOWN_ERROR
+        result_count = 0
+        error_message = None
+        retrieved_nodes = []
+        try:
+            client = Redis(
+                host=config.redis_host,
+                port=6379,
+                username="default",
+                password=config.redis_password,
+                db=0,
             )
 
-            if isinstance(query, str):
-                # try:
-                #     # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")`
-                #     # won't work as LlamaIndex
-                #     # replaces nltk tokenizers with its own version.
-                #     nltk.data.find("tokenizers/punkt_tab/english")
-                # except LookupError:
-                #     nltk.download("punkt_tab")
+            schema = IndexSchema.from_yaml(
+                os.path.join(config.module_root_dir, "custom_schema.yaml")
+            )
+            index_name = schema.index.name
 
-                # Break down the query into tokens
-                tokens = _extract_keywords(query)
-                # Remove tokens that are PURELY punctuations
-                orig_keywords = _escape_strs(tokens)
-
-                # FIXME: Hack for improving performance with multiple keywords.
-                # There ought to be better ways than this.
-                # Combinations of the original keywords are generated
-                # to "boost" the result,
-                # e.g. searching for "a b" would become "a OR b OR (a AND b)".
-                # Without boosting, documents with a lot of either just
-                # "a" or "b" would be given a heavier preferences,
-                # even though we would prefer documents with
-                # both "a" and "b".
-                # Larger weights are given to combinations of larger size.
-                keywords = []
-                weights = []
-                # Changed this to 2 from 4
-                # See issue #152
-                TUPLE_LIMIT = 2
-                BOOST_FACTOR = 2
-                for i in range(1, TUPLE_LIMIT + 1):
-                    for combo in combinations(orig_keywords, i):
-                        keywords.append(" ".join(combo))
-                        weights.append(BOOST_FACTOR ** (i - 1))
-
-                # Trying to preserve the original keyword combination too
-                if len(orig_keywords) > 2:
-                    keywords.append(" ".join(orig_keywords))
-                    weights.append(BOOST_FACTOR ** (TUPLE_LIMIT + 1))
-
-                # `|` means searching the union of the words/tokens.
-                # `%` means fuzzy search with Levenshtein distance of 1.
-                # Query attributes are used here to set the weight of the keywords.
-                text_str = " | ".join(
-                    [
-                        f"({keyword}) => {{ $weight: {weight} }}"
-                        for keyword, weight in zip(keywords, weights)
+            # Escape all punctuations, e.g. "can't" -> "can\'t"
+            def _escape_strs(strs: list[str]):
+                if strs:
+                    pattern = f"[{re.escape(string.punctuation)}]"
+                    return [
+                        re.sub(pattern, lambda match: f"\\{match.group(0)}", s)
+                        for s in strs
                     ]
-                )
-            elif isinstance(query, list):
-                text_str = " | ".join(query)
-
-            query_str = "@text:(" + text_str + ")"
-
-            exclude = _escape_strs(exclude)
-            exclude_str = " ".join([f"-@id:({e})" for e in exclude])
-            if exclude_str:
-                query_str += " " + exclude_str
-
-            # Adding the user_id filter if the user wants to search for
-            if search_mode == 0:
-                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
-
-            elif search_mode == 1:
-                if len(files) == 0:
-                    docs_str = os.path.splitext(files[0])[0]
                 else:
-                    docs_str = "|".join(
-                        f"{os.path.splitext(name)[0]}" for name in files
+                    return []
+
+            def _extract_keywords(query):
+                tokens = word_tokenize(query.lower())
+                stop_words = set(stopwords.words("english"))
+                # Keep tokens that are not stopwords and not pure punctuation
+                keywords = [
+                    t
+                    for t in tokens
+                    if t not in stop_words and t not in string.punctuation and len(t) > 1
+                ]
+                return keywords
+
+            with (
+                config.tracer.start_as_current_span("Keyword Retriever")
+                if hasattr(config, "tracer")
+                else nullcontext()
+            ) as span:
+                exclude = list(internal_memory.get("ids", set()))
+                span.set_attributes(
+                    {
+                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
+                        SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                            dict(
+                                query=query,
+                                exclude=exclude,
+                                user_id=user_id,
+                                search_mode=search_mode,
+                                files=files,
+                            )
+                        ),
+                        SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    }
+                )
+
+                if isinstance(query, str):
+                    # try:
+                    #     # NOTE: Just `nltk.data.find("tokenizers/punkt_tab")`
+                    #     # won't work as LlamaIndex
+                    #     # replaces nltk tokenizers with its own version.
+                    #     nltk.data.find("tokenizers/punkt_tab/english")
+                    # except LookupError:
+                    #     nltk.download("punkt_tab")
+
+                    # Break down the query into tokens
+                    tokens = _extract_keywords(query)
+                    # Remove tokens that are PURELY punctuations
+                    orig_keywords = _escape_strs(tokens)
+
+                    # FIXME: Hack for improving performance with multiple keywords.
+                    # There ought to be better ways than this.
+                    # Combinations of the original keywords are generated
+                    # to "boost" the result,
+                    # e.g. searching for "a b" would become "a OR b OR (a AND b)".
+                    # Without boosting, documents with a lot of either just
+                    # "a" or "b" would be given a heavier preferences,
+                    # even though we would prefer documents with
+                    # both "a" and "b".
+                    # Larger weights are given to combinations of larger size.
+                    keywords = []
+                    weights = []
+                    # Changed this to 2 from 4
+                    # See issue #152
+                    TUPLE_LIMIT = 2
+                    BOOST_FACTOR = 2
+                    for i in range(1, TUPLE_LIMIT + 1):
+                        for combo in combinations(orig_keywords, i):
+                            keywords.append(" ".join(combo))
+                            weights.append(BOOST_FACTOR ** (i - 1))
+
+                    # Trying to preserve the original keyword combination too
+                    if len(orig_keywords) > 2:
+                        keywords.append(" ".join(orig_keywords))
+                        weights.append(BOOST_FACTOR ** (TUPLE_LIMIT + 1))
+
+                    # `|` means searching the union of the words/tokens.
+                    # `%` means fuzzy search with Levenshtein distance of 1.
+                    # Query attributes are used here to set the weight of the keywords.
+                    text_str = " | ".join(
+                        [
+                            f"({keyword}) => {{ $weight: {weight} }}"
+                            for keyword, weight in zip(keywords, weights)
+                        ]
+                    )
+                elif isinstance(query, list):
+                    text_str = " | ".join(query)
+
+                query_str = "@text:(" + text_str + ")"
+
+                exclude = _escape_strs(exclude)
+                exclude_str = " ".join([f"-@id:({e})" for e in exclude])
+                if exclude_str:
+                    query_str += " " + exclude_str
+
+                # Adding the user_id filter if the user wants to search for
+                if search_mode == 0:
+                    query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+
+                elif search_mode == 1:
+                    if len(files) == 0:
+                        docs_str = os.path.splitext(files[0])[0]
+                    else:
+                        docs_str = "|".join(
+                            f"{os.path.splitext(name)[0]}" for name in files
+                        )
+
+                    query_str = (
+                        query_str
+                        + f" @user_id:{{{user_id}}} "
+                        + f"@file_name:{{{docs_str}}}"
                     )
 
-                query_str = (
-                    query_str
-                    + f" @user_id:{{{user_id}}} "
-                    + f"@file_name:{{{docs_str}}}"
+                elif search_mode == 2:
+                    query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
+                    # if len(files) == 0:
+                    #     docs_str = os.path.splitext(files[0])[0]
+                    # else:
+                    #     docs_str = "|".join(
+                    #         f"{os.path.splitext(name)[0]}" for name in files
+                    #     )
+                    #
+                    # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))" # noqa: E501
+                    # query_str = query_str + f" {user_clause}"
+
+                # See issue #175 for not using PARAMS
+                query_cmd = (
+                    Query(query_str)
+                    .dialect(2)
+                    .scorer("BM25")
+                    .paging(0, retriever_top_k)
+                    .with_scores()
                 )
 
-            elif search_mode == 2:
-                query_str = query_str + f" @user_id:{{{'Chat_DKU'}}}"
-                # if len(files) == 0:
-                #     docs_str = os.path.splitext(files[0])[0]
-                # else:
-                #     docs_str = "|".join(
-                #         f"{os.path.splitext(name)[0]}" for name in files
-                #     )
-                #
-                # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{user_id}}} @file_name:{{{docs_str}}}))" # noqa: E501
-                # query_str = query_str + f" {user_clause}"
+                results = client.ft(index_name).search(query_cmd)
+                retrieved_nodes = simplify_nodes(results)
+                result_count = len(retrieved_nodes)
 
-            # See issue #175 for not using PARAMS
-            query_cmd = (
-                Query(query_str)
-                .dialect(2)
-                .scorer("BM25")
-                .paging(0, retriever_top_k)
-                .with_scores()
+                if result_count > 0:
+                    outcome = QueryOutcome.SUCCESS
+                else:
+                    outcome = QueryOutcome.EMPTY_RESULT
+
+        except TimeoutError as e:
+            outcome = QueryOutcome.TIMEOUT
+            error_message = str(e)
+        
+        except ConnectionError as e:
+            outcome = QueryOutcome.CONNECTION_ERROR
+            error_message = str(e)
+            
+        except redis.exceptions.ResponseError as e:
+            outcome = QueryOutcome.QUERY_ERROR
+            error_message = f"Redis query error: {e}"
+            
+        except Exception as e:
+            outcome = QueryOutcome.UNKNOWN_ERROR
+            error_message = str(e)
+            
+        finally:
+            # Record metrics for Redis
+            latency_ms = (time.time() - start_time) * 1000
+            
+            # Convert query to string for logging
+            query_str_for_log = str(query)[:100] if query else "None"
+            
+            record_redis_query(
+                outcome=outcome,
+                latency_ms=latency_ms,
+                result_count=result_count,
+                expected_top_k=retriever_top_k,
+                error_message=error_message,
+                query_text=query_str_for_log,
+                user_id=user_id,
+                search_mode=search_mode,
             )
+        
+        span.set_attributes(nodes_to_openinference(retrieved_nodes))
+        span.set_attributes(
+            {
+                SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                    dict(result=retrieved_nodes)
+                ),
+                SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
+        span.set_status(Status(StatusCode.OK))
 
-            results = client.ft(index_name).search(query_cmd)
-            retrieved_nodes = simplify_nodes(results)
-
-            span.set_attributes(nodes_to_openinference(retrieved_nodes))
-            span.set_attributes(
-                {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(result=retrieved_nodes)
-                    ),
-                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
-            )
-            span.set_status(Status(StatusCode.OK))
         return retrieved_nodes
 
     def DocumentRetriever(
@@ -550,18 +655,20 @@ def DocRetrieverOuter(
                     keyword_query[i] = str(keyword_query[i])
 
             vector_result = []
+            vector_error = []
             keyword_result = []
+            keyword_error = []
 
             # Retrieve documents with individual error handling
             try:
                 with timeout() as ctx:
                     vector_result = ctx.run(__VectorRetriever, query=semantic_query)
             except ValueError as e:
-                vector_result.append(f"semantic_query had an input error: {e}")
+                vector_error.append(f"semantic_query had an input error: {e}")
             except QueryTimeoutError as e:
-                vector_result.append(f"Vector retriever timeout: {e}")
+                vector_error.append(f"Vector retriever timeout: {e}")
             except Exception as e:
-                vector_result.append(f"Vector retrieval failed: {e}")
+                vector_error.append(f"Vector retrieval failed: {e}")
 
             if keyword_query:
                 try:
@@ -570,9 +677,9 @@ def DocRetrieverOuter(
                             __KeywordRetriever, query=keyword_query
                         )
                 except QueryTimeoutError as e:
-                    keyword_result.append(f"Keyword retriever timeout: {e}")
+                    keyword_error.append(f"Keyword retriever timeout: {e}")
                 except Exception as e:
-                    keyword_result.append(f"Keyword retrieval failed: {e}")
+                    keyword_error.append(f"Keyword retrieval failed: {e}")
 
             total = vector_result + keyword_result
             overall_result = nodes_to_dicts(total)
@@ -581,7 +688,32 @@ def DocRetrieverOuter(
                     node.node_id for node in total if isinstance(node, NodeWithScore)
                 }
             }
+
+            if len(vector_error) > 0:
+                # e.g., send to monitoring/logging
+                record_chroma_query(
+                    outcome=QueryOutcome.QUERY_ERROR,
+                    latency_ms=0,
+                    result_count=len(vector_result),
+                    expected_top_k=retriever_top_k,
+                    error_message=", ".join(vector_error),
+                    query_text=semantic_query[:100],
+                    user_id=user_id,
+                    search_mode=search_mode,
+                )
+            if len(keyword_error) > 0:
+                record_redis_query(
+                    outcome=QueryOutcome.QUERY_ERROR,
+                    latency_ms=0,
+                    result_count=len(vector_result),
+                    expected_top_k=retriever_top_k,
+                    error_message=", ".join(keyword_error),
+                    query_text=str(keyword_query)[:100],
+                    user_id=user_id,
+                    search_mode=search_mode,
+                )
             return overall_result, internal_result
+        
         except Exception as e:
             return [f"Unexpected error: {e}"], {}
 
