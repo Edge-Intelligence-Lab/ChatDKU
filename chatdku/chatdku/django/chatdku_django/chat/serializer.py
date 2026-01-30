@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from chat.models import UserSession,ChatMessages
+from chat.models import UserSession,ChatMessages,Feedback
 from django.contrib.auth import get_user_model
 
 
@@ -54,3 +54,14 @@ class SessionVerifierSerializer(serializers.Serializer):
             return data
         else:
             raise serializers.ValidationError("Session ID not found")
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Feedback
+        fields = [
+            "user_input",
+            "gen_answer",
+            "feedback_reason",
+            "question_id",
+        ]

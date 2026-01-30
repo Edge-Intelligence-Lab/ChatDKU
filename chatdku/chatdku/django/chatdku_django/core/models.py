@@ -38,6 +38,9 @@ class ChatDkuUserManager(BaseUserManager):
         kwargs.setdefault('is_admin', True)
         kwargs.setdefault('is_superuser', True)
 
+        if not kwargs.get("email"):
+            raise ValueError("Superusers must have an email address.")
+
         return self.create_user(username, password=password,hash_user=False, **kwargs)
 
 
@@ -54,6 +57,7 @@ class ChatDkuUserManager(BaseUserManager):
 
 class UserModel(AbstractBaseUser,PermissionsMixin):
     username=models.CharField(max_length=100,unique=True)
+    email=models.EmailField(blank=True,unique=True,null=True)
     is_active=models.BooleanField(default=True)
     is_staff=models.BooleanField(default=False)
     is_admin=models.BooleanField(default=False)
@@ -109,8 +113,3 @@ class UploadedFile(models.Model):
             os.remove(filepath)
 
         super().delete(*args,**kwargs)
-
-
-class ActiveLM(models.Model):
-    name=models.CharField(max_length=100,default="primary")
-    updated_at=models.DateTimeField(auto_now=True)

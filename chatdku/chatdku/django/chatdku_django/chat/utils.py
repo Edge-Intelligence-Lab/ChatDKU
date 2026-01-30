@@ -3,7 +3,6 @@ from django.utils.text import slugify
 from django.utils import timezone
 from django.conf import settings
 from chat.models import Feedback
-from core.models import ActiveLM
 from chatdku.config import config
 import dspy
 
@@ -159,30 +158,30 @@ def load_conversation(user,session_id):
 
 
 # NOTE: This function is not being used
-def model_response(module,**kwargs):
-    active=ActiveLM.objects.first()
-    if active and active.name=="backup":
-         lm = dspy.LM(
-            model="openai/" + config.backup_llm,
-            api_base=config.backup_llm_url,
-            api_key=config.llm_api_key,
-            model_type="chat",
-            max_tokens=config.context_window,
-            temperature=config.llm_temperature,
-        )
+# def model_response(module,**kwargs):
+#     active=ActiveLM.objects.first()
+#     if active and active.name=="backup":
+#          lm = dspy.LM(
+#             model="openai/" + config.backup_llm,
+#             api_base=config.backup_llm_url,
+#             api_key=config.llm_api_key,
+#             model_type="chat",
+#             max_tokens=config.context_window,
+#             temperature=config.llm_temperature,
+#         )
          
-    else:
-        lm = dspy.LM(
-            model="openai/" + config.llm,
-            api_base=config.llm_url,
-            api_key=config.llm_api_key,
-            model_type="chat",
-            max_tokens=config.context_window,
-            temperature=config.llm_temperature,
-        )
+#     else:
+#         lm = dspy.LM(
+#             model="openai/" + config.llm,
+#             api_base=config.llm_url,
+#             api_key=config.llm_api_key,
+#             model_type="chat",
+#             max_tokens=config.context_window,
+#             temperature=config.llm_temperature,
+#         )
 
-    with dspy.context():
-        return module(**kwargs)
+#     with dspy.context():
+#         return module(**kwargs)
     
 
     

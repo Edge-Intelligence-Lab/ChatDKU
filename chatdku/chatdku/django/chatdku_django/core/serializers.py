@@ -13,3 +13,5 @@ class UploadFileSerializer(serializers.Serializer):
             raise serializers.ValidationError("File must be less than 10 mb")
         
         return value
+
+
