@@ -586,32 +586,32 @@ class DatabaseQueryMonitor:
                 total_in_period = cursor.fetchone()['total']
             
             report = f"""
-========================================
-Database Query Monitor - Summary Report
-========================================
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Report Period: Last {hours} hours
-Database Location: {self.db_path}
+                ========================================
+                Database Query Monitor - Summary Report
+                ========================================
+                Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                Report Period: Last {hours} hours
+                Database Location: {self.db_path}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Overall Statistics (All Databases)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total Queries: {total_in_period}
-Overall Error Rate: {overall_stats['overall_error_rate']:.1%}
-Overall Partial Result Rate: {overall_stats.get('overall_partial_rate', 0):.1%}
-Average Latency: {overall_stats['overall_latency_stats']['avg_ms']:.1f}ms
-Max Latency: {overall_stats['overall_latency_stats']['max_ms']:.1f}ms
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                📊 Overall Statistics (All Databases)
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                Total Queries: {total_in_period}
+                Overall Error Rate: {overall_stats['overall_error_rate']:.1%}
+                Overall Partial Result Rate: {overall_stats.get('overall_partial_rate', 0):.1%}
+                Average Latency: {overall_stats['overall_latency_stats']['avg_ms']:.1f}ms
+                Max Latency: {overall_stats['overall_latency_stats']['max_ms']:.1f}ms
 
-Database Distribution:
-{json.dumps(overall_stats['db_type_distribution'], indent=2)}
+                Database Distribution:
+                {json.dumps(overall_stats['db_type_distribution'], indent=2)}
 
-Overall Outcome Distribution:
-{json.dumps(overall_stats['outcome_distribution'], indent=2)}
+                Overall Outcome Distribution:
+                {json.dumps(overall_stats['outcome_distribution'], indent=2)}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔵 ChromaDB (Vector Search) Performance
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                🔵 ChromaDB (Vector Search) Performance
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                """
             
             if "error" not in chroma_stats and "message" not in chroma_stats:
                 chroma_db_stats = chroma_stats['per_database_stats'].get('chroma', {})
@@ -620,25 +620,25 @@ Overall Outcome Distribution:
                     fulfillment_str = f"{fulfillment:.1%}" if fulfillment is not None else "N/A"
                     
                     report += f"""Query Count: {chroma_db_stats['query_count']}
-Error Rate: {chroma_db_stats['error_rate']:.1%}
-Partial Result Rate: {chroma_db_stats.get('partial_rate', 0):.1%}
-Average Latency: {chroma_db_stats['latency_stats']['avg_ms']:.1f}ms
-Average Results: {chroma_db_stats['result_stats']['avg_count']:.1f}
-Result Fulfillment Rate: {fulfillment_str}
+                        Error Rate: {chroma_db_stats['error_rate']:.1%}
+                        Partial Result Rate: {chroma_db_stats.get('partial_rate', 0):.1%}
+                        Average Latency: {chroma_db_stats['latency_stats']['avg_ms']:.1f}ms
+                        Average Results: {chroma_db_stats['result_stats']['avg_count']:.1f}
+                        Result Fulfillment Rate: {fulfillment_str}
 
-Outcomes:
-{json.dumps(chroma_db_stats['outcome_distribution'], indent=2)}
-"""
+                        Outcomes:
+                        {json.dumps(chroma_db_stats['outcome_distribution'], indent=2)}
+                        """
                 else:
                     report += "No ChromaDB queries in this period.\n"
             else:
                 report += f"{chroma_stats.get('message', 'No data')}\n"
             
             report += """
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 Redis (Keyword Search) Performance
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                🔴 Redis (Keyword Search) Performance
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                """
             
             if "error" not in redis_stats and "message" not in redis_stats:
                 redis_db_stats = redis_stats['per_database_stats'].get('redis', {})
@@ -647,28 +647,28 @@ Outcomes:
                     fulfillment_str = f"{fulfillment:.1%}" if fulfillment is not None else "N/A"
                     
                     report += f"""Query Count: {redis_db_stats['query_count']}
-Error Rate: {redis_db_stats['error_rate']:.1%}
-Partial Result Rate: {redis_db_stats.get('partial_rate', 0):.1%}
-Average Latency: {redis_db_stats['latency_stats']['avg_ms']:.1f}ms
-Average Results: {redis_db_stats['result_stats']['avg_count']:.1f}
-Result Fulfillment Rate: {fulfillment_str}
+                        Error Rate: {redis_db_stats['error_rate']:.1%}
+                        Partial Result Rate: {redis_db_stats.get('partial_rate', 0):.1%}
+                        Average Latency: {redis_db_stats['latency_stats']['avg_ms']:.1f}ms
+                        Average Results: {redis_db_stats['result_stats']['avg_count']:.1f}
+                        Result Fulfillment Rate: {fulfillment_str}
 
-Outcomes:
-{json.dumps(redis_db_stats['outcome_distribution'], indent=2)}
-"""
+                        Outcomes:
+                        {json.dumps(redis_db_stats['outcome_distribution'], indent=2)}
+                        """
                 else:
                     report += "No Redis queries in this period.\n"
             else:
                 report += f"{redis_stats.get('message', 'No data')}\n"
             
             report += f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Time Range:
-  Start: {overall_stats['time_range']['start']}
-  End: {overall_stats['time_range']['end']}
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                Time Range:
+                Start: {overall_stats['time_range']['start']}
+                End: {overall_stats['time_range']['end']}
 
-========================================
-"""
+                ========================================
+                """
             return report
         except Exception as e:
             return f"Error generating summary report: {e}"
