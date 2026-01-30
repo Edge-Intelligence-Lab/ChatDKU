@@ -17,3 +17,8 @@ sudo docker run -d \
   -p 12400:8000 \
   chromadb/chroma
 ```
+---
+- **Last Updated**: 2026-01-30
+- **Version**: 1.0.0 
+- **Maintainers**: Temuulen  
+- **Contact**: te100@duke.edu
