@@ -30,10 +30,15 @@ class QueryRewriteSignature(dspy.Signature):
     # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
     __doc__ = f"""
     {ROLE_PROMPT}
-    Your goal is to rewrite the current user's message in a way that fixes errors, adds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
-    Your rewritten query will be used to fetch information with search tools such as semantic search and keyword search.
-    Please understand the information gap between the currently known information and the target problem.
-    DON\’T generate queries which has been retrieved or answered.
+    Your goal is to rewrite the current user's message in a way that fixes 
+    errors, adds relevant contextual information from the conversation_memory 
+    and tool_history and ultimately answers the user's question precisely 
+    and accurately.
+    Your rewritten query will be used to fetch information with search tools 
+    such as semantic search and keyword search.
+    Please understand the information gap between the currently known 
+    information and the target problem.
+    DON'T generate queries which has been retrieved or answered.
     """
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
