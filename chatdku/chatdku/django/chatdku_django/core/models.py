@@ -6,6 +6,8 @@ import uuid
 import hashlib
 import os
 import re
+from django_prometheus.models import ExportModelOperationsMixin
+
 #helper function and class
 def generate_uuid_string():
     return str(uuid.uuid4())
@@ -55,7 +57,7 @@ class ChatDkuUserManager(BaseUserManager):
             user.save(using=self._db)
         return user, created
 
-class UserModel(AbstractBaseUser,PermissionsMixin):
+class UserModel(ExportModelOperationsMixin('user'),AbstractBaseUser,PermissionsMixin):
     username=models.CharField(max_length=100,unique=True)
     email=models.EmailField(blank=True,unique=True,null=True)
     is_active=models.BooleanField(default=True)
@@ -98,7 +100,7 @@ class UserModel(AbstractBaseUser,PermissionsMixin):
 
 
 
-class UploadedFile(models.Model):
+class UploadedFile(ExportModelOperationsMixin('uploadfile'),models.Model):
     id=models.AutoField(primary_key=True)
     filename=models.CharField(max_length=200,unique=True,null=False)
     uploaded_time=models.DateTimeField(default=timezone.now)
