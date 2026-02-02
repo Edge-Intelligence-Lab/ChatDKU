@@ -119,11 +119,13 @@ INSTALLED_APPS = [
     "chat",
     "django_celery_results",
     "django_celery_beat",
+    "django_prometheus",
     "drf_spectacular",
     'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -134,6 +136,8 @@ MIDDLEWARE = [
     "core.middleware.NetIDMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
+
 ]
 
 
@@ -177,7 +181,7 @@ AUTH_USER_MODEL = "core.UserModel"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django_prometheus.db.backends.postgresql",
         "NAME": os.getenv("NAME_DB"),
         "USER": os.getenv("USERNAME_DB"),
         "PASSWORD": os.getenv("PASSWORD_DB"),
@@ -291,3 +295,7 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '2.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+# Prometheus Settings
+
+PROMETHEUS_LATENCY_BUCKETS = (0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, 25.0, 50.0, 75.0, float("inf"),)
