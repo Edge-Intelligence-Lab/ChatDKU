@@ -18,6 +18,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
 	title: "ChatDKU",
 	description: "AI Chat Interface",
+	icons: {
+		icon: "/favicon-small.png",
+		apple: "/favicon-small.png",
+	},
 };
 
 export default function RootLayout({
@@ -32,7 +36,7 @@ export default function RootLayout({
 					attribute="class"
 					defaultTheme="system"
 					enableSystem
-					// disableTransitionOnChange
+				// disableTransitionOnChange
 				>
 					{children}
 				</ThemeProvider>

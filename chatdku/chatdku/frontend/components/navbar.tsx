@@ -17,6 +17,7 @@ import {
 // import { ModeToggle } from "@/components/ui/mode-toggle";
 import DynamicLogo from "@/components/dynamic-logo";
 import { Badge } from "@/components/ui/badge";
+import { ModeToggle } from "./ui/mode-toggle";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -26,7 +27,6 @@ export function Navbar() {
     <NavigationMenu className="w-full max-w-[98vw] mx-auto flex justify-between items-center border-b lg:border-none fixed top-0 left-1/2 -translate-x-1/2 z-10 backdrop-blur-md lg:backdrop-blur-none bg-gradient-to-b from-background to-transparent">
       <div className="flex flex-row items-center ">
         <div className="flex flex-row items-center p-3 pr-0 space-x-2">
-
           <div className="w-5" />
 
           <DynamicLogo width={35} height={35} />
@@ -63,26 +63,26 @@ export function Navbar() {
         </TooltipProvider>
       </div>
       <NavigationMenuList>
+        {/* <NavigationMenuItem> */}
+        {/*   <TooltipProvider> */}
+        {/*     <Tooltip> */}
+        {/*       <TooltipTrigger asChild> */}
+        {/*         <NavigationMenuLink */}
+        {/*           href={isDevRoute ? "/dev" : "/"} */}
+        {/*           className="lg:text-md flex flex-row items-center" */}
+        {/*         > */}
+        {/*           <p className="hidden sm:block">New Chat</p> */}
+        {/*           <SquarePen className="size-5 text-primary-500" /> */}
+        {/*         </NavigationMenuLink> */}
+        {/*       </TooltipTrigger> */}
+        {/*       <TooltipContent className="sm:hidden"> */}
+        {/*         <p>New Chat</p> */}
+        {/*       </TooltipContent> */}
+        {/*     </Tooltip> */}
+        {/*   </TooltipProvider> */}
+        {/* </NavigationMenuItem> */}
         <NavigationMenuItem>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <NavigationMenuLink
-                  href={isDevRoute ? "/dev" : "/"}
-                  className="lg:text-md flex flex-row items-center"
-                >
-                  <p className="hidden sm:block">New Chat</p>
-                  <SquarePen className="size-5 text-primary-500" />
-                </NavigationMenuLink>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
-                <p>New Chat</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </NavigationMenuItem>
-        <NavigationMenuItem className="">
-          {/* <ModeToggle /> */}
+          <ModeToggle />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
