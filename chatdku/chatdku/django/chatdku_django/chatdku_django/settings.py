@@ -134,6 +134,7 @@ MIDDLEWARE = [
     "core.middleware.NetIDMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.rate_limit_middleware.RateLimitMiddleware"
 ]
 
 
@@ -290,4 +291,29 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'ChatDKU',
     'VERSION': '2.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+}
+# Different restrictions among different API calls
+RATE_LIMIT_DEFAULT = 60      # Default: 60 requests per minute
+RATE_LIMIT_API = 120         # API endpoints: 120 requests per minute  
+RATE_LIMIT_STRICT = 20       # Strict operations: 20 requests per 30 seconds
+RATE_LIMIT_WINDOW = 60       # Default window: 60 seconds
+RATE_LIMIT_STRICT_WINDOW = 30  # Strict window: 30 seconds
+
+# Paths exempt from rate limiting
+RATE_LIMIT_EXEMPT_PATHS = [
+    '/admin/',
+    '/static/',
+    '/media/',
+    '/health/',
+    '/docs/',
+]
+
+# Path to rate limit type mapping
+RATE_LIMIT_PATH_MAPPINGS = {
+    '/api/': 'api',
+    '/chat/': 'api',
+    '/query/': 'api',
+    '/upload/': 'strict',
+    '/scrape/': 'strict',
+    '/batch/': 'strict',
 }
