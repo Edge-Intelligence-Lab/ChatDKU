@@ -39,6 +39,7 @@ class RateLimitMiddleware:
             '/media/',
             '/health/',
             '/docs/',
+            '/metrics',  "metrics added"
         ])
         
         # Path to rate limit type mapping
