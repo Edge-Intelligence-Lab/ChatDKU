@@ -25,7 +25,7 @@ from pathlib import Path
 import dotenv
 dotenv.load_dotenv()
 
-from chatdku.core.tools.redis_listener.db_monitor import (
+from chatdku.core.tools.db_monitor.db_monitor import (
     get_query_monitor,
     DatabaseType,
     DEFAULT_DB_PATH,
@@ -127,9 +127,25 @@ Average Results per Query: {stats['overall_result_stats']['avg_count']:.1f}
                 emoji_out = outcome_emojis.get(outcome, "❓")
                 report += f"  {emoji_out} {outcome:18s}: {count:4d} ({percentage:5.1f}%)\n"
             report += "\n"
-    
-    report += "═" * 60 + "\n"
-    
+        
+    # Query snippets (recent samples)
+    samples = stats.get("query_samples", [])
+    if samples:
+        report += """
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    🔍 Recent Query Samples
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    """
+        for s in samples:
+            report += (
+                f"[{s['timestamp']}] "
+                f"{s['db_type'].upper()} | {s['query_type']} | "
+                f"{s['outcome']} | {s['latency_ms']:.0f}ms\n"
+                f"  → \"{s['query_snippet']}\"\n\n"
+            )
+
+    report += "\n" + "═" * 80 + "\n"
+    # report += "═" * 60 + "\n"
     return report
 
 
@@ -141,14 +157,14 @@ def format_comparison_report(hours: int) -> str:
     redis_stats = monitor.get_stats_from_db(hours=hours, db_type=DatabaseType.REDIS)
     
     report = f"""
-╔════════════════════════════════════════════════════════════╗
-║        ChromaDB vs Redis - Performance Comparison          ║
-╚════════════════════════════════════════════════════════════╝
+        ╔════════════════════════════════════════════════════════════╗
+        ║        ChromaDB vs Redis - Performance Comparison          ║
+        ╚════════════════════════════════════════════════════════════╝
 
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Report Period: Last {hours} hours
+        Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        Report Period: Last {hours} hours
 
-"""
+        """
     
     # Extract stats
     def get_db_specific(stats):
@@ -259,9 +275,6 @@ Report Period: Last {hours} hours
                 report += f"   → ChromaDB returns closer to requested top_k ({(chroma_fulfill - redis_fulfill):.1%} better)\n\n"
             else:
                 report += f"   → Redis returns closer to requested top_k ({(redis_fulfill - chroma_fulfill):.1%} better)\n\n"
-    
-    report += "\n" + "═" * 80 + "\n"
-    
     return report
 
 
@@ -301,15 +314,15 @@ def main():
         description="Generate Database Query Monitor reports",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  %(prog)s                          # Last 24 hours, all databases
-  %(prog)s --hours 48               # Last 48 hours
-  %(prog)s --db chroma              # Only ChromaDB queries
-  %(prog)s --db redis               # Only Redis queries
-  %(prog)s --compare                # Side-by-side comparison
-  %(prog)s --json                   # Output as JSON
-  %(prog)s --export report.txt      # Save to file
-        """
+            Examples:
+            %(prog)s                          # Last 24 hours, all databases
+            %(prog)s --hours 48               # Last 48 hours
+            %(prog)s --db chroma              # Only ChromaDB queries
+            %(prog)s --db redis               # Only Redis queries
+            %(prog)s --compare                # Side-by-side comparison
+            %(prog)s --json                   # Output as JSON
+            %(prog)s --export report.txt      # Save to file
+            """
     )
     
     parser.add_argument(

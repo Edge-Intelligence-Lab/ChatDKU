@@ -23,8 +23,8 @@ from chatdku.core.tools.email.email_tool import EmailTools
 
 
 # ------------ Storage Configuration ------------
-DEFAULT_DB_PATH = "/datapool/redis_listener/db_query_metrics.db"
-DEFAULT_LOG_PATH = "/datapool/redis_listener/db_query_monitor.log"
+DEFAULT_DB_PATH = "/datapool/db_listener/db_query_metrics.db"
+DEFAULT_LOG_PATH = "/datapool/db_listener/db_query_monitor.log"
 
 
 # ------------ Query Outcome Taxonomy ------------
@@ -330,11 +330,38 @@ class DatabaseQueryMonitor:
                         search_mode=row['search_mode'],
                     )
                     metrics.append(m)
+
+                    # --- Collect ERROR query samples only ---
+                    SNIPPET_LEN = 100
+                    MAX_SAMPLES = 5
+
+                    ERROR_OUTCOMES = {
+                        QueryOutcome.TIMEOUT.value,
+                        QueryOutcome.CONNECTION_ERROR.value,
+                        QueryOutcome.QUERY_ERROR.value,
+                        QueryOutcome.UNKNOWN_ERROR.value,
+                    }
+
+                    query_samples = []
+                    for m in metrics:
+                        if (m.outcome.value in ERROR_OUTCOMES and m.query_text):
+                            query_samples.append({
+                                "timestamp": m.timestamp.isoformat(),
+                                "db_type": m.db_type.value,
+                                "query_type": m.query_type,
+                                "outcome": m.outcome.value,
+                                "latency_ms": m.latency_ms,
+                                "query_snippet": m.query_text[:SNIPPET_LEN],
+                            })
+
+                    query_samples = query_samples[:MAX_SAMPLES]
+                
                 
                 stats = self._calculate_stats(metrics)
                 stats['time_range_hours'] = hours
                 stats['query_type_filter'] = query_type or 'all'
                 stats['db_type_filter'] = db_type.value if db_type else 'all'
+                stats["query_samples"] = query_samples
                 return stats
                 
         except Exception as e:
