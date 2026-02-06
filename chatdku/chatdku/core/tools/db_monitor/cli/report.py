@@ -2,6 +2,9 @@
 """
 Database Query Monitor - Report Generation CLI
 
+This CLI is intended for developer diagnostics and ad-hoc analysis.
+It is not used by the email reporting pipeline.
+
 Standalone tool to generate reports from ChromaDB and Redis query monitoring.
 Can be run from anywhere, independent of the retriever/agent.
 

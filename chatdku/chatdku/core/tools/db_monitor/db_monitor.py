@@ -19,8 +19,6 @@ from collections import deque, defaultdict
 from threading import Lock
 from contextlib import contextmanager
 
-from chatdku.core.tools.email.email_tool import EmailTools
-
 
 # ------------ Storage Configuration ------------
 DEFAULT_DB_PATH = "/datapool/db_listener/db_query_metrics.db"
@@ -32,6 +30,7 @@ class QueryOutcome(Enum):
     """Taxonomy for query result categorization"""
     SUCCESS = "success"  # Query returned valid results
     EMPTY_RESULT = "empty_result"  # Query succeeded but returned no documents
+    PARTIAL_RESULT = "partial_result"
     TIMEOUT = "timeout"  # Query exceeded time limit
     CONNECTION_ERROR = "connection_error"  # Database connection failed
     QUERY_ERROR = "query_error"  # Malformed query or syntax error
@@ -123,7 +122,7 @@ class DatabaseQueryMonitor:
                     outcome TEXT NOT NULL,
                     latency_ms REAL NOT NULL,
                     result_count INTEGER NOT NULL,
-                    expected_top_k INTEGER NOT NULL,
+                    expected_top_k INTEGER,
                     error_message TEXT,
                     query_text TEXT,
                     user_id TEXT,
@@ -162,23 +161,22 @@ class DatabaseQueryMonitor:
             conn.close()
     
     def _setup_logger(self, log_file: str) -> logging.Logger:
-        """Setup dedicated logger for query monitoring"""
         logger = logging.getLogger("db_query_monitor")
         logger.setLevel(logging.INFO)
-        
-        # Ensure log directory exists
+        logger.propagate = False 
+
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
-        
+
         file_handler = logging.FileHandler(log_file, encoding="utf-8", mode="a")
         file_handler.setFormatter(
             logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
         )
-        
-        if not logger.hasHandlers():
-            logger.addHandler(file_handler)
-            
+
+        if not logger.handlers:
+            logger.addHandler(file_handler) 
+
         return logger
-    
+
     def record_query(self, metrics: QueryMetrics):
         """Record a query execution and its metrics (both memory and database)"""
         # Store in memory cache
@@ -331,30 +329,30 @@ class DatabaseQueryMonitor:
                     )
                     metrics.append(m)
 
-                    # --- Collect ERROR query samples only ---
-                    SNIPPET_LEN = 100
-                    MAX_SAMPLES = 5
+                # --- Collect ERROR query samples only ---
+                SNIPPET_LEN = 100
+                MAX_SAMPLES = 5
 
-                    ERROR_OUTCOMES = {
-                        QueryOutcome.TIMEOUT.value,
-                        QueryOutcome.CONNECTION_ERROR.value,
-                        QueryOutcome.QUERY_ERROR.value,
-                        QueryOutcome.UNKNOWN_ERROR.value,
-                    }
+                ERROR_OUTCOMES = {
+                    QueryOutcome.TIMEOUT.value,
+                    QueryOutcome.CONNECTION_ERROR.value,
+                    QueryOutcome.QUERY_ERROR.value,
+                    QueryOutcome.UNKNOWN_ERROR.value,
+                }
 
-                    query_samples = []
-                    for m in metrics:
-                        if (m.outcome.value in ERROR_OUTCOMES and m.query_text):
-                            query_samples.append({
-                                "timestamp": m.timestamp.isoformat(),
-                                "db_type": m.db_type.value,
-                                "query_type": m.query_type,
-                                "outcome": m.outcome.value,
-                                "latency_ms": m.latency_ms,
-                                "query_snippet": m.query_text[:SNIPPET_LEN],
-                            })
+                query_samples = []
+                for m in metrics:
+                    if (m.outcome.value in ERROR_OUTCOMES and m.query_text):
+                        query_samples.append({
+                            "timestamp": m.timestamp.isoformat(),
+                            "db_type": m.db_type.value,
+                            "query_type": m.query_type,
+                            "outcome": m.outcome.value,
+                            "latency_ms": m.latency_ms,
+                            "query_snippet": m.query_text[:SNIPPET_LEN],
+                        })
 
-                    query_samples = query_samples[:MAX_SAMPLES]
+                query_samples = query_samples[:MAX_SAMPLES]
                 
                 
                 stats = self._calculate_stats(metrics)
@@ -498,8 +496,8 @@ class DatabaseQueryMonitor:
         }
     
     def _check_alert_conditions(self, db_type: DatabaseType):
-        """Check if current metrics warrant an alert for specific database"""
-        # Cooldown check (per database)
+        """Check if current metrics warrant recording an issue (does not immediately send email)"""
+        # Cooldown check (per database) - only for logging, not for email
         if self.last_alert_time[db_type]:
             elapsed = time.time() - self.last_alert_time[db_type]
             if elapsed < self.alert_cooldown:
@@ -511,194 +509,42 @@ class DatabaseQueryMonitor:
         if stats.get("total_queries", 0) < 10:
             return  # Not enough data
         
-        # Check error rate
+        # Check error rate - just log, don't send email
         error_rate = stats.get("overall_error_rate", 0)
         if error_rate > self.alert_error_threshold:
-            self._send_alert(
-                db_type=db_type,
-                subject=f"High {db_type.value.upper()} Query Error Rate",
-                stats=stats,
-                reason=f"Error rate {error_rate:.1%} exceeds threshold {self.alert_error_threshold:.1%}"
+            self.logger.warning(
+                f"[{db_type.value.upper()}] High error rate detected: {error_rate:.1%} "
+                f"(threshold: {self.alert_error_threshold:.1%}). "
+                f"Issue will be included in next periodic report."
             )
-            return
-        
-        # Check latency
-        avg_latency = stats.get("latency_stats", {}).get("avg_ms", 0)
-        if avg_latency > self.alert_latency_threshold_ms:
-            self._send_alert(
-                db_type=db_type,
-                subject=f"High {db_type.value.upper()} Query Latency",
-                stats=stats,
-                reason=f"Average latency {avg_latency:.0f}ms exceeds threshold {self.alert_latency_threshold_ms:.0f}ms"
-            )
-    
-    def _send_alert(self, db_type: DatabaseType, subject: str, stats: Dict[str, Any], reason: str):
-        """Send email alert about query issues"""
-        host = os.getenv("EMAIL_HOST")
-        port = int(os.getenv("EMAIL_PORT", 25))
-        from_email = os.getenv("EMAIL_HOST_USER")
-        to_email = os.getenv("EMAIL_TO")
-        
-        if not all([host, port, from_email, to_email]):
-            self.logger.error("Missing email configuration. Cannot send alert.")
-            return
-        
-        try:
-            to_email_list = json.loads(to_email)
-            
-            message = f"""Database Query Performance Alert - {db_type.value.upper()}
-                Reason: {reason}
-
-                Recent Query Statistics (last 100 queries for {db_type.value.upper()}):
-                -------------------------------------------
-                Total Queries: {stats['total_queries']}
-                Error Rate: {stats['overall_error_rate']:.1%}
-
-                Outcome Distribution:
-                {json.dumps(stats['outcome_distribution'], indent=2)}
-
-                Latency Statistics:
-                Average: {stats['overall_latency_stats']['avg_ms']:.1f}ms
-                Min: {stats['overall_latency_stats']['min_ms']:.1f}ms
-                Max: {stats['overall_latency_stats']['max_ms']:.1f}ms
-
-                Result Statistics:
-                Average Results: {stats['overall_result_stats']['avg_count']:.1f}
-
-                Time Range:
-                Start: {stats['time_range']['start']}
-                End: {stats['time_range']['end']}
-
-                Alert Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-                Action Required:
-                Please investigate {db_type.value.upper()} query performance and error causes.
-                """
-            
-            email = EmailTools(
-                host=host,
-                port=port,
-                receiver_email=to_email_list,
-                sender_name="ChatDKU",
-                sender_email=from_email
-            )
-            
-            result = email.send_mail(f"[ChatDKU Alert] {subject}", message)
-            self.logger.info(f"Alert email sent for {db_type.value}: {result}")
             self.last_alert_time[db_type] = time.time()
-            
-        except Exception as e:
-            self.logger.error(f"Failed to send alert email: {e}")
-    
-    def get_summary_report(self, hours: int = 24) -> str:
-        """Generate a comprehensive summary report from database"""
-        try:
-            # Get overall stats
-            overall_stats = self.get_stats_from_db(hours=hours)
-            
-            if "error" in overall_stats or "message" in overall_stats:
-                return f"Error generating report: {overall_stats}"
-            
-            # Get per-database stats
-            chroma_stats = self.get_stats_from_db(hours=hours, db_type=DatabaseType.CHROMA)
-            redis_stats = self.get_stats_from_db(hours=hours, db_type=DatabaseType.REDIS)
-            
-            # Get total count from database
-            with self._get_db_connection() as conn:
-                cutoff = datetime.now() - timedelta(hours=hours)
-                cursor = conn.execute(
-                    "SELECT COUNT(*) as total FROM query_metrics WHERE timestamp >= ?",
-                    [cutoff.isoformat()]
-                )
-                total_in_period = cursor.fetchone()['total']
-            
-            report = f"""
-                ========================================
-                Database Query Monitor - Summary Report
-                ========================================
-                Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                Report Period: Last {hours} hours
-                Database Location: {self.db_path}
+            return
+        
+        # Check latency - just log, don't send email
+        avg_latency = stats.get("overall_latency_stats", {}).get("avg_ms", 0)
+        if avg_latency > self.alert_latency_threshold_ms:
+            self.logger.warning(
+                f"[{db_type.value.upper()}] High latency detected: {avg_latency:.0f}ms "
+                f"(threshold: {self.alert_latency_threshold_ms:.0f}ms). "
+                f"Issue will be included in next periodic report."
+            )
+            self.last_alert_time[db_type] = time.time()
+        
+    def collect_summary_data(self, hours: int = 24) -> dict:
+        overall_stats = self.get_stats_from_db(hours=hours)
+        chroma_stats = self.get_stats_from_db(hours=hours, db_type=DatabaseType.CHROMA)
+        redis_stats = self.get_stats_from_db(hours=hours, db_type=DatabaseType.REDIS)
 
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                📊 Overall Statistics (All Databases)
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                Total Queries: {total_in_period}
-                Overall Error Rate: {overall_stats['overall_error_rate']:.1%}
-                Overall Partial Result Rate: {overall_stats.get('overall_partial_rate', 0):.1%}
-                Average Latency: {overall_stats['overall_latency_stats']['avg_ms']:.1f}ms
-                Max Latency: {overall_stats['overall_latency_stats']['max_ms']:.1f}ms
-
-                Database Distribution:
-                {json.dumps(overall_stats['db_type_distribution'], indent=2)}
-
-                Overall Outcome Distribution:
-                {json.dumps(overall_stats['outcome_distribution'], indent=2)}
-
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                🔵 ChromaDB (Vector Search) Performance
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                """
-            
-            if "error" not in chroma_stats and "message" not in chroma_stats:
-                chroma_db_stats = chroma_stats['per_database_stats'].get('chroma', {})
-                if chroma_db_stats:
-                    fulfillment = chroma_db_stats['result_stats'].get('avg_fulfillment_rate')
-                    fulfillment_str = f"{fulfillment:.1%}" if fulfillment is not None else "N/A"
-                    
-                    report += f"""Query Count: {chroma_db_stats['query_count']}
-                        Error Rate: {chroma_db_stats['error_rate']:.1%}
-                        Partial Result Rate: {chroma_db_stats.get('partial_rate', 0):.1%}
-                        Average Latency: {chroma_db_stats['latency_stats']['avg_ms']:.1f}ms
-                        Average Results: {chroma_db_stats['result_stats']['avg_count']:.1f}
-                        Result Fulfillment Rate: {fulfillment_str}
-
-                        Outcomes:
-                        {json.dumps(chroma_db_stats['outcome_distribution'], indent=2)}
-                        """
-                else:
-                    report += "No ChromaDB queries in this period.\n"
-            else:
-                report += f"{chroma_stats.get('message', 'No data')}\n"
-            
-            report += """
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                🔴 Redis (Keyword Search) Performance
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                """
-            
-            if "error" not in redis_stats and "message" not in redis_stats:
-                redis_db_stats = redis_stats['per_database_stats'].get('redis', {})
-                if redis_db_stats:
-                    fulfillment = redis_db_stats['result_stats'].get('avg_fulfillment_rate')
-                    fulfillment_str = f"{fulfillment:.1%}" if fulfillment is not None else "N/A"
-                    
-                    report += f"""Query Count: {redis_db_stats['query_count']}
-                        Error Rate: {redis_db_stats['error_rate']:.1%}
-                        Partial Result Rate: {redis_db_stats.get('partial_rate', 0):.1%}
-                        Average Latency: {redis_db_stats['latency_stats']['avg_ms']:.1f}ms
-                        Average Results: {redis_db_stats['result_stats']['avg_count']:.1f}
-                        Result Fulfillment Rate: {fulfillment_str}
-
-                        Outcomes:
-                        {json.dumps(redis_db_stats['outcome_distribution'], indent=2)}
-                        """
-                else:
-                    report += "No Redis queries in this period.\n"
-            else:
-                report += f"{redis_stats.get('message', 'No data')}\n"
-            
-            report += f"""
-                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                Time Range:
-                Start: {overall_stats['time_range']['start']}
-                End: {overall_stats['time_range']['end']}
-
-                ========================================
-                """
-            return report
-        except Exception as e:
-            return f"Error generating summary report: {e}"
+        return {
+            "meta": {
+                "generated_at": datetime.now(),
+                "hours": hours,
+                "db_path": self.db_path,
+            },
+            "overall": overall_stats,
+            "chroma": chroma_stats,
+            "redis": redis_stats,
+        }
 
 
 # ------------ Global Monitor Instance ------------
@@ -804,14 +650,3 @@ def get_query_stats(
         return monitor.get_stats_from_db(hours=hours, db_type=db_type_enum)
     else:
         return monitor.get_stats(window_size, db_type=db_type_enum)
-
-
-def print_summary_report(hours: int = 24):
-    """
-    Print summary report to stdout.
-    
-    Args:
-        hours: Number of hours to include in report
-    """
-    monitor = get_query_monitor()
-    print(monitor.get_summary_report(hours=hours))

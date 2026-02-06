@@ -32,7 +32,7 @@ from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 from chatdku.core.utils import truncate_tokens
-from chatdku.core.tools.redis_listener.db_monitor import (
+from chatdku.core.tools.db_monitor.db_monitor import (
     QueryOutcome,
     record_chroma_query,
     record_redis_query,
