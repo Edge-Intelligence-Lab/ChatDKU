@@ -7,20 +7,20 @@ Designed to run via cron job.
 
 Usage:
     # Send daily summary (last 24 hours)
-    python send_daily_report.py
+    python daily_report.py
     
     # Send weekly summary (last 7 days)
-    python send_daily_report.py --hours 168
+    python daily_report.py --hours 168
     
     # Dry run (no email, just print)
-    python send_daily_report.py --dry-run
+    python daily_report.py --dry-run
 
 Cron examples:
     # Daily at 9 AM
-    0 9 * * * cd /path/to/chatdku && python -m chatdku.core.tools.redis_listener.send_daily_report
+    0 9 * * * cd /path/to/chatdku && python -m chatdku.core.tools.db_monitor.jobs.daily_report
     
     # Twice daily (9 AM and 6 PM)
-    0 9,18 * * * cd /path/to/chatdku && python -m chatdku.core.tools.redis_listener.send_daily_report --hours 12
+    0 9,18 * * * cd /path/to/chatdku && python -m python -m chatdku.core.tools.db_monitor.jobs.daily_report --hours 12
 """
 
 import argparse

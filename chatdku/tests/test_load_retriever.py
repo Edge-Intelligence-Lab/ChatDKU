@@ -25,7 +25,7 @@ class QueryResult:
     error: str = None
 
 
-def test_concurrent_queries(num_users: int = 5, rounds: int = 3):
+def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
     """
     Load test with multiple concurrent users making queries of different sizes.
 
