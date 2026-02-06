@@ -13,6 +13,7 @@ class NetIDMiddleware:
         if   any(part in ("admin","doc","metrics") for part in path_parts):
             return self.get_response(request)
 
+        
         netid = request.META.get("HTTP_UID") or request.session.get("netid")
         display_name = request.META.get("HTTP_X_DISPLAYNAME")
         setattr(request, '_dont_enforce_csrf_checks', True)
