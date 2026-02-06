@@ -1,4 +1,6 @@
 import os
+import requests
+import json
 import re
 import string
 from collections.abc import Iterator, Mapping
@@ -7,7 +9,7 @@ from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import contextmanager, nullcontext
 from enum import Enum
 from itertools import combinations
-from typing import Any
+from typing import Any, Dict, Optional
 
 import chromadb
 import pandas as pd
@@ -41,6 +43,105 @@ from chatdku.core.utils import truncate_tokens
 #         keep_retrieval_score=True,
 #         device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
 #     )
+
+def call_vllm_rerank(
+    base_url: str,
+    model: str,
+    query: str,
+    docs_params: list[dict[str, Any]],
+    api_key: str = None,
+) -> list[float]:
+    """
+    Call vLLM's /v1/rerank endpoint and return the scores in document order.
+    Assumes vLLM was started with --task score so that /v1/rerank is available.
+    """
+    documents_payload = [json.dumps(p) for p in docs_params]
+
+    payload = {
+        "model": model,
+        "query": query,
+        "documents": documents_payload,
+    }
+
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    url = f"{base_url.rstrip('/')}/v1/rerank"
+    resp = requests.post(url, headers=headers, json=payload)
+    resp.raise_for_status()
+    data = resp.json()
+
+    results = sorted(data["results"], key=lambda x: x["index"])
+    scores = [r["relevance_score"] for r in results]
+    return scores
+
+
+def filter_chroma_top_k(
+    chroma_result: Dict[str, Any],
+    query: str,
+    top_k: int,
+    base_url: str,
+    model: str,
+    api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Filters a ChromaDB result dictionary to the top-k items based on vLLM reranking scores.
+    
+    Args:
+        chroma_result: The raw dictionary returned by chroma_collection.query()
+        query: The user query string used for reranking.
+        top_k: The number of top results to keep.
+        base_url: The vLLM base URL.
+        model: The model name for reranking.
+        api_key: Optional API key.
+
+    Returns:
+        A filtered dictionary with the same structure as chroma_result, 
+        containing only the top_k items sorted by relevance score.
+    """
+    
+    # Extract the inner lists (Chroma returns list of lists for batch queries)
+    # This assumes batch size of 1 as implied in `chroma_result_to_nodes`
+    ids = chroma_result["ids"][0]
+    documents = chroma_result["documents"][0]
+    metadatas = chroma_result["metadatas"][0]
+    docs_params = [{"text": doc} for doc in documents]
+
+    scores = call_vllm_rerank(
+        base_url=base_url,
+        model=model,
+        query=query,
+        docs_params=docs_params,
+        api_key=api_key
+    )
+
+    # Zip everything together to keep data synchronized during sorting
+    combined_data = []
+    for i in range(len(ids)):
+        combined_data.append({
+            "id": ids[i],
+            "document": documents[i],
+            "metadata": metadatas[i],
+            "score": scores[i]
+        })
+
+    # Sort by score (descending) and slice top_k
+    combined_data.sort(key=lambda x: x["score"], reverse=True)
+    top_k_data = combined_data[:top_k]
+
+    # 6. Reconstruct the ChromaDB result structure
+    filtered_result = {
+        "ids": [[item["id"] for item in top_k_data]],
+        "documents": [[item["document"] for item in top_k_data]],
+        "metadatas": [[item["metadata"] for item in top_k_data]],
+        # Replacing "distances" with the new relevance scores.
+        # NOTE: Chroma distances are usually "lower is better", but rerank scores 
+        # are "higher is better". Downstream functions must be aware of this.
+        "distances": [[item["score"] for item in top_k_data]], 
+    }
+
+    return filtered_result
 
 
 class QueryTimeoutError(Exception):
@@ -278,7 +379,7 @@ def __get_chroma_filter(
 def DocRetrieverOuter(
     internal_memory: dict,
     retriever_top_k: int = 5,
-    use_reranker: bool = False,
+    use_reranker: bool = True,
     reranker_top_n: int = 3,
     user_id: str = "Chat_DKU",
     search_mode: int = 0,
@@ -334,18 +435,27 @@ def DocRetrieverOuter(
             )
 
             retrieved_nodes = chroma_result_to_nodes(query_result)
+            if use_reranker:
+                filtered_results = filter_chroma_top_k(
+                    chroma_result=retrieved_nodes,
+                    query=query,
+                    top_k=reranker_top_n,
+                    base_url="http://0.0.0.0:6767",
+                    model="Qwen/Qwen3-VL-Reranker-8B",
+                )
+            else: filtered_results = retrieved_nodes
 
             span.set_attributes(nodes_to_openinference(retrieved_nodes))
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(result=retrieved_nodes)
+                        dict(result=filtered_results)
                     ),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
             span.set_status(Status(StatusCode.OK))
-        return retrieved_nodes
+        return filtered_results
 
     def __KeywordRetriever(
         query: str | list[str],
@@ -581,6 +691,7 @@ def DocRetrieverOuter(
                     node.node_id for node in total if isinstance(node, NodeWithScore)
                 }
             }
+            print(f"OVERALL RESULT: {vector_result}")
             return overall_result, internal_result
         except Exception as e:
             return [f"Unexpected error: {e}"], {}
