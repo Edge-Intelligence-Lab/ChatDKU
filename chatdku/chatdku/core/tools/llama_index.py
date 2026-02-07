@@ -1,6 +1,5 @@
-import os
-import requests
 import json
+import os
 import re
 import string
 from collections.abc import Iterator, Mapping
@@ -13,6 +12,7 @@ from typing import Any, Dict, Optional
 
 import chromadb
 import pandas as pd
+import requests
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 from llama_index.core.schema import NodeWithScore, TextNode
 from nltk.corpus import stopwords
@@ -44,23 +44,37 @@ from chatdku.core.utils import truncate_tokens
 #         device=str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu")),
 #     )
 
+
 def call_vllm_rerank(
     base_url: str,
     model: str,
     query: str,
-    docs_params: list[dict[str, Any]],
+    documents: list[str],
     api_key: str = None,
 ) -> list[float]:
     """
     Call vLLM's /v1/rerank endpoint and return the scores in document order.
     Assumes vLLM was started with --task score so that /v1/rerank is available.
     """
-    documents_payload = [json.dumps(p) for p in docs_params]
+    prefix = '<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n'
+
+    suffix = "<|im_end|>\n<|im_start|>assistant\n"
+
+    query_template = "{prefix}<Instruct>: {instruction}\n<Query>: {query}\n"
+
+    document_template = "<Document>: {doc}{suffix}"
+
+    instruction = (
+        "Given a search query, retrieve relevant candidates that answer the query."
+    )
+
+    documents = [document_template.format(doc=doc, suffix=suffix) for doc in documents]
 
     payload = {
-        "model": model,
-        "query": query,
-        "documents": documents_payload,
+        "query": query_template.format(
+            prefix=prefix, instruction=instruction, query=query
+        ),
+        "documents": documents,
     }
 
     headers = {"Content-Type": "application/json"}
@@ -83,11 +97,11 @@ def filter_chroma_top_k(
     top_k: int,
     base_url: str,
     model: str,
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Filters a ChromaDB result dictionary to the top-k items based on vLLM reranking scores.
-    
+
     Args:
         chroma_result: The raw dictionary returned by chroma_collection.query()
         query: The user query string used for reranking.
@@ -97,34 +111,35 @@ def filter_chroma_top_k(
         api_key: Optional API key.
 
     Returns:
-        A filtered dictionary with the same structure as chroma_result, 
+        A filtered dictionary with the same structure as chroma_result,
         containing only the top_k items sorted by relevance score.
     """
-    
+
     # Extract the inner lists (Chroma returns list of lists for batch queries)
     # This assumes batch size of 1 as implied in `chroma_result_to_nodes`
     ids = chroma_result["ids"][0]
     documents = chroma_result["documents"][0]
     metadatas = chroma_result["metadatas"][0]
-    docs_params = [{"text": doc} for doc in documents]
 
     scores = call_vllm_rerank(
         base_url=base_url,
         model=model,
         query=query,
-        docs_params=docs_params,
-        api_key=api_key
+        documents=documents,
+        api_key=api_key,
     )
 
     # Zip everything together to keep data synchronized during sorting
     combined_data = []
     for i in range(len(ids)):
-        combined_data.append({
-            "id": ids[i],
-            "document": documents[i],
-            "metadata": metadatas[i],
-            "score": scores[i]
-        })
+        combined_data.append(
+            {
+                "id": ids[i],
+                "document": documents[i],
+                "metadata": metadatas[i],
+                "score": scores[i],
+            }
+        )
 
     # Sort by score (descending) and slice top_k
     combined_data.sort(key=lambda x: x["score"], reverse=True)
@@ -136,10 +151,11 @@ def filter_chroma_top_k(
         "documents": [[item["document"] for item in top_k_data]],
         "metadatas": [[item["metadata"] for item in top_k_data]],
         # Replacing "distances" with the new relevance scores.
-        # NOTE: Chroma distances are usually "lower is better", but rerank scores 
+        # NOTE: Chroma distances are usually "lower is better", but rerank scores
         # are "higher is better". Downstream functions must be aware of this.
-        "distances": [[item["score"] for item in top_k_data]], 
+        "distances": [[item["score"] for item in top_k_data]],
     }
+    __import__("pprint").pprint(filtered_result)
 
     return filtered_result
 
@@ -429,10 +445,11 @@ def DocRetrieverOuter(
             )
 
             query_result = collection.query(
-                query_texts=[truncate_tokens(query, 7000)],
+                query_texts=truncate_tokens(query, 7000),
                 n_results=retriever_top_k,
                 where=filters,
             )
+            __import__("pprint").pprint(query_result)
             if use_reranker:
                 query_result = filter_chroma_top_k(
                     chroma_result=query_result,
@@ -441,7 +458,7 @@ def DocRetrieverOuter(
                     base_url="http://localhost:6767",
                     model="Qwen/Qwen3-VL-Reranker-8B",
                 )
-
+            __import__("pprint").pprint(len(query_result))
 
             retrieved_nodes = chroma_result_to_nodes(query_result)
             span.set_attributes(nodes_to_openinference(retrieved_nodes))
@@ -690,7 +707,7 @@ def DocRetrieverOuter(
                     node.node_id for node in total if isinstance(node, NodeWithScore)
                 }
             }
-            print(f"VECTOR RESULT: {vector_result}")
+            __import__("pprint").pprint(vector_result)
             return overall_result, internal_result
         except Exception as e:
             return [f"Unexpected error: {e}"], {}
