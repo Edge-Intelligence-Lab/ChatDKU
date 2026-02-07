@@ -378,12 +378,12 @@ def __get_chroma_filter(
 
 def DocRetrieverOuter(
     internal_memory: dict,
-    retriever_top_k: int = 5,
+    retriever_top_k: int = 25,
     use_reranker: bool = True,
-    reranker_top_n: int = 3,
+    reranker_top_n: int = 5,
     user_id: str = "Chat_DKU",
     search_mode: int = 0,
-    files: list = [],
+    files: list | None = None,
 ):
 
     def __VectorRetriever(
@@ -429,33 +429,32 @@ def DocRetrieverOuter(
             )
 
             query_result = collection.query(
-                query_texts=truncate_tokens(query, 7000),
+                query_texts=[truncate_tokens(query, 7000)],
                 n_results=retriever_top_k,
                 where=filters,
             )
-
-            retrieved_nodes = chroma_result_to_nodes(query_result)
             if use_reranker:
-                filtered_results = filter_chroma_top_k(
-                    chroma_result=retrieved_nodes,
+                query_result = filter_chroma_top_k(
+                    chroma_result=query_result,
                     query=query,
                     top_k=reranker_top_n,
-                    base_url="http://0.0.0.0:6767",
+                    base_url="http://localhost:6767",
                     model="Qwen/Qwen3-VL-Reranker-8B",
                 )
-            else: filtered_results = retrieved_nodes
 
+
+            retrieved_nodes = chroma_result_to_nodes(query_result)
             span.set_attributes(nodes_to_openinference(retrieved_nodes))
             span.set_attributes(
                 {
                     SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(result=filtered_results)
+                        dict(result=retrieved_nodes)
                     ),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
             span.set_status(Status(StatusCode.OK))
-        return filtered_results
+        return retrieved_nodes
 
     def __KeywordRetriever(
         query: str | list[str],
@@ -691,7 +690,7 @@ def DocRetrieverOuter(
                     node.node_id for node in total if isinstance(node, NodeWithScore)
                 }
             }
-            print(f"OVERALL RESULT: {vector_result}")
+            print(f"VECTOR RESULT: {vector_result}")
             return overall_result, internal_result
         except Exception as e:
             return [f"Unexpected error: {e}"], {}
