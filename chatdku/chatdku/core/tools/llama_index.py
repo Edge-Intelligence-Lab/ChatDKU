@@ -28,16 +28,12 @@ def DocRetrieverOuter(
         internal_memory,
         retriever_top_k,
         use_reranker,
-        reranker_top_n,
-        user_id,
         search_mode,
         files,
     )
     keyword_retriever = KeywordRetriever(
         internal_memory,
         retriever_top_k,
-        use_reranker,
-        reranker_top_n,
         user_id,
         search_mode,
         files,
@@ -77,6 +73,9 @@ def DocRetrieverOuter(
                     vector_result = ctx.run(
                         vector_retriever.query_with_tell, query=semantic_query
                     )
+                    vector_result = rerank(
+                        vector_result, semantic_query, reranker_top_n
+                    )
             except ValueError as e:
                 vector_result.append(f"semantic_query had an input error: {e}")
             except QueryTimeoutError as e:
@@ -89,6 +88,9 @@ def DocRetrieverOuter(
                     with timeout() as ctx:
                         keyword_result = ctx.run(
                             keyword_retriever.query_with_tell, query=keyword_query
+                        )
+                        keyword_result = rerank(
+                            keyword_result, str(keyword_query), reranker_top_n
                         )
                 except QueryTimeoutError as e:
                     keyword_result.append(f"Keyword retriever timeout: {e}")

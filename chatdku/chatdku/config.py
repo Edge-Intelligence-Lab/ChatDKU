@@ -63,6 +63,7 @@ class Config:
                 "tei_url": "http://localhost:18080",
                 # Reranker
                 "reranker_top_n": 5,
+                "reranker_backup_top_n": 10,  # If reranker fails, use the top n results using the embedding scores
                 "reranker_base_url": "http://localhost:6767",
                 "reranker_model": "Qwen/Qwen3-VL-Reranker-8B",
                 "reranker_api_key": None,

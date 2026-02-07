@@ -1,20 +1,28 @@
 import dspy
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
+
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_common import get_template
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 from chatdku.core.dspy_classes.prompt_settings import (
-    TOOL_HISTORY_FIELD,
-    TOOL_SUMMARY_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+    TOOL_HISTORY_FIELD,
+    TOOL_SUMMARY_FIELD,
 )
+from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 
 
 class PlannerSignature(dspy.Signature):
     """
-    Plan the appropiate tool calls to answer the given user question.
-    The question may be complex and require multiple-hops of tools with different kinds of parameters.
+    You are an Agent. In each episode, you have to plan for the next step.
+    And you can see your past trajectory so far. Your goal is to use one or
+    more of the supplied tools to collect any necessary information to answer
+    the user's question. To do this, you will interleave next_thought,
+    next_tool_name, and next_tool_args in each turn, and also when finishing the task.
+
+    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
+    When writing next_thought, you may reason about the current situation and plan for future steps.
+    When selecting the next_tool_name and its next_tool_args, the tool must be one of:
     """
 
     current_user_message: str = dspy.InputField()

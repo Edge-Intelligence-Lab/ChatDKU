@@ -12,8 +12,6 @@ class VectorRetriever(BaseDocRetriever):
         self,
         internal_memory: dict,
         retriever_top_k: int = 25,
-        use_reranker: bool = True,
-        reranker_top_n: int = 5,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list | None = None,
@@ -21,8 +19,6 @@ class VectorRetriever(BaseDocRetriever):
         self.super().__init__(
             internal_memory,
             retriever_top_k,
-            use_reranker,
-            reranker_top_n,
             user_id,
             search_mode,
             files,
@@ -46,12 +42,6 @@ class VectorRetriever(BaseDocRetriever):
             n_results=self.retriever_top_k,
             where=self.__get_chroma_filter(),
         )
-        if self.use_reranker:
-            query_result = rerank(
-                chroma_result=query_result,
-                query=query,
-                reranker_top_n=self.reranker_top_n,
-            )
         retrieved_nodes = self.chroma_result_to_nodes(query_result)
         return retrieved_nodes
 

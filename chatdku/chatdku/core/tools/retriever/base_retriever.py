@@ -31,16 +31,12 @@ class BaseDocRetriever:
         self,
         internal_memory: dict,
         retriever_top_k: int = 25,
-        use_reranker: bool = True,
-        reranker_top_n: int = 5,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list | None = None,
     ):
         self.exclude = list(internal_memory.get("ids", set()))
         self.retriever_top_k = retriever_top_k
-        self.use_reranker = use_reranker
-        self.reranker_top_n = reranker_top_n
         self.user_id = user_id
         self.search_mode = search_mode
         self.files = files

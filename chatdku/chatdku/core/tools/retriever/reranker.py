@@ -40,9 +40,7 @@ def call_vllm_rerank(
         headers["Authorization"] = f"Bearer {config.reranker_api_key}"
 
     resp = requests.post(config.reranker_base_url, headers=headers, json=payload)
-    resp.raise_for_status()
     data = resp.json()
-
     results = sorted(data["results"], key=lambda x: x["index"])
     scores = [r["relevance_score"] for r in results]
     return scores
@@ -52,7 +50,7 @@ def rerank(
     nodes: list[NodeWithScore],
     query: str,
     reranker_top_n: int,
-) -> Dict[str, Any]:
+) -> list[NodeWithScore]:
     """
     Filters a list of NodeWithScore to the top-k items based on vLLM reranking scores.
 
@@ -62,42 +60,38 @@ def rerank(
         reranker_top_n: The number of top results to keep.
 
     Returns:
-        A filtered dictionary with the same structure as chroma_result,
-        containing only the top_k items sorted by relevance score.
+        A filtered list of NodeWithScore containing only the top_k
+        items sorted by relevance score.
     """
     ids = [node.id_ for node in nodes]
     documents = [node.text for node in nodes]
     metadatas = [node.metadata for node in nodes]
 
-    scores = call_vllm_rerank(
-        query=query,
-        documents=documents,
-    )
-
-    # Zip everything together to keep data synchronized during sorting
-    combined_data = []
-    for i in range(len(ids)):
-        combined_data.append(
-            {
-                "id": ids[i],
-                "document": documents[i],
-                "metadata": metadatas[i],
-                "score": scores[i],
-            }
+    try:
+        scores = call_vllm_rerank(
+            query=query,
+            documents=documents,
         )
+        # Zip everything together to keep data synchronized during sorting
+        combined_data = []
+        for i in range(len(ids)):
+            combined_data.append(
+                NodeWithScore(
+                    node_id=ids[i],
+                    text=documents[i],
+                    metadata=metadatas[i],
+                    score=scores[i],
+                )
+            )
 
-    # Sort by score (descending) and slice top_k
-    combined_data.sort(key=lambda x: x["score"], reverse=True)
-    top_k_data = combined_data[:reranker_top_n]
+        # Sort by score (descending) and slice top_k
+        combined_data.sort(key=lambda x: x.score, reverse=True)
+        top_k_data = combined_data[:reranker_top_n]
+        return top_k_data
 
-    # Reconstruct the retriever result structure
-    filtered_result = {
-        "ids": [[item["id"] for item in top_k_data]],
-        "documents": [[item["document"] for item in top_k_data]],
-        "metadatas": [[item["metadata"] for item in top_k_data]],
-        # Replacing "distances" with the new relevance scores.
-        # NOTE: Chroma distances are usually "lower is better", but rerank scores
-        # are "higher is better". Downstream functions must be aware of this.
-        "distances": [[item["score"] for item in top_k_data]],
-    }
-    return filtered_result
+    # Since we will handle every error the same way, we don't need to catch specific exceptions
+    except Exception as e:
+        print(f"Error in reranking: {e}")
+        nodes.sort(key=lambda x: x.score, reverse=True)
+        nodes = nodes[: config.reranker_backup_top_n]
+        return nodes
