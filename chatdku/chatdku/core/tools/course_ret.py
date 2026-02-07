@@ -7,42 +7,10 @@ import re
 
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
-from llama_index.core.schema import NodeWithScore, TextNode
+from common import chroma_result_to_nodes, nodes_to_dicts
+from llama_index.core.schema import NodeWithScore
 
 from chatdku.config import config
-
-
-def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
-    ids = result["ids"][0]
-    texts = result["documents"][0]
-    metadatas = result["metadatas"][0]
-    scores = result["distances"][0]
-
-    return [
-        NodeWithScore(
-            node=TextNode(
-                node_id=ids[i],
-                text=texts[i],
-                metadata={
-                    "file_name": metadatas[i].get("file_name", "Not given."),
-                    # HACK: Hardcoded URL for now
-                    "url": "https://duke.box.com/s/4qez9bss1vjmkccn2rcqbhphcmh9wpxs",
-                },
-            ),
-            score=float(scores[i]),
-        )
-        for i in range(len(ids))
-    ]
-
-
-def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
-    result = []
-    for node in nodes:
-        if isinstance(node, NodeWithScore):
-            result.append([{"text": node.text, "metadata": node.metadata}])
-        if isinstance(node, str):
-            result.append(node)
-    return result
 
 
 def course_retriever(course_queries: list[str]) -> list[dict]:
