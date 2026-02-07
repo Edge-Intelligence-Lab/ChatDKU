@@ -28,94 +28,57 @@ def reader_worker(pdf_path, buffer: Queue):
     attributed to the page where its title (the course code line) appears.
     """
 
-    # Load PDF and collect page texts
+    # Extract text from PDF
     reader = PdfReader(pdf_path)
-    page_texts: list[str] = []
-    for i in range(len(reader.pages)):
-        page = reader.pages[i]
-        txt = page.extract_text() or ""
-        page_texts.append(txt)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() + "\n"
 
-    # Regex pattern to match course entries (same as before)
+    # Regex pattern to match course entries
     pattern = r"((?:[A-Z]+\s+\d{3})(?:/[A-Z]+\s+\d{3})*)\s+([^\(]+?)\s*\((\d+)\s+credits?\)(.*?)(?=\n(?:[A-Z]+\s+\d{3}(?:/[A-Z]+\s+\d{3})*)\s+|$)"
 
-    # Helper to extract printed page label from page text
-    def _extract_label(txt: str) -> int | None:
-        """Return a page label if a line near the bottom consists only of digits.
-        Returns None if no such label is found.
-        """
-        lines = txt.strip().splitlines()
-        for line in reversed(lines[-5:]):  # look at last 5 lines
-            stripped = line.strip()
-            if stripped.isdigit():
-                try:
-                    return int(stripped)
-                except ValueError:
-                    continue
-        return None
+    matches = re.finditer(pattern, text, re.DOTALL)
 
-    # Iterate with a sliding window of the current page + the next page (if any)
-    for i, page_txt in enumerate(page_texts):
-        # Determine most accurate page number: printed label or fallback index
-        extracted_label = _extract_label(page_txt)
-        page_number = extracted_label if extracted_label is not None else i + 1
+    for match in matches:
+        course_code = match.group(1).strip()
+        course_name = match.group(2).strip()
+        credits = match.group(3).strip()
+        full_text = match.group(4).strip()
 
-        # Build the combined text for the current window
-        combined = page_txt
-        if i + 1 < len(page_texts):
-            combined += "\n" + page_texts[i + 1]
+        # Extract prerequisites
+        prereq_pattern = (
+            r"((?:Prerequisite\(s\)|Pre/Co-requisite\(s\)):\s*.+?)(?=\n\n|\Z)"
+        )
+        prereq_match = re.search(prereq_pattern, full_text, re.DOTALL)
+        prerequisites = prereq_match.group(1).strip() if prereq_match else None
+        # Remove unwanted 'Back to TOC' and following page numbers if present
+        if prerequisites:
+            prerequisites = re.sub(
+                r"Back to TOC.*", "", prerequisites, flags=re.DOTALL
+            ).strip()
 
-        # Find all course matches in the combined text
-        for match in re.finditer(pattern, combined, re.DOTALL):
-            # Skip matches that actually start on the *next* page – they will be
-            # processed when the loop reaches that page.
-            if match.start() >= len(page_txt):
-                continue
-
-            # Extract basic fields
-            course_code = match.group(1).strip()
-            course_name = match.group(2).strip()
-            credits = match.group(3).strip()
-            full_course_text = match.group(4).strip()
-
-            # Extract prerequisites (same logic as before)
-            prereq_pattern = (
-                r"((?:Prerequisite\(s\)|Pre/Co-requisite\(s\)):\s*.+?)(?=\n\n|\Z)"
+        # Extract description (everything before prerequisites)
+        if prerequisites:
+            # Split on either format
+            desc_split = re.split(
+                r"(?:Prerequisite\(s\)|Pre/Co-requisite\(s\)):", full_text
             )
-            prereq_match = re.search(prereq_pattern, full_course_text, re.DOTALL)
-            prerequisites = prereq_match.group(1).strip() if prereq_match else None
-            if prerequisites:
-                prerequisites = re.sub(
-                    r"Back to TOC.*", "", prerequisites, flags=re.DOTALL
-                ).strip()
+            description = desc_split[0].strip()
+        else:
+            description = full_text.strip()
 
-            # Description – everything before prerequisites (or the whole text)
-            if prerequisites:
-                desc_split = re.split(
-                    r"(?:Prerequisite\(s\)|Pre/Co-requisite\(s\)):", full_course_text
-                )
-                description = desc_split[0].strip()
-            else:
-                description = full_course_text.strip()
-
-            # Build course dict including metadata
-            course = {
+        buffer.put(
+            {
                 "course_code": course_code,
                 "course_name": course_name,
                 "credits": credits,
                 "description": description,
                 "prerequisites": prerequisites,
-                "page_number": page_number,
                 "file_name": Path(pdf_path).name,
             }
-            # Enqueue for embedding worker
-            buffer.put(course)
+        )
 
-    # Signal completion to the embedding worker
     buffer.put(None)
-
-    # No return value – work is done via the queue
-    return None
 
 
 def embed_worker(buffer: Queue):
@@ -157,7 +120,6 @@ def embed_worker(buffer: Queue):
                     "file_name": course.get("file_name"),
                     "course_code": course.get("course_code"),
                     "course_name": course.get("course_name"),
-                    "page_number": course.get("page_number"),
                 }
             ],
         )

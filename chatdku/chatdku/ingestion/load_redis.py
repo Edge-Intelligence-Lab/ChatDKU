@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
 
-from redis import Redis
-from redisvl.schema import IndexSchema
-from llama_index.vector_stores.redis import RedisVectorStore
-
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.schema import TextNode
-
-import os
 import argparse
 import json
+import os
 
 ######
 from llama_index.core import Settings
-from chatdku.setup import setup
-
-
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import TextNode
+from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
+from llama_index.vector_stores.redis import RedisVectorStore
+from redis import Redis
+from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 
@@ -45,7 +41,11 @@ def load_redis(
     reset: Whether to overwrite the data on the existing DB.
     """
 
-    setup(use_llm=False)
+    Settings.embed_model = TextEmbeddingsInference(
+        model_name=config.embedding,
+        base_url=config.tei_url + "/" + config.embedding,
+    )
+    print(f"Using embedding model {config.embedding}")
 
     if nodes is None:
         if nodes_path is None:

@@ -24,10 +24,9 @@ def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
                 node_id=ids[i],
                 text=texts[i],
                 metadata={
-                    "filename": metadatas[i].get("file_name", "Not given."),
+                    "file_name": metadatas[i].get("file_name", "Not given."),
                     # HACK: Hardcoded URL for now
                     "url": "https://duke.box.com/s/4qez9bss1vjmkccn2rcqbhphcmh9wpxs",
-                    "page_number": metadatas[i].get("page_number", "Not given."),
                 },
             ),
             score=float(scores[i]),
