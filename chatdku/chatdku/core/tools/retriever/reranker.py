@@ -3,7 +3,7 @@ from typing import Any, Dict
 import requests
 
 from chatdku.config import config
-from chatdku.core.tools.base_retriever import NodeWithScore
+from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 
 
 def call_vllm_rerank(

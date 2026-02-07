@@ -2,7 +2,7 @@ import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
 from chatdku.config import config
-from chatdku.core.tools.base_retriever import BaseDocRetriever, NodeWithScore
+from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore
 from chatdku.core.tools.utils import get_url
 from chatdku.core.utils import truncate_tokens
 
