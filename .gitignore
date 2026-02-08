@@ -1,3 +1,5 @@
+# Harper
+.harper-dictionary.txt
 # Embeddings cache
 pipeline_cache
 # Byte-compiled / optimized / DLL files
