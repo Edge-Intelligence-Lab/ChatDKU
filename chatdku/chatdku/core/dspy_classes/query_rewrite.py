@@ -30,9 +30,9 @@ class QueryRewriteSignature(dspy.Signature):
     You goal is to rewrite the current user's message in a way that fixes errors, adds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
     Your rewritten query will be used to fetch information with search tools such as semantic search and keyword search.
     Please understand the information gap between the currently known information and the target problem.
-    DON\’T generate queries which has been retrieved or answered.
+    DON’T generate queries which has been retrieved or answered.
     """
-    role_prompt: str = ROLE_PROMPT
+    role_prompt: str = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
@@ -86,6 +86,7 @@ class QueryRewrite(dspy.Module):
             rewrite_inputs = truncate_tokens_all(
                 rewrite_inputs, self.get_token_limits()
             )
+            rewrite_inputs["role_prompt"] = ROLE_PROMPT
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(rewrite_inputs),
