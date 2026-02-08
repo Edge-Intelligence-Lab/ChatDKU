@@ -3,7 +3,6 @@ from functools import partial
 from inspect import Signature, signature
 from typing import Any, Callable, Optional
 
-import numpy as np
 from llama_index.core import Settings
 from llama_index.core.node_parser import TokenTextSplitter
 from pydantic import BaseModel, ConfigDict, Field, create_model
@@ -82,7 +81,7 @@ def truncate_tokens(
     """Truncate string so that it does not exceed the given number of tokens."""
 
     # NOTE: This is to maintain consistency with LlamaIndex.
-    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136
+    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136  # noqa E501
     if isinstance(tokenizer, PreTrainedTokenizerBase):
         tokenizer = partial(tokenizer.encode, add_special_tokens=False)
 
@@ -116,7 +115,8 @@ def token_limit_ratio_to_count(
 
 def load_conversation(history: list[tuple[str, str]]) -> list[tuple[str, str]]:
     """
-    convert (role,content) to (content_bot,content_bot) from past conversation. This method is applicable only for backend.
+    convert (role,content) to (content_bot,content_bot) from past conversation.
+    This method is applicable only for backend.
 
     Args:
         history: List on tuple containing role and content.

@@ -24,12 +24,13 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     print(f"Using embedding model {config.embedding}")
 
     # Suppress warning
-    # "Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained."
+    # "Special tokens have been added in the vocabulary,
+    # make sure the associated word embeddings are fine-tuned or trained."
     transformers.logging.set_verbosity_error()
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
+    Settings.tokenizer = AutoTokenizer.from_pretrained(config.tokenizer)
     print("Loaded tokenizer")
 
 
