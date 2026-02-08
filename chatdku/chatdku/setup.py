@@ -1,11 +1,10 @@
+import os
+
+import transformers
 from llama_index.core import Settings
 from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
-import transformers
-from transformers import AutoTokenizer
-import os
 from phoenix.otel import register
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from transformers import AutoTokenizer
 
 from chatdku.config import config
 
@@ -44,6 +43,3 @@ def use_phoenix():
         batch=True,
     )
     config.tracer = tracer_provider.get_tracer(__name__)
-    span_exporter = OTLPSpanExporter(endpoint=collector_endpoint)
-    simple_span_processor = SimpleSpanProcessor(span_exporter=span_exporter)
-    tracer_provider.add_span_processor(simple_span_processor)
