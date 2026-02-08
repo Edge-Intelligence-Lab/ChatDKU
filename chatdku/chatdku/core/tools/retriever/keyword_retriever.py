@@ -11,7 +11,7 @@ from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore
-from chatdku.core.utils import get_url
+from chatdku.core.tools.utils import get_url
 
 
 class KeywordRetriever(BaseDocRetriever):
@@ -23,7 +23,7 @@ class KeywordRetriever(BaseDocRetriever):
         search_mode: int = 0,
         files: list | None = None,
     ):
-        self.super().__init__(
+        super().__init__(
             internal_memory,
             retriever_top_k,
             user_id,
@@ -142,7 +142,7 @@ class KeywordRetriever(BaseDocRetriever):
     def redis_result_to_nodes(self, results) -> list[NodeWithScore]:
         return [
             NodeWithScore(
-                id_=doc.id,
+                node_id=doc.id,
                 text=doc.text,
                 metadata={
                     "filename": os.path.basename(doc.file_path),
