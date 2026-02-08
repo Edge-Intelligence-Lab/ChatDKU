@@ -41,7 +41,7 @@ def DocRetrieverOuter(
 
     def DocumentRetriever(
         semantic_query: str,
-        keyword_query: str | list[str] = None,
+        keyword_query: str = "",
     ) -> tuple[list, dict]:
         """
         Retrieve relevant documents using hybrid search (semantic + keyword matching).
@@ -52,8 +52,8 @@ def DocRetrieverOuter(
 
         Args:
             semantic_query (str): Natural language query for semantic/conceptual search
-            keyword_query (Optional(str | list[str])): Specific terms or phrases for BM25 keyword matching.
-                Can be a string or list of strings.
+            keyword_query (Optional(str)): Specific terms or phrases for BM25 keyword matching.
+                This is optional and can be left empty.
 
         Returns:
             Tuple of (matched_documents_list, internal_result_dict)
@@ -73,9 +73,10 @@ def DocRetrieverOuter(
                     vector_result = ctx.run(
                         vector_retriever.query_with_tell, query=semantic_query
                     )
-                    vector_result = rerank(
-                        vector_result, semantic_query, reranker_top_n
-                    )
+                    if use_reranker:
+                        vector_result = rerank(
+                            vector_result, semantic_query, reranker_top_n
+                        )
             except ValueError as e:
                 vector_result.append(f"semantic_query had an input error: {e}")
             except QueryTimeoutError as e:
@@ -89,9 +90,10 @@ def DocRetrieverOuter(
                         keyword_result = ctx.run(
                             keyword_retriever.query_with_tell, query=keyword_query
                         )
-                        keyword_result = rerank(
-                            keyword_result, str(keyword_query), reranker_top_n
-                        )
+                        if use_reranker:
+                            keyword_result = rerank(
+                                keyword_result, str(keyword_query), reranker_top_n
+                            )
                 except QueryTimeoutError as e:
                     keyword_result.append(f"Keyword retriever timeout: {e}")
                 except Exception as e:
