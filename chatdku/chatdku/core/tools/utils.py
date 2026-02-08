@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import pandas as pd
 
 from chatdku.config import config
+from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 
 
 class QueryTimeoutError(Exception):
@@ -81,3 +82,22 @@ def get_url(metadata: dict):
         return "no url"
     except Exception as e:
         return f"no url, error: {str(e)}"
+
+
+def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
+    """
+    Convert nodes to a list of dictionaries.
+
+    Args:
+        nodes (list[NodeWithScore]): The nodes to convert.
+
+    Returns:
+        list: A list of dictionaries.
+    """
+    result = []
+    for node in nodes:
+        if isinstance(node, NodeWithScore):
+            result.append([{"text": node.text, "metadata": node.metadata}])
+        if isinstance(node, str):
+            result.append(node)
+    return result
