@@ -4,7 +4,6 @@ from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore
 from chatdku.core.tools.utils import get_url
-from chatdku.core.utils import truncate_tokens
 
 
 class VectorRetriever(BaseDocRetriever):
@@ -16,7 +15,7 @@ class VectorRetriever(BaseDocRetriever):
         search_mode: int = 0,
         files: list | None = None,
     ):
-        self.super().__init__(
+        super().__init__(
             internal_memory,
             retriever_top_k,
             user_id,
@@ -38,7 +37,7 @@ class VectorRetriever(BaseDocRetriever):
         )
 
         query_result = collection.query(
-            query_texts=truncate_tokens(query, 7000),
+            query_texts=query,
             n_results=self.retriever_top_k,
             where=self.__get_chroma_filter(),
         )
@@ -108,7 +107,7 @@ class VectorRetriever(BaseDocRetriever):
                 }
         return filters
 
-    def chroma_result_to_nodes(result: dict) -> list[NodeWithScore]:
+    def chroma_result_to_nodes(self, result: dict) -> list[NodeWithScore]:
         ids = result["ids"][0]
         texts = result["documents"][0]
         metadatas = result["metadatas"][0]
