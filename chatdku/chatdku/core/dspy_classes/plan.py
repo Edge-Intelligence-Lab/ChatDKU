@@ -14,15 +14,8 @@ from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 
 class PlannerSignature(dspy.Signature):
     """
-    You are an Agent. In each episode, you have to plan for the next step.
-    And you can see your past trajectory so far. Your goal is to use one or
-    more of the supplied tools to collect any necessary information to answer
-    the user's question. To do this, you will interleave next_thought,
-    next_tool_name, and next_tool_args in each turn, and also when finishing the task.
-
-    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
-    When writing next_thought, you may reason about the current situation and plan for future steps.
-    When selecting the next_tool_name and its next_tool_args, the tool must be one of:
+    Plan the appropiate tool calls to answer the given user question.
+    The question may be complex and require multiple-hops of tools with different kinds of parameters.
     """
 
     current_user_message: str = dspy.InputField()
