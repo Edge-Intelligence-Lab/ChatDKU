@@ -61,7 +61,7 @@ class BaseDocRetriever:
             if hasattr(config, "tracer")
             else nullcontext()
         ) as span:
-            exclude = list(self.internal_memory.get("ids", set()))
+            exclude = self.exclude
             span.set_attributes(
                 {
                     SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
@@ -81,7 +81,7 @@ class BaseDocRetriever:
 
             try:
                 retrieved_nodes = self.query(query)
-                span.set_attributes(self.__nodes_to_OTLP(retrieved_nodes))
+                span.set_attributes(nodes_to_OTLP(retrieved_nodes))
                 span.set_attributes(
                     {
                         SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
@@ -102,74 +102,56 @@ class BaseDocRetriever:
                     }
                 )
                 span.set_status(Status(StatusCode.ERROR))
-                raise e
             return retrieved_nodes
 
-    def _flatten(
-        self,
-        key_values: Mapping[str, Any],
-    ) -> Iterator[tuple[str, AttributeValue]]:
-        """
-        Adapted from:
-        https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
-        """  # noqa: E501
 
-        for key, value in key_values.items():
-            if value is None:
-                continue
-            if isinstance(value, Mapping):
-                for sub_key, sub_value in self._flatten(value):
-                    yield f"{key}.{sub_key}", sub_value
-            elif isinstance(value, list) and any(
-                isinstance(item, Mapping) for item in value
-            ):
-                for index, sub_mapping in enumerate(value):
-                    for sub_key, sub_value in self._flatten(sub_mapping):
-                        yield f"{key}.{index}.{sub_key}", sub_value
-            else:
-                if isinstance(value, Enum):
-                    value = value.value
-                yield key, value
-
-    def __nodes_to_OTLP(self, nodes: list[NodeWithScore]) -> dict[str, Any]:
-        return dict(
-            self._flatten(
-                {
-                    SpanAttributes.RETRIEVAL_DOCUMENTS: [
-                        {
-                            DocumentAttributes.DOCUMENT_ID: node.node_id,
-                            DocumentAttributes.DOCUMENT_SCORE: float(node.score),
-                            DocumentAttributes.DOCUMENT_CONTENT: node.text,
-                            **(
-                                {
-                                    DocumentAttributes.DOCUMENT_METADATA: safe_json_dumps(
-                                        metadata
-                                    )
-                                }
-                                if (metadata := node.node.metadata)
-                                else {}
-                            ),
-                        }
-                        for node in nodes
-                    ]
-                }
-            )
+def nodes_to_OTLP(nodes: list[NodeWithScore]) -> dict[str, Any]:
+    return dict(
+        _flatten(
+            {
+                SpanAttributes.RETRIEVAL_DOCUMENTS: [
+                    {
+                        DocumentAttributes.DOCUMENT_ID: node.node_id,
+                        DocumentAttributes.DOCUMENT_SCORE: float(node.score),
+                        DocumentAttributes.DOCUMENT_CONTENT: node.text,
+                        **(
+                            {
+                                DocumentAttributes.DOCUMENT_METADATA: safe_json_dumps(
+                                    metadata
+                                )
+                            }
+                            if (metadata := node.metadata)
+                            else {}
+                        ),
+                    }
+                    for node in nodes
+                ]
+            }
         )
+    )
 
-    def nodes_to_dicts(self, nodes: list[NodeWithScore]) -> list:
-        """
-        Convert nodes to a list of dictionaries.
 
-        Args:
-            nodes (list[NodeWithScore]): The nodes to convert.
+def _flatten(
+    key_values: Mapping[str, Any],
+) -> Iterator[tuple[str, AttributeValue]]:
+    """
+    Adapted from:
+    https://github.com/Arize-ai/openinference/blob/a0e6f30c84011c5c743625bb69b66ba055ac17bd/python/instrumentation/openinference-instrumentation-langchain/src/openinference/instrumentation/langchain/_tracer.py#L293-L308
+    """  # noqa: E501
 
-        Returns:
-            list: A list of dictionaries.
-        """
-        result = []
-        for node in nodes:
-            if isinstance(node, NodeWithScore):
-                result.append([{"text": node.text, "metadata": node.metadata}])
-            if isinstance(node, str):
-                result.append(node)
-        return result
+    for key, value in key_values.items():
+        if value is None:
+            continue
+        if isinstance(value, Mapping):
+            for sub_key, sub_value in _flatten(value):
+                yield f"{key}.{sub_key}", sub_value
+        elif isinstance(value, list) and any(
+            isinstance(item, Mapping) for item in value
+        ):
+            for index, sub_mapping in enumerate(value):
+                for sub_key, sub_value in _flatten(sub_mapping):
+                    yield f"{key}.{index}.{sub_key}", sub_value
+        else:
+            if isinstance(value, Enum):
+                value = value.value
+            yield key, value
