@@ -27,7 +27,7 @@ def DocRetrieverOuter(
     vector_retriever = VectorRetriever(
         internal_memory,
         retriever_top_k,
-        use_reranker,
+        user_id,
         search_mode,
         files,
     )
