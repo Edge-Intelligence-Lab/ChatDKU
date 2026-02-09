@@ -1,5 +1,9 @@
+
+.harper-dictionary.txt
+
 .idea/
 .vscode/
+
 # Embeddings cache
 pipeline_cache
 # Byte-compiled / optimized / DLL files
