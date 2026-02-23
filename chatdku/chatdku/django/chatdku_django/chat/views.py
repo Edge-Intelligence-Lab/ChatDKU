@@ -321,7 +321,7 @@ class SessionViewSet(viewsets.ModelViewSet):
     def create(self,*args, **kwargs):
         raise MethodNotAllowed("Cannot Create a Session!")
 
-
+    
     @extend_schema(
             description="Messages from a session_id",
             parameters=PARAMETERS,
@@ -353,4 +353,42 @@ class SessionViewSet(viewsets.ModelViewSet):
         msgs=session.messages.all()
         serializer=ChatMessageSerializer(msgs,many=True)
         return Response(serializer.data)
+
+    @extend_schema(
+        description="Rename a chat session",
+        parameters=PARAMETERS,
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"}
+                },
+                "required": ["title"]
+            }
+        },
+        responses={
+            200: OpenApiResponse(
+                response={"message": "Session renamed successfully"}
+            )
+        }
+    )
+    @action(methods=["PATCH"], detail=True)
+    def rename(self, request, pk=None):
+        session = self.get_object()
+
+        new_title = request.data.get("title")
+
+        if not new_title:
+            return Response(
+                {"error": "Title is required"},
+                status=400
+            )
+
+        session.title = new_title
+        session.save()
+
+        return Response(
+            {"message": "Session renamed successfully"},
+            status=200
+        )
 
