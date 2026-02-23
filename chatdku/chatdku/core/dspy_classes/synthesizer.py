@@ -1,4 +1,7 @@
 import dspy
+import re
+
+from typing import Any
 
 from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
@@ -49,55 +52,36 @@ class SynthesizerSignature(dspy.Signature):
        - **General questions must be reframed as DKU-specific**. For example, rephrase 'What is a liberal arts curriculum?' → 'What is DKU’s liberal arts curriculum?'
        - If the query is ambiguous, **first attempt a reasonable answer**, then politely request clarification (e.g., *'Could you specify whether you’re asking about undergraduate majors or graduate programs?'*).
     3. **Reference Handling**:
-       - Check if you used the documents when answering to the question:
-           - If you used the documents to articulate your answer, there has be a reference list at the end of the answer.
-           - However, if you did not use any documents, you don't have to include a reference list.
-       - **For every source reference using the format below**:
+       - Before writing the final answer, perform this mandatory checklist for every retrieved item you actually used:
+           1) Read both content and metadata.
+           2) Extract these metadata fields when available: source name/title, URL/link, page/chunk locator, event identifier.
+           3) Use metadata facts in the answer when relevant (especially event links and official URLs).
+       - Metadata is a first-class source of truth and must be treated as equally important as body content.
+       - If you used retrieved documents to answer, include a `Reference:` section at the end. If you used no retrieved documents, omit `Reference:`.
+       - **Hard constraints (must follow):**
+           - **If metadata has a URL/link, include that exact string in `Reference:`.**
+           - **If metadata has no URL/link, write `No URL`.**
+           - **Do not invent, normalize, complete, rewrite, or guess URLs.**
+           - **Do not swap URLs across sources.**
+           - **Do not modify source names; preserve them exactly as provided.**
+           - **If an event is mentioned in the answer and its metadata has a URL, include that event URL in `Reference:`.**
+           - **Remove duplicate references (same source + same URL).**
+           - **Exclude unused references.**
+             - You are given `metadata_reference_candidates`, which is built deterministically from retrieved metadata before generation.
+                 - Treat it as the canonical source-url mapping.
+                 - Do not alter URLs or source names from that mapping.
+                 - If you use retrieved sources, keep your `Reference:` section consistent with this mapping.
+       - Reference format (one bullet per used source):
          Reference:
-         - {Insert the source document name here}: {Present the URL here. Say 'No URL' if the source has no URL} {Follow up with page number}
-
-       - Remember to add the URL if the source has an URL.
-       - Never modify or change the source name or the source URL.
-       - If there are duplicate resources, use only one of the duplicates.
-       - Discard unused or irrelevant resources.
-       - Never guess an URL.
-       - Never swap URLs between sources.
-       - If no source was used, you should not include a reference section.
+         - {Exact source name}: {Exact metadata URL or `No URL`} {Page number/chunk if available}
     4. **Priority & Accuracy**:
        - **Prioritize DKU resources** (e.g., Bulletins, Faculty Directory, Majors page).
        - When talking about what majors there are, always first refer to the major name and information in the website<https://ugstudies.dukekunshan.edu.cn/academics/majors/>.
        - Only cite non-DKU resources (e.g., Duke partnerships) if explicitly requested or irreplaceable for accuracy.
     5. **User Guidance**:
        - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).
-    6. **Major-Related Queries:**
-        - If the **Current User Message** asks about undergraduate majors at Duke Kunshan University (DKU), answer using the official list below.
-        - Always use the official major names and track names as written.
-            - **Applied Mathematics and Computational Sciences**
-                - Tracks: Computer Science; Mathematics
-            - **Arts & Media**
-                - Tracks: Arts; Media
-            - **Behavioral Science**
-                - Tracks: Economics; Neuroscience; Psychology
-            - **Computation and Design**
-                - Tracks: Computer Science; Digital Media; Social Policy
-            - **Cultures and Societies**
-                - Tracks: Cultural Anthropology; Sociology
-            - **Data Science**
-            - **Environmental Science**
-                - Tracks: Biogeochemistry; Biology; Chemistry; Public Policy
-            - **Global China Studies**
-            - **Global Health**
-                - Tracks: Biology; Public Policy
-            - **Humanities**
-                - Tracks: Creative Writing and Translation; Literature; Philosophy and Religion; World History
-            - **Materials Science**
-                - Tracks: Chemistry; Physics
-            - **Molecular Bioscience**
-                - Tracks: Biogeochemistry; Biophysics; Cell and Molecular Biology; Genetics and Genomics; Neuroscience
-            - **Philosophy, Politics, and Economics**
-                - Tracks: Economic History; Philosophy; Political Science; Public Policy
-            - **Quantitative Political Economy**
-                - Tracks: Economics; Political Science; Public Policy
+    6. **Major-Related Queries:**:
+       - If the **Current User Message** is asking about majors, answer with these, as these are the majors at DKU: Applied Mathematics and Computational Sciences with tracks in Computer Science and Mathematics Arts & Media Major with tracks in Arts and Media Behavioral Science with tracks in Psychology and Neuroscience Computation and Design with tracks in Computer Science, Digital Media, and Social Policy Cultures and Movements with tracks in Cultural Anthropology, Sociology, Religious Studies, and World History Data Science Environmental Science with tracks in Biogeochemistry, Biology, Chemistry, and Public Policy Ethics and Leadership with tracks in Philosophy and Public Policy Global China Studies with tracks in Chinese History, Political Science, and Religious Studies Global Cultural Studies with tracks in Creative Writing and Translation, World History, and World Literature Global Health with tracks in Biology and Public Policy Institutions and Governance with tracks in Economics, Political Science, and Public Policy Materials Science with tracks in Chemistry and Physics Molecular Bioscience with tracks in Biogeochemistry, Biophysics, Cell and Molecular Biology, Genetics and Genomics Political Economy with tracks in Economics, Political Science, and Public Policy US Studies with tracks in American History, American Literature, Political Science, and Public Policy
     7. **Never mention internal tools**:
        - It is **strictly forbidden** to mention your internal history (such as converstation history, tool history) and tool calls (vector retriever, keyword retriever).
        - Do not reference your internal tool calls (e.g., 'Based on the conversation history', 'Based on vector retriever tool', 'Based on keyword retriever tool', 'According to the vector retriever tool') when answering user query.
@@ -107,6 +91,13 @@ class SynthesizerSignature(dspy.Signature):
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     tool_history: str = TOOL_HISTORY_FIELD
     tool_summary: str = TOOL_SUMMARY_FIELD
+    #event_update test
+    metadata_reference_candidates: str = dspy.InputField(
+        desc=(
+            "Deterministically extracted reference candidates from metadata. "
+            "Use exact source names and URLs from here when building references."
+        )
+    )
     current_date: date = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     response: str = dspy.OutputField(desc="You response to the Current User Message.")
@@ -115,14 +106,17 @@ class SynthesizerSignature(dspy.Signature):
 class ResponseGen:
     """A generator that uses the DSPY streamify."""
 
+    #event_update test
     def __init__(
         self,
         prompt: str,
         streamer,
+        enforced_reference_section: str = "",
         synthesizer_span: Span = None,
         agent_span: Span = None,
     ):
         self.llm_completion_gen = streamer
+        self.enforced_reference_section = enforced_reference_section
         if hasattr(config, "tracer"):
             self.span = config.tracer.start_span(
                 "LLM", context=set_span_in_context(synthesizer_span)
@@ -140,6 +134,7 @@ class ResponseGen:
             self.agent_span = agent_span
         self.full_response = ""
 
+    #event_update test
     def __iter__(self):
         first_token = True
         # When streaming the response, it starts a new span inside `synthesizer_span`
@@ -169,6 +164,25 @@ class ResponseGen:
                 self.full_response = chunk.response
                 if first_token:
                     yield chunk.response
+
+        if self.enforced_reference_section:
+            reference_heading_present = re.search(
+                r"(^|\n)\s*Reference\s*:\s*", self.full_response, flags=re.IGNORECASE
+            )
+            if reference_heading_present is None:
+                addition = f"\n\n{self.enforced_reference_section}"
+                self.full_response += addition
+                yield addition
+            else:
+                missing_lines = [
+                    line
+                    for line in self.enforced_reference_section.splitlines()[1:]
+                    if line.strip() and line not in self.full_response
+                ]
+                if missing_lines:
+                    addition = "\n" + "\n".join(missing_lines)
+                    self.full_response += addition
+                    yield addition
 
         # for chunk in self.llm_completion_gen:
         #     s = chunk.delta
@@ -214,13 +228,131 @@ class Synthesizer(dspy.Module):
             "conversation_summary": 1 / 15,
             "tool_history": 5 / 15,
             "tool_summary": 1 / 15,
+            "metadata_reference_candidates": 2 / 15,
         }
+
+    @staticmethod
+    #event_update test
+    def _recursive_find_metadata(value: Any) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        if isinstance(value, dict):
+            metadata = value.get("metadata")
+            if isinstance(metadata, dict):
+                results.append(metadata)
+            for child in value.values():
+                results.extend(Synthesizer._recursive_find_metadata(child))
+        elif isinstance(value, list):
+            for child in value:
+                results.extend(Synthesizer._recursive_find_metadata(child))
+        return results
+
+    @staticmethod
+    #event_update test
+    def _metadata_source_name(metadata: dict[str, Any]) -> str:
+        source_keys = [
+            "source",
+            "source_name",
+            "title",
+            "document_title",
+            "doc_name",
+            "filename",
+            "file_name",
+            "event_name",
+            "name",
+            "file_path",
+        ]
+        for key in source_keys:
+            value = metadata.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return "Unknown Source"
+
+    @staticmethod
+    #event_update test
+    def _metadata_url(metadata: dict[str, Any]) -> str:
+        url_keys = [
+            "url",
+            "URL",
+            "link",
+            "event_url",
+            "source_url",
+            "web_url",
+        ]
+        for key in url_keys:
+            value = metadata.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return "No URL"
+
+    @staticmethod
+    #event_update test
+    def _metadata_locator(metadata: dict[str, Any]) -> str:
+        locator_keys = [
+            "page_label",
+            "page_number",
+            "page",
+            "chunk_id",
+            "chunk_index",
+            "start_page",
+            "end_page",
+        ]
+        for key in locator_keys:
+            value = metadata.get(key)
+            if isinstance(value, (str, int)) and str(value).strip():
+                return f"(p/chunk: {value})"
+        return ""
+
+    #event_update test
+    def _build_metadata_reference_candidates(self, tool_memory: ToolMemory) -> list[str]:
+        references: list[str] = []
+        seen: set[tuple[str, str, str]] = set()
+
+        for entry in tool_memory.history:
+            metadata_list = self._recursive_find_metadata(entry.result)
+            for metadata in metadata_list:
+                source = self._metadata_source_name(metadata)
+                url = self._metadata_url(metadata)
+                locator = self._metadata_locator(metadata)
+                key = (source, url, locator)
+                if key in seen:
+                    continue
+                seen.add(key)
+                locator_suffix = f" {locator}" if locator else ""
+                references.append(f"- {source}: {url}{locator_suffix}")
+
+        return references
+
+    #event_update test
+    def _build_reference_section(self, tool_memory: ToolMemory) -> str:
+        candidates = self._build_metadata_reference_candidates(tool_memory)
+        if not candidates:
+            return ""
+        return "Reference:\n" + "\n".join(candidates)
+
+    @staticmethod
+    #event_update test
+    def _replace_reference_section(response: str, reference_section: str) -> str:
+        if not reference_section:
+            return response
+
+        marker = re.search(r"(^|\n)\s*Reference\s*:\s*", response, flags=re.IGNORECASE)
+        stripped_response = response.strip()
+        if marker:
+            prefix = response[: marker.start()].rstrip()
+            if prefix:
+                return f"{prefix}\n\n{reference_section}"
+            return reference_section
+
+        if stripped_response:
+            return f"{stripped_response}\n\n{reference_section}"
+        return reference_section
 
     def get_token_limits(self) -> dict[str, int]:
         return token_limit_ratio_to_count(
             self.token_ratios, len(get_template(self.synthesizer))
         )
 
+    #event_update test
     def forward(
         self,
         current_user_message: str,
@@ -237,6 +369,7 @@ class Synthesizer(dspy.Module):
             )
 
         with use_span(span) if hasattr(config, "tracer") else nullcontext():
+            reference_section = self._build_reference_section(tool_memory)
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_history=conversation_memory.history_str(),
@@ -246,6 +379,9 @@ class Synthesizer(dspy.Module):
                     [i.model_dump_json() for i in tool_memory.history]
                 ),
                 tool_summary=tool_memory.summary,
+                metadata_reference_candidates=(
+                    reference_section if reference_section else "No metadata references"
+                ),
             )
             synthesizer_args = truncate_tokens_all(
                 synthesizer_args, self.get_token_limits()
@@ -277,13 +413,16 @@ class Synthesizer(dspy.Module):
                     response_gen = ResponseGen(
                         synthesizer_template,
                         synthesizer_streamer(**synthesizer_args),
+                        reference_section,
                         span,
                         parent_span if final else None,
                     )
 
                 else:
                     response_gen = ResponseGen(
-                        synthesizer_template, synthesizer_streamer(**synthesizer_args)
+                        synthesizer_template,
+                        synthesizer_streamer(**synthesizer_args),
+                        reference_section,
                     )
                 return dspy.Prediction(response=response_gen)
 
@@ -294,6 +433,7 @@ class Synthesizer(dspy.Module):
                 else nullcontext()
             ):
                 response = self.synthesizer(**synthesizer_args).response
+                response = self._replace_reference_section(response, reference_section)
                 span.set_attribute(SpanAttributes.OUTPUT_VALUE, response)
                 span.set_status(Status(StatusCode.OK))
                 return dspy.Prediction(response=response)
