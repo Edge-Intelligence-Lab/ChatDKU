@@ -368,7 +368,13 @@ class SessionViewSet(viewsets.ModelViewSet):
         },
         responses={
             200: OpenApiResponse(
-                response={"message": "Session renamed successfully"}
+                response={
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "title": {"type": "string"}
+                    }
+                }
             )
         }
     )
