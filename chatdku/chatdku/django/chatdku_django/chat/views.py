@@ -388,7 +388,10 @@ class SessionViewSet(viewsets.ModelViewSet):
         session.save()
 
         return Response(
-            {"message": "Session renamed successfully"},
+            {
+                "id": session.id,
+                "title": session.title
+            },
             status=200
         )
 
