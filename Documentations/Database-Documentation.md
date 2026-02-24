@@ -17,6 +17,48 @@ sudo docker run -d \
   -p 12400:8000 \
   chromadb/chroma
 ```
+
+### Redis
+
+When starting redis, there are two cases to consider:
+#### Redis was not set up before
+```bash
+sudo docker run -d \
+    --name redis-stack-server \
+    -p 127.0.0.1:6379:6379 \
+    -v /datapool/redis_data:/data \
+    -e REDIS_ARGS="--requirepass <password>" \
+    redis/redis-stack-server:latest
+```
+
+To test that authentication is working, run
+```docker exec -it redis-stack-server redis-cli```
+Then run
+```PING```
+If you see ```PONG```, authentication is not set up. But if you see error, run:
+```bash
+ AUTH <password>
+```
+This will give you `OK` response. Again, run: ```PING```
+You should see ```PONG```
+
+#### Redis was set up before
+To start redis, run
+
+```bash
+sudo docker start redis-stack-server
+```
+To check whether redis is running or not, you can use
+```bash
+sudo docker ps | grep redis
+```
+
+#### Password
+Contact one of the team members to get the password.
+
+> [!IMPORTANT]
+> When developing:
+> Make sure your .env file has the password, and the host set.
 ---
 - **Last Updated**: 2026-01-30
 - **Version**: 1.0.0 
