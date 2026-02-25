@@ -98,6 +98,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1:8009",
     "localhost:8009",
+    "127.0.0.1",
+    "localhost:9100",
 ]
 # Proxy
 USE_X_FORWARDED_HOST = True

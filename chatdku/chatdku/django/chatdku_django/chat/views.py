@@ -292,7 +292,8 @@ class FeedbackView(APIView):
 
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class=SessionSerializer
-    http_method_names = ["get", "head", "options","post","delete"]
+
+    http_method_names = ["get", "head", "options","post","delete","patch]
 
 
     @extend_schema(
@@ -321,7 +322,7 @@ class SessionViewSet(viewsets.ModelViewSet):
     def create(self,*args, **kwargs):
         raise MethodNotAllowed("Cannot Create a Session!")
 
-
+    
     @extend_schema(
             description="Messages from a session_id",
             parameters=PARAMETERS,
@@ -355,6 +356,51 @@ class SessionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
+        description="Rename a chat session",
+        parameters=PARAMETERS,
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"}
+                },
+                "required": ["title"]
+            }
+        },
+        responses={
+            200: OpenApiResponse(
+                response={
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "title": {"type": "string"}
+                    }
+                }
+            )
+        }
+    )
+    @action(methods=["PATCH"], detail=True)
+    def rename(self, request, pk=None):
+        session = self.get_object()
+
+        new_title = request.data.get("title")
+
+        # If the title does not exist or is an empty string
+        if not new_title:
+            new_title = session.title
+
+        session.title = new_title
+        session.save()
+
+        return Response(
+            {
+                "id": session.id,
+                "title": session.title
+            },
+            status=200
+        )
+                         
+        @extend_schema(                 
         description="Delete a session (ensure trailing slash in URL; without it Django may resolve to GET)",
         parameters=PARAMETERS,
         responses={204: OpenApiResponse(response=None)},
