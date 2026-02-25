@@ -292,7 +292,7 @@ class FeedbackView(APIView):
 
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class=SessionSerializer
-    http_method_names = ["get", "head", "options","post"]
+    http_method_names = ["get", "head", "options","post","patch"]
 
 
     @extend_schema(
