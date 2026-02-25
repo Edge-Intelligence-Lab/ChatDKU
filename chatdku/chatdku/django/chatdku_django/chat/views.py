@@ -384,11 +384,9 @@ class SessionViewSet(viewsets.ModelViewSet):
 
         new_title = request.data.get("title")
 
+        # If the title does not exist or is an empty string
         if not new_title:
-            return Response(
-                {"error": "Title is required"},
-                status=400
-            )
+            new_title = session.title
 
         session.title = new_title
         session.save()
