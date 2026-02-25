@@ -121,11 +121,13 @@ INSTALLED_APPS = [
     "chat",
     "django_celery_results",
     "django_celery_beat",
+    "django_prometheus",
     "drf_spectacular",
     'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -136,6 +138,10 @@ MIDDLEWARE = [
     "core.middleware.NetIDMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.rate_limit_middleware.RateLimitMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
+
+
 ]
 
 
@@ -179,7 +185,7 @@ AUTH_USER_MODEL = "core.UserModel"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django_prometheus.db.backends.postgresql",
         "NAME": os.getenv("NAME_DB"),
         "USER": os.getenv("USERNAME_DB"),
         "PASSWORD": os.getenv("PASSWORD_DB"),
@@ -292,4 +298,36 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'ChatDKU',
     'VERSION': '2.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+}
+
+# Prometheus Settings
+
+PROMETHEUS_LATENCY_BUCKETS = (0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, 25.0, 50.0, 75.0, float("inf"),)
+
+# Rate Limit Configurations
+
+RATE_LIMIT_DEFAULT = 60      # Default: 60 requests per minute
+RATE_LIMIT_API = 60        # API endpoints: 60 requests per minute  
+RATE_LIMIT_STRICT = 20       # Strict operations: 20 requests per 30 seconds
+RATE_LIMIT_WINDOW = 60       # Default window: 60 seconds
+RATE_LIMIT_STRICT_WINDOW = 30  # Strict window: 30 seconds
+
+# Paths exempt from rate limiting
+RATE_LIMIT_EXEMPT_PATHS = [
+    '/admin/',
+    '/static/',
+    '/media/',
+    '/health/',
+    '/docs/',
+    '/metrics'
+]
+
+# Path to rate limit type mapping
+RATE_LIMIT_PATH_MAPPINGS = {
+    '/api/': 'api',
+    '/chat/': 'api',
+    '/query/': 'api',
+    '/upload/': 'strict',
+    '/scrape/': 'strict',
+    '/batch/': 'strict',
 }

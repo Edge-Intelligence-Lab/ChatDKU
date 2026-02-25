@@ -286,13 +286,14 @@ class FeedbackView(APIView):
                     }
                 })
             }
-        )   
+        )  
 )
 
 
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class=SessionSerializer
-    http_method_names = ["get", "head", "options","post","patch"]
+
+    http_method_names = ["get", "head", "options","post","delete","patch]
 
 
     @extend_schema(
@@ -398,4 +399,23 @@ class SessionViewSet(viewsets.ModelViewSet):
             },
             status=200
         )
+                         
+        @extend_schema(                 
+        description="Delete a session (ensure trailing slash in URL; without it Django may resolve to GET)",
+        parameters=PARAMETERS,
+        responses={204: OpenApiResponse(response=None)},
+        examples=[
+            OpenApiExample(
+                "Delete Example",
+                value={
+                    "curl": (
+                        "curl -X DELETE -H 'UID: your_netid'"
+                        "https://<host>/api/sessions/<session_uuid>/"
+                    )
+                }
+            )
+        ]
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 

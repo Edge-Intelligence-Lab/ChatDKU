@@ -13,6 +13,7 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema_view, OpenApiParameter, extend_schema,OpenApiResponse
 from core.tasks import update_user_chroma
 from .utils import slugify
+from rest_framework import status
 
 import logging
 logger=logging.getLogger(__name__)
@@ -129,3 +130,8 @@ class UploadView(APIView):
             },status=200)
         except Exception as e:
             return Response({"error":{str(e)}},status=500)
+        
+
+class HealthView(APIView):
+    def get(self,request):
+        return Response({"status":"okay"},status=status.HTTP_200_OK)

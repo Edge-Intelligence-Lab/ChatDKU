@@ -1,6 +1,7 @@
 import os
-import dotenv
 from typing import Any, Mapping, Optional
+
+import dotenv
 
 dotenv.load_dotenv()
 
@@ -47,31 +48,44 @@ class Config:
 
         self._store.update(
             {
+                # LLM
                 "llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "llm_url": "http://localhost:18085/v1",
                 "llm_api_key": llm_api_key,
                 "backup_llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "backup_llm_url": "http://localhost:18085/v1",
                 "llm_temperature": 0.7,
-                "embedding": "BAAI/bge-m3",
-                "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",
-                "tei_url": "http://localhost:18080",
                 "context_window": 32000,
+                "response_type": "Multiple Paragraphs",
+                # Embedding
+                "embedding": "BAAI/bge-m3",
+                "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",  # noqa E501
+                "tei_url": "http://localhost:18080",
+                # Reranker
+                "reranker_top_n": 5,
+                "reranker_backup_top_n": 10,  # If reranker fails, use the top n results using the embedding scores
+                "reranker_base_url": "http://localhost:6767",
+                "reranker_model": "Qwen/Qwen3-VL-Reranker-8B",
+                "reranker_api_key": None,
+                # Data
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
+                # Redis
                 "redis_host": redis_host,
                 "redis_password": redis_password,
+                "index_name": "chat_dku_advising",
+                # Chroma
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
-                "index_name": "chat_dku_advising",
+                # Graph
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
-                "response_type": "Multiple Paragraphs",
+                # MISC
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
             }
         )
