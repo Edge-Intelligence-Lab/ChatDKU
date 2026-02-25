@@ -356,7 +356,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        description="Rename a chat session",
+        description="Rename a chat session (ensure trailing slash in URL; without it Django may resolve to GET)",
         parameters=PARAMETERS,
         request={
             "application/json": {
