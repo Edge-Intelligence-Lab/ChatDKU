@@ -119,7 +119,7 @@ class ChatView(APIView):
         test=request.data.get("test",False)
 
         mode = request.data.get("mode", "default")
-        max_iteration = 2 if mode == "agent" else 1
+        max_iteration = 3 if mode == "agent" else 2
         source_serializer=SourceSerializer(data=request.data)
         source_serializer.is_valid(raise_exception=True)
         search_mode,docs=source_serializer.validated_data['search_mode'],source_serializer.validated_data['docs']
@@ -293,7 +293,7 @@ class FeedbackView(APIView):
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class=SessionSerializer
 
-    http_method_names = ["get", "head", "options","post","delete","patch]
+    http_method_names = ["get", "head", "options","post","delete","patch"]
 
 
     @extend_schema(
@@ -356,7 +356,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        description="Rename a chat session",
+        description="Rename a chat session (ensure trailing slash in URL; without it Django may resolve to GET)",
         parameters=PARAMETERS,
         request={
             "application/json": {
@@ -400,7 +400,7 @@ class SessionViewSet(viewsets.ModelViewSet):
             status=200
         )
                          
-        @extend_schema(                 
+    @extend_schema(                 
         description="Delete a session (ensure trailing slash in URL; without it Django may resolve to GET)",
         parameters=PARAMETERS,
         responses={204: OpenApiResponse(response=None)},

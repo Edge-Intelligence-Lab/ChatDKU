@@ -22,6 +22,39 @@ paths:
                 items:
                   $ref: '#/components/schemas/Session'
           description: ''
+    post:
+      operationId: api_c_create
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: ''
   /api/c/{id}/:
     get:
       operationId: api_c_retrieve
@@ -44,6 +77,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/Session'
           description: ''
+    patch:
+      operationId: api_c_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSession'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: ''
+    delete:
+      operationId: api_c_destroy
+      description: Delete a session (ensure trailing slash in URL; without it Django
+        may resolve to GET)
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/c/{id}/messages/:
     get:
       operationId: api_c_messages_retrieve
@@ -87,6 +176,72 @@ paths:
                   created_at:
                     type: string
                     format: date-time
+          description: ''
+  /api/c/{id}/rename/:
+    patch:
+      operationId: api_c_rename_partial_update
+      description: Rename a chat session
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+              required:
+              - title
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+          description: ''
+  /api/c/create_session/:
+    get:
+      operationId: api_c_create_session_retrieve
+      description: Create a new chat session
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                session_id: uuid
           description: ''
   /api/chat:
     post:
@@ -145,7 +300,6 @@ paths:
       security:
       - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -201,7 +355,6 @@ paths:
       security:
       - cookieAuth: []
       - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -214,10 +367,22 @@ paths:
                 example:
                   message: Chat created successfully.
           description: Successful chat creation response.
-  /api/get_session:
+  /user/health:
     get:
-      operationId: api_get_session_retrieve
-      description: GET request for session
+      operationId: user_health_retrieve
+      tags:
+      - user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /user/upload:
+    get:
+      operationId: user_upload_retrieve
+      description: Returns files for a given user
       parameters:
       - in: header
         name: UID
@@ -231,7 +396,7 @@ paths:
           type: string
         description: Display Name of the user
       tags:
-      - api
+      - user
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -243,11 +408,13 @@ paths:
               schema:
                 type: object
                 properties:
-                  session_id:
+                  netid:
                     type: string
-                    format: uuid
+                  document:
+                    type: array
+                    items:
+                      type: string
           description: ''
-  /user/upload:
     post:
       operationId: user_upload_create
       description: Uploads files for a given user
@@ -288,44 +455,22 @@ paths:
                   message:
                     type: string
           description: ''
-  /user/user_files:
-    get:
-      operationId: user_user_files_retrieve
-      description: Returns files for a given user
-      parameters:
-      - in: header
-        name: UID
-        schema:
-          type: string
-        description: NetID of the user
-        required: true
-      - in: header
-        name: X-DisplayName
-        schema:
-          type: string
-        description: Display Name of the user
-      tags:
-      - user
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  netid:
-                    type: string
-                  document:
-                    type: array
-                    items:
-                      type: string
-          description: ''
 components:
   schemas:
+    PatchedSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     Session:
       type: object
       properties:
