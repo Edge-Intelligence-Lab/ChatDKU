@@ -1,4 +1,7 @@
+from typing import Any, Literal
+
 import dspy
+from dspy import Tool
 
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
@@ -14,28 +17,50 @@ from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 
 class PlannerSignature(dspy.Signature):
     """
-    Plan the appropiate tool calls to answer the given user question.
-    The question may be complex and require multiple-hops of tools with different kinds of parameters.
+    You are a Planner Agent. In each episode, you are given available tools.
+    And you can see your past trajectory so far. Your goal is to use one or more of the
+    supplied tools to collect any necessary information for answering the user's question.
+    To do this, you will produce next_thought, next tool name, and next tool args in each turn,
+    and also when finishing the task.
+    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
+    When writing next_thought, you may reason about the current situation and plan for future steps.
+    When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
     """
 
     current_user_message: str = dspy.InputField()
-    max_calls: int = dspy.InputField()
-    tools: list[dspy.Tool] = dspy.InputField()
-    tool_history: str = TOOL_HISTORY_FIELD
-    tool_summary: str = TOOL_SUMMARY_FIELD
-    previous_tool_plan: list[dspy.ToolCalls.ToolCall] = dspy.InputField(
-        desc="The tool plans you previously planned."
-    )
     conversation_history: str = CONVERSATION_HISTORY_FIELD
-    conversation_summary: str = CONVERSATION_SUMMARY_FIELD
-
-    tool_plan: dspy.ToolCalls = dspy.OutputField()
 
 
 class Planner(dspy.Module):
-    def __init__(self):
+    def __init__(self, tools: list):
         super().__init__()
-        self.planner = dspy.ChainOfThought(PlannerSignature)
+        tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
+        tools = {tool.name: tool for tool in tools}
+
+        instr = (
+            [f"{PlannerSignature.instructions}\n"]
+            if PlannerSignature.instructions
+            else []
+        )
+
+        outputs = ", ".join([f"`{k}`" for k in PlannerSignature.output_fields.keys()])
+
+        tools["finish"] = Tool(
+            func=lambda: "Completed.",
+            name="finish",
+            desc=(
+                "Marks the task as complete. That is, signals that all information"
+                f" for producing the outputs, i.e. {outputs}, are now available to be extracted."
+            ),
+            args={},
+        )
+
+        for idx, tool in enumerate(tools.values()):
+            instr.append(f"({idx + 1}) {tool}")
+        instr.append(
+            "When providing `next_tool_args`, the value inside the field must be in JSON format"
+        )
+
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 3 / 15,
@@ -43,6 +68,18 @@ class Planner(dspy.Module):
             "tool_history": 5 / 15,
             "tool_summary": 1 / 15,
         }
+        react_signature = (
+            dspy.Signature({**PlannerSignature.input_fields}, "\n".join(instr))
+            .append("trajectory", dspy.InputField(), type_=str)
+            .append("next_thought", dspy.OutputField(), type_=str)
+            .append(
+                "next_tool_name", dspy.OutputField(), type_=Literal[tuple(tools.keys())]
+            )
+            .append("next_tool_args", dspy.OutputField(), type_=dict[str, Any])
+        )
+
+        self.tools = tools
+        self.planner = dspy.Predict(PlannerSignature)
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
