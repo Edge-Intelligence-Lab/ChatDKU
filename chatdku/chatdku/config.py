@@ -45,6 +45,11 @@ class Config:
         llm_api_key = _env("LLM_API_KEY")
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
+        postgres_host = _env("POSTGRES_HOST")
+        postgres_port = _env("POSTGRES_PORT")
+        postgres_db = _env("POSTGRES_DATABASE")
+        postgres_user = _env("POSTGRES_USER")
+        postgres_password = _env("POSTGRES_PASSWORD")
 
         self._store.update(
             {
@@ -81,6 +86,12 @@ class Config:
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
+                # Postgres
+                "postgres_host": postgres_host,
+                "postgres_port": postgres_port,
+                "postgres_db": postgres_db,
+                "postgres_user": postgres_user,
+                "postgres_password": postgres_password,
                 # Graph
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
