@@ -4,12 +4,7 @@ import dspy
 from dspy import Tool
 
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.prompt_settings import (
-    CONVERSATION_HISTORY_FIELD,
-    CONVERSATION_SUMMARY_FIELD,
-    TOOL_HISTORY_FIELD,
-    TOOL_SUMMARY_FIELD,
-)
+from chatdku.core.dspy_classes.prompt_settings import CONVERSATION_HISTORY_FIELD
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
@@ -43,14 +38,12 @@ class Planner(dspy.Module):
             else []
         )
 
-        outputs = ", ".join([f"`{k}`" for k in PlannerSignature.output_fields.keys()])
-
         tools["finish"] = Tool(
             func=lambda: "Completed.",
             name="finish",
             desc=(
                 "Marks the task as complete. That is, signals that all information"
-                f" for producing the outputs, i.e. {outputs}, are now available to be extracted."
+                " for asnwering the current_user_message are now available to be extracted."
             ),
             args={},
         )
@@ -61,13 +54,6 @@ class Planner(dspy.Module):
             "When providing `next_tool_args`, the value inside the field must be in JSON format"
         )
 
-        self.token_ratios: dict[str, float] = {
-            "current_user_message": 2 / 15,
-            "conversation_history": 3 / 15,
-            "conversation_summary": 1 / 15,
-            "tool_history": 5 / 15,
-            "tool_summary": 1 / 15,
-        }
         react_signature = (
             dspy.Signature({**PlannerSignature.input_fields}, "\n".join(instr))
             .append("trajectory", dspy.InputField(), type_=str)
@@ -79,89 +65,80 @@ class Planner(dspy.Module):
         )
 
         self.tools = tools
-        self.planner = dspy.Predict(PlannerSignature)
+        self.planner = dspy.Predict(react_signature)
+        self.token_ratios: dict[str, float] = {
+            "current_user_message": 2 / 15,
+            "conversation_history": 3 / 15,
+            "trajectory": 6 / 15,
+        }
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
         return token_limit_ratio_to_count(self.token_ratios, template_len)
 
+    # From the DSPY.react code
+    # https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
+    def _format_trajectory(self, trajectory: dict[str, Any]):
+        adapter = dspy.settings.adapter or dspy.ChatAdapter()
+        trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
+        return adapter.format_user_message_content(trajectory_signature, trajectory)
+
     def forward(
         self,
         current_user_message: str,
-        tools: dict[str, dspy.Tool],
         conversation_memory: ConversationMemory,
-        tool_memory: ToolMemory,
         max_calls: int = 5,
     ) -> dspy.Prediction:
 
-        planner_inputs = dict(
-            current_user_message=current_user_message,
-            tool_history=tool_memory.history_str(),
-            tool_summary=tool_memory.summary,
-            conversation_history=conversation_memory.history_str(),
-            conversation_summary=conversation_memory.summary,
-        )
+        trajectory = {}
+        for idx in range(max_calls):
 
-        planner_inputs = truncate_tokens_all(
-            planner_inputs,
-            self.get_token_limits(
+            planner_inputs = dict(
                 current_user_message=current_user_message,
-                tool_history=tool_memory.history_str(),
-                tool_summary=tool_memory.summary,
-                previous_tool_plan=str(tool_memory.plan),
                 conversation_history=conversation_memory.history_str(),
-                conversation_summary=conversation_memory.summary,
-                tools=str(list(tools.values())),
-                max_calls=str(2),
-            ),
-        )
+                trajectory=self._format_trajectory(trajectory),
+            )
 
-        # Function to check whether the planner output is valid
-        def _check_errors(args, pred: dspy.Prediction) -> float:
-            score = 1.0
-            output = pred.tool_plan
-            for tool in output.tool_calls:
-                if tool.name not in tools:
-                    score = -0.1
-                    print(
-                        f'"{tool.name}" is not a valid tool. Available tools are: {list(tools.values())}'
-                    )
-            return score
+            planner_inputs = truncate_tokens_all(
+                planner_inputs,
+                self.get_token_limits(
+                    current_user_message=current_user_message,
+                    conversation_history=conversation_memory.history_str(),
+                    trajectory=self._format_trajectory(trajectory),
+                ),
+            )
 
-        refined_planner = dspy.Refine(
-            self.planner, N=3, reward_fn=_check_errors, threshold=1.0
-        )
+            plan = self.planner(**planner_inputs)
 
-        planner = refined_planner(
-            max_calls=max_calls,
-            tools=list(tools.values()),
-            previous_tool_plan=tool_memory.plan,
-            **planner_inputs,
-        )
+            trajectory[f"thought_{idx}"] = plan.next_thought
+            trajectory[f"tool_name_{idx}"] = plan.next_tool_name
+            trajectory[f"tool_args_{idx}"] = plan.next_tool_args
 
-        tool_plan = planner.tool_plan
+            try:
+                trajectory[f"observation_{idx}"] = self.tools[plan.next_tool_name](
+                    **plan.next_tool_args
+                )
+            except Exception as err:
+                trajectory[f"observation_{idx}"] = (
+                    f"Execution error in {plan.next_tool_name}: {_fmt_exc(err)}"
+                )
+            if plan.next_tool_name == "finish":
+                break
 
-        return dspy.Prediction(tool_plan=tool_plan)
+        return dspy.Prediction(tool_plan=trajectory)
 
-    # TODO: async forward needs error checking
-    async def aforward(
-        self,
-        current_user_message: str,
-        tools: dict[str, dspy.Tool],
-        conversation_memory: ConversationMemory,
-        tool_memory: ToolMemory,
-        max_calls: int = 5,
-    ) -> dspy.Prediction:
 
-        planner = await self.planner.acall(
-            current_user_message=current_user_message,
-            max_calls=max_calls,
-            tools=list(tools.value()),
-            tool_history=tool_memory.history_str(),
-            tool_summary=tool_memory.summary,
-            previous_tool_plan=tool_memory.plan,
-            conversation_history=conversation_memory.history_str(),
-            conversation_summary=conversation_memory.summary,
-        )
+def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:
+    """
+    Return a one-string traceback summary.
+    * `limit` - how many stack frames to keep (from the innermost outwards).
+    """
 
-        return dspy.Prediction(tool_plan=planner.tool_plan)
+    import traceback
+
+    return (
+        "\n"
+        + "".join(
+            traceback.format_exception(type(err), err, err.__traceback__, limit=limit)
+        ).strip()
+    )
