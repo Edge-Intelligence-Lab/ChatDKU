@@ -1,5 +1,4 @@
 import re
-from contextlib import nullcontext
 from functools import partial
 from inspect import Signature, signature
 from typing import Any, Callable, Optional
@@ -48,7 +47,7 @@ def span_start(span_name: str, span_kind, **kwargs):
         OTLP span
     """
     span = config.tracer.start_span(span_name)
-    span.set_attributes(
+    span.set_attribute(
         SpanAttributes.OPENINFERENCE_SPAN_KIND,
         span_kind.value,
     )
@@ -62,9 +61,11 @@ def span_start(span_name: str, span_kind, **kwargs):
     return span
 
 
-def span_ctx_start(span_name: str, span_kind):
+def span_ctx_start(span_name: str, span_kind, parent_context=None):
     return config.tracer.start_as_current_span(
-        span_name, attributes={SpanAttributes.OPENINFERENCE_SPAN_KIND: span_kind.value}
+        span_name,
+        attributes={SpanAttributes.OPENINFERENCE_SPAN_KIND: span_kind.value},
+        context=parent_context,
     )
 
 

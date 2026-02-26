@@ -7,7 +7,7 @@ from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.plan import Planner
+from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.utils import load_conversation, span_start
@@ -56,13 +56,13 @@ class Agent(dspy.Module):
         tools = [
             VectorRetrieverOuter(
                 self.internal_memory,
-                retriever_top_k=25,
-                use_reranker=True,
+                retriever_top_k=10,
+                use_reranker=False,
             ),
             KeywordRetrieverOuter(
                 self.internal_memory,
-                retriever_top_k=25,
-                use_reranker=True,
+                retriever_top_k=10,
+                use_reranker=False,
             ),
         ]
         self.planner = Planner(tools)
@@ -113,7 +113,7 @@ class Agent(dspy.Module):
             limits = self.planner.get_token_limits(
                 current_user_message=current_user_message,
                 conversation_history=self.conversation_memory.history_str(),
-                trajectory=self.planner._format_trajectory({}),
+                trajectory=format_trajectory({}),
             )
 
             # Clear internal memory for each user message

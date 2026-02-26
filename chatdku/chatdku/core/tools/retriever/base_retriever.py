@@ -11,7 +11,7 @@ from openinference.semconv.trace import (
     OpenInferenceSpanKindValues,
     SpanAttributes,
 )
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import Status, StatusCode, set_span_in_context
 from opentelemetry.util.types import AttributeValue
 
 from chatdku.core.utils import span_ctx_start
@@ -48,15 +48,18 @@ class BaseDocRetriever:
         """
         raise NotImplementedError
 
-    def query_with_tell(self, query) -> list:
+    def query_with_tell(self, query, parent_span=None) -> list:
         """
         Retrieve texts from the database with telemetry enabled.
         Uses the `self.query` method to retrieve the results.
 
         Uses opentelemetry to track the query and the response.
         """
+        context = None
+        if parent_span is not None:
+            context = set_span_in_context(parent_span)
         with span_ctx_start(
-            self.__class__.__name__, OpenInferenceSpanKindValues.RETRIEVER
+            self.__class__.__name__, OpenInferenceSpanKindValues.RETRIEVER, context
         ) as span:
             exclude = self.exclude
             span.set_attributes(

@@ -119,7 +119,7 @@ class Synthesizer(dspy.Module):
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
-            "tool_history": 5 / 15,
+            "trajectory": 5 / 15,
         }
 
     def get_token_limits(self) -> dict[str, int]:
@@ -165,12 +165,11 @@ class Synthesizer(dspy.Module):
                     async_streaming=False,
                 )
                 response_gen = ResponseGen(
-                    synthesizer_template,
-                    synthesizer_streamer(**synthesizer_args),
-                    span,
-                    parent_span,
+                    prompt=synthesizer_template,
+                    streamer=synthesizer_streamer(**synthesizer_args),
+                    synthesizer_span=span,
+                    agent_span=parent_span,
                 )
-
                 return dspy.Prediction(response=response_gen)
 
             else:
@@ -187,7 +186,7 @@ class ResponseGen:
         self,
         prompt: str,
         streamer,
-        synthesizer_span: Span,
+        synthesizer_span,
         agent_span: Span,
     ):
         self.llm_completion_gen = streamer
@@ -201,7 +200,6 @@ class ResponseGen:
                 SpanAttributes.LLM_MODEL_NAME: str(config.llm),
             }
         )
-        self.synthesizer_span = synthesizer_span
         self.agent_span = agent_span
         self.full_response = ""
 
@@ -230,15 +228,11 @@ class ResponseGen:
         self.span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.full_response)
         self.span.set_status(Status(StatusCode.OK))
         self.span.end()
-
-        self.synthesizer_span.set_attribute(
-            SpanAttributes.OUTPUT_VALUE, self.full_response
-        )
-        self.synthesizer_span.set_status(Status(StatusCode.OK))
-
-        self.agent_span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.full_response)
-        self.agent_span.set_status(Status(StatusCode.OK))
-        self.agent_span.end()
+        # self.agent_span.set_attribute(
+        #     SpanAttributes.OUTPUT_VALUE, self.full_response
+        # )
+        # self.agent_span.set_status(Status(StatusCode.OK))
+        # self.agent_span.end()
 
     def get_full_response(self) -> str:
         # Make sure the entire response is read

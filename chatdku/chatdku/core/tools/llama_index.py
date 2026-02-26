@@ -1,3 +1,5 @@
+from opentelemetry.trace import get_current_span
+
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.keyword_retriever import KeywordRetriever
 from chatdku.core.tools.retriever.reranker import rerank
@@ -26,7 +28,7 @@ def VectorRetrieverOuter(
         retriever_top_k,
     )
 
-    def VectorRetriever(
+    def VectorQuery(
         semantic_query: str,
     ) -> tuple[list, dict]:
         """
@@ -41,12 +43,15 @@ def VectorRetrieverOuter(
         Returns:
             Tuple of (matched_documents_list, internal_result_dict)
         """
+        parent_span = get_current_span()
         vector_result = []
         # Retrieve documents with individual error handling
         try:
             with timeout() as ctx:
                 vector_result = ctx.run(
-                    vector_retriever.query_with_tell, query=semantic_query
+                    vector_retriever.query_with_tell,
+                    query=semantic_query,
+                    parent_span=parent_span,
                 )
             if use_reranker:
                 vector_result = rerank(vector_result, semantic_query, reranker_top_n)
@@ -67,7 +72,7 @@ def VectorRetrieverOuter(
         }
         return overall_dicts, internal_result
 
-    return VectorRetriever
+    return VectorQuery
 
 
 def KeywordRetrieverOuter(
@@ -81,7 +86,7 @@ def KeywordRetrieverOuter(
         retriever_top_k,
     )
 
-    def KeywordRetriever(
+    def KeywordQuery(
         keyword_query: str | list[str],
     ) -> tuple[list, dict]:
         """
@@ -96,6 +101,7 @@ def KeywordRetrieverOuter(
         Returns:
             Tuple of (matched_documents_list, internal_result_dict)
         """
+        parent_span = get_current_span()
         if isinstance(keyword_query, list):
             for i in range(len(keyword_query)):
                 keyword_query[i] = str(keyword_query[i])
@@ -105,7 +111,9 @@ def KeywordRetrieverOuter(
         try:
             with timeout() as ctx:
                 keyword_result = ctx.run(
-                    keyword_retriever.query_with_tell, query=keyword_query
+                    keyword_retriever.query_with_tell,
+                    query=keyword_query,
+                    parent_span=parent_span,
                 )
             if use_reranker:
                 keyword_result = rerank(
@@ -126,4 +134,4 @@ def KeywordRetrieverOuter(
         }
         return overall_dict, internal_result
 
-    return KeywordRetriever
+    return KeywordQuery

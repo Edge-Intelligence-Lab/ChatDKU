@@ -20,7 +20,7 @@ from chatdku.core.utils import (
 
 class PlannerSignature(dspy.Signature):
     """
-    You are a Planner Agent. In each episode, you are given available tools.
+    You are a Planner Agent for Duke Kunshan University (DKU). In each episode, you are given available tools.
     And you can see your past trajectory so far. Your goal is to use one or more of the
     supplied tools to collect any necessary information for answering the user's question.
     To do this, you will produce next_thought, next tool name, and next tool args in each turn,
@@ -130,7 +130,7 @@ class Planner(dspy.Module):
                     )
                 if plan.next_tool_name == "finish":
                     break
-            span.set_attribute("output.value", safe_json_dumps(**trajectory))
+            span.set_attribute("output.value", safe_json_dumps(trajectory))
         return dspy.Prediction(trajectory=format_trajectory(trajectory))
 
 
