@@ -41,7 +41,7 @@ class BaseDocRetriever:
         self.search_mode = search_mode
         self.files = files
 
-    def query(self, query: str) -> list[NodeWithScore]:
+    def query(self, query) -> list[NodeWithScore]:
         """
         Retrieve texts from the database.
 
@@ -49,7 +49,7 @@ class BaseDocRetriever:
         """
         raise NotImplementedError
 
-    def query_with_tell(self, query: str) -> list:
+    def query_with_tell(self, query) -> list:
         """
         Retrieve texts from the database with telemetry enabled.
         Uses the `self.query` method to retrieve the results.

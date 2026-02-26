@@ -3,24 +3,15 @@ import traceback
 from contextlib import nullcontext
 
 import dspy
-from openinference.instrumentation import safe_json_dumps
-from openinference.semconv.trace import (
-    OpenInferenceMimeTypeValues,
-    OpenInferenceSpanKindValues,
-    SpanAttributes,
-)
+from openinference.semconv.trace import OpenInferenceSpanKindValues
 from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.judge import Judge
 from chatdku.core.dspy_classes.plan import Planner
-from chatdku.core.dspy_classes.prompt_settings import VERBOSE
-from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
-from chatdku.core.tools.llama_index import DocRetrieverOuter
-from chatdku.core.utils import load_conversation
+from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
 # from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
@@ -53,8 +44,29 @@ class Agent(dspy.Module):
         self.streaming = streaming
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
+        # Store information not accessible to the LLM.
+        # Currently, only `ids` is stored, which tracks the documents already retrieved,
+        # so they can be excluded in the subsequent retrievals.
+        # NOTE: `VectorRetriever` and `KeywordRetriever` currently uses two different id formats,
+        # but mixing them appears to not cause any issues.
+        # Edit (Temuulen): nahhh it is causing issues.
+        self.internal_memory = {}
 
-        self.planner = Planner()
+        # Define the tools here. Wrap them in dspy.Tool()
+        # Currently only supports functions.
+        tools = [
+            VectorRetrieverOuter(
+                self.internal_memory,
+                retriever_top_k=25,
+                use_reranker=True,
+            ),
+            KeywordRetrieverOuter(
+                self.internal_memory,
+                retriever_top_k=25,
+                use_reranker=True,
+            ),
+        ]
+        self.planner = Planner(tools)
 
         self.conversation_memory = ConversationMemory()
 
@@ -71,17 +83,7 @@ class Agent(dspy.Module):
         except Exception as e:
             print(f"error encountered in loading conversation: {e}")
 
-        self.tool_memory = ToolMemory()
-
-        # Store information not accessible to the LLM.
-        # Currently, only `ids` is stored, which tracks the documents already retrieved,
-        # so they can be excluded in the subsequent retrievals.
-        # NOTE: `VectorRetriever` and `KeywordRetriever` currently uses two different id formats,
-        # but mixing them appears to not cause any issues.
-        self.internal_memory = {}
         self.synthesizer = Synthesizer()
-        self.judge = Judge()
-        self.queryrewriter = QueryRewrite()
 
         self.prev_response = None
 
@@ -93,39 +95,15 @@ class Agent(dspy.Module):
         self,
         current_user_message: str,
         question_id: str,
-        user_id: str,
-        search_mode: int,
-        files: list,
     ):
-        # Define the tools here. Wrap them in dspy.Tool()
-        # Currently only supports functions.
-        self.tools = {
-            "DocumentRetriever": dspy.Tool(
-                DocRetrieverOuter(
-                    internal_memory=self.internal_memory,
-                    user_id=user_id,
-                    search_mode=search_mode,
-                    files=files,
-                )
-            ),
-        }
+        span = span_start(
+            span_name="Agent",
+            span_kind=OpenInferenceSpanKindValues.CHAIN,
+            current_user_message=current_user_message,
+            question_id=question_id,
+        )
 
-        if hasattr(config, "tracer"):
-            span = config.tracer.start_span("Agent")
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.AGENT.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(
-                            current_user_message=current_user_message,
-                            question_id=question_id,
-                        )
-                    ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
-            )
-
-        with use_span(span) if hasattr(config, "tracer") else nullcontext():
+        with use_span(span) if span is not None else nullcontext():
             # Putting this in `self.__init__()` might not work due to that you might
             # want DSPy to change prompt dynamically.
 
@@ -135,18 +113,9 @@ class Agent(dspy.Module):
             # TODO: We could notify user when their input is too long.
             limits = self.planner.get_token_limits(
                 current_user_message=current_user_message,
-                tool_history=self.tool_memory.history_str(),
-                tool_summary=self.tool_memory.summary,
-                previous_tool_plan=str(self.tool_memory.plan),
                 conversation_history=self.conversation_memory.history_str(),
-                conversation_summary=self.conversation_memory.summary,
-                tools=str(list(self.tools.values())),
-                max_calls=str(2),
+                trajectory=self.planner._format_trajectory({}),
             )
-
-            # Reset tool memory for each user message
-            # Need to make this an attribute so that DSPy can optimize it
-            self.tool_memory.reset()
 
             # Clear internal memory for each user message
             self.internal_memory.clear()
@@ -168,94 +137,15 @@ class Agent(dspy.Module):
             synthesizer_args = dict(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
-                tool_memory=self.tool_memory,
+                trajectory=self.tool_memory,
                 streaming=self.streaming,
             )
 
-        query = current_user_message
-        # The subsequent rounds of tool calling
-        for i in range(self.max_iterations):
-            if VERBOSE:
-                print(f"iteration: {i}")
-            with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                try:
-                    planner = self.planner(
-                        current_user_message=query,
-                        tools=self.tools,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                        # FIXME: Change this number when we add more tools
-                        max_calls=2,
-                    )
-                    if VERBOSE:
-                        print(f"Planner:{planner}")
-                except Exception as e:
-                    if VERBOSE:
-                        print(e)
-                    break
+            plan = self.planner(
+                current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
+            )
 
-                if VERBOSE:
-                    print(f"calls: {planner.tool_plan}")
-
-                for tool in planner.tool_plan.tool_calls:
-                    result = []
-                    internal_result = {}
-                    try:
-                        result, internal_result = self.tools[tool.name](**tool.args)
-                    except Exception as e:
-                        result = str(e)
-
-                    if "ids" in internal_result:
-                        self.internal_memory["ids"] = (
-                            self.internal_memory.get("ids", set())
-                            | internal_result["ids"]
-                        )
-
-                    if VERBOSE:
-                        print(f"result: {result}")
-
-                    self.tool_memory(
-                        current_user_message=current_user_message,
-                        conversation_memory=self.conversation_memory,
-                        call=tool,
-                        result=result,
-                        max_history_size=limits["tool_history"],
-                    )
-
-                if i == self.max_iterations - 1:
-                    break
-
-                judgement = self.judge(
-                    current_user_message=current_user_message,
-                    conversation_memory=self.conversation_memory,
-                    tool_memory=self.tool_memory,
-                ).judgement
-
-                if VERBOSE:
-                    print(f"Judge: {judgement}")
-                if judgement:
-                    break
-
-                if self.rewrite_query:
-                    query = self.queryrewriter(
-                        current_user_message=query,
-                        conversation_memory=self.conversation_memory,
-                        tool_memory=self.tool_memory,
-                    ).rewritten_query
-                    if VERBOSE:
-                        print(f"rewritten query:{query}")
-
-            # TODO: Could feed the intermediate response to judge
-            # TODO: Could also try to make this async/threaded, so the output
-            # with the user would be done simultaneous with the execution of the
-            # next round. However, this would be contradictory to the previous
-            # todo.
-            if self.get_intermediate:
-                with use_span(span) if hasattr(config, "tracer") else nullcontext():
-                    result = self.synthesizer(**synthesizer_args)
-                yield result
-
-        with use_span(span) if hasattr(config, "tracer") else nullcontext():
             self.prev_response = self.synthesizer(
                 **synthesizer_args, final=True
             ).response
@@ -266,7 +156,7 @@ class Agent(dspy.Module):
             )
 
         if not self.streaming:
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.prev_response)
+            span.set_attribute(SpanAttributes.OUTPUT_VALUE, output)
             span.set_status(Status(StatusCode.OK))
             span.end()
         yield dspy.Prediction(response=self.prev_response)

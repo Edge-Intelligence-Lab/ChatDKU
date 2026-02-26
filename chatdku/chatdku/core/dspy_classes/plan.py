@@ -2,12 +2,17 @@ from typing import Any, Literal
 
 import dspy
 from dspy import Tool
+from openinference.instrumentation import safe_json_dumps
+from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import CONVERSATION_HISTORY_FIELD
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_common import get_template
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
+from chatdku.core.utils import (
+    span_ctx_start,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
 
 
 class PlannerSignature(dspy.Signature):
@@ -20,6 +25,9 @@ class PlannerSignature(dspy.Signature):
     After each tool call, you receive a resulting observation, which gets appended to your trajectory.
     When writing next_thought, you may reason about the current situation and plan for future steps.
     When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
+
+    The user's question might be complex and require multiple hops of tool calls. If it is complex,
+    break down the question into small tool calls to get whatever information you need to answer.
     """
 
     current_user_message: str = dspy.InputField()
@@ -89,43 +97,42 @@ class Planner(dspy.Module):
         conversation_memory: ConversationMemory,
         max_calls: int = 5,
     ) -> dspy.Prediction:
+        planner_inputs = dict(
+            current_user_message=current_user_message,
+            conversation_history=conversation_memory.history_str(),
+        )
 
         trajectory = {}
-        for idx in range(max_calls):
+        with span_ctx_start("Planner", SpanKind.AGENT) as span:
+            span.set_attribute("agent.name", "Planner")
+            span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
-            planner_inputs = dict(
-                current_user_message=current_user_message,
-                conversation_history=conversation_memory.history_str(),
-                trajectory=self._format_trajectory(trajectory),
-            )
-
-            planner_inputs = truncate_tokens_all(
-                planner_inputs,
-                self.get_token_limits(
-                    current_user_message=current_user_message,
-                    conversation_history=conversation_memory.history_str(),
-                    trajectory=self._format_trajectory(trajectory),
-                ),
-            )
-
-            plan = self.planner(**planner_inputs)
-
-            trajectory[f"thought_{idx}"] = plan.next_thought
-            trajectory[f"tool_name_{idx}"] = plan.next_tool_name
-            trajectory[f"tool_args_{idx}"] = plan.next_tool_args
-
-            try:
-                trajectory[f"observation_{idx}"] = self.tools[plan.next_tool_name](
-                    **plan.next_tool_args
+            # Tool calling iterations
+            for idx in range(max_calls):
+                planner_inputs["trajectory"] = trajectory
+                planner_inputs = truncate_tokens_all(
+                    planner_inputs,
+                    self.get_token_limits(**planner_inputs),
                 )
-            except Exception as err:
-                trajectory[f"observation_{idx}"] = (
-                    f"Execution error in {plan.next_tool_name}: {_fmt_exc(err)}"
-                )
-            if plan.next_tool_name == "finish":
-                break
 
-        return dspy.Prediction(tool_plan=trajectory)
+                plan = self.planner(**planner_inputs)
+
+                trajectory[f"thought_{idx}"] = plan.next_thought
+                trajectory[f"tool_name_{idx}"] = plan.next_tool_name
+                trajectory[f"tool_args_{idx}"] = plan.next_tool_args
+
+                try:
+                    trajectory[f"observation_{idx}"] = self.tools[plan.next_tool_name](
+                        **plan.next_tool_args
+                    )
+                except Exception as err:
+                    trajectory[f"observation_{idx}"] = (
+                        f"Execution error in {plan.next_tool_name}: {_fmt_exc(err)}"
+                    )
+                if plan.next_tool_name == "finish":
+                    break
+            span.set_attribute("output.value", safe_json_dumps(**trajectory))
+        return dspy.Prediction(trajectory=trajectory)
 
 
 def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:

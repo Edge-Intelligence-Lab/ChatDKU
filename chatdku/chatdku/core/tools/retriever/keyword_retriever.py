@@ -31,14 +31,14 @@ class KeywordRetriever(BaseDocRetriever):
             files,
         )
 
-    def query(self, query: str) -> list[NodeWithScore]:
+    def query(self, query: str | list[str]) -> list[NodeWithScore]:
         """
         Retrieve texts from the database that contain the
         same keywords in the query.
         """
         client = Redis(
             host=config.redis_host,
-            port=6379,
+            port=config.redis_port,
             username="default",
             password=config.redis_password,
             db=0,
@@ -49,7 +49,7 @@ class KeywordRetriever(BaseDocRetriever):
         )
         index_name = schema.index.name
 
-        # Escape all punctuations, e.g. "can't" -> "can\'t"
+        # Escape all punctuation, e.g. "can't" -> "can\'t"
         def _escape_strs(strs: list[str]):
             if strs:
                 pattern = f"[{re.escape(string.punctuation)}]"

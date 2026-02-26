@@ -75,6 +75,7 @@ class Config:
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
                 # Redis
                 "redis_host": redis_host,
+                "redis_port": 6379,
                 "redis_password": redis_password,
                 "index_name": "chat_dku_advising",
                 # Chroma
