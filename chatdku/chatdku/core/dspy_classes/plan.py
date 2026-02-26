@@ -6,7 +6,10 @@ from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.prompt_settings import CONVERSATION_HISTORY_FIELD
+from chatdku.core.dspy_classes.prompt_settings import (
+    CONVERSATION_HISTORY_FIELD,
+    CONVERSATION_SUMMARY_FIELD,
+)
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
     span_ctx_start,
@@ -32,10 +35,11 @@ class PlannerSignature(dspy.Signature):
 
     current_user_message: str = dspy.InputField()
     conversation_history: str = CONVERSATION_HISTORY_FIELD
+    conversation_summary: str = CONVERSATION_SUMMARY_FIELD
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools: list):
+    def __init__(self, tools):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
@@ -77,19 +81,13 @@ class Planner(dspy.Module):
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 3 / 15,
+            "conversation_summary": 1 / 15,
             "trajectory": 6 / 15,
         }
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
         return token_limit_ratio_to_count(self.token_ratios, template_len)
-
-    # From the DSPY.react code
-    # https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
-    def _format_trajectory(self, trajectory: dict[str, Any]):
-        adapter = dspy.settings.adapter or dspy.ChatAdapter()
-        trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
-        return adapter.format_user_message_content(trajectory_signature, trajectory)
 
     def forward(
         self,
@@ -100,6 +98,7 @@ class Planner(dspy.Module):
         planner_inputs = dict(
             current_user_message=current_user_message,
             conversation_history=conversation_memory.history_str(),
+            conversation_summary=conversation_memory.summary,
         )
 
         trajectory = {}
@@ -109,7 +108,7 @@ class Planner(dspy.Module):
 
             # Tool calling iterations
             for idx in range(max_calls):
-                planner_inputs["trajectory"] = trajectory
+                planner_inputs["trajectory"] = format_trajectory(trajectory)
                 planner_inputs = truncate_tokens_all(
                     planner_inputs,
                     self.get_token_limits(**planner_inputs),
@@ -132,7 +131,15 @@ class Planner(dspy.Module):
                 if plan.next_tool_name == "finish":
                     break
             span.set_attribute("output.value", safe_json_dumps(**trajectory))
-        return dspy.Prediction(trajectory=trajectory)
+        return dspy.Prediction(trajectory=format_trajectory(trajectory))
+
+
+# From the DSPY.react code
+# https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
+def format_trajectory(trajectory: dict[str, Any]):
+    adapter = dspy.settings.adapter or dspy.ChatAdapter()
+    trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
+    return adapter.format_user_message_content(trajectory_signature, trajectory)
 
 
 def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:

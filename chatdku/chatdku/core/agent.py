@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import traceback
-from contextlib import nullcontext
 
 import dspy
-from openinference.semconv.trace import OpenInferenceSpanKindValues
+from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttributes
 from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
@@ -24,7 +23,7 @@ class Agent(dspy.Module):
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
-        previous_conversation: list = None,
+        previous_conversation: list = [],
     ):
         """
         Args:
@@ -103,7 +102,7 @@ class Agent(dspy.Module):
             question_id=question_id,
         )
 
-        with use_span(span) if span is not None else nullcontext():
+        with use_span(span):
             # Putting this in `self.__init__()` might not work due to that you might
             # want DSPy to change prompt dynamically.
 
@@ -125,30 +124,27 @@ class Agent(dspy.Module):
                 if self.streaming:
                     # Note that this would essentially "invalidate" the previous response generator
                     # as calling `get_full_response()` would exhaust the iterations.
-                    r = self.prev_response.get_full_response()
+                    prev_response = self.prev_response.get_full_response()
                 else:
-                    r = self.prev_response
+                    prev_response = self.prev_response
                 self.conversation_memory(
                     role="assistant",
-                    content=r,
+                    content=prev_response,
                     max_history_size=limits["conversation_history"],
                 )
-
-            synthesizer_args = dict(
-                current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
-                trajectory=self.tool_memory,
-                streaming=self.streaming,
-            )
 
             plan = self.planner(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
             )
+            synthesizer_args = dict(
+                current_user_message=current_user_message,
+                conversation_memory=self.conversation_memory,
+                trajectory=plan.trajectory,
+                streaming=self.streaming,
+            )
 
-            self.prev_response = self.synthesizer(
-                **synthesizer_args, final=True
-            ).response
+            self.prev_response = self.synthesizer(**synthesizer_args).response
             self.conversation_memory(
                 role="user",
                 content=current_user_message,
@@ -156,9 +152,10 @@ class Agent(dspy.Module):
             )
 
         if not self.streaming:
-            span.set_attribute(SpanAttributes.OUTPUT_VALUE, output)
-            span.set_status(Status(StatusCode.OK))
-            span.end()
+            if span is not None:
+                span.set_attribute(SpanAttributes.OUTPUT_VALUE, self.prev_response)
+                span.set_status(Status(StatusCode.OK))
+                span.end()
         yield dspy.Prediction(response=self.prev_response)
 
     def forward(
@@ -167,7 +164,7 @@ class Agent(dspy.Module):
         question_id: str = "",
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        files: list = None,
+        files: list = [],
     ):
         """
         current_user_message: user query
@@ -176,8 +173,6 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-        if files is None:
-            files = []
 
         if not (0 <= search_mode <= 2):
             raise ValueError(
@@ -190,9 +185,6 @@ class Agent(dspy.Module):
         gen = self._forward_gen(
             current_user_message,
             question_id,
-            user_id=user_id,
-            search_mode=search_mode,
-            files=files,
         )
 
         if self.get_intermediate:

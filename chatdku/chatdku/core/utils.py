@@ -47,28 +47,22 @@ def span_start(span_name: str, span_kind, **kwargs):
     Returns:
         OTLP span
     """
-    if hasattr(config, "tracer"):
-        span = config.tracer.start_span(span_name)
+    span = config.tracer.start_span(span_name)
+    span.set_attributes(
+        SpanAttributes.OPENINFERENCE_SPAN_KIND,
+        span_kind.value,
+    )
+    if kwargs:
         span.set_attributes(
-            SpanAttributes.OPENINFERENCE_SPAN_KIND,
-            span_kind.value,
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
         )
-        if kwargs:
-            span.set_attributes(
-                {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
-            )
-        return span
-    else:
-        return None
+    return span
 
 
 def span_ctx_start(span_name: str, span_kind):
-    if not hasattr(config, "tracer"):
-        return nullcontext()
-
     return config.tracer.start_as_current_span(
         span_name, attributes={SpanAttributes.OPENINFERENCE_SPAN_KIND: span_kind.value}
     )

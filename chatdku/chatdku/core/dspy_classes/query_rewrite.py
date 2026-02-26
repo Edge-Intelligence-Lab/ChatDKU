@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-
 import dspy
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import (
@@ -9,7 +7,6 @@ from openinference.semconv.trace import (
 )
 from opentelemetry.trace import Status, StatusCode
 
-from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
@@ -21,7 +18,11 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_common import get_template
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
+from chatdku.core.utils import (
+    span_ctx_start,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
 
 
 class QueryRewriteSignature(dspy.Signature):
@@ -70,16 +71,7 @@ class QueryRewrite(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        with (
-            config.tracer.start_as_current_span("Query Rewrite")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attribute(
-                SpanAttributes.OPENINFERENCE_SPAN_KIND,
-                OpenInferenceSpanKindValues.CHAIN.value,
-            )
-
+        with span_ctx_start("Query Rewrite", OpenInferenceSpanKindValues.CHAIN) as span:
             rewrite_inputs = dict(
                 current_user_message=current_user_message,
                 conversation_history=conversation_memory.history_str(),

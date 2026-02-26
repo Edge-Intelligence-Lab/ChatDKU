@@ -1,6 +1,5 @@
 "By: Temuulen. Ask him if you don't understand"
 
-from contextlib import nullcontext
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterator, Mapping
@@ -15,7 +14,7 @@ from openinference.semconv.trace import (
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry.util.types import AttributeValue
 
-from chatdku.config import config
+from chatdku.core.utils import span_ctx_start
 
 
 @dataclass
@@ -56,15 +55,12 @@ class BaseDocRetriever:
 
         Uses opentelemetry to track the query and the response.
         """
-        with (
-            config.tracer.start_as_current_span(self.__class__.__name__)
-            if hasattr(config, "tracer")
-            else nullcontext()
+        with span_ctx_start(
+            self.__class__.__name__, OpenInferenceSpanKindValues.RETRIEVER
         ) as span:
             exclude = self.exclude
             span.set_attributes(
                 {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
                         dict(
                             query=query,

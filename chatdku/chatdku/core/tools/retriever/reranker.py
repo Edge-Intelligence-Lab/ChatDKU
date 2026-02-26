@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-
 import requests
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import (
@@ -11,6 +9,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore, nodes_to_OTLP
+from chatdku.core.utils import span_ctx_start
 
 
 def call_vllm_rerank(
@@ -78,14 +77,9 @@ def rerank(
     documents = [node.text for node in nodes]
     metadatas = [node.metadata for node in nodes]
     # Phoenix Tracing
-    with (
-        config.tracer.start_as_current_span("Reranker")
-        if hasattr(config, "tracer")
-        else nullcontext()
-    ) as span:
+    with span_ctx_start("Reranker", OpenInferenceSpanKindValues.RETRIEVER) as span:
         span.set_attributes(
             {
-                SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                 # NOTE: Should we also add the documents in the input?
                 SpanAttributes.INPUT_VALUE: safe_json_dumps(
                     dict(
