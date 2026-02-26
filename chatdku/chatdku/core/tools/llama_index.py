@@ -63,14 +63,7 @@ def VectorRetrieverOuter(
             raise Exception(f"Vector retrieval failed: {e}")
 
         overall_dicts = nodes_to_dicts(vector_result)
-        internal_result = {
-            "ids": {
-                node.node_id
-                for node in vector_result
-                if isinstance(node, NodeWithScore)
-            }
-        }
-        return overall_dicts, internal_result
+        return overall_dicts
 
     return VectorQuery
 
@@ -125,13 +118,6 @@ def KeywordRetrieverOuter(
             raise Exception(f"Keyword retrieval failed: {e}")
 
         overall_dict = nodes_to_dicts(keyword_result)
-        internal_result = {
-            "ids": {
-                node.node_id
-                for node in keyword_result
-                if isinstance(node, NodeWithScore)
-            }
-        }
-        return overall_dict, internal_result
+        return overall_dict
 
     return KeywordQuery
