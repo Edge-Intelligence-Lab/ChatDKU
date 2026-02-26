@@ -2,6 +2,7 @@ from typing import Any, Literal
 
 import dspy
 from dspy import Tool
+from litellm import ContextWindowExceededError
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
@@ -36,6 +37,31 @@ class PlannerSignature(dspy.Signature):
     current_user_message: str = dspy.InputField()
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+
+
+class SummarizerSignature(dspy.Signature):
+    """
+    You have a Tool History storing all the tool calls you made for answering the Current User Message.
+    Your Tool History has become too long, so the oldest entries have to be discarded.
+    You keep a Summary of the discarded tool history.
+    Given the History To Discard and Previous Summary, update the Summary.
+    Remove the information not relevant to answer the Current User Message
+    and keep all the relevant information if possible.
+    Use Markdown in Summary.
+    """
+
+    # "Store the sources that you retrieved these information from."
+    current_user_message: str = dspy.InputField()
+    trajectory_to_discard: str = dspy.InputField(
+        desc=(
+            "The tool calls that would be removed from Tool History"
+            "You should extract relevant information from these tool calls."
+        ),
+    )
+
+    previous_summary: str = dspy.InputField()
+
+    new_summary: str = dspy.OutputField()
 
 
 class Planner(dspy.Module):
@@ -84,6 +110,7 @@ class Planner(dspy.Module):
             "conversation_summary": 1 / 15,
             "trajectory": 6 / 15,
         }
+        self.trajectory_summary = ""
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
@@ -108,13 +135,17 @@ class Planner(dspy.Module):
 
             # Tool calling iterations
             for idx in range(max_calls):
-                planner_inputs["trajectory"] = format_trajectory(trajectory)
                 planner_inputs = truncate_tokens_all(
                     planner_inputs,
                     self.get_token_limits(**planner_inputs),
                 )
 
-                plan = self.planner(**planner_inputs)
+                try:
+                    plan = self._call_with_potential_trajectory_truncation(
+                        self.planner, trajectory, **planner_inputs
+                    )
+                except ValueError:
+                    break
 
                 trajectory[f"thought_{idx}"] = plan.next_thought
                 trajectory[f"tool_name_{idx}"] = plan.next_tool_name
@@ -131,7 +162,54 @@ class Planner(dspy.Module):
                 if plan.next_tool_name == "finish":
                     break
             span.set_attribute("output.value", safe_json_dumps(trajectory))
-        return dspy.Prediction(trajectory=format_trajectory(trajectory))
+        return dspy.Prediction(
+            trajectory=format_trajectory(trajectory),
+            summary=self.trajectory_summary,
+        )
+
+    def _call_with_potential_trajectory_truncation(
+        self, module, trajectory, **input_args
+    ):
+        for _ in range(3):
+            try:
+                return module(
+                    **input_args,
+                    trajectory=format_trajectory(trajectory),
+                )
+            except ContextWindowExceededError:
+                # Trajectory exceeded the context window
+                # truncating the oldest tool call information.
+                new_summary, trajectory = self.truncate_trajectory(
+                    trajectory, input_args["current_user_message"]
+                )
+                self.trajectory_summary = new_summary
+        raise ValueError(
+            "The context window was exceeded even after 3 attempts to truncate the trajectory."
+        )
+
+    def truncate_trajectory(self, trajectory: dict, current_user_message: str):
+        """Truncates the trajectory so that it fits in the context window.
+
+        Summarizes by using a LLM on the earliest trajectory set.
+        """
+        summarizer = dspy.Predict(SummarizerSignature)
+        keys = list(trajectory.keys())
+        if len(keys) < 4:
+            # Every tool call has 4 keys: thought, tool_name, tool_args, and observation.
+            raise ValueError(
+                "The trajectory is too long so your prompt exceeded the context window, but the trajectory cannot be "
+                "truncated because it only has one tool call."
+            )
+
+        earliest_trajectory = ""
+        for key in keys[:4]:
+            earliest_trajectory += str(key) + ":" + trajectory.pop(key) + "\n"
+        summary = summarizer(
+            current_user_message=current_user_message,
+            previous_summary=self.trajectory_summary,
+            trajectory_to_discard=earliest_trajectory,
+        )
+        return summary.new_summary, trajectory
 
 
 # From the DSPY.react code

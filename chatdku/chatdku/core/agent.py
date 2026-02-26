@@ -141,6 +141,7 @@ class Agent(dspy.Module):
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
                 trajectory=plan.trajectory,
+                trajectory_summary=plan.summary,
                 streaming=self.streaming,
             )
 

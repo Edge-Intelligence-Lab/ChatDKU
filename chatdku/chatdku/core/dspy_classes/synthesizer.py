@@ -106,6 +106,7 @@ class SynthesizerSignature(dspy.Signature):
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     trajectory: str = dspy.InputField()
+    trajectory_summary: str = dspy.InputField()
     current_date: date = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     response: str = dspy.OutputField(desc="You response to the Current User Message.")
@@ -120,6 +121,7 @@ class Synthesizer(dspy.Module):
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
             "trajectory": 5 / 15,
+            "trajectory_summary": 1 / 15,
         }
 
     def get_token_limits(self) -> dict[str, int]:
@@ -132,6 +134,7 @@ class Synthesizer(dspy.Module):
         current_user_message: str,
         conversation_memory: ConversationMemory,
         trajectory: str,
+        trajectory_summary: str,
         streaming: bool,
     ):
         with span_ctx_start("Synthesizer", SpanKind.CHAIN) as span:
@@ -140,6 +143,7 @@ class Synthesizer(dspy.Module):
                 conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
                 trajectory=trajectory,
+                trajectory_summary=trajectory_summary,
             )
             synthesizer_args = truncate_tokens_all(
                 synthesizer_args, self.get_token_limits()
