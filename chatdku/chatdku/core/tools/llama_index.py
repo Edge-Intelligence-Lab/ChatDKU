@@ -28,6 +28,7 @@ def VectorRetrieverOuter(
         retriever_top_k,
     )
 
+    # Had to name this differently from VectorRetriever
     def VectorQuery(
         semantic_query: str,
     ) -> tuple[list, dict]:

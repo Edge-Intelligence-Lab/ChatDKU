@@ -2,28 +2,27 @@ import time
 
 import pytest
 
-from chatdku.core.tools.llama_index import DocRetrieverOuter, QueryTimeoutError, timeout
+from chatdku.core.tools.llama_index import (
+    KeywordRetrieverOuter,
+    QueryTimeoutError,
+    VectorRetrieverOuter,
+    timeout,
+)
 from chatdku.setup import setup, use_phoenix
 
 setup()
 use_phoenix()
-DocRetriever = DocRetrieverOuter({})
+vector_retriever = VectorRetrieverOuter({}, retriever_top_k=10, use_reranker=False)
+keyword_retriever = KeywordRetrieverOuter({}, retriever_top_k=10, use_reranker=False)
 
 
 def test_valid_queries():
-    assert len(DocRetriever("How often should I visit my advisor?", "COMPSCI")[0]) == 10
-    assert (
-        len(
-            DocRetriever(
-                "How often should I visit my advisor?", ["COMPSCI", "ARTS AND MEDIA"]
-            )[0]
-        )
-        == 10
-    )
-    assert len(DocRetriever("How often should I visit my advisor?", "")[0]) == 5
+    assert len(vector_retriever("How often should I visit my advisor?")) == 10
+    assert len(keyword_retriever("COMPSCI")) == 10
+    assert len(keyword_retriever(["COMPSCI", "ARTS AND MEDIA"])) == 10
 
 
-def test_response_time():
+def test_vector_time():
     """Test for response time with varying sizes of queries"""
     SEMANTIC_QUERIES = [
         "hello",
@@ -40,6 +39,23 @@ def test_response_time():
         What do I need to do?
         """,
     ]
+
+    for i, query in enumerate(SEMANTIC_QUERIES):
+
+        start_time = time.time()
+        results = vector_retriever(query)
+        elapsed = time.time() - start_time
+
+        print(
+            f"Query {i+1}: {elapsed:.2f}s - {'TIMEOUT' if not results else f'{len(results)} results'}"
+        )
+
+        # Assert that query completed within timeout
+        assert elapsed < 6.0, f"Query {i+1} took {elapsed:.2f}s (expected < 6s)"
+
+
+def test_response_time():
+    """Test for response time with varying sizes of queries"""
     KEYWORD_QUERIES = [
         "COMPSCI",
         "machine learning courses",
@@ -56,12 +72,9 @@ def test_response_time():
         """,
     ]
 
-    for i in range(len(SEMANTIC_QUERIES)):
-        semantic_query = SEMANTIC_QUERIES[i]
-        keyword_query = KEYWORD_QUERIES[i]
-
+    for i, query in enumerate(KEYWORD_QUERIES):
         start_time = time.time()
-        results, internal = DocRetriever(semantic_query, keyword_query)
+        results = keyword_retriever(query)
         elapsed = time.time() - start_time
 
         print(
