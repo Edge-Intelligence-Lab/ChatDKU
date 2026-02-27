@@ -1,0 +1,16 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY chatdku/chatdku/frontend/ChatDKU-web/package.json /app/package.json
+COPY chatdku/chatdku/frontend/ChatDKU-web/package-lock.json /app/package-lock.json
+
+RUN npm ci
+
+COPY chatdku/chatdku/frontend/ChatDKU-web /app
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3005
+
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3005"]

@@ -1,0 +1,144 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - sh
+      - -c
+      - >
+        if [ -n "$REDIS_PASSWORD" ]; then
+          exec redis-stack-server --requirepass "$REDIS_PASSWORD";
+        else
+          exec redis-stack-server;
+        fi
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  chromadb:
+    image: chromadb/chroma:latest
+    command:
+      - run
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+      - --path
+      - /data
+    volumes:
+      - chroma-data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      CHROMA_HOST: ${CHROMA_HOST:-chromadb}
+      CHROMA_DB_PORT: ${CHROMA_DB_PORT:-8010}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      OPENAI_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:18085/v1}
+      HF_ENDPOINT: ${HF_ENDPOINT:-https://hf-mirror.com}
+      TEI_URL: ${TEI_URL:-http://host.docker.internal:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3005}
+      PHOENIX_HOST: ${PHOENIX_HOST:-phoenix}
+      PHOENIX_PORT: ${PHOENIX_PORT:-6006}
+    depends_on:
+      - redis
+      - chromadb
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/chatdku/chatdku/backend/data
+    ports:
+      - "9015:9015"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3005}
+      NEXT_PUBLIC_DICTATION_WS_URL: ${NEXT_PUBLIC_DICTATION_WS_URL:-ws://localhost:8007}
+      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9015}
+      BACKEND_FEEDBACK_URL: ${BACKEND_FEEDBACK_URL:-http://backend:9015/feedback}
+    depends_on:
+      - backend
+    ports:
+      - "3005:3005"
+
+  postgres:
+    image: postgres:16
+    profiles: ["django"]
+    environment:
+      POSTGRES_DB: ${NAME_DB:-chatdku_db}
+      POSTGRES_USER: ${USERNAME_DB:-chatdku_user}
+      POSTGRES_PASSWORD: ${PASSWORD_DB:-change-me}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    profiles: ["django"]
+    working_dir: /app/chatdku/chatdku/django/chatdku_django
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8020"]
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CORS_ORIGINS: ${DJANGO_CORS_ORIGINS:-http://localhost:3005}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:3005}
+      NAME_DB: ${NAME_DB:-chatdku_db}
+      USERNAME_DB: ${USERNAME_DB:-chatdku_user}
+      PASSWORD_DB: ${PASSWORD_DB:-change-me}
+      HOST_DB: ${HOST_DB:-postgres}
+      PORT_DB: ${PORT_DB:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8001:8020"
+    volumes:
+      - ./data:/app/chatdku/chatdku/django/chatdku_django/data
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    profiles: ["django"]
+    working_dir: /app/chatdku/chatdku/django/chatdku_django
+    command: ["celery", "-A", "chatdku_django", "worker", "--beat", "-l", "INFO"]
+    environment:
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me}
+    depends_on:
+      - django
+      - redis
+      - postgres
+    volumes:
+      - ./data:/app/chatdku/chatdku/django/chatdku_django/data
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    profiles: ["phoenix"]
+    ports:
+      - "6006:6006"
+
+volumes:
+  redis-data:
+  chroma-data:
+  postgres-data:

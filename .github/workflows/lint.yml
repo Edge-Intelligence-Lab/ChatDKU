@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for git diff against base
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tools
+        run: |
+          pip install black==24.2.0 flake8
+
+      - name: Get changed Python files
+        id: changed
+        run: |
+          files="$(git diff --diff-filter=ACMRT --name-only origin/${{ github.base_ref }}...${{ github.sha }} -- '*.py' | tr '\n' ' ')"
+          echo "files=$files"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
+
+      - name: Run Black (check) on changed files
+        if: steps.changed.outputs.files != ''
+        run: |
+          black --check ${{ steps.changed.outputs.files }}
+
+      - name: Run Flake8 on changed files
+        if: steps.changed.outputs.files != ''
+        run: |
+          flake8 --max-line-length 120 ${{ steps.changed.outputs.files }}

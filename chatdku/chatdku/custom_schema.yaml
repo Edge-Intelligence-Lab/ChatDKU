@@ -1,0 +1,50 @@
+index:
+  name: idx:chat_dku_advising
+  prefix: chat_dku_advising_doc
+  key_separator: ':'
+  storage_type: hash
+fields:
+- name: id
+  type: tag
+  attrs:
+    sortable: false
+- name: user_id
+  type: tag
+  attrs:
+    sortable: true
+- name: doc_id
+  type: tag
+  attrs:
+    sortable: false
+- name: text
+  type: text
+  attrs:
+    sortable: false
+- name: file_name
+  type: tag
+  attrs:
+    sortable: true
+- name: page_number
+  type: tag
+  attrs:
+    sortable: false
+- name: groups
+  type: tag
+  attrs:
+    sortable: false
+- name: file_path
+  type: tag
+  attrs:
+    sortable: true
+- name: last_modified_date
+  type: tag
+  attrs:
+    sortable: false
+- name: vector
+  type: vector
+  attrs:
+    dims: 1024
+    algorithm: hnsw
+    datatype: float32
+    distance_metric: cosine
+version: 0.1.0

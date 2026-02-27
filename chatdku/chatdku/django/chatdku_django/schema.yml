@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: ChatDKU
+  version: 2.0.0
+  description: ChatDKU
+paths:
+  /api/c/:
+    get:
+      operationId: api_c_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+          description: ''
+  /api/c/{id}/:
+    get:
+      operationId: api_c_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: ''
+  /api/c/{id}/messages/:
+    get:
+      operationId: api_c_messages_retrieve
+      description: Messages from a session_id
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  role:
+                    type: string
+                  message:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+          description: ''
+  /api/chat:
+    post:
+      operationId: api_chat_create
+      description: chat route for ChatDKU. This is responsible for answering the query.
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                    required:
+                    - content
+                chatHistoryId:
+                  type: string
+                  format: uuid
+              required:
+              - mode
+              - messages
+              - chatHistoryId
+            examples:
+              RequestExample:
+                value:
+                  mode: default
+                  messages:
+                  - content: How do I cr/nc??
+                  chatHistoryId: 692f....
+                summary: Request Example
+              ResponseExample:
+                value: To change a course to **Credit/No Credit (CR/NC)** at Duke
+                  Kunshan University (DKU), follow these steps...
+                summary: Response Example
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                RequestExample:
+                  value:
+                    mode: default
+                    messages:
+                    - content: How do I cr/nc??
+                    chatHistoryId: 692f....
+                  summary: Request Example
+                ResponseExample:
+                  value: To change a course to **Credit/No Credit (CR/NC)** at Duke
+                    Kunshan University (DKU), follow these steps...
+                  summary: Response Example
+          description: ''
+  /api/feedback:
+    post:
+      operationId: api_feedback_create
+      description: Post fot feedback
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userInput:
+                  type: string
+                botAnswer:
+                  type: string
+                feedbackReason:
+                  type: string
+                chatHistoryId:
+                  type: string
+                  format: uuid
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Chat created successfully.
+          description: Successful chat creation response.
+  /api/get_session:
+    get:
+      operationId: api_get_session_retrieve
+      description: GET request for session
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+          description: ''
+  /user/upload:
+    post:
+      operationId: user_upload_create
+      description: Uploads files for a given user
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - user
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UploadFile'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+          description: ''
+  /user/user_files:
+    get:
+      operationId: user_user_files_retrieve
+      description: Returns files for a given user
+      parameters:
+      - in: header
+        name: UID
+        schema:
+          type: string
+        description: NetID of the user
+        required: true
+      - in: header
+        name: X-DisplayName
+        schema:
+          type: string
+        description: Display Name of the user
+      tags:
+      - user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  netid:
+                    type: string
+                  document:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+components:
+  schemas:
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - title
+    UploadFile:
+      type: object
+      properties:
+        file_:
+          type: string
+          format: uri
+          title: 'File '
+      required:
+      - file_
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

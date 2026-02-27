@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ChatDKU"
+version = "2.0.0"
+authors = [
+    { name="Mingxi Li" },
+    { name="Yuxiang Lin", email="theta.lin@yandex.com" },
+    { name="Cody Qin" },
+    { name="Ningyuan Yang" },
+]
+description = ""
+readme = ""
+requires-python = "<3.13, >=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    # core
+    "llama-index~=0.13.1",
+    "llama-index-storage-docstore-redis~=0.4.0",
+    "llama-index-vector-stores-redis~=0.6.0",
+    "llama-index-embeddings-text-embeddings-inference~=0.4.0",
+    "llama-index-llms-openai-like~=0.5.0",
+    "llama-index-llms-llama-cpp~=0.5.0",
+    "llama-index-retrievers-bm25~=0.6.2",
+    "unstructured[pdf]==0.14.10",
+    "chromadb~=1.0.15",
+    "arize-phoenix~=11.36.0",
+    "opentelemetry-api~=1.37.0",
+    "opentelemetry-sdk~=1.37.0",
+    "openinference-instrumentation~=0.1.37",
+    "openinference-instrumentation-dspy~=0.1.28",
+    "openinference-instrumentation-litellm~=0.1.25",
+    "dspy~=3.0.3",
+    "sentence-transformers",
+    "docx2txt",
+    "python-pptx",
+    "pytest",
+    # backend
+    "Flask~=3.0.3",
+    "Flask-Cors~=4.0.1",
+    "gunicorn~=23.0.0",
+    "whisper~=1.1.10",
+    "Flask-SocketIO~=5.5.1",
+    "pydub~=0.25.1",
+    "python-ffmpeg~=2.0.12",
+    "Flask-SQLAlchemy~=3.1.1",
+    "Flask-Migrate~=4.1.0",
+    "Flask-Admin~=1.6.1",
+    "eventlet~=0.39.1",
+    "openai-whisper",
+    "ollama==0.4.9",
+    "plotly==6.1.2",
+    "ffmpeg==1.4",
+    #Django backend
+    "Django~=5.2.3",
+    "django-appconf~=1.1.0",
+    "django-cors-headers~=4.7.0",
+    "django-cryptography~=1.1",
+    "django-encrypted-model-fields~=0.6.5",
+    "django-fernet-fields~=0.6",
+    "django-import-export~=4.3.8",
+    "djangorestframework~=3.16.0",
+    "django-celery-beat~=2.8.1",
+    "django_celery_results~=2.6.0",
+    "celery~=5.5.3",
+    "django-redis~=6.0.0",
+    "pandas~=2.2.3",
+    "redis~=5.2.1",
+    "psycopg2-binary>=2.9.10",
+    "openpyxl>=3.1.5",
+    "dotenv>=0.9.9",
+    "locust>=2.39.0",
+    "drf-spectacular[sidecar]",
+    "django-prometheus",
+]
+
+[tool.setuptools]
+packages = ["chatdku"]

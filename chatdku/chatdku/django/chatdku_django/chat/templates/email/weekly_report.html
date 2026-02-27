@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatDKU Weekly Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+
+
+        .logo img {
+            max-width: 180px;
+            height: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 5px 0;
+            font-size: 1.8em;
+            color: #044409;
+        }
+
+        .header p {
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #044409;
+            color: white;
+            text-align: left;
+        }
+
+        td {
+            text-align: right;
+        }
+
+        td:first-child,
+        td:nth-child(2) {
+            text-align: left;
+        }
+
+        .feedback {
+            margin-top: 40px;
+        }
+
+        .feedback h2 {
+            color: #044409;
+        }
+
+        .feedback-content {
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.85em;
+            color: #666;
+            text-align: center;
+        }
+
+        .footer a {
+            color: green;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            th, td {
+                font-size: 0.85em;
+                padding: 8px;
+            }
+
+            .logo {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .logo img {
+                max-width: 50vw;
+            }
+        }
+
+        @media (max-width: 480px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            th {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 15px;
+                border-bottom: 2px solid #eee;
+            }
+
+            td {
+                text-align: left !important;
+                padding-left: 50%;
+                position: relative;
+            }
+
+            td::before {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                width: 45%;
+                white-space: nowrap;
+                font-weight: bold;
+                color: #555;
+            }
+
+            td:nth-of-type(1)::before { content: "Method"; }
+            td:nth-of-type(2)::before { content: "Endpoint"; }
+            td:nth-of-type(3)::before { content: "Requests"; }
+            td:nth-of-type(4)::before { content: "Failures"; }
+            td:nth-of-type(5)::before { content: "Avg. Response Time (ms)"; }
+            td:nth-of-type(6)::before { content: "Failure Rate (%)"; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="cid:lablogo" alt="Edge Intelligence Lab Logo">
+        </div>
+
+        <div class="header">
+            <h1>ChatDKU Weekly Report</h1>
+            <p>Report Generated on: <strong>{{ date }}</strong></p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Requests</th>
+                    <th>Failures</th>
+                    <th>Avg. Response Time (ms)</th>
+                    <th>Failure Rate (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in locust_data %}
+                <tr>
+                    <td>{{ row.type }}</td>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.request_count }}</td>
+                    <td>{{ row.failure_count }}</td>
+                    <td>{{ row.average_response_time }}</td>
+                    <td>{{ row.failure_percentage }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #999;">No data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="feedback">
+            <h2>Feedback Report</h2>
+            <div class="feedback-content">
+                {{ feedback_report|safe }}
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by <a href="https://example.com" target="_blank"><strong>ChatDKU</strong></a> • Edge Intelligence Lab</p>
+        </div>
+    </div>
+</body>
+</html>
