@@ -12,8 +12,8 @@ from chatdku.setup import setup, use_phoenix
 
 setup()
 use_phoenix()
-vector_retriever = VectorRetrieverOuter({}, retriever_top_k=10, use_reranker=False)
-keyword_retriever = KeywordRetrieverOuter({}, retriever_top_k=10, use_reranker=False)
+vector_retriever = VectorRetrieverOuter(retriever_top_k=10, use_reranker=False)
+keyword_retriever = KeywordRetrieverOuter(retriever_top_k=10, use_reranker=False)
 
 
 def test_valid_queries():
