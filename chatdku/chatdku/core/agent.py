@@ -230,9 +230,6 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-                user_id=user_id,
-                search_mode=search_mode,
-                files=[],
             )
             first_token = True
             print("Response:")
