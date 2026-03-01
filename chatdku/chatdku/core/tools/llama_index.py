@@ -1,3 +1,5 @@
+import logging
+
 from opentelemetry.trace import get_current_span
 
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore
@@ -5,6 +7,8 @@ from chatdku.core.tools.retriever.keyword_retriever import KeywordRetriever
 from chatdku.core.tools.retriever.reranker import rerank
 from chatdku.core.tools.retriever.vector_retriever import VectorRetriever
 from chatdku.core.tools.utils import QueryTimeoutError, timeout
+
+logger = logging.getLogger(__name__)
 
 
 def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
@@ -18,20 +22,36 @@ def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
 
 
 def VectorRetrieverOuter(
-    internal_memory: dict,
     retriever_top_k: int = 25,
     use_reranker: bool = True,
     reranker_top_n: int = 5,
+    user_id: str = "Chat_DKU",
+    search_mode: int = 0,
+    files: list = [],
 ):
+    if not (0 <= search_mode <= 2):
+        logger.warning(
+            f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
+            " Defaulting to 0."
+        )
+        search_mode = 0
+
+    if search_mode != 0 and not files:
+        logger.warning("`docs` must be provided when search_mode is 1 or 2.")
+        search_mode = 0
+        files = []
+
     vector_retriever = VectorRetriever(
-        internal_memory,
-        retriever_top_k,
+        retriever_top_k=retriever_top_k,
+        user_id=user_id,
+        search_mode=search_mode,
+        files=files,
     )
 
     # Had to name this differently from VectorRetriever
     def VectorQuery(
         semantic_query: str,
-    ) -> tuple[list, dict]:
+    ) -> list:
         """
         Retrieve reranked relevant documents using semantic search.
 
@@ -42,7 +62,7 @@ def VectorRetrieverOuter(
             semantic_query (str): Natural language query for semantic/conceptual search
 
         Returns:
-            Tuple of (matched_documents_list, internal_result_dict)
+            matched_documents_list
         """
         parent_span = get_current_span()
         vector_result = []
@@ -59,7 +79,7 @@ def VectorRetrieverOuter(
         except ValueError as e:
             raise e
         except QueryTimeoutError as e:
-            raise e("Vector retriever timed out.")
+            raise Exception(f"{e}: Vector retriever timed out.")
         except Exception as e:
             raise Exception(f"Vector retrieval failed: {e}")
 
@@ -70,19 +90,35 @@ def VectorRetrieverOuter(
 
 
 def KeywordRetrieverOuter(
-    internal_memory: dict,
     retriever_top_k: int = 25,
     use_reranker: bool = True,
     reranker_top_n: int = 5,
+    user_id: str = "Chat_DKU",
+    search_mode: int = 0,
+    files: list = [],
 ):
+    if not (0 <= search_mode <= 2):
+        logger.warning(
+            f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
+            " Defaulting to 0."
+        )
+        search_mode = 0
+
+    if search_mode != 0 and not files:
+        logger.warning("`docs` must be provided when search_mode is 1 or 2.")
+        search_mode = 0
+        files = []
+
     keyword_retriever = KeywordRetriever(
-        internal_memory,
-        retriever_top_k,
+        retriever_top_k=retriever_top_k,
+        user_id=user_id,
+        search_mode=search_mode,
+        files=files,
     )
 
     def KeywordQuery(
         keyword_query: str | list[str],
-    ) -> tuple[list, dict]:
+    ) -> list:
         """
         Retrieve relevant documents using BM25 keyword matching.
 
@@ -93,7 +129,7 @@ def KeywordRetrieverOuter(
             keyword_query (str | list[str]): Specific terms or phrases for BM25 keyword matching.
 
         Returns:
-            Tuple of (matched_documents_list, internal_result_dict)
+            matched_documents_list
         """
         parent_span = get_current_span()
         if isinstance(keyword_query, list):
@@ -114,7 +150,7 @@ def KeywordRetrieverOuter(
                     keyword_result, str(keyword_query), reranker_top_n
                 )
         except QueryTimeoutError as e:
-            raise e("Keyword retriever timeout.")
+            raise Exception(f"Keyword retriever timeout: {e}")
         except Exception as e:
             raise Exception(f"Keyword retrieval failed: {e}")
 

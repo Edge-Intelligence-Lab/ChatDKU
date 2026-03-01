@@ -17,14 +17,12 @@ from chatdku.core.tools.utils import get_url
 class KeywordRetriever(BaseDocRetriever):
     def __init__(
         self,
-        internal_memory: dict,
         retriever_top_k: int = 25,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        files: list | None = None,
+        files: list = [],
     ):
         super().__init__(
-            internal_memory,
             retriever_top_k,
             user_id,
             search_mode,
@@ -120,10 +118,7 @@ class KeywordRetriever(BaseDocRetriever):
 
         query_str = "@text:(" + text_str + ")"
 
-        exclude = _escape_strs(self.exclude)
-        exclude_str = " ".join([f"-@id:({e})" for e in exclude])
-        if exclude_str:
-            query_str += " " + exclude_str
+        query_str = self.__add_redis_filter(query_str)
 
         # See issue #175 for not using PARAMS
         query_cmd = (
@@ -184,3 +179,4 @@ class KeywordRetriever(BaseDocRetriever):
             #
             # user_clause = f"(@user_id:{{Chat_DKU}} | (@user_id:{{{self.user_id}}} @file_name:{{{docs_str}}}))"  # noqa: E501
             # query_str = query_str + f" {user_clause}"
+        return query_str

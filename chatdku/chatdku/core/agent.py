@@ -24,6 +24,7 @@ class Agent(dspy.Module):
         get_intermediate: bool = False,
         rewrite_query: bool = True,
         previous_conversation: list = [],
+        tools: list = [],
     ):
         """
         Args:
@@ -51,20 +52,6 @@ class Agent(dspy.Module):
         # Edit (Temuulen): nahhh it is causing issues.
         self.internal_memory = {}
 
-        # Define the tools here. Wrap them in dspy.Tool()
-        # Currently only supports functions.
-        tools = [
-            VectorRetrieverOuter(
-                self.internal_memory,
-                retriever_top_k=10,
-                use_reranker=False,
-            ),
-            KeywordRetrieverOuter(
-                self.internal_memory,
-                retriever_top_k=10,
-                use_reranker=False,
-            ),
-        ]
         self.planner = Planner(tools)
 
         self.conversation_memory = ConversationMemory()
@@ -163,9 +150,6 @@ class Agent(dspy.Module):
         self,
         current_user_message: str,
         question_id: str = "",
-        user_id: str = "Chat_DKU",
-        search_mode: int = 0,
-        files: list = [],
     ):
         """
         current_user_message: user query
@@ -174,14 +158,6 @@ class Agent(dspy.Module):
             corpus | 2 for searching both
         docs: Names of documents searching. Required for search_mode 1 or 2.
         """
-
-        if not (0 <= search_mode <= 2):
-            raise ValueError(
-                f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
-            )
-
-        if search_mode != 0 and not files:
-            raise ValueError("`docs` must be provided when search_mode is 1 or 2.")
 
         gen = self._forward_gen(
             current_user_message,
@@ -217,10 +193,30 @@ def main():
 
     import time
 
+    tools = [
+        KeywordRetrieverOuter(
+            retriever_top_k=10,
+            use_reranker=False,
+            reranker_top_n=5,
+            user_id="Chat_DKU",
+            search_mode=0,
+            files=[],
+        ),
+        VectorRetrieverOuter(
+            retriever_top_k=10,
+            use_reranker=False,
+            reranker_top_n=5,
+            user_id="Chat_DKU",
+            search_mode=0,
+            files=[],
+        ),
+    ]
+
     agent = Agent(
         max_iterations=1,
         streaming=True,
         get_intermediate=False,
+        tools=tools,
     )
 
     user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"

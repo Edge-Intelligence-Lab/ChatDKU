@@ -28,13 +28,11 @@ class NodeWithScore:
 class BaseDocRetriever:
     def __init__(
         self,
-        internal_memory: dict,
         retriever_top_k: int = 25,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        files: list | None = None,
+        files: list = [],
     ):
-        self.exclude = list(internal_memory.get("ids", set()))
         self.retriever_top_k = retriever_top_k
         self.user_id = user_id
         self.search_mode = search_mode
@@ -61,13 +59,11 @@ class BaseDocRetriever:
         with span_ctx_start(
             self.__class__.__name__, OpenInferenceSpanKindValues.RETRIEVER, context
         ) as span:
-            exclude = self.exclude
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
                         dict(
                             query=query,
-                            exclude=exclude,
                             user_id=self.user_id,
                             search_mode=self.search_mode,
                             files=self.files,
