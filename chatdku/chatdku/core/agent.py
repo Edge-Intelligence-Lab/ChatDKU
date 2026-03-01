@@ -153,10 +153,6 @@ class Agent(dspy.Module):
     ):
         """
         current_user_message: user query
-        user_id: If set anything other than Chat_DKU, means the net_id of the user
-        search_mode: 0 for searching  the default corpus | 1 for searching the user
-            corpus | 2 for searching both
-        docs: Names of documents searching. Required for search_mode 1 or 2.
         """
 
         gen = self._forward_gen(
@@ -193,21 +189,24 @@ def main():
 
     import time
 
+    user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
+    search_mode_input = input("Search mode (0 for default): ")
+    search_mode = int(search_mode_input) if search_mode_input else 0
     tools = [
         KeywordRetrieverOuter(
             retriever_top_k=10,
             use_reranker=False,
             reranker_top_n=5,
-            user_id="Chat_DKU",
-            search_mode=0,
+            user_id=user_id,
+            search_mode=search_mode,
             files=[],
         ),
         VectorRetrieverOuter(
             retriever_top_k=10,
             use_reranker=False,
             reranker_top_n=5,
-            user_id="Chat_DKU",
-            search_mode=0,
+            user_id=user_id,
+            search_mode=search_mode,
             files=[],
         ),
     ]
@@ -218,10 +217,6 @@ def main():
         get_intermediate=False,
         tools=tools,
     )
-
-    user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
-    search_mode_input = input("Search mode (0 for default): ")
-    search_mode = int(search_mode_input) if search_mode_input else 0
 
     while True:
         try:

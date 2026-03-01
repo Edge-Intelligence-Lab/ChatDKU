@@ -63,14 +63,14 @@ class ConversationMemory(dspy.Module):
             "previous_summary": 1 / 4,
         }
 
-    def history_str(self, l: int = 0, r: Optional[int] = None):
-        if r is None:
-            r = len(self.history)
+    def history_str(self, left: int = 0, right: Optional[int] = None):
+        if right is None:
+            right = len(self.history)
 
         return "\n".join(
             [
                 i.model_dump_json(indent=4)
-                for i in self.history[l:r]
+                for i in self.history[left:right]
                 if not isinstance(i, dict)
             ]
         )

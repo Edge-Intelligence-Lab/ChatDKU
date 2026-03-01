@@ -29,6 +29,16 @@ def VectorRetrieverOuter(
     search_mode: int = 0,
     files: list = [],
 ):
+    """
+    Retrieve reranked relevant documents using semantic search.
+
+    Args:
+        user_id: If set anything other than Chat_DKU, means the net_id of the user
+        search_mode: 0 for searching  the default corpus | 1 for searching the user
+            corpus | 2 for searching both
+        docs: Names of documents searching. Required for search_mode 1 or 2.
+
+    """
     if not (0 <= search_mode <= 2):
         logger.warning(
             f"Invalid search_mode: {search_mode}. Must be between 0 and 2."
@@ -97,6 +107,16 @@ def KeywordRetrieverOuter(
     search_mode: int = 0,
     files: list = [],
 ):
+    """
+    Retrieve relevant documents using BM25 keyword matching.
+
+    Args:
+        user_id: If set anything other than Chat_DKU, means the net_id of the user
+        search_mode: 0 for searching  the default corpus | 1 for searching the user
+            corpus | 2 for searching both
+        docs: Names of documents searching. Required for search_mode 1 or 2.
+
+    """
     if not (0 <= search_mode <= 2):
         logger.warning(
             f"Invalid search_mode: {search_mode}. Must be between 0 and 2."

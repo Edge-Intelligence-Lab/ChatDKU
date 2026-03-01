@@ -44,7 +44,8 @@ class JudgeSignature(dspy.Signature):
     or should you look for more information by making more tool calls.
     You should respond to the user when either
     (a) the given information is sufficient for answer the Current User Message or
-    (b) the Current User Message is ambiguous to the extent that further tool calls would not be helpful for answering it.
+    (b) the Current User Message is ambiguous to the extent that further tool calls
+        would not be helpful for answering it.
     Note that you should respond to the user if (b) holds, where you should ask for clarifications
     as opposed to answering the question itself.
     """
@@ -110,7 +111,8 @@ class Judge(dspy.Module):
                     return 1.0
                 else:
                     print(
-                        'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).'
+                        'Judgement should be either "Yes" or "No"'
+                        "(without quotes and first letter of each word capitalized)."
                     )
                     return 0.0
 

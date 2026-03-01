@@ -101,7 +101,7 @@ class SynthesizerSignature(dspy.Signature):
        - Do not reference your internal tool calls (e.g., 'Based on the conversation history',
             'Based on vector retriever tool', 'Based on keyword retriever tool',
             'According to the vector retriever tool') when answering user query.
-    """
+    """  # noqa: E501
 
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
