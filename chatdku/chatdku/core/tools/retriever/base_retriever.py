@@ -1,6 +1,5 @@
 "By: Temuulen. Ask him if you don't understand"
 
-from contextlib import nullcontext
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterator, Mapping
@@ -12,10 +11,10 @@ from openinference.semconv.trace import (
     OpenInferenceSpanKindValues,
     SpanAttributes,
 )
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import Status, StatusCode, set_span_in_context
 from opentelemetry.util.types import AttributeValue
 
-from chatdku.config import config
+from chatdku.core.utils import span_ctx_start
 
 
 @dataclass
@@ -29,19 +28,17 @@ class NodeWithScore:
 class BaseDocRetriever:
     def __init__(
         self,
-        internal_memory: dict,
         retriever_top_k: int = 25,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
-        files: list | None = None,
+        files: list = [],
     ):
-        self.exclude = list(internal_memory.get("ids", set()))
         self.retriever_top_k = retriever_top_k
         self.user_id = user_id
         self.search_mode = search_mode
         self.files = files
 
-    def query(self, query: str) -> list[NodeWithScore]:
+    def query(self, query) -> list[NodeWithScore]:
         """
         Retrieve texts from the database.
 
@@ -49,26 +46,24 @@ class BaseDocRetriever:
         """
         raise NotImplementedError
 
-    def query_with_tell(self, query: str) -> list:
+    def query_with_tell(self, query, parent_span=None) -> list:
         """
         Retrieve texts from the database with telemetry enabled.
         Uses the `self.query` method to retrieve the results.
 
         Uses opentelemetry to track the query and the response.
         """
-        with (
-            config.tracer.start_as_current_span(self.__class__.__name__)
-            if hasattr(config, "tracer")
-            else nullcontext()
+        context = None
+        if parent_span is not None:
+            context = set_span_in_context(parent_span)
+        with span_ctx_start(
+            self.__class__.__name__, OpenInferenceSpanKindValues.RETRIEVER, context
         ) as span:
-            exclude = self.exclude
             span.set_attributes(
                 {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
                         dict(
                             query=query,
-                            exclude=exclude,
                             user_id=self.user_id,
                             search_mode=self.search_mode,
                             files=self.files,

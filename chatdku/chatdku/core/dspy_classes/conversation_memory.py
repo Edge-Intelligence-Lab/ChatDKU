@@ -1,24 +1,22 @@
-from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
+import dspy
+from openinference.instrumentation import safe_json_dumps
+from openinference.semconv.trace import (
+    OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
+)
+from opentelemetry.trace import Status, StatusCode
+from pydantic import BaseModel, ConfigDict
+
+from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
+    span_ctx_start,
     strs_fit_max_tokens_reverse,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-from chatdku.core.dspy_common import get_template
-import dspy
-
-from contextlib import nullcontext
-from openinference.instrumentation import safe_json_dumps
-from opentelemetry.trace import Status, StatusCode
-from openinference.semconv.trace import (
-    SpanAttributes,
-    OpenInferenceSpanKindValues,
-    OpenInferenceMimeTypeValues,
-)
-
-from chatdku.config import config
 
 
 class ConversationMemoryEntry(BaseModel):
@@ -30,7 +28,6 @@ class ConversationMemoryEntry(BaseModel):
 class CompressConversationMemorySignature(dspy.Signature):
     """
     You have a Conversation History storing all the conversations between user
-
     and you, the assistant.
     Your Conversation History has become too long, so the oldest entries have to be discarded.
     You keep a Summary of the discarded conversation history.
@@ -66,14 +63,14 @@ class ConversationMemory(dspy.Module):
             "previous_summary": 1 / 4,
         }
 
-    def history_str(self, l: int = 0, r: Optional[int] = None):
-        if r is None:
-            r = len(self.history)
+    def history_str(self, left: int = 0, right: Optional[int] = None):
+        if right is None:
+            right = len(self.history)
 
         return "\n".join(
             [
                 i.model_dump_json(indent=4)
-                for i in self.history[l:r]
+                for i in self.history[left:right]
                 if not isinstance(i, dict)
             ]
         )
@@ -84,23 +81,17 @@ class ConversationMemory(dspy.Module):
         )
 
     def forward(self, role: str, content: str, max_history_size: int = 1000):
-        with (
-            config.tracer.start_as_current_span("Conversation Memory")
-            if hasattr(config, "tracer")
-            else nullcontext()
+        with span_ctx_start(
+            "Conversation Memory", OpenInferenceSpanKindValues.CHAIN
         ) as span:
-            span.set_attribute(
-                SpanAttributes.OPENINFERENCE_SPAN_KIND,
-                OpenInferenceSpanKindValues.CHAIN.value,
-            )
             new_entry = ConversationMemoryEntry(role=role, content=content)
-            self.history.append(new_entry)
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(new_entry.model_dump()),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
+            self.history.append(new_entry)
 
             min_index = strs_fit_max_tokens_reverse(
                 [i.model_dump_json() for i in self.history if not isinstance(i, dict)],

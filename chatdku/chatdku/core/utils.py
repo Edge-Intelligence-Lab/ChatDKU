@@ -5,11 +5,68 @@ from typing import Any, Callable, Optional
 
 from llama_index.core import Settings
 from llama_index.core.node_parser import TokenTextSplitter
+from openinference.instrumentation import safe_json_dumps
+from openinference.semconv.trace import OpenInferenceMimeTypeValues, SpanAttributes
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic.fields import FieldInfo
 from transformers import PreTrainedTokenizerBase
 
 from chatdku.config import config
+
+
+def span_add_inputs(span, **kwargs):
+    span.set_attributes(
+        {
+            SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+            SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+        }
+    )
+
+
+def span_add_outputs(span, **kwargs):
+    span.set_attributes(
+        {
+            SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+            SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+        }
+    )
+
+
+def span_start(span_name: str, span_kind, **kwargs):
+    """Start a OTLP span.
+
+    Args:
+        span_name (str): Name of the span to start.
+        span_kind (openinference.semconv.trace.OpenInferenceSpanKindValues).
+        current (bool): Whether to use start_as_a_current_span or not.
+            Will use start_span otherwise.
+        kwargs: Add your inputs in {keyword=value} format here.
+
+
+    Returns:
+        OTLP span
+    """
+    span = config.tracer.start_span(span_name)
+    span.set_attribute(
+        SpanAttributes.OPENINFERENCE_SPAN_KIND,
+        span_kind.value,
+    )
+    if kwargs:
+        span.set_attributes(
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
+    return span
+
+
+def span_ctx_start(span_name: str, span_kind, parent_context=None):
+    return config.tracer.start_as_current_span(
+        span_name,
+        attributes={SpanAttributes.OPENINFERENCE_SPAN_KIND: span_kind.value},
+        context=parent_context,
+    )
 
 
 class NameParams(BaseModel):
