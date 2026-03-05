@@ -144,7 +144,7 @@ class ChatView(APIView):
                 reranker_top_n=5,
                 user_id=user_id,
                 search_mode=search_mode,
-                files=[],
+                files=docs,
             ),
             VectorRetrieverOuter(
                 retriever_top_k=10,
@@ -152,7 +152,7 @@ class ChatView(APIView):
                 reranker_top_n=5,
                 user_id=user_id,
                 search_mode=search_mode,
-                files=[],
+                files=docs,
             ),
         ]
 
