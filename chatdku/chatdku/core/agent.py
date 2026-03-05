@@ -17,6 +17,19 @@ from chatdku.setup import setup, use_phoenix
 
 
 class Agent(dspy.Module):
+    """
+    Args:
+        max_iterations: The maximum rounds of tool call/evaluation the agent
+            could execute for a user message. This includes the first round
+            of tool calls with the initial user message.
+        streaming: If `True`, returns the LLM response as a streaming generator
+            for `reponse` returned by synthesizer, else simply return the
+            complete response as a string.
+        get_itermediate: If `True`, `forward()` would return the synthesized
+            result for each agent iteration as a generator.
+        previous_conversation: List of User-Assistant conversation retrieved from the database.
+    """
+
     def __init__(
         self,
         max_iterations: int = 5,
@@ -26,18 +39,6 @@ class Agent(dspy.Module):
         previous_conversation: list = [],
         tools: list = [],
     ):
-        """
-        Args:
-            max_iterations: The maximum rounds of tool call/evaluation the agent
-                could execute for a user message. This includes the first round
-                of tool calls with the initial user message.
-            streaming: If `True`, returns the LLM response as a streaming generator
-                for `reponse` returned by synthesizer, else simply return the
-                complete response as a string.
-            get_itermediate: If `True`, `forward()` would return the synthesized
-                result for each agent iteration as a generator.
-            previous_conversation: List of User-Assistant conversation retrieved from the database.
-        """
 
         super().__init__()
         self.max_iterations = max_iterations
