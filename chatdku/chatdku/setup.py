@@ -1,12 +1,11 @@
+import os
+
+import transformers
 from llama_index.core import Settings
 from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
-import transformers
-from transformers import AutoTokenizer
 from sqlalchemy import create_engine, text
-import os
 from phoenix.otel import register
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from transformers import AutoTokenizer
 
 from chatdku.config import config
 
@@ -26,12 +25,13 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     print(f"Using embedding model {config.embedding}")
 
     # Suppress warning
-    # "Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained."
+    # "Special tokens have been added in the vocabulary,
+    # make sure the associated word embeddings are fine-tuned or trained."
     transformers.logging.set_verbosity_error()
 
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately.
-    Settings.tokenzier = AutoTokenizer.from_pretrained(config.tokenizer)
+    Settings.tokenizer = AutoTokenizer.from_pretrained(config.tokenizer)
     print("Loaded tokenizer")
 
 

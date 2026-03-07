@@ -6,7 +6,7 @@ import time
 import asyncio
 import functools
 import hashlib
-from chatdku.chatdku.config import config
+from ChatDKU.chatdku.chatdku.config import config
 
 
 LLM = config.llm

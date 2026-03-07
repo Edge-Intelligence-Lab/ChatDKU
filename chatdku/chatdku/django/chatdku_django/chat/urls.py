@@ -6,8 +6,7 @@ router=DefaultRouter()
 router.register(r'c',views.SessionViewSet,basename='c')
 
 urlpatterns=[
-    path('chat',views.chat,name="chat"),
-    path("feedback",views.save_feedback,name="feedback"),
-    path('get_session',views.get_session,name="get_session"),
+    path('chat',views.ChatView.as_view(),name="chat"),
+    path("feedback",views.FeedbackView.as_view(),name="feedback"),
     path('',include(router.urls))
 ]

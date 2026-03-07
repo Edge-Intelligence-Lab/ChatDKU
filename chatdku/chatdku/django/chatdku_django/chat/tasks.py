@@ -15,12 +15,16 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from core.models import hash_netid
 from chat.utils import ping_lm
+from core.utils import get_admin_email
 
 dotenv.load_dotenv()
 
 logger=logging.getLogger(__name__)
 
 User=get_user_model()
+
+
+TO_EMAIL=get_admin_email()
 
 
 
@@ -55,7 +59,6 @@ def email_weekly_load():
         }
     html_content=render_to_string("email/weekly_report.html",data)
     from_email=os.getenv("EMAIL_HOST_USER")
-    to_email=os.getenv("EMAIL_TO")
     subject="Weekly ChatDKU Test Result"
     body_content="ChatDKU Weekly Load Test\n"
 
@@ -67,7 +70,7 @@ def email_weekly_load():
         body_content+=f"Type: {item['type']}\nName:{item['name']}\nRequest Count: {item['request_count']}\nFailure Count: {item['failure_count']}\nAverage Response Time: {item['average_response_time']}\nFailure Percentage: {item['failure_percentage']}\n\n"
 
     try:
-        EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_content,content_html=html_content,add_logo=True)
+        EmailUtil.send_mail(from_email=from_email,to_email=TO_EMAIL,subject=subject,content_text=body_content,content_html=html_content,add_logo=True)
 
     except Exception as e:
         logger.error(f"Error sending Weekly Load Report: {str(e)}")
@@ -92,12 +95,11 @@ def chat_load_test_daily():
                     cache.set(COUNTER_KEY,1,timeout=60*60) #1hr
                 if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
                     from_email=os.getenv("EMAIL_HOST_USER")
-                    to_email=os.getenv("EMAIL_TO")
                     subject="Error in ChatDKU Response"
-                    body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n"
-                    body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}"
+                    body=f"<h1>Test Error: Error Identified</h1><p>Error Occured When completing ChatDKU Test at {datetime.datetime.now()}</p><h3>The response length does not meet the requirement set by the admin.</h3> <code>{line}</code>"
+                    body_text=f"Test Error: Error Identified\nError Occured When completing ChatDKU Test at {datetime.datetime.now()}.\n The response length does not meet the requirement set by the admin. Output:\n {line}"
 
-                    EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+                    EmailUtil.send_mail(from_email=from_email,to_email=TO_EMAIL,subject=subject,content_text=body_text,content_html=body)
                     logger.info("Email sent on: ",datetime.datetime.now())
                     cache.delete(COUNTER_KEY)
                     return
@@ -114,12 +116,11 @@ def chat_load_test_daily():
         logger.error(f"ErrorOutput: {str(e.stderr)}")
         if failures>=FAILURE_THRESHOLD: #Prevent unnecessary emails
             from_email=os.getenv("EMAIL_HOST_USER")
-            to_email=os.getenv("EMAIL_TO")
             subject="Error in ChatDKU"
-            body=f"<h1>Daily Load Test: Error Identified</h1><p>Error Occured When completing Daily Load Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
-            body_text=f"Daily Load Test: Error Identified\nError Occured When completing Daily Load Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
+            body=f"<h1>Test Error: Error Identified</h1><p>Error Occured When completing ChatDKU Test at {datetime.datetime.now()}</p>\n<h4>Error Code: </h4><p>{e.returncode}</p>\n <h4>Error Output:</h4><p>{e.stderr}</p>"
+            body_text=f"Test Error: Error Identified\nError Occured When completing ChatDKU Test at {datetime.datetime.now()}\n Error Code: {e.returncode}\nError Output: {e.stderr}"
 
-            EmailUtil.send_mail(from_email=from_email,to_email=to_email,subject=subject,content_text=body_text,content_html=body)
+            EmailUtil.send_mail(from_email=from_email,to_email=TO_EMAIL,subject=subject,content_text=body_text,content_html=body)
 
             logger.info("Email sent on: ",datetime.datetime.now())
             cache.delete(COUNTER_KEY)
@@ -127,8 +128,6 @@ def chat_load_test_daily():
 
     except Exception as e:
         logger.error(f'Chat Test error: {str(e)}')
-
-
 
 #Delete Logs
 @shared_task
@@ -172,7 +171,6 @@ def lm_test(self):
                 cache.set("oss_test:fail", 1, timeout=60*60*5)
 
                 from_email = os.getenv("EMAIL_HOST_USER")
-                to_email = os.getenv("EMAIL_TO")
                 subject = "Error in Primary LLM"
                 body_html = (
                     f"<h2>Issue Identified: LLM</h2>"
@@ -187,7 +185,7 @@ def lm_test(self):
 
                 EmailUtil.send_mail(
                     from_email=from_email,
-                    to_email=to_email,
+                    to_email=TO_EMAIL,
                     subject=subject,
                     content_text=body_text,
                     content_html=body_html,

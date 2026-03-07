@@ -26,7 +26,6 @@ redis_client=Redis(host=redis_host,port=6379,username="default",password=redis_p
 
 #schedule apps
 app.conf.beat_schedule={
-
     "chat-load-test-every-sunday":{
         "task":"chat.tasks.chat_load_test_weekly",
         "schedule":crontab(minute=20, hour=20,day_of_week=0) #Every Sunday 
@@ -51,13 +50,6 @@ app.conf.beat_schedule={
         "task":"chat.tasks.clean_empty_sessions",
         "schedule":crontab(minute=00,hour='*/1') #Every 1 hour everyday
     },
-
-
-    "lm-check":{
-        "task":"core.tasks.ping_llm",
-        "schedule":crontab(minute="*/10")
-    },
-
 }
 
 app.autodiscover_tasks()
