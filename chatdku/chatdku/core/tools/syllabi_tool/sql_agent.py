@@ -1,5 +1,6 @@
-import dspy
 import re
+
+import dspy
 
 
 def sanitize_sql(sql):
@@ -74,10 +75,10 @@ class Text2SQLSignature(dspy.Signature):
     Generates pure SQL given the user question, tables, and columns without any backticks, to be run on a database of the classes offered at Duke Kunshan University (DKU).
     Uses fuzzy search using regex, ILIKE, and % symbols when querying for a course or a person's name, as they may be inconsistent.
     Text fields course_code may or may not a space in the middle, so must be accounted for by adding the regex % between the name and the number.
-    Do not write overly broad regex such as %cs%, as this can catch unrelated entries. 
+    Do not write overly broad regex such as %cs%, as this can catch unrelated entries.
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
-    Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester. 
+    Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
     """
 
     natural_language_query = dspy.InputField(desc="Agent's natural language question")
@@ -109,7 +110,10 @@ class GenerateSQL(dspy.Module):
         # context = f"Tables: {table_result.selected_tables}\nColumns: {column_result.selected_columns}\nReasoning: {table_result.reasoning}"
         # print("Context taken. Building SQL query. ")
         sql_result = self.sql_generator(
-            natural_language_query=query, current_user_message=current_user_message, sql_context=db_schema
+            natural_language_query=query,
+            current_user_message=current_user_message,
+            sql_context=db_schema,
         )
         # print(sql_result.sql)
-        return sanitize_sql(extract_sql_regex(sql_result.sql))
+        sql_result = sanitize_sql(extract_sql_regex(sql_result.sql))
+        return dspy.Prediction(sql=sql_result)

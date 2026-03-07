@@ -85,8 +85,7 @@ class DB:
         https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.execute
         https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.text
         https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.CursorResult
-        for additional details.  See models/*.py for examples of
-        calling this function.
+        for additional details.
         """
         with self.engine.begin() as conn:
             # Apply a statement timeout to avoid very long-running queries caused
