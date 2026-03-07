@@ -8,8 +8,9 @@ def fetch_schema(conn):
     cur.execute("""
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_name = 'classes';
+        WHERE table_name = 'curriculum';
     """)
+    # Add more tables ^here if we want the json schema to include tables other than curriculum
     tables = [row[0] for row in cur.fetchall()]
     schema = {}
     for table in tables:
@@ -19,8 +20,7 @@ def fetch_schema(conn):
             WHERE table_name = '{table}';
         """)
         schema[table] = {col: dtype for col, dtype in cur.fetchall()}
-    # print("Schema fetched!")
-    # print(schema)
+    print("Schema fetched!")
     return str(schema)
 
 

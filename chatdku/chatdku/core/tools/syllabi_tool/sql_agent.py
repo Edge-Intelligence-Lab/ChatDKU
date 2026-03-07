@@ -32,7 +32,7 @@ def sanitize_sql(sql):
 
 
 def extract_sql_regex(text):
-    # Case-insensitive search for "sql: " followed by anything until ";"
+    # Case-insensitive extraction from "sql: " followed by anything until ";"
     pattern = r"sql:\s*(.*?);"
     match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
 
@@ -42,71 +42,72 @@ def extract_sql_regex(text):
         return text
 
 
-class TableSelectionSignature(dspy.Signature):
-    """
-    Select relevant tables for a query, with reasoning.
-    Be sure to differentiate courses and classes as one course can have many classes.
-    The column course_code may or may not have a space between the course id name and level, meaning ‘MATH 101’ could also be ‘MATH101’.
-    Remeber to be case-insensitive for every SQL query.
-    Don't take the request too literally, try to give as much info for the user as possible.
-    """
+# class TableSelectionSignature(dspy.Signature):
+#     """
+#     Select relevant tables for a query, with reasoning.
+#     Be sure to differentiate courses and classes as one course can have many classes.
+#     The column course_code may or may not have a space between the course id name and level, meaning ‘MATH 101’ could also be ‘MATH101’.
+#     Remeber to be case-insensitive for every SQL query.
+#     Don't take the request too literally, try to give as much info for the user as possible.
+#     """
 
-    natural_language_query = dspy.InputField(desc="User's natural language question")
-    db_schema = dspy.InputField(desc="Database schema in a readable format")
-    selected_tables = dspy.OutputField(desc="List of table names required")
-    reasoning = dspy.OutputField(desc="Why these tables are selected")
+#     natural_language_query = dspy.InputField(desc="User's natural language question")
+#     db_schema = dspy.InputField(desc="Database schema in a readable format")
+#     selected_tables = dspy.OutputField(desc="List of table names required")
+#     reasoning = dspy.OutputField(desc="Why these tables are selected")
 
 
-class ColumnSelectionSignature(dspy.Signature):
-    """Select relevant columns given tables and the query."""
+# class ColumnSelectionSignature(dspy.Signature):
+#     """Select relevant columns given tables and the query."""
 
-    selected_tables = dspy.InputField(desc="Tables chosen")
-    selection_reason = dspy.InputField(
-        desc="Why these tables were chosen to build the SQL query."
-    )
-    natural_language_query = dspy.InputField(desc="User's question")
-    db_schema = dspy.InputField(desc="Database schema for selected tables")
-    selected_columns = dspy.OutputField(desc="List of column names required")
+#     selected_tables = dspy.InputField(desc="Tables chosen")
+#     selection_reason = dspy.InputField(
+#         desc="Why these tables were chosen to build the SQL query."
+#     )
+#     natural_language_query = dspy.InputField(desc="User's question")
+#     db_schema = dspy.InputField(desc="Database schema for selected tables")
+#     selected_columns = dspy.OutputField(desc="List of column names required")
 
 
 class Text2SQLSignature(dspy.Signature):
     """
-    Generate pure SQL given the user question, tables, and columns without any ```.
-    Use fuzzy search using ILIKE and % symbols if querying for names, as they may be inconsistent.
+    Generates pure SQL given the user question, tables, and columns without any backticks, to be run on a database of the classes offered at Duke Kunshan University (DKU).
+    Uses fuzzy search using regex, ILIKE, and % symbols when querying for any name, as they may be inconsistent.
     Queries should account for text fields such as course_code that may or may not have spaces in the middle.
+    Do not include the words professor or instructor when querying.
+    Do not include any title, suffix, or honorifics when querying.
+    Feel free to include extra information fields in your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester. 
     """
 
     natural_language_query = dspy.InputField(desc="User's natural language question")
-    sql_context = dspy.InputField(desc="Short schema+reasoning context")
+    sql_context = dspy.InputField(desc="PostgreSQL table schema.")
     sql = dspy.OutputField(desc="Pure, valid PostgreSQL query ending with semicolon")
 
 
 class GenerateSQL(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.table_selector = dspy.Predict(TableSelectionSignature)
-        self.column_selector = dspy.Predict(ColumnSelectionSignature)
+        # self.table_selector = dspy.Predict(TableSelectionSignature)
+        # self.column_selector = dspy.Predict(ColumnSelectionSignature)
         self.sql_generator = dspy.Predict(Text2SQLSignature)
 
     def forward(self, query, db_schema: str):
-        # print("Selecting table...")
-        table_result = self.table_selector(
-            natural_language_query=query, db_schema=db_schema
-        )
-        # print("Selecting columns...")
-        column_result = self.column_selector(
-            selected_tables=table_result.selected_tables,
-            selection_reason=table_result.reasoning,
-            natural_language_query=query,
-            db_schema=db_schema,
-        )
+        # # print("Selecting table...")
+        # table_result = self.table_selector(
+        #     natural_language_query=query, db_schema=db_schema
+        # )
+        # # print("Selecting columns...")
+        # column_result = self.column_selector(
+        #     selected_tables=table_result.selected_tables,
+        #     selection_reason=table_result.reasoning,
+        #     natural_language_query=query,
+        #     db_schema=db_schema,
+        # )
         # print("Columns selected. Building context.")
-        context = f"Tables: {table_result.selected_tables}\nColumns: {
-            column_result.selected_columns
-        }\nReasoning: {table_result.reasoning}"
+        # context = f"Tables: {table_result.selected_tables}\nColumns: {column_result.selected_columns}\nReasoning: {table_result.reasoning}"
         # print("Context taken. Building SQL query. ")
         sql_result = self.sql_generator(
-            natural_language_query=query, sql_context=context
+            natural_language_query=query, sql_context=db_schema
         )
         # print(sql_result.sql)
         return sanitize_sql(extract_sql_regex(sql_result.sql))

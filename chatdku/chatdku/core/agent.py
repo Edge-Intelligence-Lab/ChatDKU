@@ -15,6 +15,9 @@ from chatdku.setup import setup, use_phoenix
 
 # from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
 
+# When `--dev` is passed to the script, enable additional debug prints in this module.
+DEBUG_DEV = False
+
 
 class Agent(dspy.Module):
     """

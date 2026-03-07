@@ -10,7 +10,7 @@ PDF_FOLDER = "/datapool/syllabi-master"
 
 # SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
 # Path to JSON schema matching the PostgreSQL table
-SCHEMA_PATH = "classes_schema.json"
+SCHEMA_PATH = "curriculum_schema.json"
 with open(SCHEMA_PATH, "r") as f:
     schema_dict = json.load(f)
 
