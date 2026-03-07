@@ -3,7 +3,11 @@ import time
 
 import dspy
 from openinference.instrumentation import safe_json_dumps
-from openinference.semconv.trace import OpenInferenceMimeTypeValues, SpanAttributes
+from openinference.semconv.trace import (
+    OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
+)
 from opentelemetry.trace import Status, StatusCode
 
 from chatdku.config import config
@@ -91,7 +95,9 @@ def QueryCurriculumOuter():
         print(f"[QueryCurriculum] ENTER query={query!r}")
         db = DB()
 
-        with span_ctx_start("Query Curriculum DB", "RETRIEVER") as span:
+        with span_ctx_start(
+            "Query Curriculum DB", OpenInferenceSpanKindValues.RETRIEVER
+        ) as span:
             sql_agent = GenerateSQL()
             db_schema = fetch_schema(db=db)
             final_sql = sql_agent(
@@ -144,4 +150,3 @@ def QueryCurriculumOuter():
         return result, internal_result
 
     return QueryCurriculum
-
