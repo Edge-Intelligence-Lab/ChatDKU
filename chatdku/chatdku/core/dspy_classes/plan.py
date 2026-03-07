@@ -1,47 +1,116 @@
+from typing import Any, Literal
+
 import dspy
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from dspy import Tool
+from litellm import ContextWindowExceededError
+from openinference.instrumentation import safe_json_dumps
+from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
+
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_common import get_template
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
 from chatdku.core.dspy_classes.prompt_settings import (
-    TOOL_HISTORY_FIELD,
-    TOOL_SUMMARY_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+)
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import (
+    span_ctx_start,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
 )
 
 
 class PlannerSignature(dspy.Signature):
     """
-    Plan the appropiate tool calls to answer the given user question.
-    The question may be complex and require multiple-hops of tools with different kinds of parameters.
+    You are a Planner Agent for Duke Kunshan University (DKU). In each episode, you are given available tools.
+    And you can see your past trajectory so far. Your goal is to use one or more of the
+    supplied tools to collect any necessary information for answering the user's question.
+    To do this, you will produce next_thought, next tool name, and next tool args in each turn,
+    and also when finishing the task.
+    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
+    When writing next_thought, you may reason about the current situation and plan for future steps.
+    When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
+
+    The user's question might be complex and require multiple hops of tool calls. If it is complex,
+    break down the question into small tool calls to get whatever information you need to answer.
     """
 
     current_user_message: str = dspy.InputField()
-    max_calls: int = dspy.InputField()
-    tools: list[dspy.Tool] = dspy.InputField()
-    tool_history: str = TOOL_HISTORY_FIELD
-    tool_summary: str = TOOL_SUMMARY_FIELD
-    previous_tool_plan: list[dspy.ToolCalls.ToolCall] = dspy.InputField(
-        desc="The tool plans you previously planned."
-    )
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
 
-    tool_plan: dspy.ToolCalls = dspy.OutputField()
+
+class SummarizerSignature(dspy.Signature):
+    """
+    You have a Tool History storing all the tool calls you made for answering the Current User Message.
+    Your Tool History has become too long, so the oldest entries have to be discarded.
+    You keep a Summary of the discarded tool history.
+    Given the History To Discard and Previous Summary, update the Summary.
+    Remove the information not relevant to answer the Current User Message
+    and keep all the relevant information if possible.
+    Use Markdown in Summary.
+    """
+
+    # "Store the sources that you retrieved these information from."
+    current_user_message: str = dspy.InputField()
+    trajectory_to_discard: str = dspy.InputField(
+        desc=(
+            "The tool calls that would be removed from Tool History"
+            "You should extract relevant information from these tool calls."
+        ),
+    )
+
+    previous_summary: str = dspy.InputField()
+
+    new_summary: str = dspy.OutputField()
 
 
 class Planner(dspy.Module):
-    def __init__(self):
+    def __init__(self, tools):
         super().__init__()
-        self.planner = dspy.ChainOfThought(PlannerSignature)
+        tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
+        tools = {tool.name: tool for tool in tools}
+
+        instr = (
+            [f"{PlannerSignature.instructions}\n"]
+            if PlannerSignature.instructions
+            else []
+        )
+
+        tools["finish"] = Tool(
+            func=lambda: "Completed.",
+            name="finish",
+            desc=(
+                "Marks the task as complete. That is, signals that all information"
+                " for asnwering the current_user_message are now available to be extracted."
+            ),
+            args={},
+        )
+
+        for idx, tool in enumerate(tools.values()):
+            instr.append(f"({idx + 1}) {tool}")
+        instr.append(
+            "When providing `next_tool_args`, the value inside the field must be in JSON format"
+        )
+
+        react_signature = (
+            dspy.Signature({**PlannerSignature.input_fields}, "\n".join(instr))
+            .append("trajectory", dspy.InputField(), type_=str)
+            .append("next_thought", dspy.OutputField(), type_=str)
+            .append(
+                "next_tool_name", dspy.OutputField(), type_=Literal[tuple(tools.keys())]
+            )
+            .append("next_tool_args", dspy.OutputField(), type_=dict[str, Any])
+        )
+
+        self.tools = tools
+        self.planner = dspy.Predict(react_signature)
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 15,
             "conversation_history": 3 / 15,
             "conversation_summary": 1 / 15,
-            "tool_history": 5 / 15,
-            "tool_summary": 1 / 15,
+            "trajectory": 6 / 15,
         }
+        self.trajectory_summary = ""
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
@@ -50,80 +119,118 @@ class Planner(dspy.Module):
     def forward(
         self,
         current_user_message: str,
-        tools: dict[str, dspy.Tool],
         conversation_memory: ConversationMemory,
-        tool_memory: ToolMemory,
         max_calls: int = 5,
     ) -> dspy.Prediction:
-
         planner_inputs = dict(
             current_user_message=current_user_message,
-            tool_history=tool_memory.history_str(),
-            tool_summary=tool_memory.summary,
             conversation_history=conversation_memory.history_str(),
             conversation_summary=conversation_memory.summary,
         )
 
-        planner_inputs = truncate_tokens_all(
-            planner_inputs,
-            self.get_token_limits(
-                current_user_message=current_user_message,
-                tool_history=tool_memory.history_str(),
-                tool_summary=tool_memory.summary,
-                previous_tool_plan=str(tool_memory.plan),
-                conversation_history=conversation_memory.history_str(),
-                conversation_summary=conversation_memory.summary,
-                tools=str(list(tools.values())),
-                max_calls=str(2),
-            ),
-        )
+        trajectory = {}
+        with span_ctx_start("Planner", SpanKind.AGENT) as span:
+            span.set_attribute("agent.name", "Planner")
+            span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
-        # Function to check whether the planner output is valid
-        def _check_errors(args, pred: dspy.Prediction) -> float:
-            score = 1.0
-            output = pred.tool_plan
-            for tool in output.tool_calls:
-                if tool.name not in tools:
-                    score = -0.1
-                    print(
-                        f'"{tool.name}" is not a valid tool. Available tools are: {list(tools.values())}'
+            # Tool calling iterations
+            for idx in range(max_calls):
+                planner_inputs = truncate_tokens_all(
+                    planner_inputs,
+                    self.get_token_limits(**planner_inputs),
+                )
+
+                try:
+                    plan = self._call_with_potential_trajectory_truncation(
+                        self.planner, trajectory, **planner_inputs
                     )
-            return score
+                except ValueError:
+                    break
 
-        refined_planner = dspy.Refine(
-            self.planner, N=3, reward_fn=_check_errors, threshold=1.0
+                trajectory[f"thought_{idx}"] = plan.next_thought
+                trajectory[f"tool_name_{idx}"] = plan.next_tool_name
+                trajectory[f"tool_args_{idx}"] = plan.next_tool_args
+
+                try:
+                    trajectory[f"observation_{idx}"] = self.tools[plan.next_tool_name](
+                        **plan.next_tool_args
+                    )
+                except Exception as err:
+                    trajectory[f"observation_{idx}"] = (
+                        f"Execution error in {plan.next_tool_name}: {_fmt_exc(err)}"
+                    )
+                if plan.next_tool_name == "finish":
+                    break
+            span.set_attribute("output.value", safe_json_dumps(trajectory))
+        return dspy.Prediction(
+            trajectory=format_trajectory(trajectory),
+            summary=self.trajectory_summary,
         )
 
-        planner = refined_planner(
-            max_calls=max_calls,
-            tools=list(tools.values()),
-            previous_tool_plan=tool_memory.plan,
-            **planner_inputs,
+    def _call_with_potential_trajectory_truncation(
+        self, module, trajectory, **input_args
+    ):
+        for _ in range(3):
+            try:
+                return module(
+                    **input_args,
+                    trajectory=format_trajectory(trajectory),
+                )
+            except ContextWindowExceededError:
+                # Trajectory exceeded the context window
+                # truncating the oldest tool call information.
+                new_summary, trajectory = self.truncate_trajectory(
+                    trajectory, input_args["current_user_message"]
+                )
+                self.trajectory_summary = new_summary
+        raise ValueError(
+            "The context window was exceeded even after 3 attempts to truncate the trajectory."
         )
 
-        tool_plan = planner.tool_plan
+    def truncate_trajectory(self, trajectory: dict, current_user_message: str):
+        """Truncates the trajectory so that it fits in the context window.
 
-        return dspy.Prediction(tool_plan=tool_plan)
+        Summarizes by using a LLM on the earliest trajectory set.
+        """
+        summarizer = dspy.Predict(SummarizerSignature)
+        keys = list(trajectory.keys())
+        if len(keys) < 4:
+            # Every tool call has 4 keys: thought, tool_name, tool_args, and observation.
+            raise ValueError(
+                "The trajectory is too long so your prompt exceeded the context window, but the trajectory cannot be "
+                "truncated because it only has one tool call."
+            )
 
-    # TODO: async forward needs error checking
-    async def aforward(
-        self,
-        current_user_message: str,
-        tools: dict[str, dspy.Tool],
-        conversation_memory: ConversationMemory,
-        tool_memory: ToolMemory,
-        max_calls: int = 5,
-    ) -> dspy.Prediction:
-
-        planner = await self.planner.acall(
+        earliest_trajectory = ""
+        for key in keys[:4]:
+            earliest_trajectory += str(key) + ":" + trajectory.pop(key) + "\n"
+        summary = summarizer(
             current_user_message=current_user_message,
-            max_calls=max_calls,
-            tools=list(tools.value()),
-            tool_history=tool_memory.history_str(),
-            tool_summary=tool_memory.summary,
-            previous_tool_plan=tool_memory.plan,
-            conversation_history=conversation_memory.history_str(),
-            conversation_summary=conversation_memory.summary,
+            previous_summary=self.trajectory_summary,
+            trajectory_to_discard=earliest_trajectory,
         )
+        return summary.new_summary, trajectory
 
-        return dspy.Prediction(tool_plan=planner.tool_plan)
+
+# From the DSPY.react code
+# https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
+def format_trajectory(trajectory: dict[str, Any]):
+    adapter = dspy.settings.adapter or dspy.ChatAdapter()
+    trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
+    return adapter.format_user_message_content(trajectory_signature, trajectory)
+
+
+def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:
+    """
+    Return a one-string traceback summary.
+    * `limit` - how many stack frames to keep (from the innermost outwards).
+    """
+
+    import traceback
+
+    return (
+        "\n"
+        + "".join(
+            traceback.format_exception(type(err), err, err.__traceback__, limit=limit)
+        ).strip()
+    )

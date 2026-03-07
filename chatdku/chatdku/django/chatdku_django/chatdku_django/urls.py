@@ -20,7 +20,7 @@ import chat.urls
 import core
 import core.urls
 from django.conf.urls.i18n import i18n_patterns
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 import chat
 
 from rest_framework.permissions import IsAdminUser
@@ -43,6 +43,7 @@ urlpatterns+=[
 ]
 #drf spectacular routes
 urlpatterns+= [
+    path('', include('django_prometheus.urls')),
     path('doc/schema/', SpectacularAPIView.as_view(permission_classes=[IsAdminUser]), name='schema'),
     path('doc/schema/view/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     # path('doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema',), name='redoc'),

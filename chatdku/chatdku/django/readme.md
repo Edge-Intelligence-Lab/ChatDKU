@@ -1,67 +1,48 @@
-# **Django Backend For ChatDKU**
+# 1. ChatDKU : The Backend
 
-## About 
-The Django Backend supplements the Flask backend previously used in ChatDKU. It features all the funcitonality from the prior system alongside some additional features.
+## 1.1. <u>Table of Contents</u>
+
+- [1. ChatDKU : The Backend](#1-chatdku--the-backend)
+  - [1.1. Table of Contents](#11-table-of-contents)
+- [2. Django Backend](#2-django-backend)
+    - [2.0.1. Requirements](#201-requirements)
+    - [2.0.2. Project Structure](#202-project-structure)
+    - [2.0.3. Running the Project](#203-running-the-project)
+      - [2.0.3.1. Setting up Environment Variables](#2031-setting-up-environment-variables)
+      - [2.0.3.2. Step 1: Check for migrations](#2032-step-1-check-for-migrations)
+      - [2.0.3.3. Step 2: Apply Migrations](#2033-step-2-apply-migrations)
+      - [2.0.3.4. Step 3 (Optional): Create Super User](#2034-step-3-optional-create-super-user)
+      - [2.0.3.5. Step 4: Running the Backend](#2035-step-4-running-the-backend)
+      - [2.0.3.6. Running Celery](#2036-running-celery)
+    - [2.0.4. Production](#204-production)
+      - [2.0.4.1. Running Backend server](#2041-running-backend-server)
+      - [2.0.4.2. Running Celery](#2042-running-celery)
+    - [2.0.5. Closing the Backend](#205-closing-the-backend)
+    - [2.0.6. Additional Information](#206-additional-information)
+      - [2.0.6.1. **Admin User**](#2061-admin-user)
+      - [2.0.6.2. **Viewing Routes**](#2062-viewing-routes)
+
+
+
+
+# 2. Django Backend
+
+<h4> Welcome to the Django Backend of ChatDKU! The Django Backend supplements the Flask backend previously used in ChatDKU. It features all the funcitonality from the prior system alongside some additional features. 
 
 Websocket funcionality, however, is not translated into this current version. `speech-to-text` runs on flask backend.
+</h4>
 
-## Requirements:
-The current version of ChatDKU uses the following packages for Django Backend. You can download the packages via [pyproject.toml](../../pyproject.toml)
+----
+### 2.0.1. Requirements
 
-```bash
-    "Django~=5.2.3",
-    "django-appconf~=1.1.0",
-    "django-cors-headers~=4.7.0",
-    "django-cryptography~=1.1",
-    "django-encrypted-model-fields~=0.6.5",
-    "django-fernet-fields~=0.6",
-    "django-import-export~=4.3.8",
-    "djangorestframework~=3.16.0",
-    "django-celery-beat~=2.8.1",
-    "django_celery_results~=2.6.0",
-    "celery~=5.5.3",
-    "django-redis~=6.0.0",
-    "pandas~=2.2.3",
-    "redis~=5.2.1",
-    "psycopg2-binary>=2.9.10",
-    "dotenv>=0.9.9",
-    "locust>=2.39.0",
-    "drf-spectacular[sidecar]",
+The current version of ChatDKU uses the following packages for Django Backend. You can download the packages via [pyproject.toml][def]
 
-```
-## Project Structure
+### 2.0.2. Project Structure
 ```
 chatdku_django/
 ├── chat/
-│   ├── migrations/
-│   ├── templates/email/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── mail.py
-│   ├── models.py
-│   ├── tests.py
-│   ├── tasks.py
-│   ├── urls.py
-│   └── views.py
 ├── chatdku_django/
-│   ├── asgi.py
-│   ├── celery.py
-│   ├── settings.py
-│   ├── urls.py
-│   ├── views.py
-│   └── wsgi.py
 ├── core/
-│   ├── migrations/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── middleware.py
-│   ├── models.py
-│   ├── serializers.py
-│   ├── signals.py
-│   ├── tasks.py
-│   ├── tests.py
-│   ├── urls.py
-│   └── views.py
 ├── manage.py
 ├── locustfile.py
 
@@ -80,10 +61,10 @@ user.
  
 > You can check [`chatdku_django/urls.py`](./chatdku_django/chatdku_django/urls.py)  for all the routes used in this project. 
 
-## Running the Project
+### 2.0.3. Running the Project
 When running the project, make sure you are in the same dir as `manage.py`.
 
-### Setting up Environment Variables
+#### 2.0.3.1. Setting up Environment Variables
 To run the backend, make sure you have `.env` file in the same directory as `manage.py`
 ```bash
     chatdku_django/
@@ -113,15 +94,11 @@ MEDIA_ROOT="/datapool/chatdku_user_storage/uploads"
 #Redis
 REDIS_PASSWORD= 'YPpVXycZ6xsjCLHLnaSC'
 REDIS_HOST="127.0.0.1"
-
-
-
 #Locust
 UID="chatdku_admin"
 DISPLAY_NAME="Admin"
 HOST='http://10.200.14.82:8000'
 LOCUST_PATH=".venv/bin/locust" #Use your env for this part. Example: venv/bin/locust
-
 #Email
 EMAIL_HOST="smtp.duke.edu"
 EMAIL_PORT=25
@@ -130,16 +107,10 @@ EMAIL_HOST_USER="chatdku@dukekunshan.edu.cn"
 # EMAIL_HOST_PASSWORD=""
 EMAIL_TO='["abc@xyz.com","def@ghi.com"]'
 
-
 LLM_API_KEY="sk-n77qYaWSg4wAMtHfromHA0fcbpI41MjPNzsmqlacgMtdmysP"
 
-
-
-
 ```
-
-
-### Step 1: Check for migrations
+#### 2.0.3.2. Step 1: Check for migrations
 
 ```bash
 python manage.py makemigrations
@@ -147,19 +118,19 @@ python manage.py makemigrations
 This will create new migration files based on changes in the model. 
 > ❗ Make sure to run this command for every change you make in models.
 
-### Step 2: Apply Migrations
+#### 2.0.3.3. Step 2: Apply Migrations
 ```bash 
 python manage.py migrate
 ```
 This will apply all the pending migrations to the database
 
-### Step 3 (Optional): Create Super User
+#### 2.0.3.4. Step 3 (Optional): Create Super User
 ```bash
 python manage.py createsuperuser
 ```
 This will create a superuser for the project. For ChatDKU, this step is **not** required since it already has a superuser.
 
-### Step 5: Running the Backend
+#### 2.0.3.5. Step 4: Running the Backend
 ```bash
 python manage.py runserver <port>
 ```
@@ -169,7 +140,7 @@ This will run the server in port `<port>`. The default port for django is `8000`
 
 Once you run the sever, you can view it via `<server ip>:<port>`. Go to `/admin` route to check the **admin dashboard**.
 
-### Running Celery
+#### 2.0.3.6. Running Celery
 All the Celery Configurations are already set up in the project itself in [`celery.py`](./chatdku_django/chatdku_django/celery.py) and [`settings.py`](./chatdku_django/chatdku_django/settings.py). 
 To run celery for development, run
 ```bash
@@ -186,9 +157,9 @@ ChatDKU backend uses Redis to:
 - Queue User File Upload
 - Lock file chat during user upload
 
-## Production
+### 2.0.4. Production
 
-### Running Backend server
+#### 2.0.4.1. Running Backend server
 Chatdku uses gunicorn in addition to apache to run the backend server. To run gunicorn server use
 
 ```bash
@@ -200,17 +171,22 @@ The current apache configuration supports `8009` as the port.
 - `--workers` define the number of worker for the backend (int).
 - `--nohup`: logs are saved in `nohup.out` file. To inspect it, run
 - `--threads` : define the number of threads (int).
+
+All in all, this is the current configuration for production:
+
+```bash
+nohup gunicorn -b 10.200.14.82:8000 chatdku_django.wsgi:application --timeout 500 --workers 8 --threads 6 --preload &
+```
+
+To view live logs, you can use
 ```bash
 tail -f nohup.out
 ```
 Besides, logs are also saved in `log/chatdku.log` file. 
 
-The current backend runs via following configuration:
-```
-nohup gunicorn -b <SERVER:IP:8000> chatdku_django.wsgi:application --timeout 500 --workers 8 --threads 3 --preload &
-```
 
-### Running Celery
+
+#### 2.0.4.2. Running Celery
 Celery worker and beats is run using system service.You can check it via
 ```bash
 /etc/systemd/system/chatdku_celery_beats.service
@@ -237,21 +213,48 @@ sudo journalctl -u chatdku_celery_worker -f
 ```
 
 ----
-## Additional Information
+
+### 2.0.5. Closing the Backend
+
+After every little change, it order to deploy the backend, we will need to stop it. In order to stop the backend, you can use this script:
+
+```bash
+sudo kill -9 $(lsof -t -i : <:port>)
+
+```
+
+For example, this is how we would currently close the backend:
+
+```bash
+
+sudo kill -9 $(lsof -t -i :8000)
+
+```
+
+To redeploy, you can refer [here](#production). You **do not** need to redeploy **Celery**
+
+### 2.0.6. Additional Information
 - ChatDKU is using `PostgreSQL` to track files and users. We `DO NOT` store raw `netid` in the database. Instead, they are hashed using `SHA-256`. To view database port, run
 ```bash
 sudo ss -tulnp | grep postgres
 ```
 - The User folders are random.
 
-### **Admin User**
+#### 2.0.6.1. **Admin User**
+
+We implement the Django admin pannel inorder to make model easily accessible for the devs as well as other admin. The devs are automatically logged into the account once they view the main site. As for other users, they can use the following details to access the dashboard
+
 **Username**: chatdku_admin
 
 **Password**: 82f7570deb18dc2334e255085f090a07af3aad4e56c0c64d034f276ec7f77b24
 
+The current dashboard is live [here](https://chatdku.dukekunshan.edu.cn/admin/).
+
+#### 2.0.6.2. **Viewing Routes**
+
+ChatDKU implements the up-to-date version of [OpenAPI](https://www.openapis.org/) to document the views present in the project. Devs can view the api documentation via [this](https://chatdku.dukekunshan.edu.cn/doc/schema/view).
 
 
 
 
-
-
+[def]: ../../pyproject.toml

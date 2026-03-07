@@ -1,17 +1,72 @@
 import re
+from functools import partial
+from inspect import Signature, signature
 from typing import Any, Callable, Optional
-from pydantic import ConfigDict, BaseModel, Field, create_model
-from pydantic.fields import FieldInfo
-from inspect import signature, Signature
 
 from llama_index.core import Settings
 from llama_index.core.node_parser import TokenTextSplitter
-
+from openinference.instrumentation import safe_json_dumps
+from openinference.semconv.trace import OpenInferenceMimeTypeValues, SpanAttributes
+from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic.fields import FieldInfo
 from transformers import PreTrainedTokenizerBase
-from functools import partial
 
 from chatdku.config import config
-import numpy as np
+
+
+def span_add_inputs(span, **kwargs):
+    span.set_attributes(
+        {
+            SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+            SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+        }
+    )
+
+
+def span_add_outputs(span, **kwargs):
+    span.set_attributes(
+        {
+            SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+            SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+        }
+    )
+
+
+def span_start(span_name: str, span_kind, **kwargs):
+    """Start a OTLP span.
+
+    Args:
+        span_name (str): Name of the span to start.
+        span_kind (openinference.semconv.trace.OpenInferenceSpanKindValues).
+        current (bool): Whether to use start_as_a_current_span or not.
+            Will use start_span otherwise.
+        kwargs: Add your inputs in {keyword=value} format here.
+
+
+    Returns:
+        OTLP span
+    """
+    span = config.tracer.start_span(span_name)
+    span.set_attribute(
+        SpanAttributes.OPENINFERENCE_SPAN_KIND,
+        span_kind.value,
+    )
+    if kwargs:
+        span.set_attributes(
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(kwargs),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
+    return span
+
+
+def span_ctx_start(span_name: str, span_kind, parent_context=None):
+    return config.tracer.start_as_current_span(
+        span_name,
+        attributes={SpanAttributes.OPENINFERENCE_SPAN_KIND: span_kind.value},
+        context=parent_context,
+    )
 
 
 class NameParams(BaseModel):
@@ -83,12 +138,12 @@ def truncate_tokens(
     """Truncate string so that it does not exceed the given number of tokens."""
 
     # NOTE: This is to maintain consistency with LlamaIndex.
-    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136
+    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136  # noqa E501
     if isinstance(tokenizer, PreTrainedTokenizerBase):
         tokenizer = partial(tokenizer.encode, add_special_tokens=False)
 
     splitter = TokenTextSplitter(
-        chunk_size=int(np.abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
+        chunk_size=int(abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
     )
     return splitter.split_text(s)[0]
 
@@ -115,24 +170,21 @@ def token_limit_ratio_to_count(
     return {k: int(v * remain) for k, v in ratios.items()}
 
 
-def load_conversation(history:list[tuple[str,str]])->list[tuple[str,str]]:
-        """
-        convert (role,content) to (content_bot,content_bot) from past conversation. This method is applicable only for backend.
+def load_conversation(history: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """
+    convert (role,content) to (content_bot,content_bot) from past conversation.
+    This method is applicable only for backend.
 
-        Args:
-            history: List on tuple containing role and content.
-        
-        """
-        
+    Args:
+        history: List on tuple containing role and content.
 
-        past_messages=[]
+    """
 
-        for user_msg,bot_msg in zip(history,history[1:]):
-            if str(user_msg[0]).lower()=='user' and str(bot_msg[0]).lower()=='bot':
-                user_message=user_msg[1]
-                bot_message=bot_msg[1]
-                past_messages.append(tuple([user_message,bot_message]))
-        return past_messages
+    past_messages = []
 
-
-
+    for user_msg, bot_msg in zip(history, history[1:]):
+        if str(user_msg[0]).lower() == "user" and str(bot_msg[0]).lower() == "bot":
+            user_message = user_msg[1]
+            bot_message = bot_msg[1]
+            past_messages.append(tuple([user_message, bot_message]))
+    return past_messages
