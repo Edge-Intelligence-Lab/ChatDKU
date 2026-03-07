@@ -80,7 +80,8 @@ class Text2SQLSignature(dspy.Signature):
     Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester. 
     """
 
-    natural_language_query = dspy.InputField(desc="User's natural language question")
+    natural_language_query = dspy.InputField(desc="Agent's natural language question")
+    current_user_message = dspy.InputField(desc="User's initial prompt")
     sql_context = dspy.InputField(desc="PostgreSQL table schema.")
     sql = dspy.OutputField(desc="Pure, valid PostgreSQL query ending with semicolon")
 
@@ -92,7 +93,7 @@ class GenerateSQL(dspy.Module):
         # self.column_selector = dspy.Predict(ColumnSelectionSignature)
         self.sql_generator = dspy.Predict(Text2SQLSignature)
 
-    def forward(self, query, db_schema: str):
+    def forward(self, query, current_user_message, db_schema: str):
         # # print("Selecting table...")
         # table_result = self.table_selector(
         #     natural_language_query=query, db_schema=db_schema
@@ -108,7 +109,7 @@ class GenerateSQL(dspy.Module):
         # context = f"Tables: {table_result.selected_tables}\nColumns: {column_result.selected_columns}\nReasoning: {table_result.reasoning}"
         # print("Context taken. Building SQL query. ")
         sql_result = self.sql_generator(
-            natural_language_query=query, sql_context=db_schema
+            natural_language_query=query, current_user_message=current_user_message, sql_context=db_schema
         )
         # print(sql_result.sql)
         return sanitize_sql(extract_sql_regex(sql_result.sql))

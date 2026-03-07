@@ -131,12 +131,13 @@ def query_curriculum_db(
 
 
 def QueryCurriculumOuter():
-    def QueryCurriculum(query: str) -> tuple[object, dict]:
+    def QueryCurriculum(query: str, current_user_message: str) -> tuple[object, dict]:
         """
         Takes a natural language query about courses and classes offered at Duke Kunshan University -> generates intermediate SQL query passed into Postgres -> Result formatted in natural language.
 
         Args: 
             query: String (Detailed question for the classes database in natural lanugage.)
+            current_user_message: String (verbatim to user's initial query)
         Returns: 
             String 
         """
@@ -161,7 +162,7 @@ def QueryCurriculumOuter():
 
             sql_agent = GenerateSQL()
             db_schema = fetch_schema(db=db)
-            final_sql = sql_agent(query=query, db_schema=db_schema)
+            final_sql = sql_agent(query=query, current_user_message=current_user_message, db_schema=db_schema)
             # sanitize generated SQL to avoid runaway repetition or duplication
             final_sql = _collapse_repeated_lines(final_sql)
             final_sql = _dedupe_lines(final_sql)
@@ -177,7 +178,7 @@ def QueryCurriculumOuter():
                 tool_out = f"SQL execution error: {e}"
                 print(f"[QueryCurriculum] DB execution error: {e}")
 
-            NLSignature = dspy.Signature("question, tool_output -> output_, internal_result")
+            NLSignature = dspy.Signature("question, tool_output -> result")
 
             start = time.perf_counter()
             res = dspy.Predict(NLSignature)(question=query, tool_output=tool_out)
