@@ -72,11 +72,12 @@ def extract_sql_regex(text):
 class Text2SQLSignature(dspy.Signature):
     """
     Generates pure SQL given the user question, tables, and columns without any backticks, to be run on a database of the classes offered at Duke Kunshan University (DKU).
-    Uses fuzzy search using regex, ILIKE, and % symbols when querying for any name, as they may be inconsistent.
-    Queries should account for text fields such as course_code that may or may not have spaces in the middle.
+    Uses fuzzy search using regex, ILIKE, and % symbols when querying for a course or a person's name, as they may be inconsistent.
+    Text fields course_code may or may not a space in the middle, so must be accounted for by adding the regex % between the name and the number.
+    Do not write overly broad regex such as %cs%, as this can catch unrelated entries. 
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
-    Feel free to include extra information fields in your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester. 
+    Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester. 
     """
 
     natural_language_query = dspy.InputField(desc="User's natural language question")
