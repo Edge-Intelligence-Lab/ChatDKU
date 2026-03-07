@@ -13,7 +13,7 @@ from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieve
 from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
-# from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumDB
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 
 # When `--dev` is passed to the script, enable additional debug prints in this module.
 DEBUG_DEV = False
@@ -213,6 +213,7 @@ def main():
             search_mode=search_mode,
             files=[],
         ),
+        QueryCurriculumOuter()
     ]
 
     agent = Agent(

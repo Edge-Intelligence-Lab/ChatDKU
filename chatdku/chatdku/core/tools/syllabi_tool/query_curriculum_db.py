@@ -93,8 +93,6 @@ def query_curriculum_db(
             )
         ),
     ],
-    user_id: str = "Chat_DKU",
-    search_mode: int = 0,
 ) -> str:
     """
     Use SQL to query anything about DKU courses, classes, or instructors
@@ -132,16 +130,17 @@ def query_curriculum_db(
     return res.result
 
 
-def QueryCurriculumOuter(
-    internal_memory: dict,
-    user_id: str = "Chat_DKU",
-    search_mode: int = 0,
-    files: list | None = None,
-):
-    files = files or []
-
+def QueryCurriculumOuter():
     def QueryCurriculum(query: str) -> tuple[object, dict]:
-        print(f"[QueryCurriculum] ENTER query={query!r} user_id={user_id} search_mode={search_mode}")
+        """
+        Takes a natural language query about courses and classes offered at Duke Kunshan University -> generates intermediate SQL query passed into Postgres -> Result formatted in natural language.
+
+        Args: 
+            query: String (Detailed question for the classes database in natural lanugage.)
+        Returns: 
+            String 
+        """
+        print(f"[QueryCurriculum] ENTER query={query!r}")
         db = DB()
 
         with (
@@ -154,7 +153,7 @@ def QueryCurriculumOuter(
                     {
                         SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
                         SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                            dict(query=query, user_id=user_id, search_mode=search_mode)
+                            dict(query=query)
                         ),
                         SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                     }
@@ -178,11 +177,10 @@ def QueryCurriculumOuter(
                 tool_out = f"SQL execution error: {e}"
                 print(f"[QueryCurriculum] DB execution error: {e}")
 
-            NLSignature = dspy.Signature("question, tool_output -> result, internal_result")
-            predictor = dspy.Predict(NLSignature)
+            NLSignature = dspy.Signature("question, tool_output -> output_, internal_result")
 
             start = time.perf_counter()
-            res = predictor(question=query, tool_output=tool_out)
+            res = dspy.Predict(NLSignature)(question=query, tool_output=tool_out)
 
             res.result = remove_think_section(res.result)
             # collapse repeated lines and truncate excessively long outputs
@@ -207,6 +205,5 @@ def QueryCurriculumOuter(
         return result, internal_result
 
     return QueryCurriculum
-
 
 query_curriculum_tool = dspy.Tool(query_curriculum_db)
