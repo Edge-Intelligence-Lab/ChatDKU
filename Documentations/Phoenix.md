@@ -83,7 +83,8 @@ This is like the basic use of how you can use opentelemetry to trace your code.
 It is extremely useful for debugging and monitoring your module/tool.
 
 You can find more information about tracing [here](https://arize.com/docs/ax/observe/tracing/setup/manual-instrumentation)
-Also, the opentelemetry [docs](https://opentelemetry.io/docs/languages/python/instrumentation/) 
+Also, the opentelemetry [docs](https://opentelemetry.io/docs/languages/python/instrumentation/)
+
 ---
 - **Last Updated**: 2026-03-08
 - **Version**: 1.0.0 
