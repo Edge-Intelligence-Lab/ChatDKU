@@ -62,7 +62,7 @@ class GenerateSQL(dspy.Module):
                 natural_language_query=query,
                 current_user_message=current_user_message,
             )
-            if judge_result.result:
+            if judge_result.judge:
                 return dspy.Prediction(sql=sql_result)
             reasoning = judge_result.reasoning
         return dspy.Prediction(sql=sql_result)
