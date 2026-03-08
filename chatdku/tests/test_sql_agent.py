@@ -6,20 +6,21 @@ External dependencies (DB, dspy LM) are mocked so
 tests run fully offline with no database or API access required.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, call
-import types
+from unittest.mock import MagicMock, call, patch
 
+import pytest
 
 # Helpers under test (import directly from the module, not via the package
 # entrypoint that calls setup() / use_phoenix() at import time).
 # We patch setup() and use_phoenix() before importing the module.
 
+
 @pytest.fixture(autouse=True, scope="session")
 def _patch_setup():
     """Prevent setup() and use_phoenix() from running during import."""
-    with patch("chatdku.setup.setup", return_value=None), \
-         patch("chatdku.setup.use_phoenix", return_value=None):
+    with patch("chatdku.setup.setup", return_value=None), patch(
+        "chatdku.setup.use_phoenix", return_value=None
+    ):
         yield
 
 
@@ -28,11 +29,11 @@ from chatdku.core.tools.syllabi_tool.query_curriculum_db import (
     _collapse_repeated_lines,
     _truncate_long_output,
     _dedupe_lines,
-    remove_think_section,
     fetch_schema,
-    query_curriculum_db,
     QueryCurriculumOuter,
 )
+
+query_curriculum_db = QueryCurriculumOuter()
 
 
 class TestCollapseRepeatedLines:
@@ -109,35 +110,6 @@ class TestDedupeLines:
         assert _dedupe_lines("hello") == "hello"
 
 
-class TestRemoveThinkSection:
-    def test_removes_think_block(self):
-        text = "<think>hidden reasoning</think>visible answer"
-        assert remove_think_section(text) == "visible answer"
-
-    def test_multiline_think_block(self):
-        text = "<think>\nline1\nline2\n</think>answer"
-        assert remove_think_section(text) == "answer"
-
-    def test_no_think_block(self):
-        text = "plain text"
-        assert remove_think_section(text) == "plain text"
-
-    def test_only_removes_first_block(self):
-        # re.sub with no count removes ALL matches; test documents actual behaviour
-        text = "<think>a</think>mid<think>b</think>end"
-        result = remove_think_section(text)
-        assert "<think>" not in result
-        assert "mid" in result
-        assert "end" in result
-
-    def test_empty_think_block(self):
-        text = "<think></think>answer"
-        assert remove_think_section(text) == "answer"
-
-    def test_empty_string(self):
-        assert remove_think_section("") == ""
-
-
 class TestFetchSchema:
     def test_returns_string_with_classes_key(self):
         mock_db = MagicMock()
@@ -179,7 +151,7 @@ def mock_db(monkeypatch):
     db_instance = MagicMock()
     db_instance.execute.side_effect = [
         FAKE_SCHEMA_ROWS,  # first call: fetch_schema
-        FAKE_ROWS,         # second call: execute final_sql
+        FAKE_ROWS,  # second call: execute final_sql
     ]
     mock_db_cls = MagicMock(return_value=db_instance)
     monkeypatch.setattr(
@@ -217,24 +189,32 @@ def mock_dspy_predict(monkeypatch):
 
 class TestQueryCurriculumDb:
     def test_returns_string(self, mock_db, mock_generate_sql, mock_dspy_predict):
-        result = query_curriculum_db("What math courses are offered?")
+        result, internal = query_curriculum_db(
+            "What math courses are offered?", "What math courses are offered?"
+        )
         assert isinstance(result, str)
 
     def test_result_content(self, mock_db, mock_generate_sql, mock_dspy_predict):
-        result = query_curriculum_db("What math courses are offered?")
+        result, internal = query_curriculum_db(
+            "What math courses are offered?", "What math courses are offered?"
+        )
         assert "math" in result.lower() or "course" in result.lower()
 
-    def test_db_execute_called_twice(self, mock_db, mock_generate_sql, mock_dspy_predict):
-        query_curriculum_db("List all courses.")
+    def test_db_execute_called_twice(
+        self, mock_db, mock_generate_sql, mock_dspy_predict
+    ):
+        query_curriculum_db("List all courses.", "List all courses.")
         # Once for schema, once for actual SQL
         assert mock_db.execute.call_count == 2
 
     def test_sql_agent_called_with_query_and_schema(
         self, mock_db, mock_generate_sql, mock_dspy_predict
     ):
-        query_curriculum_db("Find all CS classes.")
+        query_curriculum_db("Find all CS classes.", "Find all CS classes.")
         mock_generate_sql.assert_called_once()
-        kwargs = mock_generate_sql.call_args[1] if mock_generate_sql.call_args[1] else {}
+        kwargs = (
+            mock_generate_sql.call_args[1] if mock_generate_sql.call_args[1] else {}
+        )
         args = mock_generate_sql.call_args[0]
         # query should appear somewhere in the call
         all_args = str(args) + str(kwargs)
@@ -246,15 +226,15 @@ class TestQueryCurriculumDb:
         """DB raising an exception on SQL execution should not propagate."""
         db_instance = MagicMock()
         db_instance.execute.side_effect = [
-            FAKE_SCHEMA_ROWS,        # schema fetch succeeds
-            Exception("DB is down"), # SQL execution fails
+            FAKE_SCHEMA_ROWS,  # schema fetch succeeds
+            Exception("DB is down"),  # SQL execution fails
         ]
         monkeypatch.setattr(
             "chatdku.core.tools.syllabi_tool.query_curriculum_db.DB",
             MagicMock(return_value=db_instance),
         )
         # Should not raise; error is caught and passed to the LM as text
-        result = query_curriculum_db("Any query.")
+        result, internal = query_curriculum_db("Any query.", "Any query.")
         assert isinstance(result, str)
 
     def test_think_section_stripped_from_result(
@@ -267,7 +247,7 @@ class TestQueryCurriculumDb:
             "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=predictor_instance),
         )
-        result = query_curriculum_db("Test query.")
+        result, internal = query_curriculum_db("Test query.", "Test query.")
         assert "<think>" not in result
         assert "Clean answer." in result
 
@@ -281,7 +261,9 @@ class TestQueryCurriculumDb:
             "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=predictor_instance),
         )
-        result = query_curriculum_db("Repetitive output query.")
+        result, internal = query_curriculum_db(
+            "Repetitive output query.", "Repetitive output query."
+        )
         assert result.count("answer") < 20  # collapsed
 
 
@@ -377,10 +359,15 @@ class TestQueryCurriculumOuter:
         assert "Real answer." in result_str
 
     def test_no_tracer_attribute_on_config(
-        self, mock_db_outer, mock_generate_sql_outer, mock_dspy_predict_outer, monkeypatch
+        self,
+        mock_db_outer,
+        mock_generate_sql_outer,
+        mock_dspy_predict_outer,
+        monkeypatch,
     ):
         """Runs without error when config has no tracer (uses nullcontext)."""
         import chatdku.core.tools.syllabi_tool.query_curriculum_db as mod
+
         fake_config = MagicMock(spec=[])  # no tracer attribute
         monkeypatch.setattr(mod, "config", fake_config)
         fn = QueryCurriculumOuter()

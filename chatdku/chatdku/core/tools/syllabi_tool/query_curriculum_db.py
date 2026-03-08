@@ -1,7 +1,3 @@
-import re
-import time
-
-import dspy
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import (
     OpenInferenceMimeTypeValues,
@@ -10,9 +6,8 @@ from openinference.semconv.trace import (
 )
 from opentelemetry.trace import Status, StatusCode
 
-from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore, nodes_to_OTLP
-from chatdku.core.tools.syllabi_tool.sql_agent import GenerateSQL
+from chatdku.core.tools.syllabi_tool.generate_sql import GenerateSQL
 from chatdku.core.utils import span_ctx_start
 from chatdku.setup import DB
 
@@ -82,17 +77,16 @@ def fetch_schema(db: DB) -> str:
 
 
 def QueryCurriculumOuter():
-    def QueryCurriculum(query: str, current_user_message: str) -> tuple[object, dict]:
+    def QueryCurriculum(query: str, current_user_message: str) -> tuple[str, dict]:
         """
         Takes a natural language query about courses and classes offered at Duke Kunshan University -> generates intermediate SQL query passed into Postgres -> Result formatted in natural language.
 
         Args:
-            query: String (Detailed question for the classes database in natural lanugage.)
+            query: String (The information you want to retrieve by using this tool.)
             current_user_message: String (verbatim to user's initial query)
         Returns:
             String
         """
-        print(f"[QueryCurriculum] ENTER query={query!r}")
         db = DB()
 
         with span_ctx_start(
@@ -138,15 +132,8 @@ def QueryCurriculumOuter():
                 tool_out = f"SQL execution error: {e}"
                 span.set_status(Status(StatusCode.ERROR), str(e))
 
-            res = dspy.Predict("question, tool_output -> result")(
-                question=query, tool_output=tool_out
-            )
-            # collapse repeated lines and truncate excessively long outputs
-            res.result = _collapse_repeated_lines(res.result)
-            res.result = _truncate_long_output(res.result)
-            result = res.result
             internal_result = {"sql": final_sql}
 
-        return result, internal_result
+        return tool_out, internal_result
 
     return QueryCurriculum
