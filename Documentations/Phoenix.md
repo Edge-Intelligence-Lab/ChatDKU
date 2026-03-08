@@ -27,7 +27,7 @@ Run the following command, or set it in your .bashrc:
 export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6NCJ9.63j_N4wrKUZL4ZumPhqyM2svLifie-LwqFDqao7ZJrQ'
 ``` 
 
-Then, run:
+If Phoenix is not running, run:
 ```bash
 PHOENIX_PORT=6007 PHOENIX_WORKING_DIR=/datapool/phoenix PHOENIX_ENABLE_AUTH=True PHOENIX_SECRET=testsecret000000000000000000000000000000 nohup phoenix serve > /var/log/phoenix.log &
 ```
