@@ -10,10 +10,9 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
-
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 
 # When `--dev` is passed to the script, enable additional debug prints in this module.
 DEBUG_DEV = False
@@ -44,7 +43,6 @@ class Agent(dspy.Module):
     ):
 
         super().__init__()
-        self.max_iterations = max_iterations
         self.streaming = streaming
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
@@ -56,7 +54,7 @@ class Agent(dspy.Module):
         # Edit (Temuulen): nahhh it is causing issues.
         self.internal_memory = {}
 
-        self.planner = Planner(tools)
+        self.planner = Planner(tools, max_iterations)
 
         self.conversation_memory = ConversationMemory()
 
@@ -193,9 +191,8 @@ def main():
 
     import time
 
-    user_id = input("Input your user id (Chat_DKU for default): ") or "Chat_DKU"
-    search_mode_input = input("Search mode (0 for default): ")
-    search_mode = int(search_mode_input) if search_mode_input else 0
+    user_id = "Chat_DKU"
+    search_mode = 0
     tools = [
         KeywordRetrieverOuter(
             retriever_top_k=10,
@@ -213,7 +210,7 @@ def main():
             search_mode=search_mode,
             files=[],
         ),
-        QueryCurriculumOuter()
+        QueryCurriculumOuter(),
     ]
 
     agent = Agent(

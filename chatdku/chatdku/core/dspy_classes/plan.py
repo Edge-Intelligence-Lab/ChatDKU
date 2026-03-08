@@ -65,7 +65,7 @@ class SummarizerSignature(dspy.Signature):
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools):
+    def __init__(self, tools, max_iterations=5):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
@@ -111,6 +111,7 @@ class Planner(dspy.Module):
             "trajectory": 6 / 15,
         }
         self.trajectory_summary = ""
+        self.max_iterations = max_iterations
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
@@ -120,7 +121,6 @@ class Planner(dspy.Module):
         self,
         current_user_message: str,
         conversation_memory: ConversationMemory,
-        max_calls: int = 5,
     ) -> dspy.Prediction:
         planner_inputs = dict(
             current_user_message=current_user_message,
@@ -134,7 +134,7 @@ class Planner(dspy.Module):
             span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
             # Tool calling iterations
-            for idx in range(max_calls):
+            for idx in range(self.max_iterations):
                 planner_inputs = truncate_tokens_all(
                     planner_inputs,
                     self.get_token_limits(**planner_inputs),

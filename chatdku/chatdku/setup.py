@@ -98,7 +98,11 @@ class DB:
                 # If the DB doesn't support statement_timeout, continue anyway.
                 pass
             result = conn.execute(text(sqlstr), kwargs)
+            # Row object is truncating long fields like descriptions
+            # so we are turning rows into tuples
             if result.returns_rows:
-                return result.fetchall()
+                return [
+                    tuple(row) for row in result.fetchall()
+                ]  # full strings, named columns
             else:
                 return result.rowcount
