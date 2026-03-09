@@ -1,0 +1,9 @@
+[project]
+name = "seekbench"
+version = "0.1.0"
+description = "This is an implementation of the paper 'Do LLM Agents Know How to Ground, Recover, and Assess? Evaluating Epistemic Competence in Information-Seeking Agents' for ChatDKU"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dspy>=3.1.3",
+]

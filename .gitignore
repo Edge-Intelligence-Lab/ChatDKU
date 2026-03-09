@@ -222,5 +222,3 @@ benchmarks/questions.json
 **/dku_website
 **/locust_logs
 
-#For testing
-**/benchmarks
