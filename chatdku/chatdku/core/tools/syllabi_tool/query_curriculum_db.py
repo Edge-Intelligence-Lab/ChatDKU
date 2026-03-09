@@ -78,7 +78,13 @@ def QueryCurriculumOuter(N=3):
             trajectory[f"sql_{idx}"] = pred.sql
             trajectory[f"results_{idx}"] = tool_out
 
-        return tool_out, internal_result
+        summarizer = dspy.Predict("tool_trajectory, current_user_message -> answer")
+        answer = summarizer(
+            tool_trajectory=trajectory,
+            current_user_message=current_user_message,
+        ).answer
+
+        return answer, internal_result
 
     return QueryCurriculum
 
