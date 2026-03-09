@@ -37,7 +37,7 @@ def QueryCurriculumOuter(N=3):
                 current_user_message=current_user_message,
                 db_schema=db_schema,
                 trajectory=trajectory,
-            ).pred
+            )
             sql = pred.sql
             if sql == "finish":
                 break

@@ -45,8 +45,7 @@ class GenerateSQL(dspy.Module):
         sql_result = _collapse_repeated_lines(sql_result)
         sql_result = _dedupe_lines(sql_result)
         sql_result = _truncate_long_output(sql_result, max_chars=12000)
-        pred.sql = sql_result
-        return dspy.Prediction(pred=pred)
+        return dspy.Prediction(sql=sql_result, reasoning=pred.reasoning)
 
 
 def sanitize_sql(sql):
