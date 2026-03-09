@@ -102,7 +102,7 @@ def upsert_class(cur, class_obj):
         %(learning_outcomes)s, %(required_textbook)s, %(optional_textbooks)s,
         %(academic_policies)s,
         %(instructor_email)s, %(instructor_name)s, %(office_location)s,
-        %(office_hours)s, %(biography)s, %(year)s, %(semester)s, %(semester_session)s, 
+        %(office_hours)s, %(biography)s, %(year)s, %(semester)s, %(semester_session)s,
         %(schedule_days)s, %(schedule_time_start)s, %(schedule_time_end)s,
         %(location)s, %(recitation_time)s, %(recitation_location)s, %(lab_time)s,
         %(lac_location)s, %(grading_policy)s,
