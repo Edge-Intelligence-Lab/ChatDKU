@@ -5,7 +5,7 @@ import dspy
 
 class Text2SQLSignature(dspy.Signature):
     """
-    Generates pure SQL given the user question, tables, and columns without any backticks,
+    Generates pure SQL (PostgreSQL dialect) given the user question, tables, and columns without any backticks,
     to be run on a database of the classes offered at Duke Kunshan University (DKU).
 
     Uses fuzzy search using regex, ILIKE, and % symbols when querying for a course or a person's name, as they may be inconsistent.
@@ -13,7 +13,8 @@ class Text2SQLSignature(dspy.Signature):
     Do not write overly broad regex such as %cs%, as this can catch unrelated entries.
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
-    Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
+    Always extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
+    Always select at least 3 relevant columns when composing SQL queries.
     If you don't know the values of the fields, you can use `SELECT DISTINCT` to get a list of all possible values.
 
     Do note that:
