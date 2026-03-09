@@ -37,7 +37,7 @@ def QueryCurriculumOuter(N=3):
                 current_user_message=current_user_message,
                 db_schema=db_schema,
                 trajectory=trajectory,
-            )
+            ).pred
             sql = pred.sql
             if sql == "finish":
                 break
@@ -108,5 +108,5 @@ def fetch_schema(db: DB) -> str:
     schema = {"classes": {col: dtype for col, dtype in rows}}
     for key, sql in distinct_values_sql.items():
         rows = db.execute(sql)
-        schema[key] = {"distinct_values": row for row in rows}
+        schema[key] = {"distinct_values": rows}
     return str(schema)
