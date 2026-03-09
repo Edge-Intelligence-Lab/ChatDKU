@@ -40,7 +40,6 @@ dependencies = [
     "sentence-transformers",
     "docx2txt",
     "python-pptx",
-    "pytest",
     # backend
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",
@@ -79,6 +78,9 @@ dependencies = [
     "locust>=2.39.0",
     "drf-spectacular[sidecar]",
     "django-prometheus",
+    # Development
+    "pytest",
+    "pre-commit",
 ]
 
 [tool.setuptools]

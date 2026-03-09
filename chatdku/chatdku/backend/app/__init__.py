@@ -27,8 +27,7 @@ import os
 from chatdku.config import config
 
 
-
-app = Flask(__name__,template_folder='templates')
+app = Flask(__name__, template_folder="templates")
 app.config.from_object(Config)
 app.wsgi_app = ProxyFix(
     app.wsgi_app, x_proto=1, x_host=1
@@ -43,9 +42,12 @@ socketio = SocketIO(
 
 
 db = SQLAlchemy(app=app)
-migrate = Migrate(app=app,db=db)
+migrate = Migrate(app=app, db=db)
 from app.admin import Base
-admin_config = Admin(name="Dashboard", template_mode="bootstrap4", app=app,index_view=Base())
+
+admin_config = Admin(
+    name="Dashboard", template_mode="bootstrap4", app=app, index_view=Base()
+)
 
 lm = dspy.LM(
     model="openai/" + config.backup_llm,
@@ -64,17 +66,21 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 if not app.debug:
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
 
-    file_handler=RotatingFileHandler('logs/backend.log',maxBytes=104857600,backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
+    file_handler = RotatingFileHandler(
+        "logs/backend.log", maxBytes=104857600, backupCount=10
+    )
+    file_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
+        )
+    )
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.INFO)
-    app.logger.info('Backend Logger')
+    app.logger.info("Backend Logger")
 
 
 from app import models, routes
@@ -82,6 +88,3 @@ from app.admin import AdminView
 
 routes.routes(app=app, db=db, socketio=socketio, logger=app.logger or logger)
 admin_config.add_view(AdminView(models.Feedback, db.session))
-
-
-

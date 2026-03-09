@@ -46,12 +46,13 @@ class Config:
         llm_api_key = _env("LLM_API_KEY")
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
-        SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'\
-            .format(os.environ.get('DB_USER', ''),
-                    quote_plus(os.environ.get('DB_PASSWORD', '')),
-                    os.environ.get('DB_HOST', ''),
-                    os.environ.get('DB_PORT', ''),
-                    os.environ.get('DB_NAME', ''))
+        SQLALCHEMY_DATABASE_URI = "postgresql://{}:{}@{}:{}/{}".format(
+            os.environ.get("DB_USER", ""),
+            quote_plus(os.environ.get("DB_PASSWORD", "")),
+            os.environ.get("DB_HOST", ""),
+            os.environ.get("DB_PORT", ""),
+            os.environ.get("DB_NAME", ""),
+        )
 
         self._store.update(
             {
@@ -76,7 +77,7 @@ class Config:
                 "reranker_api_key": None,
                 # Data
                 "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl", # This is Deprecated use nodes instead
+                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",  # This is Deprecated use nodes instead
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",

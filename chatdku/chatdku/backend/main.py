@@ -1,4 +1,4 @@
-from app import app,socketio,setup,use_phoenix,dspy,Agent
+from app import app, socketio, setup, use_phoenix, dspy, Agent
 from chatdku.config import config
 
 # NOTE: Do not use this file on production, this is only for dev
@@ -17,7 +17,7 @@ if __name__ == "__main__":
         max_tokens=config.context_window,
         temperature=config.llm_temperature,
     )
-    dspy.configure(lm=lm)   
+    dspy.configure(lm=lm)
     agent = Agent(max_iterations=1, streaming=True, get_intermediate=False)
-    socketio.run(app=app, host="0.0.0.0", port=18420,debug=True)
+    socketio.run(app=app, host="0.0.0.0", port=18420, debug=True)
 # NOTE: Might want to make it easier to change the port
