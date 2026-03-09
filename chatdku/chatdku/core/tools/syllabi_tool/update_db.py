@@ -6,7 +6,7 @@ from llama_cloud_services.extract import ExtractConfig, LlamaExtract
 from psycopg2.extras import Json
 
 # Folder containing PDF syllabi
-PDF_FOLDER = "/datapool/syllabi-master"
+PDF_FOLDER = "/datapool/chatdku_syllabus_store"
 
 # SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS
 # FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
