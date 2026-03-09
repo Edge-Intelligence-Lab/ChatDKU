@@ -246,17 +246,40 @@ class ResponseGen:
         return self.full_response
 
 
-def _recursive_find_metadata(value: Any) -> list[dict[str, Any]]:
+def _collect_metadata_iterative(value: Any) -> list[dict[str, Any]]:
+    """Collect all embedded metadata dictionaries using an explicit stack.
+
+    This avoids recursive traversal while still supporting arbitrarily nested
+    list/dict tool results.
+    """
+
     results: list[dict[str, Any]] = []
-    if isinstance(value, dict):
-        metadata = value.get("metadata")
-        if isinstance(metadata, dict):
-            results.append(metadata)
-        for child in value.values():
-            results.extend(_recursive_find_metadata(child))
-    elif isinstance(value, list):
-        for child in value:
-            results.extend(_recursive_find_metadata(child))
+    stack: list[Any] = [value]
+    visited_containers: set[int] = set()
+
+    while stack:
+        current = stack.pop()
+
+        if isinstance(current, dict):
+            container_id = id(current)
+            if container_id in visited_containers:
+                continue
+            visited_containers.add(container_id)
+
+            metadata = current.get("metadata")
+            if isinstance(metadata, dict):
+                results.append(metadata)
+
+            stack.extend(current.values())
+            continue
+
+        if isinstance(current, list):
+            container_id = id(current)
+            if container_id in visited_containers:
+                continue
+            visited_containers.add(container_id)
+            stack.extend(current)
+
     return results
 
 
@@ -334,7 +357,7 @@ def _build_metadata_reference_candidates(tool_memory: ToolMemory) -> list[str]:
     seen: set[tuple[str, str, str]] = set()
 
     for entry in tool_memory.history:
-        metadata_list = _recursive_find_metadata(entry.result)
+        metadata_list = _collect_metadata_iterative(entry.result)
         for metadata in metadata_list:
             source = _metadata_source_name(metadata)
             url = _metadata_url(metadata)
