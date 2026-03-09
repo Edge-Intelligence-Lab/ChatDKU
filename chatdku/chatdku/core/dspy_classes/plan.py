@@ -32,6 +32,14 @@ class PlannerSignature(dspy.Signature):
 
     The user's question might be complex and require multiple hops of tool calls. If it is complex,
     break down the question into small tool calls to get whatever information you need to answer.
+
+    Useful facts:
+        Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
+        ARHU, ARTS, BEHAVSCI, BIOL, CHEM, CHINESE, COMPDSGN, COMPSCI, CULANTH, CULMOVE,
+        CULSOC, EAP, ECON, ENVIR, ETHLDR, GCHINA, GCULS, GLHLTH, HIST, HUM, INFOSCI,
+        INSTGOV, LIT, MATH, MATSCI, MEDIA, MEDIART, NEUROSCI, PHIL, PHYS, PHYSEDU,
+        POLECON, POLSCI, PPE, PSYCH, PUBPOL, SOCIOL, SOSC, STATS, USTUD, WOC, RELIG,
+        MINITERM
     """
 
     current_user_message: str = dspy.InputField()
