@@ -12,35 +12,41 @@ class Text2SQLSignature(dspy.Signature):
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
     Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
+
+    If you don't know the values of the fields, you can use `SELECT DISTINCT` to get a list of all possible values.
+
+    Return 'finish' in the field sql which marks the task as complete. That is, signals that all information for asnwering the current_user_message are now available to be extracted.
     """
 
     natural_language_query = dspy.InputField(desc="Agent's natural language question")
     current_user_message = dspy.InputField(desc="User's initial prompt")
     sql_context = dspy.InputField(desc="PostgreSQL table schema.")
-    reasoning = dspy.InputField(
-        desc="If the SQL query judger said your generated query was invalid, the reasoning will be provided here."
-    )
+    trajectory: dict = dspy.InputField(desc="The results of your previous query.")
     sql = dspy.OutputField(desc="Pure, valid PostgreSQL query ending with semicolon")
 
 
 class GenerateSQL(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.sql_generator = dspy.Predict(Text2SQLSignature)
+        self.sql_generator = dspy.ChainOfThought(Text2SQLSignature)
 
-    def forward(self, query, current_user_message, db_schema: str, reasoning=""):
-        sql_result = self.sql_generator(
+    def forward(self, query, current_user_message, db_schema: str, trajectory: dict):
+        pred = self.sql_generator(
             natural_language_query=query,
             current_user_message=current_user_message,
-            reasoning=reasoning,
             sql_context=db_schema,
-        ).sql
+            trajectory=trajectory,
+        )
+        sql_result = pred.sql
+        if sql_result.lower() == "finish":
+            return dspy.Prediction(sql="finish")
         sql_result = sanitize_sql(extract_sql_regex(sql_result))
         # sanitize generated SQL to avoid runaway repetition or duplication
         sql_result = _collapse_repeated_lines(sql_result)
         sql_result = _dedupe_lines(sql_result)
         sql_result = _truncate_long_output(sql_result, max_chars=12000)
-        return dspy.Prediction(sql=sql_result)
+        pred.sql = sql_result
+        return dspy.Prediction(pred=pred)
 
 
 def sanitize_sql(sql):
