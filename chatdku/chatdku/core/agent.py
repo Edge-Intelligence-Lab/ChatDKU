@@ -214,7 +214,7 @@ def main():
     ]
 
     agent = Agent(
-        max_iterations=1,
+        max_iterations=3,
         streaming=True,
         get_intermediate=False,
         tools=tools,
