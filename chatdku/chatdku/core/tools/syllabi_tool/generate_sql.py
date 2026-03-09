@@ -12,8 +12,10 @@ class Text2SQLSignature(dspy.Signature):
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
     Feel free to extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
-
     If you don't know the values of the fields, you can use `SELECT DISTINCT` to get a list of all possible values.
+
+    Do note that:
+        - For computer science subject code, we use the code "COMPSCI" instead of "CS".
 
     Return 'finish' in the field sql which marks the task as complete. That is, signals that all information for asnwering the current_user_message are now available to be extracted.
     """
