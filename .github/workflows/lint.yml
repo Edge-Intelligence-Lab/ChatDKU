@@ -29,10 +29,10 @@ jobs:
           echo "files=$files" >> "$GITHUB_OUTPUT"
 
 
-      - name: Run Black on changed files
+      - name: Run Black (check) on changed files
         if: steps.changed.outputs.files != ''
         run: |
-          black ${{ steps.changed.outputs.files }}
+          black --check ${{ steps.changed.outputs.files }}
 
       - name: Run Flake8 on changed files
         if: steps.changed.outputs.files != ''
