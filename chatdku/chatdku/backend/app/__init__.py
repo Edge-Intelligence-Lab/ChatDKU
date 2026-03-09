@@ -15,6 +15,8 @@ from logging.handlers import RotatingFileHandler
 
 import dspy
 import eventlet
+from app import models, routes
+from app.admin import AdminView, Base
 from config import Config
 from flask import Flask
 from flask_admin import Admin
@@ -47,7 +49,6 @@ socketio = SocketIO(
 
 db = SQLAlchemy(app=app)
 migrate = Migrate(app=app, db=db)
-from app.admin import Base
 
 admin_config = Admin(
     name="Dashboard", template_mode="bootstrap4", app=app, index_view=Base()
@@ -86,9 +87,6 @@ if not app.debug:
     app.logger.setLevel(logging.INFO)
     app.logger.info("Backend Logger")
 
-
-from app import models, routes
-from app.admin import AdminView
 
 routes.routes(app=app, db=db, socketio=socketio, logger=app.logger or logger)
 admin_config.add_view(AdminView(models.Feedback, db.session))
