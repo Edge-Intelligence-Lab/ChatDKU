@@ -1,10 +1,13 @@
-from app import app, socketio, setup, use_phoenix, dspy, Agent
+from app import Agent, app, dspy, setup, socketio, use_phoenix
+
 from chatdku.config import config
 
 # NOTE: Do not use this file on production, this is only for dev
 
 
-# NOTE: gunicorn doesn't use if __name__ == "__main__" . SO it can be commented out. For development it can be uncommented and used with `python agent_app.py`
+# NOTE: gunicorn doesn't use if __name__ == "__main__" .
+# SO it can be commented out.
+# For development it can be uncommented and used with `python agent_app.py`
 
 if __name__ == "__main__":
     setup()

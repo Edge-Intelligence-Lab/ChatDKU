@@ -1,14 +1,15 @@
-import os
-import psycopg2
-from psycopg2.extras import Json
 import json
-from llama_cloud_services.extract import LlamaExtract, ExtractConfig
+import os
 
+import psycopg2
+from llama_cloud_services.extract import ExtractConfig, LlamaExtract
+from psycopg2.extras import Json
 
 # Folder containing PDF syllabi
 PDF_FOLDER = "/datapool/syllabi-master"
 
-# SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
+# SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS
+# FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
 # Path to JSON schema matching the PostgreSQL table
 SCHEMA_PATH = "curriculum_schema.json"
 with open(SCHEMA_PATH, "r") as f:

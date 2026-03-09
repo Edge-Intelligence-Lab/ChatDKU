@@ -5,7 +5,9 @@ import dspy
 
 class Text2SQLSignature(dspy.Signature):
     """
-    Generates pure SQL given the user question, tables, and columns without any backticks, to be run on a database of the classes offered at Duke Kunshan University (DKU).
+    Generates pure SQL given the user question, tables, and columns without any backticks,
+    to be run on a database of the classes offered at Duke Kunshan University (DKU).
+
     Uses fuzzy search using regex, ILIKE, and % symbols when querying for a course or a person's name, as they may be inconsistent.
     Text fields course_code may or may not a space in the middle, so must be accounted for by adding the regex % between the name and the number.
     Do not write overly broad regex such as %cs%, as this can catch unrelated entries.
@@ -18,7 +20,7 @@ class Text2SQLSignature(dspy.Signature):
         - For computer science subject code, we use the code "COMPSCI" instead of "CS".
 
     Return 'finish' in the field sql which marks the task as complete. That is, signals that all information for asnwering the current_user_message are now available to be extracted.
-    """
+    """  # noqa: E501
 
     natural_language_query = dspy.InputField(desc="Agent's natural language question")
     current_user_message = dspy.InputField(desc="User's initial prompt")

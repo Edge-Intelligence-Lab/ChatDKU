@@ -6,32 +6,26 @@ External dependencies (DB, dspy LM) are mocked so
 tests run fully offline with no database or API access required.
 """
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
+
+from chatdku.core.tools.syllabi_tool.generate_sql import (
+    _collapse_repeated_lines,
+    _dedupe_lines,
+    _truncate_long_output,
+)
+
+# Import helpers directly after patching
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import (
+    QueryCurriculumOuter,
+    fetch_schema,
+)
 
 # Helpers under test (import directly from the module, not via the package
 # entrypoint that calls setup() / use_phoenix() at import time).
 # We patch setup() and use_phoenix() before importing the module.
 
-
-@pytest.fixture(autouse=True, scope="session")
-def _patch_setup():
-    """Prevent setup() and use_phoenix() from running during import."""
-    with patch("chatdku.setup.setup", return_value=None), patch(
-        "chatdku.setup.use_phoenix", return_value=None
-    ):
-        yield
-
-
-# Import helpers directly after patching
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import (
-    _collapse_repeated_lines,
-    _truncate_long_output,
-    _dedupe_lines,
-    fetch_schema,
-    QueryCurriculumOuter,
-)
 
 query_curriculum_db = QueryCurriculumOuter()
 

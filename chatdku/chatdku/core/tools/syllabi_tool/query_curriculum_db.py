@@ -20,7 +20,9 @@ def QueryCurriculumOuter(N=3):
 
     def QueryCurriculum(query: str, current_user_message: str) -> tuple[str, dict]:
         """
-        Takes a natural language query about courses and classes offered at Duke Kunshan University -> generates intermediate SQL query passed into Postgres -> Result formatted in natural language.
+        Takes a natural language query about courses and classes offered
+        at Duke Kunshan University -> generates intermediate SQL query
+        passed into Postgres -> Result formatted in natural language.
 
         Args:
             query: String (The information you want to retrieve by using this tool.)

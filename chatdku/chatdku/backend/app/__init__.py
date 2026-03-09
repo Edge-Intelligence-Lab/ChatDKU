@@ -1,30 +1,34 @@
 #!/usr/bin/env python3
 # FIXME: Purge API key from the history of this file
 
-### TODO: Create multiple app objects in advance, lock the app object for each user, and reset the app object when the user is not using it.
-###TODO: Add limiter to prevent Ddos attack. Can use flask-limiter, with ePPn from Shibboleth to limit unique identity. If not possible, restricy general question over a specific IP to a specific number.
+# TODO: Create multiple app objects in advance, lock the app object for each user,
+# and reset the app object when the user is not using it.
+
+# TODO: Add limiter to prevent Ddos attack.
+# Can use flask-limiter, with ePPn from Shibboleth to limit unique identity.
+# If not possible, restricy general question over a specific IP to a specific number.
 
 
-import eventlet
-
-eventlet.monkey_patch()
-
-from flask import Flask
-from flask_cors import CORS
-from flask_socketio import SocketIO
-import dspy
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 
-from werkzeug.middleware.proxy_fix import ProxyFix
-from chatdku.setup import setup, use_phoenix
-from chatdku.core.agent import Agent
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_admin import Admin
+import dspy
+import eventlet
 from config import Config
-import os
+from flask import Flask
+from flask_admin import Admin
+from flask_cors import CORS
+from flask_migrate import Migrate
+from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from chatdku.config import config
+from chatdku.core.agent import Agent
+from chatdku.setup import setup, use_phoenix
+
+eventlet.monkey_patch()
 
 
 app = Flask(__name__, template_folder="templates")
