@@ -4,57 +4,33 @@ from chatdku.setup import setup, use_phoenix
 import dspy
 from chatdku.config import config
 from openinference.instrumentation import dangerously_using_project
-import time
-import concurrent.futures
-
-
 from phoenix.otel import register
+
+import argparse
+
+parser=argparse.ArgumentParser()
+parser.add_arguement("--file_path",help = "File path for parquet file (questions)",required =True)
+
+
 
 tracer_provider = register(
     project_name="evals"
 )
 
 
-questions = [
-    {"question": "What is DKU?", "max_iteration": 2},
-    {"question": "Tell me about the campus facilities at DKU.", "max_iteration": 4},
-    {"question": "What programs does DKU offer?", "max_iteration": 2},
-    {"question": "How to apply to DKU?", "max_iteration": 2},
-    {"question": "What is the student life like at DKU?", "max_iteration": 4},
-]
+def read_questions_parquet(path: str) -> list[dict]:
+    ray.init(ignore_reinit_error=True)
+    ds = ray.data.read_parquet(path)
+    df = ds.to_pandas()
+    records = df[["question", "max_iteration"]].to_dict(orient="records")
+    return records
 
 
 
-
-
-def _run_agent(idx: int, question: str, tools: list, max_iterations: int = 2):
-    print(f"----\n{idx+1}\n{question}\n status: pending\n----")
-
-    with dangerously_using_project("evals"):
-        agent = Agent(
-            max_iterations=max_iterations,
-            streaming=True,
-            get_intermediate=False,
-            tools=tools,
-        )
-        responses_gen = agent(
-            current_user_message=question,
-        )
-        full_response = ""
-
-        for r in responses_gen.response:
-            full_response+=r
-
-
-    print(f"----\n{question}\nresponse: {full_response}\n status: done\n----")
-
-
-
-def run_multiple_agent(question:dict):
-    user_id='ChatDKU'
-    search_mode=0
-
-
+@ray.remote
+def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
+    user_id = "ChatDKU"
+    search_mode = 0
     tools = [
         KeywordRetrieverOuter(
             retriever_top_k=10,
@@ -74,18 +50,43 @@ def run_multiple_agent(question:dict):
         ),
     ]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = [executor.submit(_run_agent, idx, q['question'], tools, q['max_iteration']) for idx, q in enumerate(question)]
-        for future in concurrent.futures.as_completed(futures):
-            future.result()
-    
-    return 
+    print(f"----\n{idx+1}\n{question}\n status: pending\n----")
+    with dangerously_using_project("evals"):
+        agent = Agent(
+            max_iterations=max_iterations,
+            streaming=True,
+            get_intermediate=False,
+            tools=tools,
+        )
+        responses_gen = agent(
+            current_user_message=question,
+        )
+        full_response = ""
+        for r in responses_gen.response:
+            full_response += r
+
+    print(f"----\n{question}\nresponse: {full_response}\n status: done\n----")
+
+
+
+def run_multiple_agent(question: list[dict]) -> None:
+    ray.init(ignore_reinit_error=True)
+
+    futures = [
+        _run_agent_remote.remote(idx, q['question'], q.get('max_iteration', 2))
+        for idx, q in enumerate(question)
+    ]
+    ray.get(futures)
+
+    return
 
 
 
 def main():
     setup()
     use_phoenix()
+    args=parser.parse_args()
+    qlist=args.file_path
 
     lm = dspy.LM(
         model="openai/" + config.backup_llm,
@@ -96,8 +97,7 @@ def main():
         temperature=config.llm_temperature,
     )
     dspy.configure(lm=lm)
-
-    run_multiple_agent(question=questions)
+    run_multiple_agent(question=qlist)
 
     return
 
