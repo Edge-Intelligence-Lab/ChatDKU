@@ -61,6 +61,8 @@ class Config:
                 "embedding": "BAAI/bge-m3",
                 "tokenizer": "/datapool/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/9c925d64d72725edaf899c6cb9c377fd0709d9c5",  # noqa E501
                 "tei_url": "http://localhost:18080",
+                "chunk_size": 512,
+                "chunk_overlap": 40,
                 # Reranker
                 "reranker_top_n": 5,
                 "reranker_backup_top_n": 10,  # If reranker fails, use the top n results using the embedding scores

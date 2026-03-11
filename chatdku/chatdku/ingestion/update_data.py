@@ -1,22 +1,23 @@
-import os
-import mimetypes
-import datetime
-import uuid
-import json
 import argparse
-from llama_index.core import SimpleDirectoryReader
-from llama_index.readers.file import UnstructuredReader
-from llama_index.core.schema import TextNode, BaseNode
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.readers.base import BaseReader
-from llama_parse import LlamaParse
-from chatdku.config import config
+import datetime
+import json
+import mimetypes
+import os
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional
-from llama_index.core.schema import Document
+
 import pandas as pd
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.readers.base import BaseReader
+from llama_index.core.schema import BaseNode, Document, TextNode
+from llama_index.readers.file import UnstructuredReader
+from llama_parse import LlamaParse
 from openpyxl import load_workbook
+
+from chatdku.config import config
 
 
 def _import_data(nodes_path: str) -> list:
@@ -148,7 +149,9 @@ class XlsxReader(BaseReader):
 
             structured_rows = []
             for _, row in df.iterrows():
-                row_text = "; ".join([f"{col}: {row[col]}" for col in df.columns if pd.notna(row[col])])
+                row_text = "; ".join(
+                    [f"{col}: {row[col]}" for col in df.columns if pd.notna(row[col])]
+                )
                 structured_rows.append(row_text)
 
             # 将 DataFrame 转换为 Markdown 格式
@@ -156,7 +159,9 @@ class XlsxReader(BaseReader):
             # markdown_menu += sheet_name + "菜单：\n"
             # markdown_menu += markdown_output
             # markdown_menu += "\n\n\n\n"
-            markdown_menu += f"Work Sheet {sheet_name}:\n" + "\n".join(structured_rows) + "\n\n"
+            markdown_menu += (
+                f"Work Sheet {sheet_name}:\n" + "\n".join(structured_rows) + "\n\n"
+            )
 
         return markdown_menu
 
@@ -300,7 +305,10 @@ def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
 
     pipeline = IngestionPipeline(
         transformations=[
-            SentenceSplitter(chunk_size=1024, chunk_overlap=20),
+            SentenceSplitter(
+                chunk_size=config.chunk_size,
+                chunk_overlap=config.chunk_overlap,
+            ),
         ]
     )
 
