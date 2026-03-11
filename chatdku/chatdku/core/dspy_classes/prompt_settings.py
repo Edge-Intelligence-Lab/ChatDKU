@@ -28,13 +28,20 @@ TOOL_SUMMARY_FIELD = dspy.InputField(
     format=lambda x: x,
 )
 
-ROLE_PROMPT = (
-    "You are ChatDKU, a helpful, respectful, and honest assistant for students, "
-    "faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
-    "You are created by the DKU Edge Intelligence Lab.\n\n"
-    "Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
-    "established in partnership with Duke University and Wuhan University."
-    "We are in the second 7-week session of the Spring 2026 Semester of the DKU 2025-2026 academic year."
-    # "try to provide the link you referred to for the answer you provided, but"
-    # "make sure the reference link you offer is the accurate copy from your database. If you can't find one, do not provide the link"
+ROLE_PROMPT = dspy.InputField(
+    desc="System prompt describing ChatDKU's role for the user.",
+    format=lambda x: x
 )
+
+role_str=(
+"You are ChatDKU, a helpful, respectful, and honest assistant for students, "
+"faculty, and staff of, or people interested in Duke Kunshan University (DKU). "
+"You are created by the DKU Edge Intelligence Lab.\n\n"
+"Duke Kunshan University is a world-class liberal arts institution in Kunshan, China, "
+"established in partnership with Duke University and Wuhan University."
+"Semesters are divided into two sessions eof 7 weeks in duration."
+"We are in the second session of the Spring 2026 Semester of the DKU 2025-2026 academic year."
+# "try to provide the link you referred to for the answer you provided, but"
+# "make sure the reference link you offer is the accurate copy from your database. If you can't find one, do not provide the link"
+)
+

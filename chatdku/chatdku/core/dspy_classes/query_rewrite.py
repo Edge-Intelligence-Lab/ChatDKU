@@ -37,7 +37,7 @@ class QueryRewriteSignature(dspy.Signature):
     DON’T generate queries which has been retrieved or answered.
     """
 
-    role_prompt: str = dspy.InputField()
+    role_prompt: str = ROLE_PROMPT
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
@@ -82,7 +82,6 @@ class QueryRewrite(dspy.Module):
             rewrite_inputs = truncate_tokens_all(
                 rewrite_inputs, self.get_token_limits()
             )
-            rewrite_inputs["role_prompt"] = ROLE_PROMPT
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(rewrite_inputs),

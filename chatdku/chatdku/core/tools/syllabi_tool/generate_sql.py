@@ -13,8 +13,7 @@ class Text2SQLSignature(dspy.Signature):
     Do not write overly broad regex such as %cs%, as this can catch unrelated entries.
     Do not include the words professor or instructor when querying.
     Do not include any title, suffix, or honorifics when querying.
-    Always extract extra information using your query if it's helpful for the user's goals - such as instructor_name, course_title, year, semester.
-    Always select at least 3 relevant columns when composing SQL queries.
+    Always select at least 4 relevant columns when composing SQL queries.
     If you don't know the values of the fields, you can use `SELECT DISTINCT` to get a list of all possible values.
 
     Do note that:
