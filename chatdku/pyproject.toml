@@ -40,6 +40,7 @@ dependencies = [
     "sentence-transformers",
     "docx2txt",
     "python-pptx",
+    "mem0ai",
     # backend
     "Flask~=3.0.3",
     "Flask-Cors~=4.0.1",

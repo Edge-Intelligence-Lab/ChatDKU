@@ -95,10 +95,10 @@ class Config:
                 # PSQL
                 "psql_uri": SQLALCHEMY_DATABASE_URI,
                 # MISC
+                "memory_collection": "user_memory",  # Memory collection name
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
-                # MISC
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
             }
         )
