@@ -11,7 +11,7 @@ from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
     ROLE_PROMPT,
-    role_str
+    role_str,
 )
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
@@ -48,6 +48,7 @@ class PlannerSignature(dspy.Signature):
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     chatbot_role: str = ROLE_PROMPT
+
 
 class SummarizerSignature(dspy.Signature):
     """
@@ -137,7 +138,7 @@ class Planner(dspy.Module):
             current_user_message=current_user_message,
             conversation_history=conversation_memory.history_str(),
             conversation_summary=conversation_memory.summary,
-            chatbot_role=role_str
+            chatbot_role=role_str,
         )
 
         trajectory = {}
