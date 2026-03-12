@@ -2,11 +2,11 @@ from typing import Any, Literal
 
 import dspy
 from dspy import Tool
-from litellm import ContextWindowExceededError
+from litellm.exceptions import ContextWindowExceededError
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
-from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
@@ -75,43 +75,43 @@ class SummarizerSignature(dspy.Signature):
     new_summary: str = dspy.OutputField()
 
 
+def create_react_signature(signature: dspy.Signature, tools: list[Tool]):
+    """Create a react signature for the given signature and tools."""
+    tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
+    tool_dict = {tool.name: tool for tool in tools}
+
+    instr = [f"{signature.instructions}\n"] if signature.instructions else []
+
+    tool_dict["finish"] = Tool(
+        func=lambda: "Completed.",
+        name="finish",
+        desc=("Marks the task as complete."),
+        args={},
+    )
+
+    for idx, tool in enumerate(tool_dict.values()):
+        instr.append(f"({idx + 1}) {tool}")
+    instr.append(
+        "When providing `next_tool_args`, the value inside the field must be in JSON format"
+    )
+
+    react_signature = (
+        dspy.Signature({**signature.input_fields}, "\n".join(instr))
+        .append("trajectory", dspy.InputField(), type_=str)
+        .append("next_thought", dspy.OutputField(), type_=str)
+        .append(
+            "next_tool_name", dspy.OutputField(), type_=Literal[tuple(tool_dict.keys())]
+        )
+        .append("next_tool_args", dspy.OutputField(), type_=dict[str, Any])
+    )
+    return react_signature, tool_dict
+
+
 class Planner(dspy.Module):
-    def __init__(self, tools, max_iterations=5):
+    def __init__(self, tools, signature=PlannerSignature, max_iterations=5):
         super().__init__()
-        tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
-        tools = {tool.name: tool for tool in tools}
 
-        instr = (
-            [f"{PlannerSignature.instructions}\n"]
-            if PlannerSignature.instructions
-            else []
-        )
-
-        tools["finish"] = Tool(
-            func=lambda: "Completed.",
-            name="finish",
-            desc=(
-                "Marks the task as complete. That is, signals that all information"
-                " for asnwering the current_user_message are now available to be extracted."
-            ),
-            args={},
-        )
-
-        for idx, tool in enumerate(tools.values()):
-            instr.append(f"({idx + 1}) {tool}")
-        instr.append(
-            "When providing `next_tool_args`, the value inside the field must be in JSON format"
-        )
-
-        react_signature = (
-            dspy.Signature({**PlannerSignature.input_fields}, "\n".join(instr))
-            .append("trajectory", dspy.InputField(), type_=str)
-            .append("next_thought", dspy.OutputField(), type_=str)
-            .append(
-                "next_tool_name", dspy.OutputField(), type_=Literal[tuple(tools.keys())]
-            )
-            .append("next_tool_args", dspy.OutputField(), type_=dict[str, Any])
-        )
+        react_signature, tools = create_react_signature(signature, tools)
 
         self.tools = tools
         self.planner = dspy.Predict(react_signature)
