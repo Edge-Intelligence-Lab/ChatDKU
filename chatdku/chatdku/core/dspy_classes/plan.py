@@ -6,7 +6,6 @@ from litellm.exceptions import ContextWindowExceededError
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
-from chatdku.core.dspy_classes.memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
@@ -132,12 +131,13 @@ class Planner(dspy.Module):
     def forward(
         self,
         current_user_message: str,
-        conversation_memory: ConversationMemory,
+        conversation_history: str,
+        conversation_summary: str,
     ) -> dspy.Prediction:
         planner_inputs = dict(
             current_user_message=current_user_message,
-            conversation_history=conversation_memory.history_str(),
-            conversation_summary=conversation_memory.summary,
+            conversation_history=conversation_history,
+            conversation_summary=conversation_summary,
             chatbot_role=role_str,
         )
 

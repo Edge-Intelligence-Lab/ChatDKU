@@ -125,7 +125,8 @@ class Agent(dspy.Module):
 
             plan = self.planner(
                 current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
+                conversation_history=self.conversation_memory.history_str(),
+                conversation_summary=self.conversation_memory.summary,
             )
             synthesizer_args = dict(
                 current_user_message=current_user_message,
