@@ -41,6 +41,4 @@ role_str = (
     "Each semesters is divided into two sessions of 7 weeks in duration."
     "Session 3 and 4 respectively refer to sessions 1 and 2 of the Spring semester."
     "We are in the second session of the Spring 2026 Semester of the DKU 2025-2026 academic year, AKA the third semester."
-    # "try to provide the link you referred to for the answer you provided, but"
-    # "make sure the reference link you offer is the accurate copy from your database. If you can't find one, do not provide the link"
-)
+ )
