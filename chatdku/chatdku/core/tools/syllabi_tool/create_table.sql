@@ -1,54 +1,49 @@
-DROP TABLE IF EXISTS classes CASCADE;
+DROP TABLE IF EXISTS curriculum CASCADE;
 DROP TYPE IF EXISTS season;
 DROP TYPE IF EXISTS first_or_second;
 DROP TYPE IF EXISTS attribute;
 
 CREATE TYPE season AS ENUM('spring', 'summer', 'fall');
 CREATE TYPE first_or_second AS ENUM('first', 'second', 'third', 'fourth', 'mini-term');
-CREATE TYPE attribute AS ENUM(
-        'two-credit-writing', 
-        'ah-foundations', 
-        'chinese-student-requirements',
-        'common-core',
-        'language',
-        'ns-foundations',
-        'quantitative-reasoning',
-        'ss-foundations',
-        'signature-projects'
-);
 
-CREATE TABLE classes (
+CREATE TABLE curriculum (
     class_id SERIAL PRIMARY KEY,
     course_code VARCHAR(20) NOT NULL,
-    course_title TEXT,
+    course_title VARCHAR(255),
     credit_hours NUMERIC(3,1),
-    course_format TEXT,
-    prerequisites TEXT,
+    course_format VARCHAR(128),
+    prerequisites VARCHAR(255),
+    -- This can be left as a TEXT
     description TEXT,
     attributes attribute,
+    -- Maybe we can create instructors table
+    instructor_email VARCHAR(255),
+    instructor_name VARCHAR(255)[],
+    office_location VARCHAR(32),
+    office_hours VARCHAR(255),
+    -- This can be left as a TEXT
+    instructor_biography TEXT,
     learning_outcomes TEXT[],
-    required_textbook TEXT,
-    optional_textbooks TEXT[],
+    required_textbook VARCHAR(255),
+    optional_textbooks VARCHAR(255)[],
     academic_policies TEXT,
-    instructor_email TEXT,
-    instructor_name TEXT,
-    office_location TEXT,
-    office_hours TEXT,
-    biography TEXT,
     year INT,
     semester season NOT NULL,
     semester_session first_or_second NOT NULL,
-    schedule_days TEXT[],
-    schedule_time_start TEXT,
-    schedule_time_end TEXT,
-    location TEXT,
-    recitation_time TEXT,
-    recitation_location TEXT,
-    lab_time TEXT,
-    lab_location TEXT,
+    lecture_days VARCHAR(64),
+    lecture_time_start VARCHAR(32),
+    lecture_time_end VARCHAR(32),
+    location VARCHAR(32),
+    recitation_day VARCHAR(32),
+    recitation_time VARCHAR(32),
+    recitation_location VARCHAR(32),
+    lab_day VARCHAR(32),
+    lab_time VARCHAR(32),
+    lab_location VARCHAR(32),
     grading_policy TEXT,
-    grade_scale TEXT,
+    grade_scale VARCHAR(255),
     assignment_policy TEXT,
     communication_policy TEXT,
-    teaching_methods TEXT
+    teaching_methods TEXT,
+    late_submission_policy TEXT,
 );

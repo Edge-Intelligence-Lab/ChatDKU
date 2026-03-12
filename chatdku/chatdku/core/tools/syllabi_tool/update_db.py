@@ -1,16 +1,17 @@
-import os
-import psycopg2
-from psycopg2.extras import Json
 import json
-from llama_cloud_services.extract import LlamaExtract, ExtractConfig
+import os
 
+import psycopg2
+from llama_cloud_services.extract import ExtractConfig, LlamaExtract
+from psycopg2.extras import Json
 
 # Folder containing PDF syllabi
-PDF_FOLDER = "/datapool/syllabi-master"
+PDF_FOLDER = "/datapool/chatdku_syllabus_store"
 
-# SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
+# SCHEMA IS NOT AUTOMATICALLY GENERATED BECAUSE JSON ALLOWS
+# FOR LLAMAEXTRACT TO HAVE MORE CONTEXT INFO ABOUT EACH DATA FIELD.
 # Path to JSON schema matching the PostgreSQL table
-SCHEMA_PATH = "classes_schema.json"
+SCHEMA_PATH = "curriculum_schema.json"
 with open(SCHEMA_PATH, "r") as f:
     schema_dict = json.load(f)
 
@@ -90,22 +91,22 @@ def upsert_class(cur, class_obj):
         course_code, course_title, credit_hours, course_format, prerequisites, description,
         learning_outcomes, required_textbook, optional_textbooks, academic_policies,
         instructor_email, instructor_name, office_location,
-        office_hours, biography, year, semester, semester_session, schedule_days, 
-        schedule_time_start, schedule_time_end, location, recitation_time, 
+        office_hours, biography, year, semester, semester_session, schedule_days,
+        schedule_time_start, schedule_time_end, location, recitation_time,
         recitation_location, lab_time, lac_location, grading_policy,
         grade_scale, assignment_policy, communication_policy, teaching_methods
     )
     VALUES (
-        %(course_code)s, %(course_title)s, %(credit_hours)s, %(course_format)s, 
+        %(course_code)s, %(course_title)s, %(credit_hours)s, %(course_format)s,
         %(prerequisites)s, %(description)s,
-        %(learning_outcomes)s, %(required_textbook)s, %(optional_textbooks)s, 
+        %(learning_outcomes)s, %(required_textbook)s, %(optional_textbooks)s,
         %(academic_policies)s,
         %(instructor_email)s, %(instructor_name)s, %(office_location)s,
-        %(office_hours)s, %(biography)s, %(year)s, %(semester)s, %(semester_session)s, 
+        %(office_hours)s, %(biography)s, %(year)s, %(semester)s, %(semester_session)s,
         %(schedule_days)s, %(schedule_time_start)s, %(schedule_time_end)s,
         %(location)s, %(recitation_time)s, %(recitation_location)s, %(lab_time)s,
         %(lac_location)s, %(grading_policy)s,
-        %(grade_scale)s, %(assignment_policy)s, %(communication_policy)s, 
+        %(grade_scale)s, %(assignment_policy)s, %(communication_policy)s,
         %(teaching_methods)s
     );
     """
@@ -134,13 +135,15 @@ def test_db_connection():
         print(f"PostgreSQL version: {version}")
 
         # Test if the classes table exists
-        cur.execute("""
+        cur.execute(
+            """
             SELECT EXISTS (
-                SELECT FROM pg_tables 
-                WHERE schemaname = 'public' 
+                SELECT FROM pg_tables
+                WHERE schemaname = 'public'
                 AND tablename = 'classes'
             );
-        """)
+        """
+        )
         table_exists = cur.fetchone()[0]
         if not table_exists:
             print("WARNING: 'classes' table does not exist!")

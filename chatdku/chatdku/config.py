@@ -1,5 +1,6 @@
 import os
 from typing import Any, Mapping, Optional
+from urllib.parse import quote_plus
 
 import dotenv
 
@@ -45,6 +46,13 @@ class Config:
         llm_api_key = _env("LLM_API_KEY")
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
+        SQLALCHEMY_DATABASE_URI = "postgresql://{}:{}@{}:{}/{}".format(
+            os.environ.get("DB_USER", ""),
+            quote_plus(os.environ.get("DB_PASSWORD", "")),
+            os.environ.get("DB_HOST", ""),
+            os.environ.get("DB_PORT", ""),
+            os.environ.get("DB_NAME", ""),
+        )
 
         self._store.update(
             {
@@ -71,7 +79,7 @@ class Config:
                 "reranker_api_key": None,
                 # Data
                 "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",
+                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",  # This is Deprecated use nodes instead
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
@@ -84,7 +92,9 @@ class Config:
                 "chroma_db_port": 12400,
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
-                # Graph
+                # PSQL
+                "psql_uri": SQLALCHEMY_DATABASE_URI,
+                # MISC
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",

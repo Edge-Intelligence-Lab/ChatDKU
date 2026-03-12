@@ -10,6 +10,8 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+    ROLE_PROMPT,
+    role_str,
 )
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
@@ -32,11 +34,20 @@ class PlannerSignature(dspy.Signature):
 
     The user's question might be complex and require multiple hops of tool calls. If it is complex,
     break down the question into small tool calls to get whatever information you need to answer.
+
+    Useful facts:
+        - Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
+            ARHU, ARTS, BEHAVSCI, BIOL, CHEM, CHINESE, COMPDSGN, COMPSCI, CULANTH, CULMOVE,
+            CULSOC, EAP, ECON, ENVIR, ETHLDR, GCHINA, GCULS, GLHLTH, HIST, HUM, INFOSCI,
+            INSTGOV, LIT, MATH, MATSCI, MEDIA, MEDIART, NEUROSCI, PHIL, PHYS, PHYSEDU,
+            POLECON, POLSCI, PPE, PSYCH, PUBPOL, SOCIOL, SOSC, STATS, USTUD, WOC, RELIG,
+            MINITERM
     """
 
     current_user_message: str = dspy.InputField()
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    chatbot_role: str = ROLE_PROMPT
 
 
 class SummarizerSignature(dspy.Signature):
@@ -65,7 +76,7 @@ class SummarizerSignature(dspy.Signature):
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools):
+    def __init__(self, tools, max_iterations=5):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
@@ -108,9 +119,11 @@ class Planner(dspy.Module):
             "current_user_message": 2 / 15,
             "conversation_history": 3 / 15,
             "conversation_summary": 1 / 15,
+            "chatbot_role": 2 / 15,
             "trajectory": 6 / 15,
         }
         self.trajectory_summary = ""
+        self.max_iterations = max_iterations
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
@@ -120,12 +133,12 @@ class Planner(dspy.Module):
         self,
         current_user_message: str,
         conversation_memory: ConversationMemory,
-        max_calls: int = 5,
     ) -> dspy.Prediction:
         planner_inputs = dict(
             current_user_message=current_user_message,
             conversation_history=conversation_memory.history_str(),
             conversation_summary=conversation_memory.summary,
+            chatbot_role=role_str,
         )
 
         trajectory = {}
@@ -134,7 +147,7 @@ class Planner(dspy.Module):
             span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
             # Tool calling iterations
-            for idx in range(max_calls):
+            for idx in range(self.max_iterations):
                 planner_inputs = truncate_tokens_all(
                     planner_inputs,
                     self.get_token_limits(**planner_inputs),
