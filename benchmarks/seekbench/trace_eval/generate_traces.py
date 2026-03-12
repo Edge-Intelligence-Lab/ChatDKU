@@ -1,16 +1,13 @@
 from chatdku.core.agent import Agent
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
-from chatdku.setup import setup, use_phoenix
 import dspy
-from chatdku.config import config
 from openinference.instrumentation import dangerously_using_project
 from phoenix.otel import register
-
+import ray
 import argparse
 
 parser=argparse.ArgumentParser()
-parser.add_arguement("--file_path",help = "File path for parquet file (questions)",required =True)
-
+parser.add_argument("--file_path",help = "File path for parquet file (questions)",required = True)
 
 
 tracer_provider = register(
@@ -29,6 +26,20 @@ def read_questions_parquet(path: str) -> list[dict]:
 
 @ray.remote
 def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
+    from chatdku.config import config
+    from chatdku.setup import setup, use_phoenix
+
+    setup()
+    use_phoenix()
+    lm = dspy.LM(
+        model="openai/" + config.backup_llm,
+        api_base=config.backup_llm_url,
+        api_key=config.llm_api_key,
+        model_type="chat",
+        max_tokens=config.context_window,
+        temperature=config.llm_temperature,
+    )
+    dspy.configure(lm=lm)
     user_id = "ChatDKU"
     search_mode = 0
     tools = [
@@ -72,6 +83,7 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
 def run_multiple_agent(question: list[dict]) -> None:
     ray.init(ignore_reinit_error=True)
 
+
     futures = [
         _run_agent_remote.remote(idx, q['question'], q.get('max_iteration', 2))
         for idx, q in enumerate(question)
@@ -83,21 +95,13 @@ def run_multiple_agent(question: list[dict]) -> None:
 
 
 def main():
-    setup()
-    use_phoenix()
     args=parser.parse_args()
+
     qlist=args.file_path
 
-    lm = dspy.LM(
-        model="openai/" + config.backup_llm,
-        api_base=config.backup_llm_url,
-        api_key=config.llm_api_key,
-        model_type="chat",
-        max_tokens=config.context_window,
-        temperature=config.llm_temperature,
-    )
-    dspy.configure(lm=lm)
-    run_multiple_agent(question=qlist)
+    records=read_questions_parquet(qlist)
+
+    run_multiple_agent(question=records)
 
     return
 
