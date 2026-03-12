@@ -19,7 +19,7 @@ from chatdku.core.dspy_classes.prompt_settings import VERBOSE
 from chatdku.core.dspy_classes.query_rewrite import QueryRewrite
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.dspy_classes.tool_memory import ToolMemory
-from chatdku.core.tools.llama_index import DocRetrieverOuter
+from chatdku.core.tools.llama_index_pg import DocRetrieverOuter
 from chatdku.core.utils import load_conversation
 from chatdku.setup import setup, use_phoenix
 

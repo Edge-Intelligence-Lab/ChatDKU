@@ -50,6 +50,26 @@ def _clean_file_name(file_name: str) -> str:
     return os.path.splitext(file_name)[0]
 
 
+def _strip_nul(value: str) -> str:
+    """Remove NUL (0x00) characters that PostgreSQL string literals cannot contain."""
+    return value.replace("\x00", "")
+
+
+def _is_valid_text(text) -> bool:
+    """
+    Mirror the guard used in load_chroma.py:
+        if not node.text or not isinstance(node.text, str): continue
+
+    Also rejects strings that become empty / whitespace-only after NUL removal,
+    because the TEI embedding server returns HTTP 413 for such payloads even
+    when the byte length is tiny (chars=2 still fails).
+    """
+    if not text or not isinstance(text, str):
+        return False
+    cleaned = text.replace("\x00", "").strip()
+    return bool(cleaned)
+
+
 def _split_metadata(metadata: dict) -> tuple[dict, dict]:
     """
     Separate promoted scalar fields from the rest of the metadata.
@@ -62,6 +82,44 @@ def _split_metadata(metadata: dict) -> tuple[dict, dict]:
     promoted = {f: metadata.get(f) for f in PROMOTED_FIELDS}
     rest = {k: v for k, v in metadata.items() if k not in PROMOTED_FIELDS}
     return promoted, rest
+
+
+def _embed_with_retry(embed_model, texts: list[str], min_batch: int = 1) -> list:
+    """
+    Call embed_model.get_text_embedding_batch, automatically halving the sub-batch
+    on HTTP 413 / payload-too-large errors until min_batch is reached.
+
+    Why this is needed
+    ------------------
+    The TEI server enforces a hard payload limit per request.  load_chroma.py
+    avoided hitting it by using buffer_size=25; our batch_size was accidentally
+    set to 64 which blew the limit.  Rather than hard-coding a magic number we
+    retry adaptively: any failure halves the batch and retries each half
+    independently, converging to single-item batches in the worst case.
+    """
+    if not texts:
+        return []
+
+    try:
+        result = embed_model.get_text_embedding_batch(texts, show_progress=False)
+        # LlamaIndex returns a dict (not a list) when the server signals an error
+        if not isinstance(result, list):
+            raise ValueError(f"Embedding server returned an error payload: {result}")
+        return result
+    except Exception as e:
+        half = len(texts) // 2
+        if half < min_batch:
+            raise RuntimeError(
+                f"Embedding failed on a single chunk (chars={len(texts[0])})."
+                " The chunk itself may exceed the TEI server's payload limit."
+            ) from e
+        logger.warning(
+            "Embedding batch of %d failed (%s) — retrying as two halves of %d.",
+            len(texts), e, half,
+        )
+        left  = _embed_with_retry(embed_model, texts[:half],  min_batch)
+        right = _embed_with_retry(embed_model, texts[half:], min_batch)
+        return left + right
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +184,7 @@ def load_postgres(
     nodes_path: Optional[str] = None,
     table_name: Optional[str] = None,
     reset: bool = False,
-    batch_size: int = 64,
+    batch_size: int = 25,   # matches Chroma's buffer_size default; auto-halves on 413
 ) -> None:
     """
     Ingest TextNodes into PostgreSQL + pgvector.
@@ -137,7 +195,9 @@ def load_postgres(
     nodes_path  : path to a nodes.json file (used when *nodes* is None).
     table_name  : target table; falls back to config.postgres_table.
     reset       : if True, DROP and recreate the table before ingestion.
-    batch_size  : rows per INSERT batch.
+    batch_size  : texts per embedding request.  Defaults to 25 (same as the
+                  legacy Chroma loader) to stay within TEI's payload limit.
+                  Automatically halved on HTTP 413 / server error responses.
     """
     # ---- 1. Embeddings setup ------------------------------------------------
     setup(use_llm=False)
@@ -180,22 +240,40 @@ def load_postgres(
     for batch_start in range(0, total, batch_size):
         batch = nodes[batch_start: batch_start + batch_size]
 
-        # Embed texts
-        texts = [n.text for n in batch]
-        embeddings = embed_model.get_text_embedding_batch(texts, show_progress=False)
+        # Filter out invalid nodes (empty / non-string text) before embedding.
+        # Chroma does the same: "if not node.text or not isinstance(node.text, str): continue"
+        # The TEI server returns HTTP 413 even for a single chunk whose text is
+        # blank or whitespace-only after NUL removal, so we must drop them here.
+        valid_pairs = [
+            (n, _strip_nul(n.text))
+            for n in batch
+            if _is_valid_text(n.text)
+        ]
+        skipped = len(batch) - len(valid_pairs)
+        if skipped:
+            logger.warning("Skipping %d node(s) with empty/invalid text in this batch.", skipped)
+        if not valid_pairs:
+            continue
+
+        valid_nodes, texts = zip(*valid_pairs)   # unzip into two tuples
+
+        # Embed — retries with smaller sub-batches on 413 / server errors
+        embeddings = _embed_with_retry(embed_model, list(texts))
 
         rows = []
-        for node, embedding in zip(batch, embeddings):
+        for node, embedding, clean_text in zip(valid_nodes, embeddings, texts):
             promoted, rest = _split_metadata(node.metadata)
+            # Sanitise every string field — NUL (0x00) anywhere causes psycopg2 to raise
             rows.append((
-                node.node_id,                       # id
-                node.ref_doc_id,                    # doc_id
-                node.text,                          # text
-                embedding,                          # embedding  (list[float])
-                promoted.get("file_name"),          # file_name
-                promoted.get("user_id"),            # user_id
-                promoted.get("groups"),             # groups
-                Json(rest),                         # metadata JSONB
+                _strip_nul(node.node_id),                        # id
+                _strip_nul(node.ref_doc_id or ""),               # doc_id
+                clean_text,                                      # text (already cleaned)
+                embedding,                                       # embedding (list[float])
+                _strip_nul(promoted.get("file_name") or ""),     # file_name
+                _strip_nul(promoted.get("user_id") or ""),       # user_id
+                _strip_nul(promoted.get("groups") or ""),        # groups
+                Json({k: (_strip_nul(v) if isinstance(v, str) else v)
+                      for k, v in rest.items()}),                # metadata JSONB
             ))
 
         execute_values(
@@ -214,9 +292,7 @@ def load_postgres(
                 metadata  = EXCLUDED.metadata
             """,
             rows,
-            template=(
-                "(%s, %s, %s, %s::vector, %s, %s, %s, %s)"
-            ),
+            template="(%s, %s, %s, %s::vector, %s, %s, %s, %s)",
         )
         conn.commit()
         logger.info("Inserted batch %d–%d / %d",
@@ -268,7 +344,7 @@ if __name__ == "__main__":
         "--table_name",
         type=str,
         default="chat_dku_docs",
-        help="Target PostgreSQL table (default: config.postgres_table or 'chatdku')",
+        help="Target PostgreSQL table (default: 'chat_dku_docs')",
     )
     parser.add_argument(
         "--reset",
