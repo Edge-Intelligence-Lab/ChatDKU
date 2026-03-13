@@ -3,6 +3,8 @@
 from contextlib import nullcontext
 from dataclasses import dataclass
 from enum import Enum
+from time import perf_counter, time
+import traceback
 from typing import Any, Iterator, Mapping
 
 from openinference.instrumentation import safe_json_dumps
@@ -56,52 +58,73 @@ class BaseDocRetriever:
 
         Uses opentelemetry to track the query and the response.
         """
-        with (
-            config.tracer.start_as_current_span(self.__class__.__name__)
-            if hasattr(config, "tracer")
+        tracer = getattr(config, "tracer", None)
+        span_cm = (
+            tracer.start_as_current_span(self.__class__.__name__) 
+            if tracer 
             else nullcontext()
-        ) as span:
+        )
+
+        with span_cm as span:
             exclude = self.exclude
-            span.set_attributes(
-                {
-                    SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(
-                            query=query,
-                            exclude=exclude,
-                            user_id=self.user_id,
-                            search_mode=self.search_mode,
-                            files=self.files,
-                        )
-                    ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
+
+            # Guard: span can be None or a non-standard object depending on tracer setup
+            if hasattr(span, "set_attributes"):
+                span.set_attributes(
+                    {
+                        SpanAttributes.OPENINFERENCE_SPAN_KIND: OpenInferenceSpanKindValues.RETRIEVER.value,
+                        SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                            dict(
+                                query=query,
+                                exclude=exclude,
+                                user_id=self.user_id,
+                                search_mode=self.search_mode,
+                                files=self.files,
+                            )
+                        ),
+                        SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    }
             )
             retrieved_nodes = []
 
             try:
+                t0 = perf_counter()
                 retrieved_nodes = self.query(query)
-                span.set_attributes(nodes_to_OTLP(retrieved_nodes))
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(result=retrieved_nodes)
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                    }
+                dt = perf_counter() - t0
+
+                print(
+                    f"[retriever] {self.__class__.__name__} query_s={dt:.3f} "
+                    f"n={len(retrieved_nodes)} query='{query[:60]}'"
                 )
-                span.set_status(Status(StatusCode.OK))
+
+                if hasattr(span, "set_attributes"):
+                    span.set_attributes(nodes_to_OTLP(retrieved_nodes))
+                    span.set_attributes(
+                        {
+                            SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                                dict(result=retrieved_nodes)
+                            ),
+                            SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                        }
+                    )
+                if hasattr(span, "set_status"):
+                    span.set_status(Status(StatusCode.OK))
                 return retrieved_nodes
             except Exception as e:
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(result=str(e))
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                    }
-                )
-                span.set_status(Status(StatusCode.ERROR))
+                tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                print(f"[retriever][ERROR] {self.__class__.__name__}\n{tb}")
+
+                if hasattr(span, "record_exception"):
+                    span.record_exception(e)
+                if hasattr(span, "set_status"):
+                    span.set_status(Status(StatusCode.ERROR))                    
+                if hasattr(span, "set_attributes"):
+                    span.set_attributes(
+                        {
+                            SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(error=str(e))),
+                            SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                        }
+                    )
             return retrieved_nodes
 
 
