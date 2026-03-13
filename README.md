@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://www.docker.com/)
 
-[English](#) | [中文文档](./README_ZH.md)
+[English](./README_EN.md) | [中文文档](./README.md)
 
 </div>
 
