@@ -53,7 +53,9 @@
       "Bash(HF_ENDPOINT=https://hf-mirror.com CHROMA_HOST=localhost CHROMA_DB_PORT=8011 REDIS_HOST=localhost bash scripts/setup_agent_data.sh)",
       "Bash(HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 CHROMA_HOST=localhost CHROMA_DB_PORT=8011 REDIS_HOST=localhost bash scripts/setup_agent_data.sh)",
       "Bash(ls -la *.md)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "additionalDirectories": [
       "/home/ubuntu/ChatDKU/nginx"
