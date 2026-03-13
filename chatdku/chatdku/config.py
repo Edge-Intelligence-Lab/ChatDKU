@@ -73,10 +73,10 @@ class Config:
         self._store.update(
             {
                 # LLM
-                "llm": _env("LLM_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507"),
+                "llm": _env("LLM_MODEL", "Qwen/Qwen3.5-4B"),
                 "llm_url": _env("LLM_BASE_URL", "http://localhost:18085/v1"),
                 "llm_api_key": llm_api_key,
-                "backup_llm": _env("LLM_BACKUP_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507"),
+                "backup_llm": _env("LLM_BACKUP_MODEL", "Qwen/Qwen3.5-4B"),
                 "backup_llm_url": _env("LLM_BACKUP_BASE_URL", "http://localhost:18085/v1"),
                 "llm_temperature": _env_float("LLM_TEMPERATURE", 0.7),
                 "context_window": _env_int("LLM_CONTEXT_WINDOW", 32000),
@@ -85,7 +85,7 @@ class Config:
                 "embedding": _env("EMBEDDING_MODEL", "BAAI/bge-m3"),
                 "tokenizer": _env(
                     "TOKENIZER_PATH",
-                    "Qwen/Qwen3-8B",
+                    "Qwen/Qwen3.5-4B",
                 ),
                 "tei_url": _env("TEI_URL", "http://localhost:8080"),
                 # Reranker

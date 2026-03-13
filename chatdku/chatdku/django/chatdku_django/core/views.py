@@ -92,28 +92,22 @@ class UploadView(APIView):
             uploaded_file = serializer.validated_data["file_"]
             filename = f"{slugify(os.path.splitext(uploaded_file.name)[0])}.pdf"
 
-            user_folder = request.user.folder
-            relative_path = os.path.join(user_folder, filename)  # Relative path for default_storage
-            full_user_folder_path = os.path.join(settings.MEDIA_ROOT, user_folder)  # Absolute path
+            # Use shared upload folder instead of user-specific
+            upload_folder = "uploads"
+            relative_path = os.path.join(upload_folder, filename)
+            full_folder_path = os.path.join(settings.MEDIA_ROOT, upload_folder)
 
-            os.makedirs(full_user_folder_path, exist_ok=True)
+            os.makedirs(full_folder_path, exist_ok=True)
             saved_path = default_storage.save(relative_path, uploaded_file)
             saved_name = os.path.basename(saved_path)
 
             serializer.save(
                 data={
                     "filename":saved_name,
-                    "user":request.user,
                     "uploaded_time":now()
                 }
 
             )
-
-
-            # File upload queue with Redis and celery
-            netid = request.netid
-            enqueue_user_task(netid, user_folder_path=full_user_folder_path)
-            logger.info(f"Enqueued task for user: {netid}")
 
             return Response({"message": "File uploaded successfully"}, status=201)
 
@@ -122,10 +116,10 @@ class UploadView(APIView):
 
     def get(self,request):
         try:
-            docs=list(request.user.files.values_list("filename",flat=True))
-            netid=request.netid
+            # Return all uploaded files (no user filtering)
+            from core.models import UploadedFile
+            docs = list(UploadedFile.objects.values_list("filename", flat=True))
             return Response({
-                "netid":netid,
                 "document":docs
             },status=200)
         except Exception as e:

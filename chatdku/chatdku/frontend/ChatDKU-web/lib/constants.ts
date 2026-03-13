@@ -4,7 +4,6 @@ const dictationWsUrl =
   process.env.NEXT_PUBLIC_DICTATION_WS_URL || "ws://localhost:8007";
 
 export const API_ENDPOINTS = {
-    USER: `${apiBaseUrl}/user`,
     CHAT_DEFAULT: `${apiBaseUrl}/api/chat`,
     CHAT_DEV1: `${apiBaseUrl}/dev/ant/chat`,
     CHAT_DEV2: `${apiBaseUrl}/dev/qwen/chat`,

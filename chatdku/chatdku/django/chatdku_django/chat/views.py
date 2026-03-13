@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework import viewsets
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from chatdku.core.agent import Agent
 from django.http import StreamingHttpResponse
 from chatdku_django.celery import redis_client
@@ -97,8 +99,11 @@ PARAMETERS=[
         ]
         )
 )
+@method_decorator(csrf_exempt, name='dispatch')
 class ChatView(APIView):
     permission_classes=[IsAuthenticated]
+
+    @method_decorator(csrf_exempt)
     def post(self,request):
         
         messages = request.data.get("messages", [])
@@ -292,6 +297,7 @@ class FeedbackView(APIView):
 
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class=SessionSerializer
+    permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options","post"]
 
 
@@ -309,6 +315,11 @@ class SessionViewSet(viewsets.ModelViewSet):
     )
     @action(methods=["GET"], detail=False)
     def create_session(self, request):
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "Authentication required. Please provide UID header."},
+                status=401
+            )
         session = UserSession.objects.create(user=request.user)
         return Response(
             {"session_id": str(session.id)},

@@ -1,2 +1,49 @@
+# Models
 models/
+
+# Git
 .git/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Environment
+.env.local
+.env.backup
+
+# Logs
+logs/*.log
+*.log
+
+# Data
+data/
+*.pkl
+*.json.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+.next/
+out/
+
+# Docker
+*.pid

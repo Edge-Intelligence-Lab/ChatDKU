@@ -234,9 +234,9 @@ return response
 **Code quality**: Overlaps with ingestion code; could be refactored.
 
 ### 3.17 Django Backend (Primary)
-**Responsibility**: Auth, chat API, file upload, rate limiting, Celery tasks.
+**Responsibility**: Chat API, file upload, rate limiting, Celery tasks.
 **Interface**: `/api/chat`, `/api/feedback`, `/user/upload`, `/user/health`.
-**Logic**: NetID middleware, Redis locks for uploads, streaming responses from Agent.
+**Logic**: Redis locks for uploads, streaming responses from Agent, IP-based rate limiting.
 **Design choice**: Treat Django as primary production layer.
 **Dependencies**: Django, DRF, Celery, Redis, Prometheus.
 **Code quality**: Production-ready but testing coverage is thin.
@@ -395,7 +395,6 @@ All paths are absolute to guarantee full coverage.
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/Documentations/Database-Documentation.md` | Documents Redis and ChromaDB setup with Docker. Includes usage notes and password guidance. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/Documentations/Embedding-Server-Documentation.md` | Describes TEI embedding server setup and nginx routing. Lists valid model endpoints and metrics paths. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/Documentations/Prometheus-Monitoring-Documentation.md` | Explains Prometheus architecture, configuration paths, and sample queries. Details target services and alert setup. |
-| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/Documentations/Shibboleth.md` | Describes Shibboleth authentication integration and Apache config location. Emphasizes safe modification practices. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/utils/README.md` | Summarizes utility scripts in the utils directory. It is purely descriptive. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/utils/test_backend.sh` | Curl-based test script for `/chat` endpoint. Accepts port and optional query content. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/utils/test_feedback.sh` | Curl-based test script for feedback endpoint. Intended for quick API checks. |
@@ -488,7 +487,7 @@ All paths are absolute to guarantee full coverage.
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/routes.py` | Defines Flask routes for chat, feedback, upload, and audio. Streams responses from Agent. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/models.py` | SQLAlchemy models for feedback, requests, users, and uploads. Supports basic analytics. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/admin.py` | Flask-Admin views with Plotly charts for requests. Used in the admin dashboard. |
-| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/utils.py` | Helper functions for Shibboleth headers and allowed file extensions. Used in upload flow. |
+| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/utils.py` | Helper functions for allowed file extensions. Used in upload flow. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/app/templates/admin.html` | Jinja template for admin dashboard with Plotly graphs. Extends Flask-Admin base template. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/migrations/README` | Alembic migration readme. Documents database migration usage. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/backend/migrations/alembic.ini` | Alembic configuration file for migrations. Used by Flask backend. |
@@ -516,13 +515,13 @@ All paths are absolute to guarantee full coverage.
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/__init__.py` | Core app package marker. No logic. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/apps.py` | Core app startup initializes DSPy and Phoenix. Enables caching for performance. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/admin.py` | Django admin registration for users and uploads. Enforces superuser-only edits. |
-| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/models.py` | User and UploadedFile models with NetID hashing. Includes file deletion hook. |
+| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/models.py` | User and UploadedFile models. Includes file deletion hook. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/serializers.py` | Upload serializer validating PDF and size. Limits files to 10MB. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/views.py` | Upload and health endpoints. Uploads enqueue Celery tasks. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/urls.py` | Routes for upload and health endpoints. Attached under `/user/`. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/utils.py` | Slugify helper and admin email lookup. Used in uploads and notifications. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/middleware.py` | NetID authentication middleware. Injects user into request. |
-| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/rate_limit_middleware.py` | Sliding-window rate limiter with path-based policies. Adds rate limit headers. |
+| `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/rate_limit_middleware.py` | Sliding-window rate limiter with IP-based identification. Adds rate limit headers. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/set_enqueue.py` | Queues user tasks in Redis and triggers Celery. Prevents parallel uploads. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/set_lock.py` | Redis lock helper for mutual exclusion. Used by ingestion tasks. |
 | `/Users/glitterc/Desktop/CodeX_codes/ChatDKU_2_23/chatdku/chatdku/django/chatdku_django/core/tasks.py` | Celery tasks for user indexing, cleanup, and load tests. Includes retry logic. |
@@ -709,7 +708,7 @@ flowchart TD
 
 | Parameter | Default | Role |
 |---|---|---|
-| `llm` | `Qwen/Qwen3-30B-A3B-Instruct-2507` | Primary LLM model |
+| `llm` | `Qwen/Qwen3.5-4B` | Primary LLM model |
 | `llm_url` | `http://localhost:18085/v1` | LLM API base URL |
 | `embedding` | `BAAI/bge-m3` | Embedding model |
 | `tei_url` | `http://localhost:18080` | TEI endpoint |

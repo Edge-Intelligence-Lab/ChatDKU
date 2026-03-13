@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        libmagic-dev \
+        poppler-utils \
+        tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY chatdku/pyproject.toml /app/chatdku/
+COPY chatdku/chatdku/core /app/chatdku/chatdku/core
+COPY chatdku/chatdku/config.py /app/chatdku/chatdku/
+COPY chatdku/chatdku/setup.py /app/chatdku/chatdku/
+COPY chatdku/chatdku/__init__.py /app/chatdku/chatdku/
+COPY chatdku/chatdku/ingestion /app/chatdku/chatdku/ingestion
+
+RUN pip install --no-cache-dir -e /app/chatdku
+
+ENV PYTHONPATH=/app/chatdku
+
+WORKDIR /app
+
+CMD ["python", "-m", "chatdku.core.agent"]

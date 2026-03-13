@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "import_export",
     "corsheaders",
     "chat",
+    "stt",
     "django_celery_results",
     "django_celery_beat",
     "django_prometheus",
@@ -144,9 +145,9 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "core.middleware.NetIDMiddleware",
+    "core.auth_middleware.UIDAuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.rate_limit_middleware.RateLimitMiddleware",
@@ -186,6 +187,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_SCHEMA_CLASS":'drf_spectacular.openapi.AutoSchema',
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     # "PAGE_SIZE":20
@@ -343,3 +345,7 @@ RATE_LIMIT_PATH_MAPPINGS = {
     '/scrape/': 'strict',
     '/batch/': 'strict',
 }
+
+# Socket.IO / STT Settings
+WHISPER_MODEL_URI = os.getenv("WHISPER_MODEL_URI")
+STT_ENABLED = _env_bool("STT_ENABLED", False)

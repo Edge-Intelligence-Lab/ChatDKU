@@ -17,6 +17,21 @@ from typing import Dict, List, Optional
 from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
+import docx2txt
+
+try:
+    from pypdf import PdfReader
+except Exception:
+    PdfReader = None
+
+
+def _skip_parse_errors() -> bool:
+    return os.getenv("INGEST_SKIP_PARSE_ERRORS", "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _import_data(nodes_path: str) -> list:
@@ -241,15 +256,87 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
 def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     total_nodes = []
     llama_parse_api_key = os.getenv("LLAMA_PARSE_API_KEY")
-    if not llama_parse_api_key:
-        raise RuntimeError(
-            "LLAMA_PARSE_API_KEY is not set. Set it to enable PDF parsing."
-        )
-
     parser = SentenceSplitter(
         chunk_size=1024,
         chunk_overlap=20,
     )
+
+    # Fallback path: use local parser if LlamaParse API key is unavailable.
+    if not llama_parse_api_key:
+        print(
+            "Warning: LLAMA_PARSE_API_KEY is not set. "
+            "Falling back to local PDF parsing (quality may be lower)."
+        )
+        if PdfReader is not None:
+            for file_path in file_paths:
+                print(f"Reading: {file_path}")  # Debugging output
+                if not os.path.exists(file_path):
+                    print(f"Error: The directory '{file_path}' does not exist.")
+                    continue
+                try:
+                    pdf_reader = PdfReader(file_path)
+                    for page_idx, page in enumerate(pdf_reader.pages, start=1):
+                        text = page.extract_text() or ""
+                        text = text.strip()
+                        if not text:
+                            continue
+                        metadata = custom_metadata(user_id)(file_path)
+                        metadata["page_number"] = page_idx
+                        for chunk in parser.split_text(text):
+                            if not chunk:
+                                continue
+                            chunk_id = str(uuid.uuid4())
+                            metadata["chunk_id"] = chunk_id
+                            node = TextNode(
+                                text=chunk,
+                                id_=chunk_id,
+                                metadata=metadata,
+                            )
+                            total_nodes.append(node)
+                    print(f"Finished loading {file_path}.")
+                except Exception as e:
+                    if _skip_parse_errors():
+                        print(f"Failed to parse PDF with pypdf ({file_path}): {e}")
+                    else:
+                        raise RuntimeError(
+                            f"Failed to parse PDF with pypdf ({file_path}): {e}"
+                        ) from e
+        else:
+            print("pypdf is unavailable. Trying unstructured PDF fallback.")
+
+        if total_nodes:
+            return total_nodes
+
+        reader = UnstructuredReader()
+        try:
+            pdf_documents = SimpleDirectoryReader(
+                input_files=file_paths,
+                file_metadata=custom_metadata(user_id),
+                required_exts=[".pdf"],
+                file_extractor={".pdf": reader},
+            ).load_data(show_progress=True)
+
+            non_remote_nodes = IngestionPipeline(
+                transformations=[parser]
+            ).run(documents=pdf_documents, show_progress=True)
+
+            for node in non_remote_nodes:
+                if not node.text:
+                    continue
+                node.node_id = str(uuid.uuid4())
+                node.metadata["chunk_id"] = node.node_id
+                node.metadata.setdefault("page_number", "Not given.")
+                total_nodes.append(node)
+        except Exception as e:
+            if _skip_parse_errors():
+                print(f"Failed to parse PDFs with unstructured fallback: {e}")
+            else:
+                raise RuntimeError(
+                    f"Failed to parse PDFs with unstructured fallback: {e}"
+                ) from e
+
+        return total_nodes
+
     pdf_reader = LlamaParse(
         api_key=llama_parse_api_key,
         result_type="json",
@@ -289,18 +376,68 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
 def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
-    non_pdf_documents = SimpleDirectoryReader(
-        input_files=files,
-        file_metadata=custom_metadata(user_id),
-        required_exts=[".htm", ".html", ".csv", ".jpg", ".xlsx"],
-        file_extractor={
-            ".htm": reader,
-            ".html": reader,
-            ".csv": reader,
-            ".jpg": reader,
-            ".xlsx": xlsx_reader,
-        },
-    ).load_data(show_progress=True)
+    non_pdf_documents = []
+
+    for file_path in files:
+        metadata = custom_metadata(user_id)(file_path)
+        suffix = Path(file_path).suffix.lower()
+        try:
+            if suffix == ".docx":
+                text = docx2txt.process(file_path) or ""
+                text = text.strip()
+                if text:
+                    non_pdf_documents.append(
+                        Document(text=text, metadata=metadata or {})
+                    )
+                continue
+
+            if suffix == ".txt":
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    text = f.read().strip()
+                if text:
+                    non_pdf_documents.append(
+                        Document(text=text, metadata=metadata or {})
+                    )
+                continue
+
+            if suffix in {".htm", ".html"}:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    text = f.read().strip()
+                if text:
+                    non_pdf_documents.append(
+                        Document(text=text, metadata=metadata or {})
+                    )
+                continue
+
+            if suffix == ".csv":
+                df = pd.read_csv(file_path, dtype=str, encoding="utf-8", on_bad_lines="skip")
+                text = df.fillna("").to_csv(index=False)
+                text = text.strip()
+                if text:
+                    non_pdf_documents.append(
+                        Document(text=text, metadata=metadata or {})
+                    )
+                continue
+
+            if suffix == ".xlsx":
+                non_pdf_documents.extend(
+                    xlsx_reader.load_data(file=Path(file_path), extra_info=metadata)
+                )
+                continue
+
+            docs = SimpleDirectoryReader(
+                input_files=[file_path],
+                file_metadata=lambda _: metadata,
+                file_extractor={suffix: reader},
+            ).load_data(show_progress=False)
+            non_pdf_documents.extend(docs)
+        except Exception as e:
+            if _skip_parse_errors():
+                print(f"Failed to load file {file_path} with error: {e}. Skipping...")
+                continue
+            raise RuntimeError(
+                f"Failed to load file {file_path} with error: {e}"
+            ) from e
 
     pipeline = IngestionPipeline(
         transformations=[

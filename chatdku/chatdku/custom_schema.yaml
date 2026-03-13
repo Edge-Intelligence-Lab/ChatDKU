@@ -1,6 +1,6 @@
 index:
-  name: idx:chat_dku_advising
-  prefix: chat_dku_advising_doc
+  name: idx:chatdku
+  prefix: chatdku_doc
   key_separator: ':'
   storage_type: hash
 fields:

@@ -16,12 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from django.views.decorators.csrf import csrf_exempt
 import chat.urls
+import chat.views
 import core
 import core.urls
+import core.views
 from django.conf.urls.i18n import i18n_patterns
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-import chat
 
 from rest_framework.permissions import IsAdminUser
 
@@ -38,8 +40,12 @@ urlpatterns += i18n_patterns(
 #URL for ChatDKU django apps
 urlpatterns+=[
     path("user/",include(core.urls)),
-    path("api/",include(chat.urls))
-
+    path("api/",include(chat.urls)),
+    # 别名路由（Flask 兼容性）
+    path("chat", csrf_exempt(chat.views.ChatView.as_view()), name="chat_alias"),
+    path("feedback", csrf_exempt(chat.views.FeedbackView.as_view()), name="feedback_alias"),
+    path("upload", csrf_exempt(core.views.UploadView.as_view()), name="upload_alias"),
+    path("api/get_session", chat.views.SessionViewSet.as_view({'get': 'create_session'}), name="get_session"),
 ]
 #drf spectacular routes
 urlpatterns+= [

@@ -111,7 +111,7 @@ class DocumentIngestor:
         """Setup SGLang client for Qwen3 model"""
         # SGLang serves models via OpenAI-compatible API
         new_lm = dspy.OpenAI(
-            model="Qwen/Qwen3-8B",
+            model="Qwen/Qwen3.5-4B",
             api_base=self.args.sglang_url,
             api_key="dummy",
             model_type="chat",
@@ -482,8 +482,8 @@ Examples:
 
     parser.add_argument(
         "--model-name",
-        default="Qwen/Qwen3-8B",
-        help="Model name for SGLang (default: Qwen/Qwen3-8B)",
+        default="Qwen/Qwen3.5-4B",
+        help="Model name for SGLang (default: Qwen/Qwen3.5-4B)",
     )
 
     # Utility arguments

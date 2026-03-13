@@ -14,9 +14,7 @@ export interface Convo {
 
 export async function getNewSession(): Promise<string | null> {
   try {
-    const response = await fetch(API_ENDPOINTS.NEW_SESSION, {
-      credentials: "include",
-    });
+    const response = await fetch(API_ENDPOINTS.NEW_SESSION);
     if (!response.ok) {
       throw new Error("Failed to create new session");
     }
@@ -36,9 +34,7 @@ interface RawConversation {
 
 export async function getConversations(): Promise<Convo[]> {
   try {
-    const response = await fetch(API_ENDPOINTS.CONVERSATIONS, {
-      credentials: "include",
-    });
+    const response = await fetch(API_ENDPOINTS.CONVERSATIONS);
     if (!response.ok) {
       throw new Error("Failed to fetch conversations");
     }
@@ -59,9 +55,7 @@ export async function getSessionMessages(
   sessionId: string,
 ): Promise<Message[]> {
   try {
-    const response = await fetch(API_ENDPOINTS.SESSION_MESSAGES(sessionId), {
-      credentials: "include",
-    });
+    const response = await fetch(API_ENDPOINTS.SESSION_MESSAGES(sessionId));
     if (!response.ok) {
       throw new Error("Failed to fetch session messages");
     }

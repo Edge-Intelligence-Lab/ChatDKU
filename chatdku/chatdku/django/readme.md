@@ -48,10 +48,9 @@ chatdku_django/
 
 ```
 - [`chat/`](./chatdku_django/chat) is the chatapp for query and feedback.
-- [`core/`](./chatdku_django/core) is the user app for everything related to the 
+- [`core/`](./chatdku_django/core) is the user app for everything related to the
 user.
 - `*/views.py` contains routes for respective apps.
-- `*/middleware.py` checks for netid in the header.
 - `*/models.py` model for each app.
 - `*/admin.py` handles admin for the respective app
 - [`chatdku_django/celery.py`](./chatdku_django/chatdku_django/celery.py) uses `celery` for automation. Check [celery_docs](https://docs.celeryq.dev/en/latest/django/first-steps-with-django.html) for using it.
@@ -233,7 +232,7 @@ sudo kill -9 $(lsof -t -i :8000)
 To redeploy, you can refer [here](#production). You **do not** need to redeploy **Celery**
 
 ### 2.0.6. Additional Information
-- ChatDKU is using `PostgreSQL` to track files and users. We `DO NOT` store raw `netid` in the database. Instead, they are hashed using `SHA-256`. To view database port, run
+- ChatDKU is using `PostgreSQL` to track files and users. To view database port, run
 ```bash
 sudo ss -tulnp | grep postgres
 ```

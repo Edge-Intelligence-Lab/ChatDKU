@@ -1,0 +1,80 @@
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - sh
+      - -c
+      - >
+        if [ -n "$REDIS_PASSWORD" ]; then
+          exec redis-stack-server --requirepass "$REDIS_PASSWORD";
+        else
+          exec redis-stack-server;
+        fi
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - chatdku-agent
+
+  chromadb:
+    image: chromadb/chroma:latest
+    command:
+      - run
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+      - --path
+      - /data
+    ports:
+      - "8011:8010"
+    volumes:
+      - chroma-data:/data
+    networks:
+      - chatdku-agent
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    environment:
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:18085/v1}
+      LLM_MODEL: ${LLM_MODEL:-Qwen/Qwen3.5-4B}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
+      LLM_CONTEXT_WINDOW: ${LLM_CONTEXT_WINDOW:-32000}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
+      TOKENIZER_PATH: ${TOKENIZER_PATH:-Qwen/Qwen3.5-4B}
+      TEI_URL: ${TEI_URL:-http://host.docker.internal:8080}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_INDEX_NAME: ${REDIS_INDEX_NAME:-chatdku}
+      CHROMA_HOST: chromadb
+      CHROMA_DB_PORT: 8010
+      CHROMA_COLLECTION: ${CHROMA_COLLECTION:-chatdku_docs}
+      DATA_DIR: ${DATA_DIR:-./data}
+      NODES_PATH: ${NODES_PATH:-./data/nodes.json}
+      HF_ENDPOINT: ${HF_ENDPOINT:-https://hf-mirror.com}
+    depends_on:
+      - redis
+      - chromadb
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    stdin_open: true
+    tty: true
+    networks:
+      - chatdku-agent
+
+volumes:
+  redis-data:
+  chroma-data:
+
+networks:
+  chatdku-agent:
+    driver: bridge

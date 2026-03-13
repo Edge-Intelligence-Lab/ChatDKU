@@ -16,10 +16,10 @@ def mydeepcopy(self, memo):
 def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     """Setup common resources from command line arguments."""
     # A Text Embeddings Inference server is used to serve the embedding model
-    # The endpoint should be of the format [base_url]/[author]/[model_name]
     Settings.embed_model = TextEmbeddingsInference(
         model_name=config.embedding,
-        base_url=config.tei_url + "/" + config.embedding,
+        base_url=config.tei_url,
+        timeout=120,
     )
     print(f"Using embedding model {config.embedding}")
 

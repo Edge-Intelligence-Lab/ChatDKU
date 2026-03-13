@@ -80,7 +80,7 @@ class QueryCurriculumDB(dspy.Module):
 
             # lm = dspy.LM("ollama_chat/qwen3:4b", api_base="http://localhost:11434", api_key="")
             # new_lm = dspy.OpenAI(
-            #     model="Qwen/Qwen3-8B",
+            #     model="Qwen/Qwen3.5-4B",
             #     api_base="http://127.0.0.1:18085/v1/",
             #     api_key="dummy",
             #     model_type="chat",

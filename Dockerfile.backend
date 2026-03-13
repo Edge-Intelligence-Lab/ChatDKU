@@ -22,6 +22,6 @@ ENV PYTHONPATH=/app/chatdku:/app/chatdku/chatdku/backend
 
 WORKDIR /app/chatdku/chatdku/backend
 
-EXPOSE 9015
+EXPOSE 8007
 
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:9015", "app:app"]
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "-b", "0.0.0.0:8007", "app:app"]

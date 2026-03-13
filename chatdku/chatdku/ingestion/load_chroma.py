@@ -5,6 +5,15 @@ import json
 import chromadb
 import argparse
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
+import httpx
+from typing import Optional
+
+class HuggingFaceEmbeddingServerWithTimeout(HuggingFaceEmbeddingServer):
+    def __init__(self, url: str, api_key_env_var: Optional[str] = None, api_key: Optional[str] = None, timeout: float = 120.0):
+        super().__init__(url, api_key_env_var, api_key)
+        self._session = httpx.Client(timeout=timeout)
+        if self.api_key is not None:
+            self._session.headers.update({"Authorization": f"Bearer {self.api_key}"})
 
 # from llama_index.core import Settings
 # from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -74,8 +83,8 @@ def load_chroma(
 
     collection = chroma_db.get_or_create_collection(
         name=collection,
-        embedding_function=HuggingFaceEmbeddingServer(
-            url=f"{config.tei_url}/{config.embedding}/embed"
+        embedding_function=HuggingFaceEmbeddingServerWithTimeout(
+            url=f"{config.tei_url}/embed"
         ),
         metadata={
             "hnsw:batch_size": 512,
