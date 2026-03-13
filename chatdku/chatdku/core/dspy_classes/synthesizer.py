@@ -54,7 +54,7 @@ class SynthesizerSignature(dspy.Signature):
             Reference:
             - {Insert the source document name here}: {Present the URL here. 'No URL' if the source has no URL} {Follow up with page number}
 
-       - Remember to add the URL if the source has an URL.
+       - Remember to add the URL if the source (or its metadata) has an URL.
        - Never modify or change the source name or the source URL.
        - If there are duplicate resources, use only one of the duplicates.
        - Discard unused or irrelevant resources.
