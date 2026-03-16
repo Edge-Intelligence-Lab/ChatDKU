@@ -1,6 +1,7 @@
 from contextlib import suppress
-import time
+from time import perf_counter
 import traceback
+import uuid
 
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.reranker import rerank
@@ -46,50 +47,51 @@ def DocRetrieverOuter(
             try:
                 # Fixed budgets (do not rely on config having timeout fields)
                 overall_timeout_s = 10.0
+                rid = uuid.uuid4().hex[:8]
+                tagged_query = f"[rid={rid}] {semantic_query}"
+
                 reranker_guard_s = 0.35
                 reranker_cap_s = 2.0
 
-                t0 = time.time()
-                with timeout(overall_timeout_s) as ctx:
-                    vector_result = ctx.run(
-                        vector_retriever.query_with_tell, query=semantic_query
-                    )
-                    elapsed = time.time() - t0
+                t0 = perf_counter()
+                vector_result = vector_retriever.query_with_tell(query=tagged_query)
 
-                    # If retriever already returned an error payload, don't rerank
-                    if use_reranker and vector_result and all(
-                        isinstance(x, NodeWithScore) for x in vector_result
-                    ):
-                        remaining = overall_timeout_s - elapsed
-                        # Only rerank if we have enough time left
-                        if remaining > (reranker_guard_s + 0.2):
-                            # Temporarily cap reranker timeout based on remaining budget.
-                            # (Keep interface stable; don't assume config has reranker_timeout_s.)
-                            prev = getattr(config, "reranker_timeout_s", None)
-                            try:
-                                setattr(
-                                    config,
-                                    "reranker_timeout_s",
-                                    max(
-                                        0.2,
-                                        min(reranker_cap_s, remaining - reranker_guard_s),
-                                    ),
-                                )
-                                vector_result = rerank(
-                                    vector_result, semantic_query, reranker_top_n
-                                )
-                            finally:
-                                # restore if it existed
-                                if prev is None:
-                                    # best-effort: don't blow up if config is frozen
-                                    try:
-                                        delattr(config, "reranker_timeout_s")
-                                    except Exception:
-                                        pass
-                                else:
-                                    with suppress(Exception):
-                                        setattr(config, "reranker_timeout_s", prev)
-                        # else: skip rerank (degrade gracefully)
+                elapsed = perf_counter() - t0
+
+                # If retriever already returned an error payload, don't rerank
+                if use_reranker and vector_result and all(
+                    isinstance(x, NodeWithScore) for x in vector_result
+                ):
+                    remaining = overall_timeout_s - elapsed
+                    # Only rerank if we have enough time left
+                    if remaining > (reranker_guard_s + 0.2):
+                        # Temporarily cap reranker timeout based on remaining budget.
+                        # (Keep interface stable; don't assume config has reranker_timeout_s.)
+                        prev = getattr(config, "reranker_timeout_s", None)
+                        try:
+                            setattr(
+                                config,
+                                "reranker_timeout_s",
+                                max(
+                                    0.2,
+                                    min(reranker_cap_s, remaining - reranker_guard_s),
+                                ),
+                            )
+                            vector_result = rerank(
+                                vector_result, semantic_query, reranker_top_n
+                            )
+                        finally:
+                            # restore if it existed
+                            if prev is None:
+                                # best-effort: don't blow up if config is frozen
+                                try:
+                                    delattr(config, "reranker_timeout_s")
+                                except Exception:
+                                    pass
+                            else:
+                                with suppress(Exception):
+                                    setattr(config, "reranker_timeout_s", prev)
+                    # else: skip rerank (degrade gracefully)
 
             except ValueError as e:
                 vector_result.append(f"semantic_query had an input error: {e}")

@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import List
 
-from chatdku.core.tools.llama_index import DocRetrieverOuter
+from chatdku.core.tools.llama_index_pg import DocRetrieverOuter
 
 DocumentRetriever = DocRetrieverOuter({})
 
@@ -88,7 +88,7 @@ def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
         semantic_q, keyword_q = queries[query_idx]
 
         start_time = time.time()
-        results, internal = DocumentRetriever(semantic_q, keyword_q)
+        results, internal = DocumentRetriever(semantic_q)
         elapsed = time.time() - start_time
 
         success = True if len(results) == 10 else False
@@ -112,8 +112,8 @@ def test_concurrent_queries(num_users: int = 3, rounds: int = 3):
 
     # Execute queries concurrently
     with ThreadPoolExecutor(max_workers=num_users) as executor:
-        futures = []
         for round_num in range(rounds):
+            futures = [] # <-- reset per round
             for user_id in range(num_users):
                 future = executor.submit(user_query_task, user_id, round_num)
                 futures.append(future)
@@ -206,7 +206,7 @@ def test_same_query_concurrent(num_users: int = 3):
 
     def query_task(user_id: int):
         start = time.time()
-        docs, internal = DocumentRetriever(SAME_QUERY[0], SAME_QUERY[1])
+        docs, internal = DocumentRetriever(SAME_QUERY[0])
         elapsed = time.time() - start
         doc_len = len(docs)
         if doc_len == 10:

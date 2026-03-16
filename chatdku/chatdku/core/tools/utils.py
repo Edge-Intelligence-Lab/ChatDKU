@@ -2,16 +2,19 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from contextlib import contextmanager
+from time import perf_counter
 
 import pandas as pd
 
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 
+# Reuse a single executor to avoid creating unbounded threads under load.
+# Keep workers modest; tune if needed.
+_EXECUTOR = ThreadPoolExecutor(max_workers=8)
 
 class QueryTimeoutError(Exception):
     """Raised when a query exceeds the timeout limit."""
-
     pass
 
 
@@ -32,24 +35,30 @@ def timeout(seconds: int = 5):
 
     class TimeoutContext:
         def __init__(self):
-            self.executor = ThreadPoolExecutor(max_workers=1)
             self.future = None
 
         def run(self, func, *args, **kwargs):
-            self.future = self.executor.submit(func, *args, **kwargs)
+            t_submit = perf_counter()
+
+            def _wrapper():
+                t_start = perf_counter()
+                wait = t_start - t_submit
+
+                if wait > 0.5:
+                    print(f"[timeout] queued_for={wait:.3f}s func={getattr(func, '__name__', type(func).__name__)}")
+                return func(*args, **kwargs)
+
+            self.future = _EXECUTOR.submit(_wrapper)
             try:
                 return self.future.result(timeout=seconds)
             except FuturesTimeoutError:
+                # Best-effort cancellation (only cancels if not started)
+                if self.future is not None:
+                    self.future.cancel()                
                 raise QueryTimeoutError(f"Query exceeded {seconds} second timeout")
-            finally:
-                self.executor.shutdown(wait=False)
 
     ctx = TimeoutContext()
-    try:
-        yield ctx
-    finally:
-        if ctx.executor:
-            ctx.executor.shutdown(wait=False)
+    yield ctx
 
 
 def get_url(metadata: dict):

@@ -20,6 +20,7 @@ Performance fixes applied vs original:
 """
 
 from __future__ import annotations
+from time import perf_counter
 
 import psycopg2
 from psycopg2 import extensions as pg_ext
@@ -272,25 +273,55 @@ class PostgresRetriever(BaseDocRetriever):
           2) Sparse is best-effort (short timeout + error suppression)
           3) Fuse with RRF in Python
         """
+        t0 = perf_counter()
+
+        # 1) semaphore wait
+        t_sem0 = perf_counter()
         # Prevent connection storms / DB overload under concurrency.
         with _DB_QUERY_SEMAPHORE:
+            sem_wait = perf_counter() - t_sem0
+
+            # 2) pool wait
+            t_pool0 = perf_counter()        
             pool, conn = _borrow()
+            pool_wait = perf_counter() - t_pool0
+
             try:
+                # 3) dense/sparse + RRF
+                t_dense0 = perf_counter()
                 dense_hits = self._dense(conn, query)
+                dense_s = perf_counter() - t_dense0
 
                 sparse_hits: list[_Hit] = []
+                sparse_s = 0.0
                 if self.sparse_enabled:
+                    t_sparse0 = perf_counter()
                     # Best-effort: sparse may timeout or error; dense still returns.
                     with suppress(Exception):
                         sparse_hits = self._sparse(conn, query)
-
+                    sparse_s = perf_counter() - t_sparse0
+                
+                t_fuse0 = perf_counter()
                 fused = self._rrf_fuse(dense_hits, sparse_hits)
+                fuse_s = perf_counter() - t_fuse0
+
+                t_commit0 = perf_counter()
                 conn.commit()
+                commit_s = perf_counter() - t_commit0
+
             except Exception:
                 conn.rollback()
                 raise
             finally:
                 _return(pool, conn)
+        
+        total = perf_counter() - t0
+        print(
+            "[pg] "
+            f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "
+            f"dense={dense_s:.3f}s sparse={sparse_s:.3f}s fuse={fuse_s:.3f}s commit={commit_s:.3f}s "
+            f"total={total:.3f}s q='{query[:40]}'"
+        )
 
         results: list[NodeWithScore] = []
         for hit, score in fused:

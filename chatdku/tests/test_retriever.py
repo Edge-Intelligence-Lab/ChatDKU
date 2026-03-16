@@ -2,25 +2,25 @@ import time
 
 import pytest
 
-from chatdku.core.tools.llama_index import DocRetrieverOuter, QueryTimeoutError, timeout
+from chatdku.core.tools.llama_index_pg import DocRetrieverOuter, QueryTimeoutError, timeout
 from chatdku.setup import setup, use_phoenix
 
 setup()
-use_phoenix()
+# use_phoenix()
 DocRetriever = DocRetrieverOuter({})
 
 
 def test_valid_queries():
-    assert len(DocRetriever("How often should I visit my advisor?", "COMPSCI")[0]) == 10
+    assert len(DocRetriever("How often should I visit my advisor?")[0]) == 10
     assert (
         len(
             DocRetriever(
-                "How often should I visit my advisor?", ["COMPSCI", "ARTS AND MEDIA"]
+                "How often should I visit my advisor?"
             )[0]
         )
         == 10
     )
-    assert len(DocRetriever("How often should I visit my advisor?", "")[0]) == 5
+    assert len(DocRetriever("How often should I visit my advisor?")[0]) == 10
 
 
 def test_response_time():
@@ -58,10 +58,10 @@ def test_response_time():
 
     for i in range(len(SEMANTIC_QUERIES)):
         semantic_query = SEMANTIC_QUERIES[i]
-        keyword_query = KEYWORD_QUERIES[i]
+        # keyword_query = KEYWORD_QUERIES[i]
 
         start_time = time.time()
-        results, internal = DocRetriever(semantic_query, keyword_query)
+        results, internal = DocRetriever(semantic_query)
         elapsed = time.time() - start_time
 
         print(

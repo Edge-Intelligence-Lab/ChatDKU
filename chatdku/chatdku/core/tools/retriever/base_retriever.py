@@ -58,6 +58,7 @@ class BaseDocRetriever:
 
         Uses opentelemetry to track the query and the response.
         """
+        
         tracer = getattr(config, "tracer", None)
         span_cm = (
             tracer.start_as_current_span(self.__class__.__name__) 
@@ -89,14 +90,11 @@ class BaseDocRetriever:
 
             try:
                 t0 = perf_counter()
+                t_query0 = perf_counter()
                 retrieved_nodes = self.query(query)
-                dt = perf_counter() - t0
+                t_query = perf_counter() - t_query0
 
-                print(
-                    f"[retriever] {self.__class__.__name__} query_s={dt:.3f} "
-                    f"n={len(retrieved_nodes)} query='{query[:60]}'"
-                )
-
+                t_attrs0 = perf_counter()
                 if hasattr(span, "set_attributes"):
                     span.set_attributes(nodes_to_OTLP(retrieved_nodes))
                     span.set_attributes(
@@ -109,6 +107,15 @@ class BaseDocRetriever:
                     )
                 if hasattr(span, "set_status"):
                     span.set_status(Status(StatusCode.OK))
+                t_attrs = perf_counter() - t_attrs0
+
+                total = perf_counter() - t0
+                print(
+                    f"[retriever] {self.__class__.__name__} "
+                    f"query_s={t_query:.3f} attrs_s={t_attrs:.3f} "
+                    f"total_s={total:.3f} n={len(retrieved_nodes)} q='{query[:60]}'"
+                )
+
                 return retrieved_nodes
             except Exception as e:
                 tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
