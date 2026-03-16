@@ -39,7 +39,7 @@ def use_phoenix():
     phoenix_port = os.environ.get("PHOENIX_PORT", 6007)
     collector_endpoint = f"http://127.0.0.1:{phoenix_port}/v1/traces"
     tracer_provider = register(
-        project_name="ChatDKU_student_release",  # Default is 'default'
+        project_name="Mem0Test",
         auto_instrument=True,  # See 'Trace all calls made to a library' below
         endpoint=collector_endpoint,
         batch=True,
@@ -106,3 +106,6 @@ class DB:
                 ]  # full strings, named columns
             else:
                 return result.rowcount
+
+
+print("OTEL_TOKEN =", os.environ.get("OTEL_TOKEN"))
