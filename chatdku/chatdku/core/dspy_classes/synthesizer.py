@@ -15,7 +15,7 @@ from opentelemetry.trace import (
 )
 
 from chatdku.config import config
-from chatdku.core.dspy_classes.memory import ConversationMemory
+from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.prompt_settings import (
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,

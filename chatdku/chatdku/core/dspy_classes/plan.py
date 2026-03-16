@@ -107,10 +107,10 @@ def create_react_signature(signature: dspy.Signature, tools: list[Tool]):
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools, max_iterations=5):
+    def __init__(self, tools, signature=PlannerSignature, max_iterations=5):
         super().__init__()
 
-        react_signature, tools = create_react_signature(PlannerSignature, tools)
+        react_signature, tools = create_react_signature(signature, tools)
 
         self.tools = tools
         self.planner = dspy.Predict(react_signature)

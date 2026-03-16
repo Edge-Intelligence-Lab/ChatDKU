@@ -85,7 +85,6 @@ class PermanentMemory(dspy.Module):
             span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
             for idx in range(5):
-                planner_inputs["trajectory"] = trajectory
                 try:
                     plan = self._call_with_potential_conversation_truncation(
                         self.planner,

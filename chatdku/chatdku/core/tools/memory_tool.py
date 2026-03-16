@@ -12,7 +12,7 @@ class MemoryTools:
         # Setting up agent memory
         memory_config = {
             "vector_store": {
-                "provider": "chroma",
+                "provider": "chromadb",
                 "config": {
                     "collection_name": config.memory_collection,
                     "host": "localhost",
@@ -24,7 +24,7 @@ class MemoryTools:
                 "config": {
                     "model": config.llm,
                     "temperature": 0.1,
-                    "openai_base_url": config.llm_url + "/v1",
+                    "openai_base_url": config.llm_url,
                     "api_key": config.llm_api_key,
                 },
             },
@@ -33,7 +33,7 @@ class MemoryTools:
                 "config": {
                     "model": config.embedding,
                     "embedding_dims": 1024,
-                    "huggingface_base_url": config.tei_url + "/" + config.embedding,
+                    "huggingface_base_url": config.tei_url,
                 },
             },
         }
