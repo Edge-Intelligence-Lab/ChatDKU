@@ -59,6 +59,8 @@ class MemoryTools:
             str: The result of the operation.
         """
         try:
+            print(f"[DEBUG] Attempting to store memory for user_id={self.user_id}, session_id={self.session_id}")
+            print(f"[DEBUG] Content: {content}")
             self.memory.add(content, user_id=self.user_id, run_id=self.session_id)
             return f"Stored memory: {content}"
         except Exception as e:
@@ -128,3 +130,28 @@ class MemoryTools:
             return "Memory deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
+
+if __name__ == "__main__":
+    """
+    Debug block for testing MemoryTools independently of the rest of the system.
+    """
+    # user_id = "test_user"
+    # memory_tool = MemoryTools(user_id)
+    # print(memory_tool.store_memory("User's name is Bob."))
+    # print(memory_tool.store_memory("User's major is Cell and Molecular Biology."))
+    # print(memory_tool.search_memories("What is the user's major?"))
+    # print(memory_tool.get_all_memories())
+    
+    """
+    Mem0 quickstart example
+    """
+    # this times out with openai
+    m = Memory()
+    messages = [
+        {"role": "user", "content": "My name is Bob"},
+        {"role": "assistant", "content": "Hey Bob! I'll remember your interests."}
+    ]
+    m.add(messages, user_id="test_user")
+    results = m.search("What do you know about me?", filters={"user_id": "test_user"})
+    print(results)
+   
