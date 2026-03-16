@@ -83,11 +83,11 @@ WHISPER_MODEL_URI="http://10.200.14.82:8002"
 
 
 #DB
-USERNAME_DB="chatdku_user"
-NAME_DB="chatdku_db"
-PASSWORD_DB="securepassword123"
-HOST_DB="localhost"
-PORT_DB="5432"
+DB_USER="chatdku_user"
+DB_NAME="chatdku_db"
+DB_PASSWORD="securepassword123"
+DB_HOST="localhost"
+DB_PORT="5432"
 
 MEDIA_ROOT="/datapool/chatdku_user_storage/uploads"
 
