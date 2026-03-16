@@ -24,7 +24,7 @@ pip install arize-phoenix
 Run the following command, or set it in your .bashrc:
 
 ```bash
-export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6NCJ9.63j_N4wrKUZL4ZumPhqyM2svLifie-LwqFDqao7ZJrQ'
+export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6MyJ9.TTBhMzMyyevVPEQIGqVPbdzSW6V9QhnYQtErH-KCeqM'
 ``` 
 
 If Phoenix is not running, run:
