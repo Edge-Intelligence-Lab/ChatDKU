@@ -86,7 +86,6 @@ You can find more information about tracing [here](https://arize.com/docs/ax/obs
 Also, the opentelemetry [docs](https://opentelemetry.io/docs/languages/python/instrumentation/)
 
 ---
-- **Last Updated**: 2026-03-08
-- **Version**: 1.0.0 
+- **Last Updated**: 2026-03-16
 - **Maintainers**: Temuulen  
 - **Contact**: te100@duke.edu
