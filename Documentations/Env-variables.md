@@ -1,4 +1,8 @@
 # Delete this for public version
+
+Put these environment variables in your `.bashrc` or `.zshrc`.
+
+```
 export OPENAI_API_KEY='dummy'
 export PHOENIX_ENABLE_AUTH='True'
 export PHOENIX_SECRET='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6MyJ9.TTBhMzMyyevVPEQIGqVPbdzSW6V9QhnYQtErH-KCeqM'
@@ -16,3 +20,4 @@ export DB_PASSWORD="securepassword123"
 export DB_HOST="localhost"
 export DB_PORT="5432"
 export DB_NAME="chatdku_db"
+```
