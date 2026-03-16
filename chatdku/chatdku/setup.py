@@ -106,6 +106,3 @@ class DB:
                 ]  # full strings, named columns
             else:
                 return result.rowcount
-
-
-print("OTEL_TOKEN =", os.environ.get("OTEL_TOKEN"))
