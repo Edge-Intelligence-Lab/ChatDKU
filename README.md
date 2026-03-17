@@ -4,7 +4,7 @@
 
 **智能校园问答系统 | Agentic RAG System**
 
-https://github.com/Edge-Intelligence-Lab/ChatDKU/assets/video/in-depth%20chatdku%20promo%20video_v1.1.mp4
+<video src="https://github.com/Edge-Intelligence-Lab/ChatDKU/raw/main/video/in-depth%20chatdku%20promo%20video_v1.1.mp4" controls width="100%"></video>
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
