@@ -1,5 +1,5 @@
 from mem0 import Memory
-import os
+
 from chatdku.config import config
 
 
@@ -127,12 +127,4 @@ class MemoryTools:
             return "Memory deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
-   
-if __name__ == "__main__":
-    # Example usage
-    memory_tool = MemoryTools(user_id="user123")
-    print(memory_tool.store_memory("User's name is Bob."))
-    print(memory_tool.store_memory("User's major is Computer Science."))
-    print(memory_tool.search_memories("What is the user's name?"))
-    print(memory_tool.search_memories("what is the memory_id of the memory about user's major?"))
-    os._exit(0)
+ 
