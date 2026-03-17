@@ -59,8 +59,6 @@ class MemoryTools:
             str: The result of the operation.
         """
         try:
-            print(f"[DEBUG] Attempting to store memory for user_id={self.user_id}, session_id={self.session_id}")
-            print(f"[DEBUG] Content: {content}")
             self.memory.add(content, user_id=self.user_id, run_id=self.session_id)
             return f"Stored memory: {content}"
         except Exception as e:

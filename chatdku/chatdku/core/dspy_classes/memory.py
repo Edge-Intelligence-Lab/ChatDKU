@@ -31,7 +31,14 @@ class ConversationMemoryEntry(BaseModel):
 
 
 class PermanentMemorySignature(dspy.Signature):
-    """You are a Memory Management Agent. In each episode, you are given available tools.
+    """You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
+    
+    You have access to the following tools to manage the long-term memory:
+     - store_memory(content: str): Store the content in the long-term memory.
+     - update_memory(memory_id: str, new_content: str): Update the memory with the given memory_id to have the new_content.
+     - delete_memory(memory_id: str): Delete the memory with the given memory_id.
+     - finish(): stop when no action is needed
+   
     And you can see your past trajectory so far. Your goal is to use one or more of the
     supplied tools to store OR update OR delete any useful facts about the user from the
     most_recent_conversation.
@@ -44,10 +51,16 @@ class PermanentMemorySignature(dspy.Signature):
     For your convenience, all the user_memories are given to you. Based on the latest conversation,
     you may update any memory that needs updating and may also delete any memory that is no longer relevant.
 
+    Guidelines: 
+     - Avoid duplicate memories
+     - if a similar memory already exists, update it instead of creating a new one.
+     - Delete memories only if they are no longer relevant or if the information is incorrect. For example, if the user has changed their major, you should delete the old memory and store the new one.
+
     If the most_recent_conversation does not contain any useful information,
     you should immediately use "finish" tool.
     """
-
+    # need to tweak prompt to include guidelines for temp and long term memories
+    
     session_conversation: dict[str, str] = dspy.InputField()
     user_memories: list[str] = dspy.InputField()
     most_recent_conversation: dict[str, str] = dspy.InputField()
