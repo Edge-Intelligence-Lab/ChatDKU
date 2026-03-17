@@ -1,7 +1,7 @@
 from mem0 import Memory
 
 from chatdku.config import config
-
+import os
 
 class MemoryTools:
     """Tools for interacting with the Mem0 memory system."""
@@ -9,6 +9,7 @@ class MemoryTools:
     def __init__(self, user_id, session_id=""):
         self.user_id = user_id
         self.session_id = session_id
+        self.last_memory_search = []
         # Setting up agent memory
         memory_config = {
             "vector_store": {
@@ -91,9 +92,12 @@ class MemoryTools:
                 return "No relevant memories found."
 
             memory_text = "Relevant memories found:\n"
-            for i, result in enumerate(results["results"]):
-                memory_id = result["id"]
-                memory_text += f"{i}. {result['memory']} (ID: {memory_id})\n"
+            self.last_memory_search = results["results"]  # Store the last search results
+            for idx, result in enumerate(results["results"]):
+                print(result) # Debugging line to check the structure of the result
+                
+            for idx, result in enumerate(results["results"]): 
+                memory_text += f"{idx}. {result['memory']}\n" # store idx 
             return memory_text
         except Exception as e:
             return f"Error searching memories: {str(e)}"
@@ -112,19 +116,41 @@ class MemoryTools:
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
 
-    def update_memory(self, memory_id: str, new_content: str) -> str:
+    def update_memory(self, idx: int, new_content: str) -> str:
         """Update an existing memory."""
         try:
+            if(idx>=len(self.last_memory_search)):
+                return "Invalid memory index. Please search for memories again to get the correct index."
+            
+            memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
             self.memory.update(memory_id, new_content)
-            return f"Updated memory with new content: {new_content}"
+            
+            return f"Updated memory {idx} with new content: {new_content}"
         except Exception as e:
             return f"Error updating memory: {str(e)}"
 
-    def delete_memory(self, memory_id: str) -> str:
+    def delete_memory(self, idx: int) -> str:
         """Delete a specific memory."""
         try:
+            if(idx>=len(self.last_memory_search)):
+                return "Invalid memory index. Please search for memories again to get the correct index."
+            memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
+
             self.memory.delete(memory_id)
             return "Memory deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
- 
+
+if __name__ == "__main__":
+    # Example usage
+    user_id = "user123"
+    memory_tool = MemoryTools(user_id)
+    print(memory_tool.store_memory("User's name is Alice."))
+    print(memory_tool.search_memories("What is the user's name?"))
+    print(memory_tool.get_all_memories())
+
+    print(memory_tool.update_memory(0, "User's name is Bob."))
+    print(memory_tool.get_all_memories())
+
+    # print(memory_tool.delete_memory(0))
+    os._exit(0)
