@@ -90,9 +90,7 @@ class MemoryTools:
             if not results:
                 return "No relevant memories found."
 
-            memory_text = "Relevant memories found:\n"
-            for i, result in enumerate(results["results"]):
-                memory_text += f"{i}. {result['memory']}\n"
+            memory_text = "Relevant memories found:\n" + str(results["results"])
             return memory_text
         except Exception as e:
             return f"Error searching memories: {str(e)}"
@@ -106,9 +104,7 @@ class MemoryTools:
             if not results:
                 return "No memories found for this user."
 
-            memory_text = "All memories for user:\n"
-            for i, result in enumerate(results["results"]):
-                memory_text += f"{i}. {result['memory']}\n"
+            memory_text = "All memories for user:\n" + str(results["results"])
             return memory_text
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
@@ -128,4 +124,4 @@ class MemoryTools:
             return "Memory deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
-   
+
