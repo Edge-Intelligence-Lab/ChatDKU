@@ -16,6 +16,7 @@ from llama_index.core.schema import BaseNode, Document, TextNode
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from openpyxl import load_workbook
+from html_cleaner import HtmlCleaner
 
 from chatdku.config import config
 
@@ -25,6 +26,14 @@ def _import_data(nodes_path: str) -> list:
         datas = json.load(f)
     return [TextNode.from_dict(data) for data in datas]
 
+def load_event_files():
+    event_dir = config.event_path
+    result = []
+    for root, _, files in os.walk(event_dir):
+        for f in files:
+            path = os.path.join(root, f)
+            result.append(path)
+    return result
 
 def _write_data(nodes_path: str, data: list):
     with open(nodes_path, "w") as f:
@@ -191,11 +200,20 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
     with open(log_path, "r") as file:
         log = json.load(file)
 
-    for file in log["file_paths"][:]:
-        if file in removed_files:
-            log["file_paths"].remove(file)
+    new_list = []
+    for f in log["file_paths"]:
+        ### filtering event out
+        if f.startswith(config.event_path):
+            continue
+        if f not in removed_files:
+            new_list.append(f)
 
-    log["file_paths"].extend(added_files)
+    ### filtering event out
+    for f in added_files:
+        if not f.startswith(config.event_path):
+            new_list.append(f)
+
+    log["file_paths"] = new_list
 
     with open(log_path, "w") as file:
         json.dump(log, file)
@@ -216,7 +234,10 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
     if os.path.exists(log_path):
         with open(log_path, "r") as file:
             log = json.load(file)
-            previous_files = log.get("file_paths", [])
+            previous_files = [
+                f for f in log.get("file_paths", [])
+                if not f.startswith(config.event_path)
+            ]
     else:
         previous_files = []
         with open(log_path, "w") as file:
@@ -232,6 +253,7 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
                 os.path.abspath(file_path) == os.path.abspath(log_path)
                 or file_name.endswith(".json")
                 or file_name.endswith(".pkl")
+                or file_path.startswith(os.path.abspath(config.event_path))
             ):
                 continue
             current_files.append(os.path.abspath(file_path))
@@ -242,6 +264,22 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
 
     return added_files, removed_files
 
+def clean_expired_nodes(nodes):
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    kept = []
+    for n in nodes:
+        meta = n.metadata
+        if meta.get("is_event") is True:
+            exp = meta.get("expire_at")
+            if exp:
+                exp_dt = datetime.datetime.fromisoformat(exp.replace("Z", "+00:00"))
+                if exp_dt < now:
+                    # expired -> do not keep
+                    continue
+        kept.append(n)
+
+    return kept
 
 def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     total_nodes = []
@@ -290,13 +328,14 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
 def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
+    html_cleaner = HtmlCleaner()
     non_pdf_documents = SimpleDirectoryReader(
         input_files=files,
         file_metadata=custom_metadata(user_id),
         required_exts=[".htm", ".html", ".csv", ".jpg", ".xlsx"],
         file_extractor={
-            ".htm": reader,
-            ".html": reader,
+            ".htm": html_cleaner,
+            ".html": html_cleaner,
             ".csv": reader,
             ".jpg": reader,
             ".xlsx": xlsx_reader,
@@ -331,56 +370,74 @@ def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
 
     return non_pdf_nodes
 
+def update_events(user_id: str) -> list:
+    """Always re-read all event files and generate fresh event nodes."""
+    event_files = load_event_files()
+    event_nodes = _read_non_pdf(event_files, user_id)
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    expire = now + datetime.timedelta(days=7)  
+
+    for n in event_nodes:
+        n.metadata["is_event"] = True
+        n.metadata["expire_at"] = expire.isoformat().replace("+00:00", "Z")
+
+    return event_nodes
 
 def update(data_dir: str, user_id: str, verbose: bool = False):
-    added_files, removed_files = read_changes(data_dir)
+    # detect add/remove only in NON-EVENT dir
     nodes_path = os.path.join(data_dir, "nodes.json")
 
-    total_nodes = []
+     # load old nodes
+    if os.path.exists(nodes_path):
+        old_nodes = _import_data(nodes_path)
+    else:
+        old_nodes = []
 
+    # keep only non-event nodes
+    non_event_old = [n for n in old_nodes if not n.metadata.get("is_event")]
+    new_nodes = []
+
+    added_files, removed_files = read_changes(data_dir)
     if verbose:
         print(f"Files to be added: {added_files}")
         print(f"Files to be removed: {removed_files}")
 
-    if removed_files:
-        old_nodes = _import_data(nodes_path)
-
-        for node in old_nodes:
-            if node.metadata["file_name"] in removed_files:
-                continue
-            total_nodes.append(node)
-
-        old_nodes_dict = [node.to_dict() for node in total_nodes]
-
-        _write_data(nodes_path, old_nodes_dict)
-
-        print("Documents removal done!")
-
-    elif added_files:
-        if not total_nodes:
-            if os.path.exists(nodes_path):
-                total_nodes = _import_data(nodes_path)
-
+    # load newly added non-event files
+    if added_files:
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
         if non_pdf_files:
-            non_pdf_nodes = _read_non_pdf(non_pdf_files, user_id)
-            total_nodes += non_pdf_nodes
+            new_nodes.extend(_read_non_pdf(non_pdf_files, user_id))
 
         if pdf_files:
-            pdf_nodes = _read_pdf(pdf_files, user_id)
-            total_nodes += pdf_nodes
+            new_nodes.extend(_read_pdf(pdf_files, user_id))
 
-        nodes_dicts = [node.to_dict() for node in total_nodes]
+        print("Total added nodes:", len(new_nodes))
+    
+    # remove deleted non-event files
+    kept_nodes = []
+    for n in non_event_old:
+        file_path_meta = os.path.abspath(n.metadata.get("file_path", ""))
+        if file_path_meta not in removed_files:
+            kept_nodes.append(n)
+    print("Total kept nodes:", len(kept_nodes))
 
-        _write_data(nodes_path, nodes_dicts)
+    # combine non-event
+    non_event_nodes = kept_nodes + new_nodes
+    # now load events
+    event_nodes = update_events(user_id)
 
-        print("Documents add done!")
+    total_nodes = non_event_nodes + event_nodes
+    print("Total nodes:", len(total_nodes))
 
-    else:
-        print("No changes to be done!")
+    nodes_dicts = [node.to_dict() for node in total_nodes]
+
+    _write_data(nodes_path, nodes_dicts)
     write_changes(data_dir, added_files, removed_files)
+
+    print("Document load done!")
 
 
 def main(data_dir, user_id, verbose=False):
