@@ -5,12 +5,12 @@ import os
 import json
 import pandas as pd
 import json
-from benchmarks.seekbench.utils.qa_em import compute_score_f1
+from utils.qa_em import compute_score_f1
 import argparse
 
 parser=argparse.ArgumentParser()
-parser.add_argument("--file_path",help="Parquet fille with qa",default="benchmarks/seekbench/trace_eval/bulletin_qa.parquet")
-parser.add_argument("--output_path",help="description for output parsed traces",default="benchmarks/seekbench/trace_eval/seek_bench.jsonl")
+parser.add_argument("--file_path",help="Parquet fille with qa",default="trace_eval/bulletin_qa.parquet")
+parser.add_argument("--output_path",help="description for output parsed traces",default="trace_eval/seek_bench.jsonl")
 
 
 dotenv.load_dotenv()
@@ -105,17 +105,18 @@ def get_traces_and_export_jsonl(traces,input_file,output_file):
                     reasoning=json.loads(df.iloc[i].iloc[1])
                     answer=df.iloc[i].iloc[3]
 
-                    parsed_trace=reasoning_to_tags(reasoning,answer)
+                    parsed_trace = f"<|im_start|>assistant\n{reasoning_to_tags(reasoning,answer)}\n<|im_end|>"
                     score=compute_score_f1(qa['ground_truth'],answer)
 
                     result=({
                         'question':question,
                         'sequences_str':parsed_trace,
-                        'ground_truth':qa['ground_truth'],
-                        'reward':score
-                    })
-
-                    f.write(json.dumps(result)+'\n')
+                        'ground_truth':{'target': [qa['ground_truth']]},
+                        'reward':score,
+                        'is_correct': score == 1.0})
+                    
+                    f.write(json.dumps(result)+'\n'
+                    )
 
 
 def main():
@@ -125,14 +126,13 @@ def main():
         client=setup()
 
         traces=client.spans.get_spans_dataframe(
-        project_identifier="evals"
+        project_identifier="seekbench_eval"
         )
-
         get_traces_and_export_jsonl(traces=traces,input_file=args.file_path,output_file=args.output_path)
 
     finally:
         client.projects.delete(
-            project_name="evals"
+            project_name="seekbench_eval"
         )
 
 

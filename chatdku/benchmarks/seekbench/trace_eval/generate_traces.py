@@ -1,36 +1,44 @@
 from chatdku.core.agent import Agent
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 import dspy
-from openinference.instrumentation import dangerously_using_project
-from phoenix.otel import register
 import ray
 import argparse
+import torch
 
-parser=argparse.ArgumentParser()
-parser.add_argument("--file_path",help = "File path for parquet file (questions)",required = True)
+from openinference.instrumentation import dangerously_using_project
+from opentelemetry import trace
 
 
-# tracer_provider = register(
-#     project_name="evals"
-# )
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--file_path",
+    help="File path for parquet file (questions)",
+    required=True
+)
+
+num_gpu=torch.cuda.device_count() if (torch.cuda.device_count()>=1 and torch.cuda.device_count()<=4) else 0
 
 
 def read_questions_parquet(path: str) -> list[dict]:
-    ray.init(ignore_reinit_error=True)
     ds = ray.data.read_parquet(path)
     df = ds.to_pandas()
     records = df[["question", "max_iteration"]].to_dict(orient="records")
     return records[400:420:2]
 
 
-
-@ray.remote
+@ray.remote(num_gpus=num_gpu)
 def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
+
     from chatdku.config import config
     from chatdku.setup import setup, use_phoenix
 
     setup()
     use_phoenix()
+
+    print(f"Tracing setup completed for idx {idx}")
+    print(f"Using {num_gpu} gpu")
+
+
     lm = dspy.LM(
         model="openai/" + config.backup_llm,
         api_base=config.backup_llm_url,
@@ -39,9 +47,12 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
         max_tokens=config.context_window,
         temperature=config.llm_temperature,
     )
+
     dspy.configure(lm=lm)
+
     user_id = "ChatDKU"
     search_mode = 0
+
     tools = [
         KeywordRetrieverOuter(
             retriever_top_k=10,
@@ -62,49 +73,51 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
     ]
 
     print(f"----\n{idx+1}\n{question}\n status: pending\n----")
-    # with dangerously_using_project("evals"):
+
     agent = Agent(
         max_iterations=max_iterations,
         streaming=True,
         get_intermediate=False,
         tools=tools,
     )
-    responses_gen = agent(
-        current_user_message=question,
-    )
+
     full_response = ""
-    for r in responses_gen.response:
-        full_response += r
+
+    with dangerously_using_project("seekbench_eval"):
+
+        responses_gen = agent(
+            current_user_message=question,
+        )
+
+        for r in responses_gen.response:
+            full_response += r
 
     print(f"----\n{question}\nresponse: {full_response}\n status: done\n----")
 
+    trace.get_tracer_provider().force_flush()
+    trace.get_tracer_provider().shutdown()
 
 
 def run_multiple_agent(question: list[dict]) -> None:
-    ray.init(ignore_reinit_error=True)
-
 
     futures = [
-        _run_agent_remote.remote(idx, q['question'], q.get('max_iteration', 2))
+        _run_agent_remote.remote(idx, q["question"], q.get("max_iteration", 2))
         for idx, q in enumerate(question)
     ]
+
     ray.get(futures)
-
-    return
-
 
 
 def main():
-    args=parser.parse_args()
+    args = parser.parse_args()
 
-    qlist=args.file_path
 
-    records=read_questions_parquet(qlist)
+
+    ray.init(ignore_reinit_error=True)
+
+    records = read_questions_parquet(args.file_path)
 
     run_multiple_agent(question=records)
-
-    return
-
 
 
 if __name__ == "__main__":
