@@ -1,29 +1,30 @@
+import re
+
 import dspy
-
-from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
-from opentelemetry.trace import Status, StatusCode
 from openinference.semconv.trace import (
-    SpanAttributes,
-    OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
 )
+from opentelemetry.trace import Status, StatusCode
 
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
-    CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+    CURRENT_USER_MESSAGE_FIELD,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
     VERBOSE,
 )
-
-from chatdku.config import config
-import re
+from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import (
+    span_ctx_start,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
 
 
 def filter_judge(judge_str: str):
@@ -43,7 +44,8 @@ class JudgeSignature(dspy.Signature):
     or should you look for more information by making more tool calls.
     You should respond to the user when either
     (a) the given information is sufficient for answer the Current User Message or
-    (b) the Current User Message is ambiguous to the extent that further tool calls would not be helpful for answering it.
+    (b) the Current User Message is ambiguous to the extent that further tool calls
+        would not be helpful for answering it.
     Note that you should respond to the user if (b) holds, where you should ask for clarifications
     as opposed to answering the question itself.
     """
@@ -84,16 +86,7 @@ class Judge(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        with (
-            config.tracer.start_as_current_span("Judge")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attribute(
-                SpanAttributes.OPENINFERENCE_SPAN_KIND,
-                OpenInferenceSpanKindValues.CHAIN.value,
-            )
-
+        with span_ctx_start("Judge", OpenInferenceSpanKindValues.CHAIN) as span:
             judge_inputs = dict(
                 current_user_message=current_user_message,
                 conversation_history=conversation_memory.history_str(),
@@ -111,14 +104,15 @@ class Judge(dspy.Module):
                 }
             )
 
-            def _check_judge(args, pred: dspy.Prediction) -> float:
+            def _check_judge(pred: dspy.Prediction) -> float:
                 answer = filter_judge(pred.judgement)
 
                 if answer in ["Yes", "No"]:
                     return 1.0
                 else:
                     print(
-                        'Judgement should be either "Yes" or "No" (without quotes and first letter of each word capitalized).'
+                        'Judgement should be either "Yes" or "No"'
+                        "(without quotes and first letter of each word capitalized)."
                     )
                     return 0.0
 
@@ -135,10 +129,6 @@ class Judge(dspy.Module):
                         'Judgement not "Yes" or "No" after retries, default to "No" (`False`).'
                     )
             judgement = judgement_str == "Yes"
-
-            # FIXME: While OpenTelemetry allows Boolean values, Arize Phoenix has issue with it,
-            # as there is a part of the code that assumes the attribute to be a string.
-            # Here: https://github.com/Arize-ai/phoenix/blob/2eae8c5df25c4454352d4167b3435675db19ae75/src/phoenix/server/api/types/Span.py#L93
             span.set_attribute(SpanAttributes.OUTPUT_VALUE, str(judgement))
             span.set_status(Status(StatusCode.OK))
             return dspy.Prediction(judgement=judgement)

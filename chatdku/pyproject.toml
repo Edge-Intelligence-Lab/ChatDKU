@@ -10,10 +10,19 @@ authors = [
     { name="Yuxiang Lin", email="theta.lin@yandex.com" },
     { name="Cody Qin" },
     { name="Ningyuan Yang" },
+    { name="Temuulen Enkhtamir" },
+    { name="Anar Nyambayar" },
+    { name="Munish Lohani" },
+    { name="Zhiwei" },
+    { name="Youran Wang" },
+    { name="Zeyu Yu" },
+    { name="Jingxuan" },
+    { name="Ruihan Yin" },
+
 ]
 description = ""
 readme = ""
-requires-python = ">=3.10"
+requires-python = "<3.13, >=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -49,6 +58,7 @@ dependencies = [
     "pydub~=0.25.1",
     "python-ffmpeg~=2.0.12",
     "Flask-SQLAlchemy~=3.1.1",
+    "sqlalchemy",
     "Flask-Migrate~=4.1.0",
     "Flask-Admin~=1.6.1",
     "eventlet~=0.39.1",
@@ -76,6 +86,10 @@ dependencies = [
     "dotenv>=0.9.9",
     "locust>=2.39.0",
     "drf-spectacular[sidecar]",
+    "django-prometheus",
+    # Development
+    "pytest",
+    "pre-commit",
 ]
 
 [tool.setuptools]

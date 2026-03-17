@@ -1,39 +1,43 @@
 import dspy
-
-from contextlib import nullcontext
 from openinference.instrumentation import safe_json_dumps
-from opentelemetry.trace import Status, StatusCode
 from openinference.semconv.trace import (
-    SpanAttributes,
-    OpenInferenceSpanKindValues,
     OpenInferenceMimeTypeValues,
+    OpenInferenceSpanKindValues,
+    SpanAttributes,
 )
+from opentelemetry.trace import Status, StatusCode
 
-from chatdku.core.utils import token_limit_ratio_to_count, truncate_tokens_all
-from chatdku.core.dspy_common import get_template
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.tool_memory import ToolMemory
 from chatdku.core.dspy_classes.prompt_settings import (
-    CURRENT_USER_MESSAGE_FIELD,
     CONVERSATION_HISTORY_FIELD,
     CONVERSATION_SUMMARY_FIELD,
+    CURRENT_USER_MESSAGE_FIELD,
+    ROLE_PROMPT,
     TOOL_HISTORY_FIELD,
     TOOL_SUMMARY_FIELD,
-    ROLE_PROMPT,
 )
-
-
-from chatdku.config import config
+from chatdku.core.dspy_classes.tool_memory import ToolMemory
+from chatdku.core.dspy_common import get_template
+from chatdku.core.utils import (
+    span_ctx_start,
+    token_limit_ratio_to_count,
+    truncate_tokens_all,
+)
 
 
 class QueryRewriteSignature(dspy.Signature):
-    # 'You serve as an intelligent assistant, adept at facilitating users through complex, multi-hop reasoning across multiple documents.'
     """
-    You goal is to rewrite the current user's message in a way that fixes errors, adds relevant contextual information from the conversation_memory and tool_history and ultimately answers the user's question precisely and accurately.
-    Your rewritten query will be used to fetch information with search tools such as semantic search and keyword search.
-    Please understand the information gap between the currently known information and the target problem.
-    DON\’T generate queries which has been retrieved or answered.
+    You goal is to rewrite the current user's message in a way that fixes errors,
+    adds relevant contextual information from the conversation_memory and tool_history
+    and ultimately answers the user's question precisely and accurately.
+    Your rewritten query will be used to fetch information with search tools such as
+    semantic search and keyword search.
+    Please understand the information gap between the currently known information and
+    the target problem.
+    DON’T generate queries which has been retrieved or answered.
     """
+
+    role_prompt: str = ROLE_PROMPT
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
@@ -67,16 +71,7 @@ class QueryRewrite(dspy.Module):
         conversation_memory: ConversationMemory,
         tool_memory: ToolMemory,
     ):
-        with (
-            config.tracer.start_as_current_span("Query Rewrite")
-            if hasattr(config, "tracer")
-            else nullcontext()
-        ) as span:
-            span.set_attribute(
-                SpanAttributes.OPENINFERENCE_SPAN_KIND,
-                OpenInferenceSpanKindValues.CHAIN.value,
-            )
-
+        with span_ctx_start("Query Rewrite", OpenInferenceSpanKindValues.CHAIN) as span:
             rewrite_inputs = dict(
                 current_user_message=current_user_message,
                 conversation_history=conversation_memory.history_str(),

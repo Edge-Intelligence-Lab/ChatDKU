@@ -9,35 +9,33 @@ You can run `agent.py` to directly talk with out agent. In the first two argumen
 
 # About Agent
 
-The agent consists of 6 big DSPy sub-modules:
-- Query rewriter
+The agent consists of 4 big DSPy sub-modules:
 - Planner
-- Tool memory
 - Judge
 - Synthesizer
 - Conversation Memory
 
-Right now, we are NOT doing a true Agentic RAG. We have only 2 tools and doesn't really need the planner, but once we implement more tools we wil turn on the planner. 
+In the Planner, we have only 2 tools and doesn't really need the planner, but once we implement more tools we wil turn on the planner. 
 
-As of 2025-11-04, our pipeline is as the following:
+As of 2026-03-12, our pipeline is as the following:
 
 1. The previous conversation is loaded in if there is one.
-2. User message is sent to the Query rewriter.
-3. The rewritten query is used to retrieve documents from the `KeywordRetriever` and `VectorRetriever`.
-4. The Judge will check if additional retrieval is necessary or not.
-5. If it is needed, run Query rewriter again and retrieve documents that did not get retrieved (Done using the `internal_memory`).
-6. If not needed, the Synthesizer will use the retrieved documents, conversation history and the original query to give an answer.
-7. Return the answer to the user.
+2. The planner receives the available tools, prevous conversation, and the user message.
+3. The planner chooses a tool to use and its arguments.
+4. The tool will be executed. Then, the reasoning (thought), tool name, args, and the tool result (observation) is recorded in the trajectory dictionary.
+5. If more context is needed to answer the user message, the planner will iterate again with another tool call.
+6. If not needed, the planner will use the `finish` tool call to finish context retrieval.
+7. The trajectory is sent to the synthesizer to answer the user message.
 8. Summarize the answer and save it as `conversation_history` type.
 
 ## About Sub-modules
 
 All off these modules are using:
-- `span` to telemeterize the inputs and outputs to `Phoenix`, our analytical tool. 
+- `span` to telemeterize the inputs and outputs to `Phoenix`, our analytical tool. More info in [this documentation](/Documentations/Phoenix.md). 
 - truncation on inputs to accomodate for too much tokens if the model context window is small
 - DSPy [refinement](https://dspy.ai/api/modules/Refine/) to see if the model gave an answer in correct format (e.g. "Yes" or "No" for Judge).
 
-### Query rewriter
+### Query rewriter (NOT USED)
 
 This module's purpose is to:
 1. Clean the user query for any misspellings
@@ -51,30 +49,15 @@ This module's purpose is to:
 
 ### Planner
 
-> [!IMPORTANT]
-> This module is turned off for the time being as we only have 2 tools. Once more tools are implemented we will start usign this module.
-
 The "brain" of our agent. This module's responsibility is to plan the necessary tool calls, as well as, the tool's parameters for a successful **context retrieval**. 
 
 The **context retrieval** can be anything that is necessary for a succesful answer to the **user query**.
 
-> [!IMPORTANT]
-> Optimizing this module to multi-hop reasoning will give our agent huge accuracy boost. 
-> Also, creating more tools for specific purposes will make our agent more "capable".
-
 The current tools are here:
+https://github.com/Glitterccc/ChatDKU/blob/71d0415c8aa17636b56a93a8fedceb25386707bf/chatdku/chatdku/core/agent.py#L196-L213
 
-https://github.com/Glitterccc/ChatDKU/blob/ea80410cf8ebfce0b72bbe576ba8dbb4d0875fea/chatdku/chatdku/core/agent.py#L105-L122
 
 To create a tool please look at this issue https://github.com/Glitterccc/ChatDKU/issues/122.
-
-### Judge
-
-The Judge is there to check if the retrieved **context** is enough to answer the **user query**. 
-
-If it is **NOT** enough, the above mentioned sub-modules are called again to retrieve more **context**. This will loop for however many times the `max_iterations` is set to until the Judge deems the **context** is enough OR the loop ends.
-
-If it is enough, the retrieved **context** and the **user query** is passed to the Synthesizer. 
 
 ### Synthesizer
 
