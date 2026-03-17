@@ -91,15 +91,15 @@ class PermanentMemory(dspy.Module):
             "Permanent Memory",
             OpenInferenceSpanKindValues.AGENT,
         ) as span:
-            span.set_attribute("agent.name", "PermanentMemoryAgent")
-            span.set_attribute("input.value", safe_json_dumps(planner_inputs))
-
             for idx in range(self.max_calls):
                 planner_inputs = dict(
                     user_memories=self.memory.get_all_memories(),
                     most_recent_conversation=most_recent_conversation,
                     trajectory=trajectory,
                 )
+                # Recording the planner inputs
+                span.set_attribute("agent.name", "PermanentMemoryAgent")
+                span.set_attribute("input.value", safe_json_dumps(planner_inputs))
                 try:
                     plan = self._call_with_potential_conversation_truncation(
                         self.planner,
