@@ -234,10 +234,10 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-            )
+            ).response
             first_token = True
             print("Response:")
-            for r in responses_gen.response:
+            for r in responses_gen:
                 if first_token:
                     end_time = time.time()
                     print(f"first token时间:{end_time - start_time}")
@@ -247,7 +247,7 @@ def main():
 
             recent_conversation = [
                 {"role": "user", "content": current_user_message},
-                {"role": "assistant", "content": agent.prev_response},
+                {"role": "assistant", "content": responses_gen.get_full_response()},
             ]
             permanent_memory(
                 session_conversation=conversations,
