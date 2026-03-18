@@ -43,18 +43,28 @@ class MemoryTools:
 
     def store_memory(
         self,
-        content: str | list[dict[str, str]],
+        content: str | list[dict[str, str]], metadata: dict | None = None,
     ) -> str:
         """Store information in memory.
 
         Args:
             content: The fact to be stored in memory.
+            metadata: Metadata to be stored with the memory content.
             You should store information related to the user. For example it could be:
                 - name of the user
                 - user's major
                 - user's graduation year
                 - etc
             You should store the information you have asked from the user also.
+
+        In addition to storing memory content, you should extract metadata from the content and store it as well.
+        Metadata can include:
+        - category (e.g., academic, personal, preference)
+        - entities (e.g., course names, majors, locations)
+        - tags (keywords)
+        - time relevance (e.g., temporary, long-term)
+
+        Return metadata as a JSON dictionary when calling store_memory.
 
         Returns:
             str: The result of the operation.
@@ -93,9 +103,7 @@ class MemoryTools:
 
             memory_text = "Relevant memories found:\n"
             self.last_memory_search = results["results"]  # Store the last search results
-            for idx, result in enumerate(results["results"]):
-                print(result) # Debugging line to check the structure of the result
-                
+            
             for idx, result in enumerate(results["results"]): 
                 memory_text += f"{idx}. {result['memory']}\n" # store idx 
             return memory_text
@@ -132,9 +140,13 @@ class MemoryTools:
     def delete_memory(self, idx: int) -> str:
         """Delete a specific memory."""
         try:
-            if(idx>=len(self.last_memory_search)):
-                return "Invalid memory index. Please search for memories again to get the correct index."
-            memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
+            if not self.last_memory_search:
+                        return "No recent search results. Please search memories first."
+
+            if idx < 0 or idx >= len(self.last_memory_search):
+                return f"Invalid memory index {idx}. Valid range: 0 to {len(self.last_memory_search)-1}"
+
+            memory_id = self.last_memory_search[idx]["id"]
 
             self.memory.delete(memory_id)
             return "Memory deleted successfully."

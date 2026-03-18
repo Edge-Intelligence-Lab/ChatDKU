@@ -35,9 +35,15 @@ class PermanentMemorySignature(dspy.Signature):
 
     You have access to the following tools to manage the long-term memory:
      - store_memory(content: str): Store the content in the long-term memory.
-     - update_memory(memory_id: str, new_content: str): Update the memory with the given memory_id to have the new_content.
-     - delete_memory(memory_id: str): Delete the memory with the given memory_id.
+     - search_memories(query: str): Search for relevant memories based on the query
+     - update_memory(idx: int, new_content: str): Update the memory at the given index to have the new_content.
+     - delete_memory(idx: int): Delete the memory at the given index.
      - finish(): stop when no action is needed
+
+    When updating or deleting memories:
+     - First use the search_memories(query: str, limit: int) tool
+     - Then use the index (idx) from the search results to specify which memory to update or delete.
+     - Do NOT generate or guess memory IDs
 
     And you can see your past trajectory so far. Your goal is to use one or more of the
     supplied tools to store OR update OR delete any useful facts about the user from the
