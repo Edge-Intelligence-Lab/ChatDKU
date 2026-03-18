@@ -45,17 +45,20 @@ class MemoryTools:
         self,
         content: str | list[dict[str, str]], metadata: dict | None = None,
     ) -> str:
-        """Store information in memory.
+        """Store information in memory along with metadata.
 
         Args:
             content: The fact to be stored in memory.
-            metadata: Metadata to be stored with the memory content.
-            You should store information related to the user. For example it could be:
-                - name of the user
-                - user's major
-                - user's graduation year
-                - etc
-            You should store the information you have asked from the user also.
+            metadata: optional dictionary of metadata to associate with the memory.
+                      All metadata values must be a single primitive (str, int, float, bool), or None
+                      If you store multiple items(e.g., multiple tags), encode them as a comma-seperated string.
+
+        You should store information related to the user. For example it could be:
+            - name of the user
+            - user's major
+            - user's graduation year
+            - etc
+        You should store the information you have asked from the user also.
 
         In addition to storing memory content, you should extract metadata from the content and store it as well.
         Metadata can include:
@@ -64,13 +67,14 @@ class MemoryTools:
         - tags (keywords)
         - time relevance (e.g., temporary, long-term)
 
-        Return metadata as a JSON dictionary when calling store_memory.
+        Example Usage:
+        store_memory("The user's name is Alice.", metadata={"category": "personal", "entities": "name", "tags": "user_info"}, "time_relevance": "long-term"})
 
         Returns:
             str: The result of the operation.
         """
         try:
-            self.memory.add(content, user_id=self.user_id, run_id=self.session_id)
+            self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
             return f"Stored memory: {content}"
         except Exception as e:
             return f"Error storing memory: {str(e)}"
@@ -80,17 +84,14 @@ class MemoryTools:
         query: str,
         limit: int = 5,
     ) -> str:
-        """Search for long-term memories
-
-        This tool can also retrieve informations you have saved
-        in your previous conversations with the user.
+        """
+        Searches the user's long term memories
 
         Args:
-            query: The query to search for.
-            limit: The number of results to return.
+            query: The text string to search for in memory.
+            limit: The maximum number of relevant memories to return, defaults to 5
 
-        Returns:
-            str: The result of the operation.
+        Returns a formatted string with indicies and memory IDs for reference.
         """
         try:
             results = self.memory.search(
@@ -99,13 +100,20 @@ class MemoryTools:
                 limit=limit,
             )
             if not results:
+                self.last_memory_search = []  # Clear last search results if no results found
                 return "No relevant memories found."
 
-            memory_text = "Relevant memories found:\n"
             self.last_memory_search = results["results"]  # Store the last search results
-            
-            for idx, result in enumerate(results["results"]): 
-                memory_text += f"{idx}. {result['memory']}\n" # store idx 
+            memory_text = "Relevant memories found:\n"
+
+            for idx, mem in enumerate(results["results"]):
+                memory_text += (
+                    f"{idx}. Memory: {mem['memory']}\n"
+                    f"   ID: {mem['id']}\n"
+                    f"   Metadata: {mem.get('metadata')}\n"
+                    f"   Created: {mem['created_at']}\n"
+                    f"   Updated: {mem.get('updated_at')}\n"
+                ) 
             return memory_text
         except Exception as e:
             return f"Error searching memories: {str(e)}"
@@ -116,40 +124,41 @@ class MemoryTools:
         """Get all memories for the user."""
         try:
             results = self.memory.get_all(user_id=self.user_id)
-            if not results:
+            if not results or not results.get("results"):
                 return "No memories found for this user."
 
-            memory_text = "All memories for user:\n" + str(results["results"])
+            memory_text = "All memories for user:\n"
+            for i, memory in enumerate(results["results"]):
+                memory_text += (
+                    f"{i}. Memory: {memory['memory']}\n"
+                    f"   ID: {memory['id']}\n"
+                    f"   Metadata: {memory.get('metadata')}\n"
+                    f"   Created: {memory['created_at']}\n"
+                    f"   Updated: {memory.get('updated_at')}\n"
+                )
+
             return memory_text
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
 
-    def update_memory(self, idx: int, new_content: str) -> str:
+    def update_memory(self, idx: int, new_content: str, metadata: dict | None=None) -> str:
         """Update an existing memory."""
         try:
             if(idx>=len(self.last_memory_search)):
                 return "Invalid memory index. Please search for memories again to get the correct index."
             
             memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
-            self.memory.update(memory_id, new_content)
+            self.memory.update(memory_id, new_content, metadata=metadata)
             
             return f"Updated memory {idx} with new content: {new_content}"
         except Exception as e:
             return f"Error updating memory: {str(e)}"
 
-    def delete_memory(self, idx: int) -> str:
-        """Delete a specific memory."""
+    def delete_memory(self, memory_id: str) -> str:
+        """Delete a specific memory. Important: call search_memories first to get the memory_id, do NOT guess or generate memory IDs."""
         try:
-            if not self.last_memory_search:
-                        return "No recent search results. Please search memories first."
-
-            if idx < 0 or idx >= len(self.last_memory_search):
-                return f"Invalid memory index {idx}. Valid range: 0 to {len(self.last_memory_search)-1}"
-
-            memory_id = self.last_memory_search[idx]["id"]
-
             self.memory.delete(memory_id)
-            return "Memory deleted successfully."
+            return f"Memory with id:{memory_id} deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
 

@@ -37,13 +37,9 @@ class PermanentMemorySignature(dspy.Signature):
      - store_memory(content: str): Store the content in the long-term memory.
      - search_memories(query: str): Search for relevant memories based on the query
      - update_memory(idx: int, new_content: str): Update the memory at the given index to have the new_content.
-     - delete_memory(idx: int): Delete the memory at the given index.
+     - delete_memory(memory_id: str): Delete the memory with the given ID.
      - finish(): stop when no action is needed
 
-    When updating or deleting memories:
-     - First use the search_memories(query: str, limit: int) tool
-     - Then use the index (idx) from the search results to specify which memory to update or delete.
-     - Do NOT generate or guess memory IDs
 
     And you can see your past trajectory so far. Your goal is to use one or more of the
     supplied tools to store OR update OR delete any useful facts about the user from the
@@ -56,6 +52,12 @@ class PermanentMemorySignature(dspy.Signature):
 
     For your convenience, all the user_memories are given to you. Based on the latest conversation,
     you may update any memory that needs updating and may also delete any memory that is no longer relevant.
+
+    When updating or deleting memories:
+     1.  ALWAYS call search_memories first to get the relevant memories and their indices.
+     2.  Then use the index (idx) from the search results to specify which memory to update or delete.
+     3.  Memory IDs are for reference only. Do NOT generate or guess memory IDs.
+     3.  Only call one tool per turn and wait for the observation before next action
 
     Guidelines:
      - Avoid duplicate memories
@@ -79,6 +81,7 @@ class PermanentMemory(dspy.Module):
         self.memory = MemoryTools(user_id)
         tools = [
             self.memory.store_memory,
+            self.memory.search_memories,
             self.memory.delete_memory,
             self.memory.update_memory,
         ]
