@@ -1,6 +1,7 @@
 from mem0 import Memory
 
 from chatdku.config import config
+from chatdku.core.dspy_classes.prompt_settings import custom_fact_extraction_prompt
 import os
 
 class MemoryTools:
@@ -37,9 +38,10 @@ class MemoryTools:
                     "huggingface_base_url": config.tei_url + "/" + config.embedding,
                 },
             },
+            "custom_fact_extraction_prompt": custom_fact_extraction_prompt,
         }
 
-        self.memory = Memory.from_config(memory_config)
+        self.memory = Memory.from_config(config_dict=memory_config)
 
     def store_memory(
         self,
@@ -66,6 +68,8 @@ class MemoryTools:
         - entities (e.g., course names, majors, locations)
         - tags (keywords)
         - time relevance (e.g., temporary, long-term)
+        - relevance score (a numerical score indicating how important or relevant the memory is, on a scale from 0 to 1)
+        - last referenced (timestamp of when the memory was last referenced, can be used to determine recency)
 
         Example Usage:
         store_memory("The user's name is Alice.", metadata={"category": "personal", "entities": "name", "tags": "user_info"}, "time_relevance": "long-term"})
