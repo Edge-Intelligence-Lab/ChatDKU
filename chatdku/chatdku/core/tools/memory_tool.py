@@ -83,6 +83,7 @@ class MemoryTools:
         self,
         query: str,
         limit: int = 5,
+        filters: dict | None = None,
     ) -> str:
         """
         Searches the user's long term memories
@@ -90,14 +91,23 @@ class MemoryTools:
         Args:
             query: The text string to search for in memory.
             limit: The maximum number of relevant memories to return, defaults to 5
+            filters: Optional dictionary of metadata filters to apply to the search.
+                     Example: 
+                     {
+                        "category": "academic",
+                        "entities": "Bio110",
+                        "time_relevance": "long-term"
+                        "tags": "course_info"
+                     }
 
-        Returns a formatted string with indicies and memory IDs for reference.
+        Returns a formatted string with indicies, ID's, and metadata.
         """
         try:
             results = self.memory.search(
                 query,
                 user_id=self.user_id,
                 limit=limit,
+                filters=filters
             )
             if not results:
                 self.last_memory_search = []  # Clear last search results if no results found
@@ -111,8 +121,6 @@ class MemoryTools:
                     f"{idx}. Memory: {mem['memory']}\n"
                     f"   ID: {mem['id']}\n"
                     f"   Metadata: {mem.get('metadata')}\n"
-                    f"   Created: {mem['created_at']}\n"
-                    f"   Updated: {mem.get('updated_at')}\n"
                 ) 
             return memory_text
         except Exception as e:
@@ -141,14 +149,14 @@ class MemoryTools:
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
 
-    def update_memory(self, idx: int, new_content: str, metadata: dict | None=None) -> str:
+    def update_memory(self, idx: int, new_content: str, ) -> str:
         """Update an existing memory."""
         try:
             if(idx>=len(self.last_memory_search)):
                 return "Invalid memory index. Please search for memories again to get the correct index."
             
             memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
-            self.memory.update(memory_id, new_content, metadata=metadata)
+            self.memory.update(memory_id, new_content)
             
             return f"Updated memory {idx} with new content: {new_content}"
         except Exception as e:
