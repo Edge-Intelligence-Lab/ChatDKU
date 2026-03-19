@@ -26,6 +26,7 @@ def _import_data(nodes_path: str) -> list:
         datas = json.load(f)
     return [TextNode.from_dict(data) for data in datas]
 
+
 def load_event_files():
     event_dir = config.event_path
     result = []
@@ -34,6 +35,7 @@ def load_event_files():
             path = os.path.join(root, f)
             result.append(path)
     return result
+
 
 def _write_data(nodes_path: str, data: list):
     with open(nodes_path, "w") as f:
@@ -235,7 +237,8 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
         with open(log_path, "r") as file:
             log = json.load(file)
             previous_files = [
-                f for f in log.get("file_paths", [])
+                f
+                for f in log.get("file_paths", [])
                 if not f.startswith(config.event_path)
             ]
     else:
@@ -264,6 +267,7 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
 
     return added_files, removed_files
 
+
 def clean_expired_nodes(nodes):
     now = datetime.datetime.now(datetime.timezone.utc)
 
@@ -281,16 +285,16 @@ def clean_expired_nodes(nodes):
 
     return kept
 
+
 def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     total_nodes = []
-    llama_parse_api_key = "llx-6IAg1KqUtB2S3nfMrlWujujfSEU9N3kCerJDXHQrDKtkVcs7"
 
     parser = SentenceSplitter(
         chunk_size=1024,
         chunk_overlap=20,
     )
     pdf_reader = LlamaParse(
-        api_key=llama_parse_api_key,
+        api_key=config.llamaparse_api,
         result_type="json",
         verbose=True,
         disable_image_extraction=True,
@@ -370,13 +374,14 @@ def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
 
     return non_pdf_nodes
 
+
 def update_events(user_id: str) -> list:
     """Always re-read all event files and generate fresh event nodes."""
     event_files = load_event_files()
     event_nodes = _read_non_pdf(event_files, user_id)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    expire = now + datetime.timedelta(days=7)  
+    expire = now + datetime.timedelta(days=7)
 
     for n in event_nodes:
         n.metadata["is_event"] = True
@@ -384,11 +389,12 @@ def update_events(user_id: str) -> list:
 
     return event_nodes
 
+
 def update(data_dir: str, user_id: str, verbose: bool = False):
     # detect add/remove only in NON-EVENT dir
     nodes_path = os.path.join(data_dir, "nodes.json")
 
-     # load old nodes
+    # load old nodes
     if os.path.exists(nodes_path):
         old_nodes = _import_data(nodes_path)
     else:
@@ -415,7 +421,7 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
             new_nodes.extend(_read_pdf(pdf_files, user_id))
 
         print("Total added nodes:", len(new_nodes))
-    
+
     # remove deleted non-event files
     kept_nodes = []
     for n in non_event_old:
