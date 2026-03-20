@@ -1,10 +1,11 @@
-DROP TABLE IF EXISTS curriculum CASCADE;
-DROP TYPE IF EXISTS season;
-DROP TYPE IF EXISTS first_or_second;
-DROP TYPE IF EXISTS attribute;
+-- DROP TABLE IF EXISTS curriculum CASCADE;
+-- DROP TYPE IF EXISTS season;
+-- DROP TYPE IF EXISTS first_or_second;
+-- DROP TYPE IF EXISTS attribute;
 
-CREATE TYPE season AS ENUM('spring', 'summer', 'fall');
-CREATE TYPE first_or_second AS ENUM('first', 'second', 'third', 'fourth', 'mini-term');
+-- CREATE TYPE season AS ENUM('spring', 'summer', 'fall');
+-- CREATE TYPE first_or_second AS ENUM('first', 'second', 'third', 'fourth', 'mini-term');
+-- CREATE TYPE attribute AS ENUM('two-credit-writing', 'ah-foundations', 'chinese-student-requirements', 'common-core', 'language', 'ns-foundations', 'quantitative-reasoning', 'ss-foundations', 'signature-projects');
 
 CREATE TABLE curriculum (
     class_id SERIAL PRIMARY KEY,
@@ -45,5 +46,5 @@ CREATE TABLE curriculum (
     assignment_policy TEXT,
     communication_policy TEXT,
     teaching_methods TEXT,
-    late_submission_policy TEXT,
+    late_submission_policy TEXT
 );

@@ -1,0 +1,10 @@
+2026-03-19 17:43:04,511 - INFO - Document Ingestor started
+2026-03-19 17:43:04,527 - INFO - Connected to PostgreSQL database: chatdku_db
+2026-03-19 17:43:04,528 - INFO - SGLang client configured for: http://localhost:8000/v1
+2026-03-19 17:43:04,528 - ERROR - Failed to load schema: [Errno 2] No such file or directory: 'classes_schema.json'
+2026-03-19 17:44:13,434 - INFO - Document Ingestor started
+2026-03-19 17:44:13,453 - INFO - Connected to PostgreSQL database: chatdku_db
+2026-03-19 17:44:13,454 - INFO - SGLang client configured for: http://localhost:8000/v1
+2026-03-19 17:44:13,454 - INFO - Schema loaded from: /home/pomegranar/ChatDKU-main/chatdku/chatdku/core/tools/syllabi_tool/classes_schema.json
+2026-03-19 17:44:13,455 - INFO - No PDF or DOCX files found in pool directory or its subdirectories
+2026-03-19 17:44:13,455 - INFO - Database connection closed
