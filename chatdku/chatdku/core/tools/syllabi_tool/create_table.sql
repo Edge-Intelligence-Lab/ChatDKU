@@ -8,7 +8,7 @@
 
 CREATE TABLE curriculum (
     class_id SERIAL PRIMARY KEY,
-    course_code VARCHAR(20) NOT NULL,
+    course_code VARCHAR(40) NOT NULL,
     course_title TEXT,
     credit_hours NUMERIC(3,1),
     course_format TEXT,
