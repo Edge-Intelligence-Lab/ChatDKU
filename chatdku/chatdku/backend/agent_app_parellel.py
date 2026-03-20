@@ -88,9 +88,10 @@ def chat():
         # Stream the responses
         def generate():
             for response in responses_gen.response:
-                yield f"{response}"
+                #yield f"{response}"
+                yield f"{response}\n\n" # SSE format
 
-        return Response(stream_with_context(generate()), content_type="text/plain")
+        return Response(stream_with_context(generate()), content_type="text/event-stream")#not text/plain
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -110,6 +111,7 @@ def ollama_response(data):
                 + data,
             },
         ],
+        stream=True,
     )
     return response.message.content
 
