@@ -7,10 +7,13 @@ import pandas as pd
 import json
 from utils.qa_em import compute_score_f1
 import argparse
+import uuid
 
 parser=argparse.ArgumentParser()
-parser.add_argument("--file_path",help="Parquet fille with qa",default="trace_eval/bulletin_qa.parquet")
-parser.add_argument("--output_path",help="description for output parsed traces",default="trace_eval/seek_bench.jsonl")
+parser.add_argument("--file_path",help="Parquet file with qa",default="trace_eval/bulletin_qa.parquet")
+parser.add_argument("--output_path",help="description for output parsed traces",default="outputs/raw_traces.jsonl")
+parser.add_argument("--model", help="Model name to record in the output traces", default="Unknown")
+parser.add_argument("--dataset", help="Dataset name to record in the output traces", default="Unknown")
 
 
 dotenv.load_dotenv()
@@ -86,7 +89,7 @@ def reasoning_to_tags(reasoning: dict, output: str) -> str:
 
 
 
-def get_traces_and_export_jsonl(traces,input_file,output_file):
+def get_traces_and_export_jsonl(traces,input_file,output_file,model,dataset):
 
     with open(output_file,'w') as f:
         qa_pairs=import_parquet(input_file)
@@ -107,12 +110,16 @@ def get_traces_and_export_jsonl(traces,input_file,output_file):
 
                     parsed_trace = f"<|im_start|>assistant\n{reasoning_to_tags(reasoning,answer)}\n<|im_end|>"
                     score=compute_score_f1(qa['ground_truth'],answer)
+                    id_=str(uuid.uuid4())
 
                     result=({
+                        'id':id_,
                         'question':question,
                         'sequences_str':parsed_trace,
                         'ground_truth':{'target': [qa['ground_truth']]},
                         'reward':score,
+                        'model':model,
+                        'dataset':"ChatDKU",
                         'is_correct': score == 1.0})
                     
                     f.write(json.dumps(result)+'\n'
@@ -128,7 +135,7 @@ def main():
         traces=client.spans.get_spans_dataframe(
         project_identifier="seekbench_eval"
         )
-        get_traces_and_export_jsonl(traces=traces,input_file=args.file_path,output_file=args.output_path)
+        get_traces_and_export_jsonl(traces=traces,input_file=args.file_path,output_file=args.output_path,model=args.model,dataset=args.dataset)
 
     finally:
         client.projects.delete(

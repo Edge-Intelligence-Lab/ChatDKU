@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 import logging
 import asyncio
+import uuid
 try:
     from .prompts import (
         generate_ontology_description,
@@ -615,6 +616,8 @@ async def main():
     parser.add_argument("--ontology_file", default=DEFAULT_ONTOLOGY_PATH, help="Path to the ontology JSON file.")
     parser.add_argument("--concurrency", type=int, default=30, help="Number of concurrent requests to OpenAI.")
     parser.add_argument("--model", default="gpt-4.1-mini", help="Model to use for annotation.")
+    parser.add_argument("--agent_model", default="Qwen3-30B-A3B-Instruct-2507", help="Model to use by the agent")
+    parser.add_argument("--dataset", default="ChatDKU", help="dataset for evaluation")
     args = parser.parse_args()
 
     try:
@@ -639,6 +642,8 @@ async def main():
                 ground_truth = trace_data.get('ground_truth')
                 question = trace_data.get('question') # <-- Get the question
 
+
+
                 # Pass the question to the annotation function
                 processed_trace = await annotate_trace(processed_trace, ontology, ontology_lock, ground_truth, question=question, model=args.model)
 
@@ -655,6 +660,16 @@ async def main():
         for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Annotating Traces"):
             result = await future
             if result:
+                id_=uuid.uuid4()
+                result.update(
+                    {
+                        'dataset':args.dataset,
+                        'model':args.agent_model,
+                        'id':str(id_)
+                    }
+                )
+
+
                 outfile.write(json.dumps(result) + '\n')
 
     try:

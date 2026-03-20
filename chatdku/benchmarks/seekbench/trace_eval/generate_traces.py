@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--file_path",
     help="File path for parquet file (questions)",
-    required=True
+    default="trace_eval/bulletin_qa.parquet"
 )
 
 num_gpu=torch.cuda.device_count() if (torch.cuda.device_count()>=1 and torch.cuda.device_count()<=4) else 0
