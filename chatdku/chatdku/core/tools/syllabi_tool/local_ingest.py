@@ -12,31 +12,30 @@ import json
 import logging
 import getpass
 from pathlib import Path
-from datetime import datetime
 import hashlib
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, Optional
 import re
 
 # Third-party imports
 import psycopg2
-import psycopg2.extras
 from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import pymupdf  # PyMuPDF for PDF parsing
 import pdfplumber  # Alternative PDF parser for complex layouts
-# from docx import Document  # python-docx for DOCX parsing
-import requests
+
+from docx import Document  # python-docx for DOCX parsing
+
+from markitdown import DocumentConverter
 from jsonschema import validate, ValidationError
 import dspy
 
-from chatdku.config import config 
-
+from chatdku.config import config
 
 curriculum_context = (
     "Course attribute must be a list of the following string values: [two-credit-writing, ah-foundations, chinese-student-requirements, common-core, language, ns-foundations, quantitative-reasoning, ss-foundations, signature-projects]",
     "Course code must have a space between the label and number.",
-    ""
-    )
+    "",
+)
 
 
 def remove_think_section(text: str) -> str:
@@ -67,7 +66,7 @@ class DocumentIngestor:
         self.load_schema()
         self.logger.info("Creating cursor.")
         self.cursor = self.conn.cursor()
-
+        self.docx_converter = DocumentConverter
 
     def setup_logging(self):
         """Setup logging to file in the pool directory"""
@@ -206,36 +205,42 @@ class DocumentIngestor:
         return text_content.strip()
 
     # def extract_docx_content(self, file_path: Path) -> str:
-    #     """Extract text content from DOCX file"""
-    #     try:
-    #         doc = Document(str(file_path))
-    #         text_content = []
+    #     # self.docx_converter.convert(self, file_stream=open(file_path, 'w'), stream_info=)
 
-    #         # Extract paragraphs
-    #         for paragraph in doc.paragraphs:
-    #             if paragraph.text.strip():
-    #                 text_content.append(paragraph.text.strip())
+    #     return ""
 
-    #         # Extract table content
-    #         for table in doc.tables:
-    #             for row in table.rows:
-    #                 row_text = []
-    #                 for cell in row.cells:
-    #                     cell_text = cell.text.strip()
-    #                     if cell_text:
-    #                         row_text.append(cell_text)
-    #                 if row_text:
-    #                     text_content.append(" | ".join(row_text))
+    def extract_docx_content(self, file_path: Path) -> str:
+        """Extract text content from DOCX file"""
+        try:
+            doc = Document(str(file_path))
+            text_content = []
 
-    #         result = "\n".join(text_content)
-    #         self.logger.info(f"Extracted text from DOCX file: {file_path.name}")
-    #         return result
+            # Extract paragraphs
+            for paragraph in doc.paragraphs:
+                if paragraph.text.strip():
+                    text_content.append(paragraph.text.strip())
 
-    #     except Exception as e:
-    #         self.logger.error(
-    #             f"Failed to extract DOCX content from {file_path.name}: {e}"
-    #         )
-    #         return ""
+            # Extract table content
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = []
+                    for cell in row.cells:
+                        cell_text = cell.text.strip()
+                        if cell_text:
+                            row_text.append(cell_text)
+                    if row_text:
+                        text_content.append(" | ".join(row_text))
+
+            result = "\n".join(text_content)
+            self.logger.info(f"Extracted text from DOCX file: {file_path.name}")
+            return result
+
+        except Exception as e:
+            self.logger.error(
+                f"Failed to extract DOCX content from {file_path.name}: {e}"
+            )
+            return ""    
+
 
     def extract_structured_data(
         self, content: str, file_name: str
@@ -252,17 +257,26 @@ class DocumentIngestor:
 
             class Extractor(dspy.Signature):
                 """json_schema, parsed_content -> extracted_json"""
-                parsed_content: str = dspy.InputField(desc="A parsed plaintext representation of a Duke Kunshan University syllabus.")
-                json_schema: str = dspy.InputField(desc="A v7 json-schema description of the structured data required for syllabus information extraction.")
-                curriculum_context: str = dspy.InputField(desc="Some context useful for parsing the syllabus.")
-                extracted_json: str = dspy.OutputField(desc="A non-markdown, pure JSON reproduction of the syllabus data.")
+
+                parsed_content: str = dspy.InputField(
+                    desc="A parsed plaintext representation of a Duke Kunshan University syllabus."
+                )
+                json_schema: str = dspy.InputField(
+                    desc="A v7 json-schema description of the structured data required for syllabus information extraction."
+                )
+                curriculum_context: str = dspy.InputField(
+                    desc="Some context useful for parsing the syllabus."
+                )
+                extracted_json: str = dspy.OutputField(
+                    desc="A non-markdown, pure JSON reproduction of the syllabus data."
+                )
 
             extractor = dspy.Predict(Extractor)
             json_text = extractor(
                 parsed_content=content,
                 json_schema=schema_description,
                 curriculum_context=curriculum_context,
-                ).extracted_json
+            ).extracted_json
 
             json_text = remove_think_section(json_text)
             # Clean up response (remove markdown formatting if present)
@@ -309,21 +323,23 @@ class DocumentIngestor:
             values = [data[col] for col in columns]
 
             # Build SQL statement safely
-            insert_sql = sql.SQL("INSERT INTO {table} ({fields}) VALUES ({placeholders})").format(
+            insert_sql = sql.SQL(
+                "INSERT INTO {table} ({fields}) VALUES ({placeholders})"
+            ).format(
                 table=sql.Identifier(table_name),
                 fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
-                placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns))
+                placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns)),
             )
 
             # self.logger.info(f"Executing SQL: {insert_sql.as_string(self.cursor)}")
             self.cursor.execute(insert_sql, values)
 
-            self.logger.info(
-                f"Data stored in database table '{table_name}'"
-            )
+            self.logger.info(f"Data stored in database table '{table_name}'")
 
         except psycopg2.Error as e:
-            self.logger.error(f"Database storage failed. Attempted values: \n{values} \nError: {e}")
+            self.logger.error(
+                f"Database storage failed. Attempted values: \n{values} \nError: {e}"
+            )
 
     def process_file(self, file_path: Path):
         """Process a single document file"""
@@ -337,8 +353,8 @@ class DocumentIngestor:
         # Extract content based on file type
         if file_path.suffix.lower() == ".pdf":
             content = self.extract_pdf_content(file_path)
-        # elif file_path.suffix.lower() == ".docx":
-            # content = self.extract_docx_content(file_path)
+        elif file_path.suffix.lower() == ".docx":
+            content = self.extract_docx_content(file_path)
         else:
             self.logger.warning(f"Unsupported file type: {file_path.suffix}")
             return
@@ -385,12 +401,15 @@ class DocumentIngestor:
 
         # Process each file
         import traceback
+
         for file_path in all_files:
             try:
                 self.process_file(file_path)
             except Exception as e:
                 tb_str = traceback.format_exc()
-                self.logger.error(f"Unexpected error processing {file_path.name}: {e}\nTraceback:\n{tb_str}")
+                self.logger.error(
+                    f"Unexpected error processing {file_path.name}: {e}\nTraceback:\n{tb_str}"
+                )
                 continue
 
         self.logger.info("Processing completed")

@@ -14,6 +14,7 @@ from chatdku.setup import DB
 
 table_name = "curriculum"
 
+
 def QueryCurriculumOuter(N=3):
     db = DB()
     sql_agent = GenerateSQL()
