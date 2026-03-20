@@ -71,7 +71,7 @@ class DocumentIngestor:
 
     def setup_logging(self):
         """Setup logging to file in the pool directory"""
-        log_file = Path(self.args.pool) / "ingestor.log"
+        log_file = Path(self.args.pool) / "ingestor_v2.log"
 
         # Create directory if it doesn't exist
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -155,7 +155,7 @@ class DocumentIngestor:
 
     def is_already_processed(self, file_path: Path) -> bool:
         """Check if document was already processed by reading log file"""
-        log_file = Path(self.args.pool) / "ingestor.log"
+        log_file = Path(self.args.pool) / "ingestor_v2.log"
         if not log_file.exists():
             return False
 
@@ -272,7 +272,7 @@ class DocumentIngestor:
                 json_text = json_text[:-3]
 
             # Parse and validate JSON
-            self.logger.info(f"LLM response for {file_name}:\n{json_text}")
+            # self.logger.info(f"LLM response for {file_name}:\n{json_text}")
             extracted_data = json.loads(json_text.strip())
 
             # Validate against schema
@@ -315,16 +315,15 @@ class DocumentIngestor:
                 placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns))
             )
 
-            self.logger.info(f"Executing SQL: {insert_sql.as_string(self.cursor)}")
+            # self.logger.info(f"Executing SQL: {insert_sql.as_string(self.cursor)}")
             self.cursor.execute(insert_sql, values)
 
             self.logger.info(
                 f"Data stored in database table '{table_name}'"
             )
-            self.cursor.close()
 
         except psycopg2.Error as e:
-            self.logger.error(f"Database storage failed: {e}")
+            self.logger.error(f"Database storage failed. Attempted values: \n{values} \nError: {e}")
 
     def process_file(self, file_path: Path):
         """Process a single document file"""

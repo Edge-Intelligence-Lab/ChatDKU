@@ -78,7 +78,7 @@
 			"type": "string",
 			"description": "Instructor’s office hours"
 		},
-		"biography": {
+		"instructor_biography": {
 			"type": "string",
 			"description": "Instructor’s biography"
 		},
@@ -98,38 +98,54 @@
 			"enum": ["first", "second", "third", "fourth", "mini-term"],
 			"description": "Whether this is the first, second, third, or fourth seven-week session of the academic year, or a spring mini-term class."
 		},
-		"schedule_days": {
+		"lecture_days": {
 			"type": "array",
 			"items": {
 				"type": "string"
 			},
 			"description": "Array of days when the class meets (e.g., ['Monday', 'Wednesday', 'Friday'])"
 		},
-		"schedule_time_start": {
+		"lecture_time_start": {
 			"type": "string",
 			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
-			"description": "Start time of the class (HH:MM format)"
+			"description": "Start time of the lecture or seminar sessions (HH:MM format)"
 		},
-		"schedule_time_end": {
+		"lecture_time_end": {
 			"type": "string",
 			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
-			"description": "End time of the class (HH:MM format)"
+			"description": "End time of the lecture or seminar sessions (HH:MM format)"
 		},
-		"location": {
+		"lecture_location": {
 			"type": "string",
-			"description": "Classroom or location where the class meets"
+			"description": "Classroom or location of lecture or seminar sessions."
 		},
-		"recitation_time": {
+		"recitation_day": {
 			"type": "string",
-			"description": "Time for recitation sessions"
+			"description": "Days offered for optional recitation sessions"
+		},
+		"recitation_time_start": {
+			"type": "string",
+			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+			"description": "Starting time for recitation sessions"
+		},
+		"recitation_time_end": {
+			"type": "string",
+			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+			"description": "Ending time for recitation sessions"
 		},
 		"recitation_location": {
 			"type": "string",
 			"description": "Location for recitation sessions"
 		},
-		"lab_time": {
+		"lab_time_start": {
 			"type": "string",
-			"description": "Time for laboratory sessions"
+			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+			"description": "Starting time for laboratory sessions"
+		},
+		"lab_time_end": {
+			"type": "string",
+			"pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+			"description": "Ending time for laboratory sessions"
 		},
 		"lab_location": {
 			"type": "string",
@@ -137,11 +153,11 @@
 		},
 		"grading_policy": {
 			"type": "string",
-			"description": "Course grading policy"
+			"description": "Grading policy for this class."
 		},
 		"grade_scale": {
 			"type": "string",
-			"description": "Grading scale used for the course"
+			"description": "Grading scale used for the class."
 		},
 		"assignment_policy": {
 			"type": "string",
@@ -149,11 +165,15 @@
 		},
 		"communication_policy": {
 			"type": "string",
-			"description": "Communication policy for the course"
+			"description": "Communication policy for the class."
 		},
 		"teaching_methods": {
 			"type": "string",
-			"description": "Teaching methods employed in the course"
+			"description": "Teaching methods employed in the class."
+		},
+		"late_submission_policy": {
+			"type": "string",
+			"description": "Policy for submitting assignments late in the class."
 		}
 	},
 	"required": ["course_code", "semester", "semester_session"],
