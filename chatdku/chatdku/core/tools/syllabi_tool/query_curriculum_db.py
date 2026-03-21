@@ -62,7 +62,7 @@ def QueryCurriculumOuter(N=3):
 
                 try:
                     rows = db.execute(sql)
-                    __import__("pprint").pprint(rows)
+                    # __import__("pprint").pprint(rows)
                     tool_out = str(rows)
                     for i, row in enumerate(rows):
                         nodes.append(
