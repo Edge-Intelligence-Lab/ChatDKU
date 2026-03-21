@@ -34,6 +34,7 @@ def setup() -> Client :
 
 
 def import_parquet(file_name):
+    """Import QA from the path"""
     df=pd.read_parquet(file_name)
     qa=[]
 
@@ -50,6 +51,8 @@ def import_parquet(file_name):
 
 
 def reasoning_to_tags(reasoning: dict, output: str) -> str:
+    """Convert reasoning steps to tags"""
+
     blocks = []
 
     step = 0
@@ -90,6 +93,7 @@ def reasoning_to_tags(reasoning: dict, output: str) -> str:
 
 
 def get_traces_and_export_jsonl(traces,input_file,output_file,model,dataset):
+    "Export the traces to the output file."
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -122,7 +126,7 @@ def get_traces_and_export_jsonl(traces,input_file,output_file,model,dataset):
                         'reward':score,
                         'model':model,
                         'dataset':"ChatDKU",
-                        'is_correct': score == 1.0})
+                        'is_correct': score>=0.6})
                     
                     f.write(json.dumps(result)+'\n'
                     )

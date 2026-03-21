@@ -75,22 +75,9 @@ def savefig(fig, outdir, name):
 
 # Global model color palette (shared across figures)
 MODEL_COLOR_PALETTE = {
-    'Base (Qwen)': '#460057',          
-    'Few-shot (Qwen)': '#423e81',      
-    'CoT (Qwen)': '#8b5a9f',
-    'ReAct (Qwen)': '#a67db8',
-    'Structured (Qwen)': '#c19fd1',
-    'Self-Consistency (Qwen)': '#d9bce5',
-    'GPT-5': '#e74c3c',
-    'GPT-4o': '#e67e22',
-    'Tongyi DeepResearch': '#3498db',
-    'Claude Sonnet 4.5': '#9b59b6',
+    'Qwen3-30B-A3B-Instruct-2507': '#460057',          
     'Qwen3-30B-A3B': '#1abc9c',
-    'DeepResearcher': '#2e5d88',       
-    'ReSearch': '#159988',             
-    'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',    
-    'Qwen3.5-35B-A3B':"#101621"       
+      
 }
 
 def get_model_color(model_name: str) -> str:
@@ -108,9 +95,11 @@ def clean_and_categorize_model(model_name: str):
         return "Tongyi DeepResearch", "DeepResearch"
     if "claude-sonnet-4-5-thinking" in model_name or "claude-sonnet-4-5-thinking-all" in model_name:
         return "Claude Sonnet 4.5", "DeepResearch"
-    if "Qwen3-30B-A3B-Instruct-2507" in model_name or "Qwen3-30B-A3B" in model_name:
-        return "Qwen3-30B-A3B", "DeepResearch"
     # Legacy models
+    if "Qwen3-30B-A3B-Instruct-2507" in model_name in model_name:
+        return "Qwen3-30B-A3B-Instruct-2507", "Base" 
+    if "Qwen3-30B-A3B" in model_name  in model_name:
+        return "Qwen3-30B-A3B", "Base"
     if "fewshot-Qwen2.5-7B-Instruct" in model_name:
         return "Few-shot (Qwen)", "Few-shot"
     if "cot-Qwen2.5-7B-Instruct" in model_name:
@@ -120,18 +109,18 @@ def clean_and_categorize_model(model_name: str):
     if "Qwen2.5-7B-Instruct" in model_name:
         return "Base (Qwen)", "Base"
     if "SearchR1" in model_name:
-        return "SearchR1", "Trained"
+        return "SearchR1", "RL Agents"
     if "DeepResearcher" in model_name:
-        return "DeepResearcher", "Trained"
+        return "DeepResearcher", "RL Agents"
     if "ReSearch" in model_name:
-        return "ReSearch", "Trained"
+        return "ReSearch", "RL Agents"
     if "ASearcher" in model_name:
-        return "ASearcher", "Trained"
+        return "ASearcher", "RL Agents"
     return "Other", "Other"
 
 def get_model_order():
-    """Return the desired model order for consistent sorting across all plots."""
-    return ["Base (Qwen)", "Few-shot (Qwen)", "CoT (Qwen)", "ReAct (Qwen)", "Structured (Qwen)", "Self-Consistency (Qwen)", "GPT-5", "GPT-4o", "Tongyi DeepResearch", "Claude Sonnet 4.5", "Qwen3-30B-A3B", "DeepResearcher", "ReSearch", "SearchR1", "ASearcher"]
+    return ["Qwen3-30B-A3B-Instruct-2507 (Qwen)", "Qwen3-30B-A3B'(Qwen)"]
+
 
 def load_traces(path: str):
     rows = []

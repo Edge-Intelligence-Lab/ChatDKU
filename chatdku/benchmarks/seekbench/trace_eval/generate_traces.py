@@ -30,6 +30,7 @@ def read_questions_parquet(path: str) -> list[dict]:
 
 @ray.remote(num_gpus=num_gpu)
 def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
+    """Use the custom agent to generate reasoning traces"""
 
     from chatdku.config import config
     from chatdku.setup import setup, use_phoenix
@@ -101,6 +102,7 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
 
 
 def run_multiple_agent(question: list[dict]) -> None:
+    """Run multiple agents concurrently"""
 
     futures = [
         _run_agent_remote.remote(idx, q["question"], q.get("max_iteration", 2))

@@ -1,4 +1,4 @@
-FILEPATH="data/bulletin_qa.parquet"
+FILEPATH="data/chatdku_dataset.parquet"
 OUTPUTPATH="outputs/raw_traces.jsonl"
 MODEL="Qwen3-30B-A3B"
 DATASET="ChatDKU_dataset"

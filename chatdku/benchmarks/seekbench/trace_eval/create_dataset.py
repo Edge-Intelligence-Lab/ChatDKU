@@ -1,112 +1,99 @@
-#TODO: Use LLM for automation
-
-
-import pypdf
-import re
 import pandas as pd
-from pathlib import Path
 import argparse
 import os
+from prompts import QA_PROMPT
+from chatdku.config import config
+import chromadb
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
+import re
+import json
+import asyncio
+import random 
+import tqdm
+
+load_dotenv()
 
 parser=argparse.ArgumentParser()
-parser.add_argument("--corpus_path",help="Path for corpus",type=str,required=True)
 parser.add_argument("--output_path",help="Path for output",type=str,required=True)
-parser.add_argument("--max_iteration",default=3)
+parser.add_argument("--concurrency",help="Path for output",type=int,required=True)
+parser.add_argument("--num_samples",help="Number of tasks to run (questions to produce)",type=int, default=20)
+parser.add_argument("--model",help="Model used in qa generation",required = True)
 
+async def _query_llm(client,chunk,model,max_attempt=5,delay=3):
+    """Query the LLM to generate QA pair. Calls the OpenAI API with retry logic and the most robust JSON parsing"""
+    prompt=QA_PROMPT.format(chunk=chunk)
+    for attempt in range(max_attempt):
+        try:
+            response= await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                response_format={"type": "json_object"}
+            )
 
-def extract_text_from_pdf(pdf_path):
-    """Extract all text from the PDF."""
-    text = ""
-    with open(pdf_path, 'rb') as file:
-        reader = pypdf.PdfReader(file)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-    return text
+            content = response.choices[0].message.content
 
-def split_into_sections(text):
-    """Split the text into sections based on 'Part X:' headings."""
-    # Match lines starting with "Part X:" and capture content until next "Part X:" or end
-    pattern = r'(Part\s+\d+[:\s]+.*?)(?=Part\s+\d+[:\s]+|\Z)'
-    sections = re.findall(pattern, text, flags=re.DOTALL | re.IGNORECASE)
-    if not sections:
-        sections = [text]
-    return sections
+            try:
+                return json.loads(content)
+            except:
+                match = re.search(r'\{.*?\}', content, re.DOTALL)
+                if match:
+                    return json.loads(match.group(0))
+            if attempt + 1 == max_attempt:
+                return None
+            await asyncio.sleep(delay)
+            
+        except Exception as e:
+            print(f"Error occured: {e}\nattempt: {attempt+1}")
+            if attempt + 1 == max_attempt:
+                return None
+            await asyncio.sleep(delay)
+    return None
 
-def extract_definitions(text_chunk):
-    """Extract definition sentences containing patterns like 'is defined as', 'refers to', etc."""
-    def_pattern = r'([A-Z][a-zA-Z\s]+?)\s+(?:is defined as|refers to|means)\s+([^.!?]*[.!?])'
-    matches = re.findall(def_pattern, text_chunk, re.IGNORECASE)
-    definitions = []
-    for term, definition in matches:
-        term = term.strip()
-        definition = definition.strip()
-        if len(term) > 1 and len(definition) > 10:
-            definitions.append((term, definition))
-    return definitions
+async def main():
+    args = parser.parse_args()
 
-def extract_courses(text_chunk):
-    """Extract course codes and descriptions (e.g., 'ARTS 105 / PHYS 105 The Science...')."""
-    course_pattern = r'([A-Z]{2,}\s+\d+[A-Z]?(?:\s*/\s*[A-Z]{2,}\s+\d+)?)\s+(.+?)(?=\n|$)'
-    matches = re.findall(course_pattern, text_chunk)
-    courses = []
-    for code, desc in matches:
-        code = code.strip()
-        desc = desc.strip()
-        if len(code) > 2 and len(desc) > 10:
-            courses.append((code, desc))
-    return courses
+    chroma_db = chromadb.HttpClient(host="localhost", port=config.chroma_db_port)
+    collection = chroma_db.get_collection(name="dku_html_pdf")
 
-def generate_qa_from_section(section_title, section_text,max_iter):
-    if not max_iter:
-        max_iter=5
-    """Generate question-answer pairs from a section."""
-    qa_pairs = []
-    # 1. Generate a broad question from the section title
-    title_clean = re.sub(r'Part\s+\d+[:\s]+', '', section_title).strip()
-    if title_clean:
-        qa_pairs.append({
-            "question": f"What is {title_clean}?",
-            "ground_truth": section_text[:500] + "...",  # first 500 chars as rough answer
-            "max_iteration": max_iter
-        })
-    # 2. Extract definitions
-    for term, definition in extract_definitions(section_text):
-        qa_pairs.append({
-            "question": f"What is {term}?",
-            "ground_truth": definition,
-            "max_iteration": max_iter
-        })
-    # 3. Extract course descriptions
-    for code, desc in extract_courses(section_text):
-        qa_pairs.append({
-            "question": f"What is {code}?",
-            "ground_truth": desc,
-            "max_iteration": max_iter
-        })
-    return qa_pairs
+    collection_data = collection.get()['documents'] 
 
-def main():
-    args=parser.parse_args()
-    corpus_path= os.path.abspath(args.corpus_path)
-    full_text = extract_text_from_pdf(corpus_path)
+    client = AsyncOpenAI(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE") or None,
+    )
 
-    sections = split_into_sections(full_text)
+    model = args.model
+    semaphore = asyncio.Semaphore(args.concurrency)
 
-    all_qa = []
-    for i, section in enumerate(sections):
-        first_line = section.split('\n')[0].strip()
-        title = first_line if first_line else f"Section {i+1}"
-        qa_list = generate_qa_from_section(title, section,max_iter=args.max_iteration)
-        all_qa.extend(qa_list)
+    indices = list(range(len(collection_data) - 6))
+    random.shuffle(indices)
+    indices = indices[:args.num_samples]
 
-    # Remove duplicates based on question text
-    df = pd.DataFrame(all_qa).drop_duplicates(subset=["question"])
-    output_path=os.path.abspath(args.output_path)
+    async def generate_qa(idx):
+        async with semaphore:
+            chunks = collection_data[idx:idx + 5]
 
-    df.to_parquet(output_path, index=False)
-    print(f"Dataset saved to {args.output_path}")  # kept as essential information
+            response = await _query_llm(
+                client=client,
+                chunk=chunks,
+                model=model
+            )
 
-if __name__ == "__main__":
-    main()
+            return response
+
+    tasks = [generate_qa(i) for i in range(indices)]
+
+    output_file=os.path.abspath(args.output_path)
+
+    os.makedirs(os.path.dirname(output_file),exist_ok=True)
+
+    results=[]
+    for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Writing QA"):
+        result = await future
+        if result:
+            results.append(result)
+
+    df=pd.DataFrame(result)
+    df.to_parquet(output_file)

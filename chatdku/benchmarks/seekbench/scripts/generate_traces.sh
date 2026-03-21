@@ -1,5 +1,5 @@
 # CONFIGS
-FILE_PATH="data/bulletin_qa.parquet"
+FILE_PATH=data/chatdku_dataset.parquet
 
 echo "Generating Traces..."
 

@@ -1,11 +1,15 @@
 #----CONFIG----
-OUTPUTPATH=data/bulletin_qa.parquet
+CONCURRENCY=30
 MAX_ITERATION=3
-CORPUS_PATH=data/ug_bulletin_2025-2026.pdf
+OUTPUT_PATH=data/chatdku_dataset.parquet
+NUM_SAMPLES=60
+MODEL=openai/gpt-oss-120b
 
 echo "Creating Dataset"
+
 python trace_eval/create_dataset.py \
---corpus_path $CORPUS_PATH \
+--concurrency $CONCURRENCY \
 --output_path $OUTPUTPATH \
---max_iteration $MAX_ITERATION
+--num_samples $NUM_SAMPLES \
+--model $MODEL
 

@@ -44,24 +44,10 @@ plt.rcParams.update({
 
 # Global model color palette (shared with groundness analysis for consistency)
 MODEL_COLOR_PALETTE = {
-    'Base (Qwen)': '#460057',          
-    'Few-shot (Qwen)': '#423e81',      
-    'CoT (Qwen)': '#8b5a9f',
-    'ReAct (Qwen)': '#a67db8',
-    'Structured (Qwen)': '#c19fd1',
-    'Self-Consistency (Qwen)': '#d9bce5',
-    'GPT-5': '#e74c3c',
-    'GPT-4o': '#e67e22',
-    'Tongyi DeepResearch': '#3498db',
-    'Claude Sonnet 4.5': '#9b59b6',
-    'Qwen3-30B-A3B': '#1abc9c',
-    'DeepResearcher': '#2e5d88',       
-    'ReSearch': '#159988',             
-    'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',   
-    'Qwen3-30B-A3B': '#1abc9c',
-        
+    'Qwen3-30B-A3B-Instruct-2507': '#460057',          
+    'Qwen3-30B-A3B': '#1abc9c',  
 }
+
 def get_model_color(model_name: str) -> str:
     return MODEL_COLOR_PALETTE.get(model_name, '#7f7f7f')
 
@@ -306,11 +292,9 @@ def savefig(fig, output_dir, name):
     print(f"Saved {png_path}")
     plt.close(fig)
 
-def clean_and_categorize_model(model_name):
-    """清理模型名称并分类"""
+def clean_and_categorize_model(model_name: str):
     if not isinstance(model_name, str):
         return "Unknown", "Other"
-        
     # New DeepResearch models
     if "gpt-5" in model_name or model_name == "gpt-5":
         return "GPT-5", "DeepResearch"
@@ -320,20 +304,17 @@ def clean_and_categorize_model(model_name):
         return "Tongyi DeepResearch", "DeepResearch"
     if "claude-sonnet-4-5-thinking" in model_name or "claude-sonnet-4-5-thinking-all" in model_name:
         return "Claude Sonnet 4.5", "DeepResearch"
-    if "Qwen3-30B-A3B-Instruct-2507" in model_name or "Qwen3-30B-A3B" in model_name:
-        return "Qwen3-30B-A3B", "DeepResearch"
-    
     # Legacy models
+    if "Qwen3-30B-A3B-Instruct-2507" in model_name in model_name:
+        return "Qwen3-30B-A3B-Instruct-2507", "Base" 
+    if "Qwen3-30B-A3B" in model_name  in model_name:
+        return "Qwen3-30B-A3B", "Base"
     if "fewshot-Qwen2.5-7B-Instruct" in model_name:
         return "Few-shot (Qwen)", "Few-shot"
     if "cot-Qwen2.5-7B-Instruct" in model_name:
-        return "CoT (Qwen)", "Prompting Variants"
+        return "CoT (Qwen)", "CoT (Qwen)"
     if "react-Qwen2.5-7B-Instruct" in model_name:
-        return "ReAct (Qwen)", "Prompting Variants"
-    if "structured-Qwen2.5-7B-Instruct" in model_name:
-        return "Structured (Qwen)", "Prompting Variants"
-    if "self_consistency-Qwen2.5-7B-Instruct" in model_name:
-        return "Self-Consistency (Qwen)", "Prompting Variants"
+        return "ReAct (Qwen)", "ReAct (Qwen)"
     if "Qwen2.5-7B-Instruct" in model_name:
         return "Base (Qwen)", "Base"
     if "SearchR1" in model_name:
