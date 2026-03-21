@@ -25,8 +25,6 @@ import pdfplumber  # Alternative PDF parser for complex layouts
 
 from docx import Document  # python-docx for DOCX parsing
 
-from markitdown import DocumentConverter
-from jsonschema import validate, ValidationError
 import dspy
 
 from chatdku.config import config
@@ -66,7 +64,6 @@ class DocumentIngestor:
         self.load_schema()
         self.logger.info("Creating cursor.")
         self.cursor = self.conn.cursor()
-        self.docx_converter = DocumentConverter
 
     def setup_logging(self):
         """Setup logging to file in the pool directory"""
@@ -204,11 +201,6 @@ class DocumentIngestor:
 
         return text_content.strip()
 
-    # def extract_docx_content(self, file_path: Path) -> str:
-    #     # self.docx_converter.convert(self, file_stream=open(file_path, 'w'), stream_info=)
-
-    #     return ""
-
     def extract_docx_content(self, file_path: Path) -> str:
         """Extract text content from DOCX file"""
         try:
@@ -289,24 +281,9 @@ class DocumentIngestor:
             # self.logger.info(f"LLM response for {file_name}:\n{json_text}")
             extracted_data = json.loads(json_text.strip())
 
-            # Validate against schema
-            # validate(instance=extracted_data, schema=self.schema)
-
-            # Add metadata
-            # extracted_data["_metadata"] = {
-            #     "source_file": file_name,
-            #     "extraction_timestamp": datetime.now().isoformat(),
-            #     "model_used": self.args.model_name,
-            # }
-
             self.logger.info(f"Successfully extracted structured data from {file_name}")
             return extracted_data
 
-        except (json.JSONDecodeError, ValidationError) as e:
-            self.logger.error(
-                f"Invalid JSON or schema validation failed for {file_name}: {e}"
-            )
-            return None
         except Exception as e:
             self.logger.error(f"LLM extraction failed for {file_name}: {e}")
             return None
