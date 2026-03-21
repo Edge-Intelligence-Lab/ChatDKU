@@ -77,7 +77,9 @@ MODEL_COLOR_PALETTE = {
     'DeepResearcher': '#2e5d88',       
     'ReSearch': '#159988',             
     'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',           
+    'ASearcher': '#fee837',     
+    'Qwen3-30B-A3B': '#1abc9c',
+      
 }
 
 def get_model_color(model_name: str) -> str:

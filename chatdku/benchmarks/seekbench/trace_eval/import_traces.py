@@ -10,8 +10,8 @@ import argparse
 import uuid
 
 parser=argparse.ArgumentParser()
-parser.add_argument("--file_path",help="Parquet file with qa",default="trace_eval/bulletin_qa.parquet")
-parser.add_argument("--output_path",help="description for output parsed traces",default="outputs/raw_traces.jsonl")
+parser.add_argument("--file_path",help="Parquet file with qa",required=True)
+parser.add_argument("--output_path",help="description for output parsed traces",required=True)
 parser.add_argument("--model", help="Model name to record in the output traces", default="Unknown")
 parser.add_argument("--dataset", help="Dataset name to record in the output traces", default="Unknown")
 
@@ -39,7 +39,7 @@ def import_parquet(file_name):
 
     for i in df.iterrows():
         question=i[1]['question']
-        answer=i[1]['answer']
+        answer=i[1]['ground_truth']
         
         qa.append({
             'question':question,
@@ -91,6 +91,8 @@ def reasoning_to_tags(reasoning: dict, output: str) -> str:
 
 def get_traces_and_export_jsonl(traces,input_file,output_file,model,dataset):
 
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
     with open(output_file,'w') as f:
         qa_pairs=import_parquet(input_file)
         trace_1 = traces[traces['span_kind'] == 'AGENT'][['context.trace_id','attributes.output.value','attributes.input.value']]
@@ -135,7 +137,9 @@ def main():
         traces=client.spans.get_spans_dataframe(
         project_identifier="seekbench_eval"
         )
-        get_traces_and_export_jsonl(traces=traces,input_file=args.file_path,output_file=args.output_path,model=args.model,dataset=args.dataset)
+        output_file=os.path.abspath(args.output_path)
+        input_path=os.path.abspath(args.file_path)
+        get_traces_and_export_jsonl(traces=traces,input_file=input_path,output_file=output_file,model=args.model,dataset=args.dataset)
 
     finally:
         client.projects.delete(

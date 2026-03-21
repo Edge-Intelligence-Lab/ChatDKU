@@ -7,13 +7,15 @@ import torch
 
 from openinference.instrumentation import dangerously_using_project
 from opentelemetry import trace
+import os
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--file_path",
     help="File path for parquet file (questions)",
-    default="trace_eval/bulletin_qa.parquet"
+    type=str,
+    required=True
 )
 
 num_gpu=torch.cuda.device_count() if (torch.cuda.device_count()>=1 and torch.cuda.device_count()<=4) else 0
@@ -114,8 +116,9 @@ def main():
 
 
     ray.init(ignore_reinit_error=True)
+    file_path = os.path.abspath(args.file_path)
 
-    records = read_questions_parquet(args.file_path)
+    records = read_questions_parquet(file_path)
 
     run_multiple_agent(question=records)
 

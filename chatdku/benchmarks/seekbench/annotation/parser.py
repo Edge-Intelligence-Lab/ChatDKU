@@ -3,6 +3,7 @@ import pickle
 import re
 import argparse
 from typing import List, Dict, Any
+import os
 
 def parse_information(info_str: str) -> List[Dict[str, str]]:
     """Parses the content of an <information> block into a list of documents."""
@@ -176,10 +177,12 @@ def main():
     
     args = parser.parse_args()
     print("processing:", args.input_file)
-    structured_data = extract_structured_data_from_file(args.input_file, args.flawed_data_file)
+    input_file=os.path.abspath(args.input_file)
+    structured_data = extract_structured_data_from_file(input_file, args.flawed_data_file)
     
     if args.output_file:
-        with open(args.output_file, 'w', encoding='utf-8') as f:
+        output_file=os.path.abspath(args.output_file)
+        with open(output_file, 'w', encoding='utf-8') as f:
             for item in structured_data:
                 f.write(json.dumps(item) + '\n')
         print(f"Successfully processed {len(structured_data)} items and saved to {args.output_file}")

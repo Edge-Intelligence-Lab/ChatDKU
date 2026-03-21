@@ -5,10 +5,14 @@ import pypdf
 import re
 import pandas as pd
 from pathlib import Path
+import argparse
+import os
 
-PDF_PATH = "ug_bulletin_2025-2026.pdf"
-OUTPUT_PATH = "bulletin_qa.parquet"
-MAX_ITERATION = 3  # unified maximum iteration
+parser=argparse.ArgumentParser()
+parser.add_argument("--corpus_path",help="Path for corpus",type=str,required=True)
+parser.add_argument("--output_path",help="Path for output",type=str,required=True)
+parser.add_argument("--max_iteration",default=3)
+
 
 def extract_text_from_pdf(pdf_path):
     """Extract all text from the PDF."""
@@ -54,7 +58,9 @@ def extract_courses(text_chunk):
             courses.append((code, desc))
     return courses
 
-def generate_qa_from_section(section_title, section_text):
+def generate_qa_from_section(section_title, section_text,max_iter):
+    if not max_iter:
+        max_iter=5
     """Generate question-answer pairs from a section."""
     qa_pairs = []
     # 1. Generate a broad question from the section title
@@ -62,27 +68,29 @@ def generate_qa_from_section(section_title, section_text):
     if title_clean:
         qa_pairs.append({
             "question": f"What is {title_clean}?",
-            "answer": section_text[:500] + "...",  # first 500 chars as rough answer
-            "max_iteration": MAX_ITERATION
+            "ground_truth": section_text[:500] + "...",  # first 500 chars as rough answer
+            "max_iteration": max_iter
         })
     # 2. Extract definitions
     for term, definition in extract_definitions(section_text):
         qa_pairs.append({
             "question": f"What is {term}?",
-            "answer": definition,
-            "max_iteration": MAX_ITERATION
+            "ground_truth": definition,
+            "max_iteration": max_iter
         })
     # 3. Extract course descriptions
     for code, desc in extract_courses(section_text):
         qa_pairs.append({
             "question": f"What is {code}?",
-            "answer": desc,
-            "max_iteration": MAX_ITERATION
+            "ground_truth": desc,
+            "max_iteration": max_iter
         })
     return qa_pairs
 
 def main():
-    full_text = extract_text_from_pdf(PDF_PATH)
+    args=parser.parse_args()
+    corpus_path= os.path.abspath(args.corpus_path)
+    full_text = extract_text_from_pdf(corpus_path)
 
     sections = split_into_sections(full_text)
 
@@ -90,14 +98,15 @@ def main():
     for i, section in enumerate(sections):
         first_line = section.split('\n')[0].strip()
         title = first_line if first_line else f"Section {i+1}"
-        qa_list = generate_qa_from_section(title, section)
+        qa_list = generate_qa_from_section(title, section,max_iter=args.max_iteration)
         all_qa.extend(qa_list)
 
     # Remove duplicates based on question text
     df = pd.DataFrame(all_qa).drop_duplicates(subset=["question"])
+    output_path=os.path.abspath(args.output_path)
 
-    df.to_parquet(OUTPUT_PATH, index=False)
-    print(f"Dataset saved to {OUTPUT_PATH}")  # kept as essential information
+    df.to_parquet(output_path, index=False)
+    print(f"Dataset saved to {args.output_path}")  # kept as essential information
 
 if __name__ == "__main__":
     main()

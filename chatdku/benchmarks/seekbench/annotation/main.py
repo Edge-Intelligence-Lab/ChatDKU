@@ -621,14 +621,17 @@ async def main():
     args = parser.parse_args()
 
     try:
-        with open(args.ontology_file, 'r') as f:
+        ontology_file=os.path.abspath(args.ontology_file)
+        with open(ontology_file, 'r') as f:
             ontology = json.load(f)
         logging.info(f"Successfully loaded ontology from {args.ontology_file}")
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.error(f"Failed to load ontology from {args.ontology_file}: {e}")
         return
+    
+    input_file=os.path.abspath(args.input_file)
 
-    with open(args.input_file, 'r') as infile:
+    with open(input_file, 'r') as infile:
         traces = [json.loads(line) for line in infile]
 
     ontology_lock = asyncio.Lock()
@@ -656,7 +659,9 @@ async def main():
 
     tasks = [process_and_annotate_trace(trace_data) for trace_data in traces]
 
-    with open(args.output_file, 'w') as outfile:
+    output_file=os.path.abspath(args.output_file)
+
+    with open(output_file, 'w') as outfile:
         for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Annotating Traces"):
             result = await future
             if result:
@@ -673,7 +678,7 @@ async def main():
                 outfile.write(json.dumps(result) + '\n')
 
     try:
-        with open(args.ontology_file, 'w') as f:
+        with open(ontology_file, 'w') as f:
             json.dump(ontology, f, indent=2)
         logging.info(f"Ontology updated and saved back to {args.ontology_file}")
     except Exception as e:
