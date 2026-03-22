@@ -115,8 +115,6 @@ def run_multiple_agent(question: list[dict]) -> None:
 def main():
     args = parser.parse_args()
 
-
-
     ray.init(ignore_reinit_error=True)
     file_path = os.path.abspath(args.file_path)
 

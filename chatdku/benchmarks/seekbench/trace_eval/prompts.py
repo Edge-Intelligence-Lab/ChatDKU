@@ -1,32 +1,25 @@
 QA_PROMPT = """
-You are an Expert Human QA generator. Your task is to generate Question-Answer (QA) pair based on the given corpus for an agent system. You design questions of different difficulty and produce answers based on the question. The question you generate is used for benchmarking.
+You are an expert QA dataset generator.
 
-**QA Metadata**
-`question` : The question based on the corpus.
-`grounded_truth` : The answer based on the corpus.
-`max_iteration` : The number of hops required to generate the answer. Values Range from 2 to 5
+Your task is to generate exactly 5 Question-Answer pairs from the given context.
 
-----
+You MUST return ONLY valid JSON in the following exact format:
 
-**Example**
-
-- Example Chunk:
-['Students will be alumni of both institutions.\n\nDuke University is accredited by the Southern Association of Colleges and Schools Commission on Colleges (SACSCOC) in the United States to award baccalaureate, master’s and doctorate degrees. Duke Kunshan University is not accredited by SACSCOC and the accreditation of Duke University does not extend to or include Duke Kunshan University or its students. Further, although Duke University agrees to accept certain course work from Duke Kunshan University to be applied toward an award from Duke University, that course work may not be accepted by other colleges or universities in transfer, even if it appears on a transcript from Duke University. The decision to accept course work in transfer from any institution is made by the institution considering the acceptance of credits or course work.\n\nDuke Kunshan University recognizes and utilizes electronic mail as a medium for official communications. The university provides all students with email accounts. All students are expected to access their email accounts on a regular basis to check for and respond as necessary to such communications.', 'Table of Contents\n# Part 1: General Information\n\nMission Statement\n\nStatement on Diversity and Inclusion\n\nWho We Are\n\nPartners\n\n- Duke University\n- Wuhan University\n- Kunshan\n\nDuke Kunshan University Community Standard\n\n# Part 2: A Liberal Arts Education at Duke Kunshan University\n\nA 21st Century Curriculum\n\nA Liberal Arts College Experience\n\nDual Degrees\n\nAnimating Principles\n\n# Part 3: The Curriculum\n\nOverview\n\nKey Components\n\nStructures\n\nCore Components\n\nDegree Requirements\n\n- General Education Requirements\n- - Common Core (3 courses, 12 credits)\n- Distribution Requirement (3 courses, 12 credits)\n- Quantitative Reasoning Course Requirement (1 course, 4 credits)\n- Language Courses (4-8 courses, 8-16 credits)\n- Writing Course (1 course, 2 credits)\n\nMajor Requirements (16-19 courses, 64-76 credits)\n\nCredits Required for Degree\n\nNon-Credit Mini-Term Courses\n\nDKU 101 (0 Credits)\n\n# Part 4: Admission, Scholarships and Financial Aid\n\nPrinciples of Selection\n\nHow to Apply\n\nApplication Timelines\n\nApplication Requirements\n\nScholarships and Financial Aid\n\nNotification and Responses\n\n# Part 5: Financial Information']
-
-
-- Example Response:
-```json
-{{
-    "question": "Which organization accredits Duke University?",
-    "ground_truth": "Duke University is accredited by the Southern Association of Colleges and Schools Commission on Colleges (SACSCOC).",
-    "max_iteration": 2
-
-}}
-
-
+```json 
+{{ "qa_pairs":[ {{ "question": "Which organization accredits Duke University?", "ground_truth": "Duke University is accredited by the Southern Association of Colleges and Schools Commission on Colleges (SACSCOC).", "max_iteration": 2 }}, {{ "question": "If a student takes courses at Duke Kunshan University and later applies to another university, what factors determine whether those courses will be accepted for transfer?", "ground_truth": "Although Duke University may accept certain course work from Duke Kunshan University, other universities independently decide whether to accept transfer credits, and such course work may not be accepted even if it appears on a Duke University transcript.", "max_iteration": 5 }}, {{ "question": "Explain how Duke Kunshan University’s partnership structure and accreditation status affect a student’s academic recognition.", "ground_truth": "Duke Kunshan University partners with Duke University, Wuhan University, and Kunshan, and students become alumni of both institutions. However, Duke University is accredited by SACSCOC while Duke Kunshan University is not, and this accreditation does not extend to DKU or its students.", "max_iteration": 4 }}, {{ "question": "How does the university ensure students stay informed about academic and administrative requirements, and what responsibilities do students have in this process?", "ground_truth": "Duke Kunshan University provides all students with email accounts and uses electronic mail for official communication. Students are expected to regularly check and respond to these communications to stay informed.", "max_iteration": 3 }}, {{ "question": "How do general education requirements and major requirements together contribute to fulfilling degree requirements at Duke Kunshan University?", "ground_truth": "General education requirements include Common Core, distribution, quantitative reasoning, language, and writing courses, while major requirements consist of 16–19 courses totaling 64–76 credits. Together, these components contribute to fulfilling overall degree requirements.", "max_iteration": 5 }}, {{ "question": "What is the significance of DKU 101 in the curriculum, and how does it relate to the overall credit structure of the degree?", "ground_truth": "DKU 101 is a non-credit mini-term course worth 0 credits, meaning it is part of the curriculum experience but does not contribute to the total credits required for the degree.", "max_iteration": 4 }} ] }}
 ```
-----
 
-Chunk:
+STRICT RULES:
+- Output MUST be valid JSON
+- Output MUST contain the key "qa_pairs"
+- "qa_pairs" MUST be a list of exactly 5 items
+- DO NOT return {{}}
+- DO NOT return an empty list
+- DO NOT include explanations or text outside JSON
+- Each question MUST be answerable strictly from the context. Multi hop questions should be extremely difficult.
+- Questions should vary in difficulty (2 to 5 hops). 
+- Multihop questions can include multiple questions from the chunks.
+
+Context:
 {chunk}
 """

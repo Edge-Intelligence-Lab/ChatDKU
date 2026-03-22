@@ -8,6 +8,7 @@ This project is based on the paper **Do LLM Agents Know How to Ground, Recover, 
 ----
 
 - [Evaluation: Seekbench](#evaluation-seekbench)
+  - [Quick Start](#quick-start)
   - [Workflows](#workflows)
     - [A. Create Dataset](#a-create-dataset)
     - [B. Generate Traces](#b-generate-traces)
@@ -19,6 +20,13 @@ This project is based on the paper **Do LLM Agents Know How to Ground, Recover, 
     - [Dataset](#dataset)
     - [Raw Traces (trace\_eval/import\_traces.py)](#raw-traces-trace_evalimport_tracespy)
 
+
+
+## Quick Start
+If you have already created the environment (including `.env` files), you can quick start the entire process from scratch (from dataset creation to analysis) via:
+```bash
+bash eval.sh
+```
 
 
 ## Workflows
@@ -104,8 +112,8 @@ Typical field includes:
     'ground_truth': ground_truth,
     'reward': score,
     'model': model,
-    'dataset': "ChatDKU",
-    'is_correct': score == 1.0
+    'dataset': "chatdku_dataset",
+    'is_correct': score >= 0.6
 }
 ```
 
