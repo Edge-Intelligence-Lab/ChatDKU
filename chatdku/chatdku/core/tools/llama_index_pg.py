@@ -59,8 +59,10 @@ def DocRetrieverOuter(
                 elapsed = perf_counter() - t0
 
                 # If retriever already returned an error payload, don't rerank
-                if use_reranker and vector_result and all(
-                    isinstance(x, NodeWithScore) for x in vector_result
+                if (
+                    use_reranker
+                    and vector_result
+                    and all(isinstance(x, NodeWithScore) for x in vector_result)
                 ):
                     remaining = overall_timeout_s - elapsed
                     # Only rerank if we have enough time left

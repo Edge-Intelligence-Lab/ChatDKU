@@ -57,7 +57,7 @@ def _get_pool() -> SimpleConnectionPool:
             minconn=1,
             # keep pool bounded; high values cause connection storms under load
             maxconn=int(getattr(config, "postgres_maxconn", 20)),
-            dsn=config.psql_uri, 
+            dsn=config.psql_uri,
         )
     return _pool
 
@@ -153,14 +153,10 @@ class PostgresRetriever(BaseDocRetriever):
 
         # oversample branches, then fuse; helps quality while keeping final top_k stable
         self.dense_top_k = (
-            dense_top_k
-            if dense_top_k is not None
-            else max(self.retriever_top_k, 25)
+            dense_top_k if dense_top_k is not None else max(self.retriever_top_k, 25)
         )
         self.sparse_top_k = (
-            sparse_top_k
-            if sparse_top_k is not None
-            else max(self.retriever_top_k, 25)
+            sparse_top_k if sparse_top_k is not None else max(self.retriever_top_k, 25)
         )
         self.sparse_enabled = sparse_enabled
 
@@ -284,7 +280,9 @@ class PostgresRetriever(BaseDocRetriever):
         where, base_params = self._build_where()
         where, base_params = self._wrap_access_filter(where, base_params)
         tsquery_cond = "text_search @@ plainto_tsquery('english', %s)"
-        sparse_where = f"{where} AND {tsquery_cond}" if where else f"WHERE {tsquery_cond}"
+        sparse_where = (
+            f"{where} AND {tsquery_cond}" if where else f"WHERE {tsquery_cond}"
+        )
 
         sql = f"""
         SELECT id, text, metadata, file_name
@@ -307,7 +305,9 @@ class PostgresRetriever(BaseDocRetriever):
         return hits
 
     # +++ added: Python-side RRF merge (tiny compute: O(k))
-    def _rrf_fuse(self, dense: list[_Hit], sparse: list[_Hit]) -> list[tuple[_Hit, float]]:
+    def _rrf_fuse(
+        self, dense: list[_Hit], sparse: list[_Hit]
+    ) -> list[tuple[_Hit, float]]:
         scores: dict[str, float] = {}
         by_id: dict[str, _Hit] = {}
 
@@ -344,7 +344,7 @@ class PostgresRetriever(BaseDocRetriever):
             sem_wait = perf_counter() - t_sem0
 
             # 2) pool wait
-            t_pool0 = perf_counter()        
+            t_pool0 = perf_counter()
             pool, conn = _borrow()
             pool_wait = perf_counter() - t_pool0
 
@@ -362,7 +362,7 @@ class PostgresRetriever(BaseDocRetriever):
                     with suppress(Exception):
                         sparse_hits = self._sparse(conn, query)
                     sparse_s = perf_counter() - t_sparse0
-                
+
                 t_fuse0 = perf_counter()
                 fused = self._rrf_fuse(dense_hits, sparse_hits)
                 fuse_s = perf_counter() - t_fuse0
@@ -376,7 +376,7 @@ class PostgresRetriever(BaseDocRetriever):
                 raise
             finally:
                 _return(pool, conn)
-        
+
         total = perf_counter() - t0
         # print(
         #     "[pg] "
@@ -412,11 +412,11 @@ if __name__ == "__main__":
     from chatdku.setup import setup
 
     parser = argparse.ArgumentParser(description="Test PostgresRetriever")
-    parser.add_argument("--query",       type=str, required=True)
-    parser.add_argument("--top_k",       type=int, default=5)
-    parser.add_argument("--user_id",     type=str, default="Chat_DKU")
+    parser.add_argument("--query", type=str, required=True)
+    parser.add_argument("--top_k", type=int, default=5)
+    parser.add_argument("--user_id", type=str, default="Chat_DKU")
     parser.add_argument("--search_mode", type=int, default=0)
-    parser.add_argument("--files",       nargs="*", default=None)
+    parser.add_argument("--files", nargs="*", default=None)
     args = parser.parse_args()
 
     setup(use_llm=False)

@@ -47,7 +47,6 @@ This file must remain a *dumb loader*:
 """
 
 
-
 def _clean_file_name(file_name: str) -> str:
     """Strip extension from file_name (preserves legacy behaviour from load_redis)."""
     return os.path.splitext(file_name)[0]
@@ -118,9 +117,11 @@ def _embed_with_retry(embed_model, texts: list[str], min_batch: int = 1) -> list
             ) from e
         logger.warning(
             "Embedding batch of %d failed (%s) — retrying as two halves of %d.",
-            len(texts), e, half,
+            len(texts),
+            e,
+            half,
         )
-        left  = _embed_with_retry(embed_model, texts[:half],  min_batch)
+        left = _embed_with_retry(embed_model, texts[:half], min_batch)
         right = _embed_with_retry(embed_model, texts[half:], min_batch)
         return left + right
 
@@ -206,8 +207,10 @@ CREATE INDEX IF NOT EXISTS document_access_filter_idx
 # Core ingestion
 # ---------------------------------------------------------------------------
 
+
 def _get_connection() -> psycopg2.extensions.connection:
     return psycopg2.connect(config.psql_uri)
+
 
 def _prepare_batch(valid_pairs, embed_model):
     valid_nodes, texts = zip(*valid_pairs)
@@ -236,39 +239,52 @@ def _prepare_batch(valid_pairs, embed_model):
             if access_type is None:
                 raise ValueError(f"Missing access_type in node {node.node_id}")
 
-            acl_rows.add((
-                _strip_nul(str(doc_id)),
-                st,
-                access_type,
-                _strip_nul(str(role)) if role is not None else None,
-                _strip_nul(str(organization)) if organization is not None else None,
-                _strip_nul(str(access_user_id)) if access_user_id is not None else None,
-            ))
+            acl_rows.add(
+                (
+                    _strip_nul(str(doc_id)),
+                    st,
+                    access_type,
+                    _strip_nul(str(role)) if role is not None else None,
+                    _strip_nul(str(organization)) if organization is not None else None,
+                    (
+                        _strip_nul(str(access_user_id))
+                        if access_user_id is not None
+                        else None
+                    ),
+                )
+            )
 
-        rows.append((
-            _strip_nul(node.node_id),
-            doc_id,
-            st,
-            clean_text,
-            embedding,
-            file_name,
-            owner_user_id,
-            groups_val,
-            Json({k: (_strip_nul(v) if isinstance(v, str) else v)
-                for k, v in rest.items()}),
-        ))
+        rows.append(
+            (
+                _strip_nul(node.node_id),
+                doc_id,
+                st,
+                clean_text,
+                embedding,
+                file_name,
+                owner_user_id,
+                groups_val,
+                Json(
+                    {
+                        k: (_strip_nul(v) if isinstance(v, str) else v)
+                        for k, v in rest.items()
+                    }
+                ),
+            )
+        )
     return rows, acl_rows
 
+
 def _insert_batch(
-        conn, 
-        cur, 
-        batch_nodes: list[TextNode], 
-        *,
-        target_table_name: str,
-        embed_model,
-        batch_size: int = 25,
-    ) -> None:
-    
+    conn,
+    cur,
+    batch_nodes: list[TextNode],
+    *,
+    target_table_name: str,
+    embed_model,
+    batch_size: int = 25,
+) -> None:
+
     if not batch_nodes:
         logger.info("No nodes to insert for table %s", target_table_name)
         return
@@ -276,20 +292,18 @@ def _insert_batch(
     # ---- Embed + insert in batches -----------------------------------
     total = len(batch_nodes)
     for batch_start in range(0, total, batch_size):
-        batch = batch_nodes[batch_start: batch_start + batch_size]
+        batch = batch_nodes[batch_start : batch_start + batch_size]
 
-        valid_pairs = [
-            (n, _strip_nul(n.text))
-            for n in batch
-            if _is_valid_text(n.text)
-        ]
+        valid_pairs = [(n, _strip_nul(n.text)) for n in batch if _is_valid_text(n.text)]
         skipped = len(batch) - len(valid_pairs)
         if skipped:
-            logger.warning("Skipping %d node(s) with empty/invalid text in this batch.", skipped)
+            logger.warning(
+                "Skipping %d node(s) with empty/invalid text in this batch.", skipped
+            )
         if not valid_pairs:
             continue
 
-        rows, acl_rows = _prepare_batch(valid_pairs,embed_model=embed_model)
+        rows, acl_rows = _prepare_batch(valid_pairs, embed_model=embed_model)
 
         execute_values(
             cur,
@@ -323,7 +337,7 @@ def _insert_batch(
                 acl_rows_list,
                 template="(%s, %s, %s, %s, %s, %s)",
             )
-        
+
         conn.commit()
         logger.info(
             "Inserted batch %d–%d / %d into %s",
@@ -339,7 +353,7 @@ def load_postgres(
     nodes_path: Optional[str] = None,
     table_name: Optional[str] = None,
     reset: bool = False,
-    batch_size: int = 25,   # matches Chroma's buffer_size default; auto-halves on 413
+    batch_size: int = 25,  # matches Chroma's buffer_size default; auto-halves on 413
 ) -> None:
     """
     Ingest TextNodes into PostgreSQL + pgvector.
@@ -376,9 +390,12 @@ def load_postgres(
     if table_name is None:
         table_name = getattr(config, "postgres_table", "chat_dku")
 
-    logger.info(f"Target partitioned table: {table_name}  |  nodes: %d  |  reset: %s",
-                len(nodes), reset)
-    
+    logger.info(
+        f"Target partitioned table: {table_name}  |  nodes: %d  |  reset: %s",
+        len(nodes),
+        reset,
+    )
+
     # ---- 3. Database setup --------------------------------------------------
     conn = _get_connection()
     conn.autocommit = False
@@ -393,7 +410,14 @@ def load_postgres(
     conn.commit()
 
     # ---- 4. Embed + insert in batches ---------------------------------------
-    _insert_batch(conn, cur, nodes, target_table_name=table_name, batch_size=batch_size, embed_model=embed_model)
+    _insert_batch(
+        conn,
+        cur,
+        nodes,
+        target_table_name=table_name,
+        batch_size=batch_size,
+        embed_model=embed_model,
+    )
     logger.info("PostgreSQL load done!")
 
     cur.close()
@@ -403,6 +427,7 @@ def load_postgres(
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def _str2bool(val):
     if isinstance(val, bool):

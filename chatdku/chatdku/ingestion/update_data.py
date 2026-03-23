@@ -27,12 +27,21 @@ from chatdku.config import config
 def _safe_lower(x):
     return x.strip().lower() if isinstance(x, str) else None
 
+
 def _import_data(nodes_path: str) -> list:
     with open(nodes_path, "r") as f:
         datas = json.load(f)
     return [TextNode.from_dict(data) for data in datas]
 
-def _ensure_permission_metadata(metadata: dict, *, user_id: str, access_type: str | None = None, role: str | None = None, organization: str | None = None) -> dict:
+
+def _ensure_permission_metadata(
+    metadata: dict,
+    *,
+    user_id: str,
+    access_type: str | None = None,
+    role: str | None = None,
+    organization: str | None = None,
+) -> dict:
     """Ensure required permission fields exist in node metadata.
 
     This function sets minimal defaults for ordinary (non-event) nodes.
@@ -52,7 +61,7 @@ def _ensure_permission_metadata(metadata: dict, *, user_id: str, access_type: st
 
     if md["access_type"] == "student":
         md["role"] = _safe_lower(role) or md.get("role") or "student"
-    
+
     elif md["access_type"] == "office":
         org = _safe_lower(organization) or md.get("organization")
         if not org:
@@ -66,8 +75,9 @@ def _ensure_permission_metadata(metadata: dict, *, user_id: str, access_type: st
     md.setdefault("role", "student")
     md.setdefault("organization", None)
     md.setdefault("user_id", _safe_lower(user_id))
-    
+
     return md
+
 
 def load_event_files():
     event_dir = config.event_path
@@ -82,6 +92,7 @@ def load_event_files():
 def _write_data(nodes_path: str, data: list):
     with open(nodes_path, "w") as f:
         json.dump(data, f)
+
 
 def nodes_to_dicts(nodes: list) -> dict:
     result = {
@@ -327,7 +338,9 @@ def clean_expired_nodes(nodes):
     return kept
 
 
-def _read_pdf(file_paths: list[str], user_id, access_type, role, organization) -> list[TextNode]:
+def _read_pdf(
+    file_paths: list[str], user_id, access_type, role, organization
+) -> list[TextNode]:
     total_nodes = []
 
     parser = SentenceSplitter(
@@ -384,7 +397,9 @@ def _read_pdf(file_paths: list[str], user_id, access_type, role, organization) -
     return total_nodes
 
 
-def _read_non_pdf(files: list, user_id, access_type, role, organization) -> list[BaseNode]:
+def _read_non_pdf(
+    files: list, user_id, access_type, role, organization
+) -> list[BaseNode]:
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     html_cleaner = HtmlCleaner()
@@ -440,14 +455,16 @@ def _read_non_pdf(files: list, user_id, access_type, role, organization) -> list
         )
 
         if str(node.metadata.get("file_name", "")).endswith(".pptx"):
-                node.metadata["extraction_errors"] = str(node.metadata.get("extraction_errors"))
-                node.metadata["extraction_warnings"] = str(
-                    node.metadata["extraction_warnings"]
-                )
-                node.metadata["tables"] = str(node.metadata["tables"])
-                node.metadata["charts"] = str(node.metadata["charts"])
-                node.metadata["images"] = str(node.metadata["images"])
-                node.metadata["text_sections"] = str(node.metadata["text_sections"])
+            node.metadata["extraction_errors"] = str(
+                node.metadata.get("extraction_errors")
+            )
+            node.metadata["extraction_warnings"] = str(
+                node.metadata["extraction_warnings"]
+            )
+            node.metadata["tables"] = str(node.metadata["tables"])
+            node.metadata["charts"] = str(node.metadata["charts"])
+            node.metadata["images"] = str(node.metadata["images"])
+            node.metadata["text_sections"] = str(node.metadata["text_sections"])
 
     return non_pdf_nodes
 
@@ -458,7 +475,7 @@ def update_events(user_id: str) -> list:
     event_nodes = _read_non_pdf(
         event_files,
         user_id,
-        access_type="student",  
+        access_type="student",
         role="student",
         organization=None,
     )
@@ -473,7 +490,14 @@ def update_events(user_id: str) -> list:
     return event_nodes
 
 
-def update(data_dir: str, user_id: str, access_type: str, role: str, organization: str = None, verbose: bool = False):
+def update(
+    data_dir: str,
+    user_id: str,
+    access_type: str,
+    role: str,
+    organization: str = None,
+    verbose: bool = False,
+):
     # detect add/remove only in NON-EVENT dir
     nodes_path = os.path.join(data_dir, "nodes.json")
 
@@ -498,10 +522,14 @@ def update(data_dir: str, user_id: str, access_type: str, role: str, organizatio
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
         if non_pdf_files:
-            new_nodes.extend(_read_non_pdf(non_pdf_files, user_id, access_type, role, organization))
+            new_nodes.extend(
+                _read_non_pdf(non_pdf_files, user_id, access_type, role, organization)
+            )
 
         if pdf_files:
-            new_nodes.extend(_read_pdf(pdf_files, user_id, access_type, role, organization))
+            new_nodes.extend(
+                _read_pdf(pdf_files, user_id, access_type, role, organization)
+            )
 
         print("Total added nodes:", len(new_nodes))
 
@@ -557,8 +585,8 @@ if __name__ == "__main__":
         help="ID of the user. Defaults to Chat_DKU if none given.",
     )
     parser.add_argument(
-        "--access_type", 
-        type=str, 
+        "--access_type",
+        type=str,
         default="student",
         help="Access type for the nodes. Including 'public', 'student', 'office', 'private'. Defaults to 'student'.",
     )
@@ -579,4 +607,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(args.data_dir, args.user_id, args.access_type, args.role, args.organization, args.v)
+    main(
+        args.data_dir,
+        args.user_id,
+        args.access_type,
+        args.role,
+        args.organization,
+        args.v,
+    )
