@@ -101,7 +101,6 @@ class PostgresRetriever(BaseDocRetriever):
 
     def __init__(
         self,
-        internal_memory: dict,
         retriever_top_k: int = 25,
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
@@ -122,7 +121,6 @@ class PostgresRetriever(BaseDocRetriever):
         sparse_timeout_ms: int | None = None,
     ):
         super().__init__(retriever_top_k, user_id, search_mode, files)
-        self.internal_memory = internal_memory
         self.exclude = set()
         self.table_name = table_name or getattr(config, "postgres_table", "chat_dku")
         # Permission schema (documents/document_access):
@@ -154,8 +152,16 @@ class PostgresRetriever(BaseDocRetriever):
         )
 
         # oversample branches, then fuse; helps quality while keeping final top_k stable
-        self.dense_top_k = dense_top_k if dense_top_k is not None else max(self.retriever_top_k, 25)
-        self.sparse_top_k = sparse_top_k if sparse_top_k is not None else max(self.retriever_top_k, 25)
+        self.dense_top_k = (
+            dense_top_k
+            if dense_top_k is not None
+            else max(self.retriever_top_k, 25)
+        )
+        self.sparse_top_k = (
+            sparse_top_k
+            if sparse_top_k is not None
+            else max(self.retriever_top_k, 25)
+        )
         self.sparse_enabled = sparse_enabled
 
     # ------------------------------------------------------------------
@@ -416,7 +422,6 @@ if __name__ == "__main__":
     setup(use_llm=False)
 
     retriever = PostgresRetriever(
-        internal_memory={},
         retriever_top_k=args.top_k,
         user_id=args.user_id,
         search_mode=args.search_mode,

@@ -22,7 +22,6 @@ def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
 
 
 def DocRetrieverOuter(
-    internal_memory: dict,
     retriever_top_k: int = 25,
     use_reranker: bool = True,
     reranker_top_n: int = 10,
@@ -30,12 +29,13 @@ def DocRetrieverOuter(
     search_mode: int = 0,
     files: list | None = None,
 ):
+    # Keep this call keyword-based so it stays compatible if the retriever's
+    # signature evolves (we've recently added permission + partition args).
     vector_retriever = PostgresRetriever(
-        internal_memory,
-        retriever_top_k,
-        user_id,
-        search_mode,
-        files,
+        retriever_top_k=retriever_top_k,
+        user_id=user_id,
+        search_mode=search_mode,
+        files=files,
     )
 
     def DocumentRetriever(
