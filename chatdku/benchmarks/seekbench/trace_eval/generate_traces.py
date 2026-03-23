@@ -25,7 +25,7 @@ def read_questions_parquet(path: str) -> list[dict]:
     ds = ray.data.read_parquet(path)
     df = ds.to_pandas()
     records = df[["question", "max_iteration"]].to_dict(orient="records")
-    return records[400:420:2]
+    return records
 
 
 @ray.remote(num_gpus=num_gpu)
@@ -119,6 +119,7 @@ def main():
     file_path = os.path.abspath(args.file_path)
 
     records = read_questions_parquet(file_path)
+    print(records)
 
     run_multiple_agent(question=records)
 
