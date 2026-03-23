@@ -16,6 +16,7 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import BaseNode, Document, TextNode
 from llama_index.readers.file import UnstructuredReader
+from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
 from llama_parse import LlamaParse
 from openpyxl import load_workbook
 from improved_html_cleaner import HtmlCleaner
@@ -373,7 +374,9 @@ def _read_pdf(file_paths: list[str], user_id, access_type, role, organization) -
                 if node.text == "":
                     continue
                 doc_id = os.path.abspath(file_path)
-                node.ref_doc_id = hashlib.md5(doc_id.encode()).hexdigest()  # Use file path hash as ref_doc_id
+                node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+                    node_id=hashlib.md5(doc_id.encode()).hexdigest()
+                )
 
                 total_nodes.append(node)
         print(f"Finished loading {file_path}.")
@@ -432,7 +435,9 @@ def _read_non_pdf(files: list, user_id, access_type, role, organization) -> list
         if not file_path:
             raise ValueError("Cannot determine file_path for node")
         doc_id = os.path.abspath(file_path) if file_path else "unknown"
-        node.ref_doc_id = hashlib.md5(doc_id.encode()).hexdigest()
+        node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+            node_id=hashlib.md5(doc_id.encode()).hexdigest()
+        )
 
         if str(node.metadata.get("file_name", "")).endswith(".pptx"):
                 node.metadata["extraction_errors"] = str(node.metadata.get("extraction_errors"))

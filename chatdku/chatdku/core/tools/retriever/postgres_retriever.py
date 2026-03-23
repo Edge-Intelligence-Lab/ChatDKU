@@ -57,11 +57,7 @@ def _get_pool() -> SimpleConnectionPool:
             minconn=1,
             # keep pool bounded; high values cause connection storms under load
             maxconn=int(getattr(config, "postgres_maxconn", 20)),
-            host=config.postgres_host,
-            port=getattr(config, "postgres_port", 5432),
-            dbname=config.postgres_db,
-            user=config.postgres_user,
-            password=config.postgres_password,
+            dsn=config.psql_uri, 
         )
     return _pool
 
@@ -111,6 +107,11 @@ class PostgresRetriever(BaseDocRetriever):
         search_mode: int = 0,
         files: list | None = None,
         table_name: str | None = None,
+        access_table: str | None = None,
+        access_type: str | None = None,
+        role: str | None = None,
+        organization: str | None = None,
+        source_type: str = "doc",
         rrf_k: int = 60,
         ef_search: int = 64,
         # +++ added: DB-side timeouts (ms) and per-branch caps
@@ -120,8 +121,23 @@ class PostgresRetriever(BaseDocRetriever):
         sparse_enabled: bool = True,
         sparse_timeout_ms: int | None = None,
     ):
-        super().__init__(internal_memory, retriever_top_k, user_id, search_mode, files)
-        self.table_name = table_name or getattr(config, "postgres_table", "chatdku")
+        super().__init__(retriever_top_k, user_id, search_mode, files)
+        self.internal_memory = internal_memory
+        self.exclude = set()
+        self.table_name = table_name or getattr(config, "postgres_table", "chat_dku")
+        # Permission schema (documents/document_access):
+        # - access_table holds per-document ACL rows
+        # - access_type/role default to 'student' as requested
+        self.access_table = access_table or getattr(
+            config, "postgres_access_table", "document_access"
+        )
+        self.access_type = (access_type or "student").strip()
+        self.role = (role or "student").strip()
+        self.organization = organization
+
+        # Partition pruning: constrain queries to a single partition.
+        # Valid values: 'doc' | 'event' (and future types).
+        self.source_type = (source_type or "doc").strip()
         self.rrf_k = rrf_k
         self.ef_search = ef_search
 
@@ -163,6 +179,10 @@ class PostgresRetriever(BaseDocRetriever):
         params: list = []
         conditions: list[str] = []
 
+        # Partition pruning (critical): must be present in WHERE.
+        conditions.append("source_type = %s")
+        params.append(self.source_type)
+
         if self.search_mode == 0:
             conditions.append("user_id = %s")
             params.append(self.user_id)
@@ -187,6 +207,40 @@ class PostgresRetriever(BaseDocRetriever):
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         return where, params
 
+    def _wrap_access_filter(self, where: str, params: list) -> tuple[str, list]:
+        """Add ACL / permission filter based on access model.
+
+        IMPORTANT correctness:
+          - ACL must bind both doc_id AND source_type (doc_id not globally unique)
+          - organization can be NULL; use IS NULL-safe comparison
+        """
+        org = self.organization
+
+        access_cond = (
+            f"EXISTS (\n"
+            f"  SELECT 1\n"
+            f"  FROM {self.access_table} da\n"
+            f"  WHERE da.doc_id = {self.table_name}.doc_id\n"
+            f"    AND da.source_type = {self.table_name}.source_type\n"
+            f"    AND (\n"
+            f"      da.access_type = 'public'\n"
+            f"      OR (da.access_type = 'student' AND da.role = %s)\n"
+            f"      OR (\n"
+            f"        da.access_type = 'office' AND (\n"
+            f"          (da.organization IS NULL AND %s IS NULL)\n"
+            f"          OR da.organization = %s\n"
+            f"        )\n"
+            f"      )\n"
+            f"      OR (da.access_type = 'private' AND da.user_id = %s)\n"
+            f"    )\n"
+            f")"
+        )
+
+        new_params = list(params) + [self.role, org, org, self.user_id]
+        if where:
+            return f"{where} AND {access_cond}", new_params
+        return f"WHERE {access_cond}", new_params
+
     # +++ added: DB session guards
     def _apply_session_settings(self, cur, statement_timeout_ms: int) -> None:
         # DB-side timeout is critical for stability under concurrency.
@@ -199,6 +253,7 @@ class PostgresRetriever(BaseDocRetriever):
     def _dense(self, conn: pg_ext.connection, query: str) -> list[_Hit]:
         embedding = self._embed(query)
         where, base_params = self._build_where()
+        where, base_params = self._wrap_access_filter(where, base_params)
         sql = f"""
         SELECT id, text, metadata, file_name
         FROM   {self.table_name}
@@ -221,6 +276,7 @@ class PostgresRetriever(BaseDocRetriever):
     # +++ added: sparse branch (can be disabled / short-timeout / best-effort)
     def _sparse(self, conn: pg_ext.connection, query: str) -> list[_Hit]:
         where, base_params = self._build_where()
+        where, base_params = self._wrap_access_filter(where, base_params)
         tsquery_cond = "text_search @@ plainto_tsquery('english', %s)"
         sparse_where = f"{where} AND {tsquery_cond}" if where else f"WHERE {tsquery_cond}"
 
@@ -316,12 +372,12 @@ class PostgresRetriever(BaseDocRetriever):
                 _return(pool, conn)
         
         total = perf_counter() - t0
-        print(
-            "[pg] "
-            f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "
-            f"dense={dense_s:.3f}s sparse={sparse_s:.3f}s fuse={fuse_s:.3f}s commit={commit_s:.3f}s "
-            f"total={total:.3f}s q='{query[:40]}'"
-        )
+        # print(
+        #     "[pg] "
+        #     f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "
+        #     f"dense={dense_s:.3f}s sparse={sparse_s:.3f}s fuse={fuse_s:.3f}s commit={commit_s:.3f}s "
+        #     f"total={total:.3f}s q='{query[:40]}'"
+        # )
 
         results: list[NodeWithScore] = []
         for hit, score in fused:

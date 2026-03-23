@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS document_access (
     role           TEXT,           -- student | faculty | ...
     organization   TEXT,           -- advising / registrar
     user_id        TEXT,           -- only for private
-    PRIMARY KEY (doc_id, source_type, access_type, role, organization, user_id)
+    PRIMARY KEY (doc_id, source_type, access_type, role, user_id)
 );
 
 -- Indexes (must be on parent so partitions get them on PG 11+)
@@ -182,6 +182,10 @@ CREATE INDEX IF NOT EXISTS {table_name}_source_type_idx
 -- ACL lookup index (doc_id is the join key in retriever)
 CREATE INDEX IF NOT EXISTS document_access_doc_id_idx
     ON document_access (doc_id);
+CREATE UNIQUE INDEX document_access_unique_idx
+    ON document_access (
+        doc_id, source_type, access_type, role, organization, user_id
+    );
 CREATE INDEX IF NOT EXISTS {table_name}_doc_id_source_type_idx
     ON {table_name} (doc_id, source_type);
 
@@ -203,13 +207,7 @@ CREATE INDEX IF NOT EXISTS document_access_filter_idx
 # ---------------------------------------------------------------------------
 
 def _get_connection() -> psycopg2.extensions.connection:
-    return psycopg2.connect(
-        host=config.postgres_host,
-        port=getattr(config, "postgres_port", 5432),
-        dbname=config.postgres_db,
-        user=config.postgres_user,
-        password=config.postgres_password,
-    )
+    return psycopg2.connect(config.psql_uri)
 
 def _prepare_batch(valid_pairs, embed_model):
     valid_nodes, texts = zip(*valid_pairs)
