@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
-"""
-load_postgres.py
+"""load_postgres.py
 
-Replaces load_redis.py and load_chroma.py.
-Ingests LlamaIndex TextNodes into a unified PostgreSQL + pgvector table.
+Ingests LlamaIndex TextNodes into PostgreSQL + pgvector.
 
-Schema per node:
-  id            TEXT PRIMARY KEY
-  doc_id        TEXT
-  text          TEXT
-  embedding     vector(1024)
-  file_name     TEXT          -- structured for fast filtering
-  user_id       TEXT          -- structured for fast filtering
-  groups        TEXT          -- structured for fast filtering
-  metadata      JSONB         -- remaining arbitrary metadata
-  text_search   tsvector      -- sparse / BM25 search support
+This loader stores content chunks in `{table_name}` and writes permissions into
+`document_access`.
 
-Index strategy (千级 chunk 规模):
-  - No IVFFLAT / HNSW — plain sequential scan is more accurate at this scale.
-  - GIN index on text_search for keyword retrieval.
-  - B-tree indexes on file_name / user_id / groups for metadata filtering.
+Important: the loader **must not** infer permissions. Permissions are defined
+upstream in the parser stage (see `update_data.py`) by injecting these fields
+into each node's metadata:
+
+    access_type  : 'public' | 'student' | 'office' | 'private'   (required)
+    role         : optional (defaults to 'student' for student access)
+    organization : optional (required when access_type == 'office')
+    user_id      : only meaningful when access_type == 'private'
 """
 
 import os
@@ -43,6 +37,33 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 PROMOTED_FIELDS = ("file_name", "user_id", "groups")  # fields pulled out of JSONB
+
+"""NOTE
+
+This file must remain a *dumb loader*:
+    - parser stage writes permission metadata into each node
+    - loader stores it (no inference, no validation, no defaulting)
+    - retriever enforces it at query time
+"""
+
+
+def _split_groups(groups_value: str | None) -> list[str]:
+    """Parse groups string into list.
+
+    Existing metadata uses a single TEXT field `groups` (sometimes empty).
+    We keep parsing simple to avoid breaking old ingestion formats.
+    """
+    if not groups_value:
+        return []
+    raw = str(groups_value).strip()
+    if not raw:
+        return []
+    # Support common separators.
+    for sep in ("|", ",", ";", " "):
+        if sep in raw:
+            parts = [p.strip() for p in raw.split(sep)]
+            return [p for p in parts if p]
+    return [raw]
 
 
 def _clean_file_name(file_name: str) -> str:
@@ -129,6 +150,7 @@ def _embed_with_retry(embed_model, texts: list[str], min_batch: int = 1) -> list
 DDL = """
 CREATE EXTENSION IF NOT EXISTS vector;
 
+-- Chunk table (kept for backwards compatibility)
 CREATE TABLE IF NOT EXISTS {table} (
     id            TEXT PRIMARY KEY,
     doc_id        TEXT,
@@ -140,6 +162,16 @@ CREATE TABLE IF NOT EXISTS {table} (
     metadata      JSONB,
     text_search   tsvector
         GENERATED ALWAYS AS (to_tsvector('english', coalesce(text, ''))) STORED
+);
+
+-- Permission table (used by PostgresRetriever)
+CREATE TABLE IF NOT EXISTS document_access (
+    doc_id         TEXT NOT NULL,
+    access_type    TEXT NOT NULL,  -- public | student | office | private
+    role           TEXT,           -- student | faculty | ...
+    organization   TEXT,           -- advising / registrar
+    user_id        TEXT,           -- only for private
+    PRIMARY KEY (doc_id, access_type, role, organization, user_id)
 );
 
 -- Sparse / keyword search
@@ -155,6 +187,14 @@ CREATE INDEX IF NOT EXISTS {table}_user_id_idx
 
 CREATE INDEX IF NOT EXISTS {table}_groups_idx
     ON {table} (groups);
+
+-- ACL lookup index (doc_id is the join key in retriever)
+CREATE INDEX IF NOT EXISTS document_access_doc_id_idx
+    ON document_access (doc_id);
+
+-- Filter index (matches retriever's access predicate)
+CREATE INDEX IF NOT EXISTS document_access_filter_idx
+    ON document_access (access_type, role, organization, user_id);
 """
 
 # NOTE: No ANN vector index is created intentionally.
@@ -231,6 +271,7 @@ def load_postgres(
     if reset:
         logger.info("Dropping table %s", table_name)
         cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS document_access CASCADE;")
 
     cur.execute(DDL.format(table=table_name))
     conn.commit()
@@ -261,17 +302,42 @@ def load_postgres(
         embeddings = _embed_with_retry(embed_model, list(texts))
 
         rows = []
+        
+        acl_rows: set[tuple[str, str, str | None, str | None, str | None]] = set()
         for node, embedding, clean_text in zip(valid_nodes, embeddings, texts):
             promoted, rest = _split_metadata(node.metadata)
+            if not node.ref_doc_id:
+                raise ValueError(f"Node missing ref_doc_id: {node.node_id}")
+            doc_id = _strip_nul(node.ref_doc_id or "")
+            file_name = _strip_nul(promoted.get("file_name") or "")
+            owner_user_id = _strip_nul(promoted.get("user_id") or "")
+            groups_val = _strip_nul(promoted.get("groups") or "")
+
+            # Permission: store exactly what parser produced on node.metadata
+            if doc_id:
+                md = node.metadata or {}
+                access_type = md.get("access_type")
+                role = md.get("role")
+                organization = md.get("organization")
+                access_user_id = md.get("user_id")
+
+                acl_rows.add((
+                    _strip_nul(str(doc_id)),
+                    access_type if access_type is not None else None,
+                    _strip_nul(str(role)) if role is not None else None,
+                    _strip_nul(str(organization)) if organization is not None else None,
+                    _strip_nul(str(access_user_id)) if access_user_id is not None else None,
+                ))
+
             # Sanitise every string field — NUL (0x00) anywhere causes psycopg2 to raise
             rows.append((
                 _strip_nul(node.node_id),                        # id
-                _strip_nul(node.ref_doc_id or ""),               # doc_id
+                doc_id,                                           # doc_id
                 clean_text,                                      # text (already cleaned)
                 embedding,                                       # embedding (list[float])
-                _strip_nul(promoted.get("file_name") or ""),     # file_name
-                _strip_nul(promoted.get("user_id") or ""),       # user_id
-                _strip_nul(promoted.get("groups") or ""),        # groups
+                file_name,                                        # file_name
+                owner_user_id,                                    # user_id
+                groups_val,                                       # groups
                 Json({k: (_strip_nul(v) if isinstance(v, str) else v)
                       for k, v in rest.items()}),                # metadata JSONB
             ))
@@ -294,9 +360,29 @@ def load_postgres(
             rows,
             template="(%s, %s, %s, %s::vector, %s, %s, %s, %s)",
         )
+
+        # Upsert ACL rows for this batch
+        if acl_rows:
+            acl_rows_list = list(acl_rows)
+            execute_values(
+                cur,
+                """
+                INSERT INTO document_access
+                    (doc_id, access_type, role, organization, user_id)
+                VALUES %s
+                ON CONFLICT DO NOTHING
+                """,
+                acl_rows_list,
+                template="(%s, %s, %s, %s, %s)",
+            )
+
         conn.commit()
-        logger.info("Inserted batch %d–%d / %d",
-                    batch_start + 1, min(batch_start + batch_size, total), total)
+        logger.info(
+            "Inserted batch %d–%d / %d",
+            batch_start + 1,
+            min(batch_start + batch_size, total),
+            total,
+        )
 
     cur.close()
     conn.close()
