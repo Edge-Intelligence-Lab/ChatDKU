@@ -47,24 +47,6 @@ This file must remain a *dumb loader*:
 """
 
 
-def _split_groups(groups_value: str | None) -> list[str]:
-    """Parse groups string into list.
-
-    Existing metadata uses a single TEXT field `groups` (sometimes empty).
-    We keep parsing simple to avoid breaking old ingestion formats.
-    """
-    if not groups_value:
-        return []
-    raw = str(groups_value).strip()
-    if not raw:
-        return []
-    # Support common separators.
-    for sep in ("|", ",", ";", " "):
-        if sep in raw:
-            parts = [p.strip() for p in raw.split(sep)]
-            return [p for p in parts if p]
-    return [raw]
-
 
 def _clean_file_name(file_name: str) -> str:
     """Strip extension from file_name (preserves legacy behaviour from load_redis)."""
@@ -150,10 +132,11 @@ def _embed_with_retry(embed_model, texts: list[str], min_batch: int = 1) -> list
 DDL = """
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Chunk table (kept for backwards compatibility)
-CREATE TABLE IF NOT EXISTS {table} (
-    id            TEXT PRIMARY KEY,
+-- Main table (partitioned)
+CREATE TABLE IF NOT EXISTS {table_name} (
+    id            TEXT,
     doc_id        TEXT,
+    source_type   TEXT NOT NULL,
     text          TEXT NOT NULL,
     embedding     vector(1024),
     file_name     TEXT,
@@ -161,40 +144,50 @@ CREATE TABLE IF NOT EXISTS {table} (
     groups        TEXT,
     metadata      JSONB,
     text_search   tsvector
-        GENERATED ALWAYS AS (to_tsvector('english', coalesce(text, ''))) STORED
-);
+        GENERATED ALWAYS AS (to_tsvector('english', coalesce(text, ''))) STORED,
+    PRIMARY KEY (id, source_type)
+) PARTITION BY LIST (source_type);
+
+-- doc partition
+CREATE TABLE IF NOT EXISTS {table_name}_docs
+PARTITION OF {table_name}
+FOR VALUES IN ('doc');
+
+-- event partition
+CREATE TABLE IF NOT EXISTS {table_name}_events
+PARTITION OF {table_name}
+FOR VALUES IN ('event');
 
 -- Permission table (used by PostgresRetriever)
 CREATE TABLE IF NOT EXISTS document_access (
     doc_id         TEXT NOT NULL,
+    source_type    TEXT,
     access_type    TEXT NOT NULL,  -- public | student | office | private
     role           TEXT,           -- student | faculty | ...
     organization   TEXT,           -- advising / registrar
     user_id        TEXT,           -- only for private
-    PRIMARY KEY (doc_id, access_type, role, organization, user_id)
+    PRIMARY KEY (doc_id, source_type, access_type, role, organization, user_id)
 );
 
--- Sparse / keyword search
-CREATE INDEX IF NOT EXISTS {table}_text_search_idx
-    ON {table} USING GIN (text_search);
+-- Indexes (must be on parent so partitions get them on PG 11+)
+CREATE INDEX IF NOT EXISTS {table_name}_text_search_idx
+    ON {table_name} USING GIN (text_search);
 
--- Metadata filters
-CREATE INDEX IF NOT EXISTS {table}_file_name_idx
-    ON {table} (file_name);
+CREATE INDEX IF NOT EXISTS {table_name}_doc_id_idx
+    ON {table_name} (doc_id);
 
-CREATE INDEX IF NOT EXISTS {table}_user_id_idx
-    ON {table} (user_id);
-
-CREATE INDEX IF NOT EXISTS {table}_groups_idx
-    ON {table} (groups);
+CREATE INDEX IF NOT EXISTS {table_name}_source_type_idx
+    ON {table_name} (source_type);
 
 -- ACL lookup index (doc_id is the join key in retriever)
 CREATE INDEX IF NOT EXISTS document_access_doc_id_idx
     ON document_access (doc_id);
+CREATE INDEX IF NOT EXISTS {table_name}_doc_id_source_type_idx
+    ON {table_name} (doc_id, source_type);
 
 -- Filter index (matches retriever's access predicate)
 CREATE INDEX IF NOT EXISTS document_access_filter_idx
-    ON document_access (access_type, role, organization, user_id);
+    ON document_access (source_type, access_type, role, organization, user_id);
 """
 
 # NOTE: No ANN vector index is created intentionally.
@@ -217,6 +210,130 @@ def _get_connection() -> psycopg2.extensions.connection:
         user=config.postgres_user,
         password=config.postgres_password,
     )
+
+def _prepare_batch(valid_pairs, embed_model):
+    valid_nodes, texts = zip(*valid_pairs)
+    embeddings = _embed_with_retry(embed_model, list(texts))
+
+    rows = []
+    acl_rows: set[tuple[str, str, str, str | None, str | None, str | None]] = set()
+    for node, embedding, clean_text in zip(valid_nodes, embeddings, texts):
+        promoted, rest = _split_metadata(node.metadata)
+        if not node.ref_doc_id:
+            raise ValueError(f"Node missing ref_doc_id: {node.node_id}")
+        doc_id = _strip_nul(node.ref_doc_id or "")
+        file_name = _strip_nul(promoted.get("file_name") or "")
+        owner_user_id = _strip_nul(promoted.get("user_id") or "")
+        groups_val = _strip_nul(promoted.get("groups") or "")
+
+        st = "event" if node.metadata.get("is_event") else "doc"
+
+        if doc_id:
+            md = node.metadata or {}
+            access_type = md.get("access_type")
+            role = md.get("role")
+            organization = md.get("organization")
+            access_user_id = md.get("user_id")
+
+            if access_type is None:
+                raise ValueError(f"Missing access_type in node {node.node_id}")
+
+            acl_rows.add((
+                _strip_nul(str(doc_id)),
+                st,
+                access_type,
+                _strip_nul(str(role)) if role is not None else None,
+                _strip_nul(str(organization)) if organization is not None else None,
+                _strip_nul(str(access_user_id)) if access_user_id is not None else None,
+            ))
+
+        rows.append((
+            _strip_nul(node.node_id),
+            doc_id,
+            st,
+            clean_text,
+            embedding,
+            file_name,
+            owner_user_id,
+            groups_val,
+            Json({k: (_strip_nul(v) if isinstance(v, str) else v)
+                for k, v in rest.items()}),
+        ))
+    return rows, acl_rows
+
+def _insert_batch(
+        conn, 
+        cur, 
+        batch_nodes: list[TextNode], 
+        *,
+        target_table_name: str,
+        embed_model,
+        batch_size: int = 25,
+    ) -> None:
+    
+    if not batch_nodes:
+        logger.info("No nodes to insert for table %s", target_table_name)
+        return
+
+    # ---- Embed + insert in batches -----------------------------------
+    total = len(batch_nodes)
+    for batch_start in range(0, total, batch_size):
+        batch = batch_nodes[batch_start: batch_start + batch_size]
+
+        valid_pairs = [
+            (n, _strip_nul(n.text))
+            for n in batch
+            if _is_valid_text(n.text)
+        ]
+        skipped = len(batch) - len(valid_pairs)
+        if skipped:
+            logger.warning("Skipping %d node(s) with empty/invalid text in this batch.", skipped)
+        if not valid_pairs:
+            continue
+
+        rows, acl_rows = _prepare_batch(valid_pairs,embed_model=embed_model)
+
+        execute_values(
+            cur,
+            f"""
+            INSERT INTO {target_table_name}
+                (id, doc_id, source_type, text, embedding, file_name, user_id, groups, metadata)
+            VALUES %s
+            ON CONFLICT (id, source_type) DO UPDATE SET
+                doc_id    = EXCLUDED.doc_id,
+                text      = EXCLUDED.text,
+                embedding = EXCLUDED.embedding,
+                file_name = EXCLUDED.file_name,
+                user_id   = EXCLUDED.user_id,
+                groups    = EXCLUDED.groups,
+                metadata  = EXCLUDED.metadata
+            """,
+            rows,
+            template="(%s, %s, %s, %s, %s::vector, %s, %s, %s, %s)",
+        )
+
+        if acl_rows:
+            acl_rows_list = list(acl_rows)
+            execute_values(
+                cur,
+                """
+                INSERT INTO document_access
+                    (doc_id, source_type, access_type, role, organization, user_id)
+                VALUES %s
+                ON CONFLICT DO NOTHING
+                """,
+                acl_rows_list,
+                template="(%s, %s, %s, %s, %s, %s)",
+            )
+        
+        conn.commit()
+        logger.info(
+            "Inserted batch %d–%d / %d into %s",
+            batch_start + 1,
+            min(batch_start + batch_size, total),
+            total,
+            target_table_name,
+        )
 
 
 def load_postgres(
@@ -252,141 +369,37 @@ def load_postgres(
             datas = json.load(fh)
         nodes = [TextNode.from_dict(d) for d in datas]
 
-    # Normalise file_name (strip extension) to match legacy behaviour
     for node in nodes:
+        # Normalise file_name (strip extension) to match legacy behaviour
         if "file_name" in node.metadata:
             node.metadata["file_name"] = _clean_file_name(node.metadata["file_name"])
 
+    # table_name/event_table_name kept for CLI compatibility; loader inserts into chat_dku only.
     if table_name is None:
-        table_name = getattr(config, "postgres_table", "chatdku")
+        table_name = getattr(config, "postgres_table", "chat_dku")
 
-    logger.info("Target table: %s  |  nodes: %d  |  reset: %s",
-                table_name, len(nodes), reset)
-
+    logger.info(f"Target partitioned table: {table_name}  |  nodes: %d  |  reset: %s",
+                len(nodes), reset)
+    
     # ---- 3. Database setup --------------------------------------------------
     conn = _get_connection()
     conn.autocommit = False
     cur = conn.cursor()
 
     if reset:
-        logger.info("Dropping table %s", table_name)
         cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE;")
         cur.execute("DROP TABLE IF EXISTS document_access CASCADE;")
 
-    cur.execute(DDL.format(table=table_name))
+    cur.execute(DDL.format(table_name=table_name))
+
     conn.commit()
 
     # ---- 4. Embed + insert in batches ---------------------------------------
-    total = len(nodes)
-    for batch_start in range(0, total, batch_size):
-        batch = nodes[batch_start: batch_start + batch_size]
-
-        # Filter out invalid nodes (empty / non-string text) before embedding.
-        # Chroma does the same: "if not node.text or not isinstance(node.text, str): continue"
-        # The TEI server returns HTTP 413 even for a single chunk whose text is
-        # blank or whitespace-only after NUL removal, so we must drop them here.
-        valid_pairs = [
-            (n, _strip_nul(n.text))
-            for n in batch
-            if _is_valid_text(n.text)
-        ]
-        skipped = len(batch) - len(valid_pairs)
-        if skipped:
-            logger.warning("Skipping %d node(s) with empty/invalid text in this batch.", skipped)
-        if not valid_pairs:
-            continue
-
-        valid_nodes, texts = zip(*valid_pairs)   # unzip into two tuples
-
-        # Embed — retries with smaller sub-batches on 413 / server errors
-        embeddings = _embed_with_retry(embed_model, list(texts))
-
-        rows = []
-        
-        acl_rows: set[tuple[str, str, str | None, str | None, str | None]] = set()
-        for node, embedding, clean_text in zip(valid_nodes, embeddings, texts):
-            promoted, rest = _split_metadata(node.metadata)
-            if not node.ref_doc_id:
-                raise ValueError(f"Node missing ref_doc_id: {node.node_id}")
-            doc_id = _strip_nul(node.ref_doc_id or "")
-            file_name = _strip_nul(promoted.get("file_name") or "")
-            owner_user_id = _strip_nul(promoted.get("user_id") or "")
-            groups_val = _strip_nul(promoted.get("groups") or "")
-
-            # Permission: store exactly what parser produced on node.metadata
-            if doc_id:
-                md = node.metadata or {}
-                access_type = md.get("access_type")
-                role = md.get("role")
-                organization = md.get("organization")
-                access_user_id = md.get("user_id")
-
-                acl_rows.add((
-                    _strip_nul(str(doc_id)),
-                    access_type if access_type is not None else None,
-                    _strip_nul(str(role)) if role is not None else None,
-                    _strip_nul(str(organization)) if organization is not None else None,
-                    _strip_nul(str(access_user_id)) if access_user_id is not None else None,
-                ))
-
-            # Sanitise every string field — NUL (0x00) anywhere causes psycopg2 to raise
-            rows.append((
-                _strip_nul(node.node_id),                        # id
-                doc_id,                                           # doc_id
-                clean_text,                                      # text (already cleaned)
-                embedding,                                       # embedding (list[float])
-                file_name,                                        # file_name
-                owner_user_id,                                    # user_id
-                groups_val,                                       # groups
-                Json({k: (_strip_nul(v) if isinstance(v, str) else v)
-                      for k, v in rest.items()}),                # metadata JSONB
-            ))
-
-        execute_values(
-            cur,
-            f"""
-            INSERT INTO {table_name}
-                (id, doc_id, text, embedding, file_name, user_id, groups, metadata)
-            VALUES %s
-            ON CONFLICT (id) DO UPDATE SET
-                doc_id    = EXCLUDED.doc_id,
-                text      = EXCLUDED.text,
-                embedding = EXCLUDED.embedding,
-                file_name = EXCLUDED.file_name,
-                user_id   = EXCLUDED.user_id,
-                groups    = EXCLUDED.groups,
-                metadata  = EXCLUDED.metadata
-            """,
-            rows,
-            template="(%s, %s, %s, %s::vector, %s, %s, %s, %s)",
-        )
-
-        # Upsert ACL rows for this batch
-        if acl_rows:
-            acl_rows_list = list(acl_rows)
-            execute_values(
-                cur,
-                """
-                INSERT INTO document_access
-                    (doc_id, access_type, role, organization, user_id)
-                VALUES %s
-                ON CONFLICT DO NOTHING
-                """,
-                acl_rows_list,
-                template="(%s, %s, %s, %s, %s)",
-            )
-
-        conn.commit()
-        logger.info(
-            "Inserted batch %d–%d / %d",
-            batch_start + 1,
-            min(batch_start + batch_size, total),
-            total,
-        )
+    _insert_batch(conn, cur, nodes, target_table_name=table_name, batch_size=batch_size, embed_model=embed_model)
+    logger.info("PostgreSQL load done!")
 
     cur.close()
     conn.close()
-    logger.info("PostgreSQL load done!")
 
 
 # ---------------------------------------------------------------------------
@@ -429,8 +442,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--table_name",
         type=str,
-        default="chat_dku_docs",
-        help="Target PostgreSQL table (default: 'chat_dku_docs')",
+        default="chat_dku",
+        help="Target PostgreSQL table (default: 'chat_dku')",
     )
     parser.add_argument(
         "--reset",
