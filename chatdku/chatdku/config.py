@@ -84,6 +84,7 @@ class Config:
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
+                "event_path": "/datapool/chat_dku_advising/event_data",
                 # Redis
                 "redis_host": redis_host,
                 "redis_port": 6379,
@@ -95,6 +96,7 @@ class Config:
                 "user_uploads_collection": "user_uploads",
                 # PSQL
                 "psql_uri": SQLALCHEMY_DATABASE_URI,
+                "postgres_maxconn": 20,
                 # MISC
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
