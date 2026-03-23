@@ -59,7 +59,8 @@ class PermanentMemorySignature(dspy.Signature):
         - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
      2. If a similar memory is found, update it instead of creating a new one.
      3. If the new information is a correction of an existing memory (e.g., user changed major), delete the old memory and store the new one.
-     4. Only call one tool per turn and wait for the observation before next action
+     4. If no relevant memories are found, then store the memory.
+     5. Only call one tool per turn and wait for the observation before next action
 
     When updating or deleting memories:
      1.  ALWAYS call search_memories first to get the relevant memories and their indices.
@@ -67,7 +68,7 @@ class PermanentMemorySignature(dspy.Signature):
         - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
      2.  Then use the index (idx) from the search results to specify which memory to update or delete.
      3.  Memory IDs are for reference only. Do NOT generate or guess memory IDs.
-     3.  Only call one tool per turn and wait for the observation before next action
+     4.  Only call one tool per turn and wait for the observation before next action
 
     Guidelines:
      - Avoid duplicate memories

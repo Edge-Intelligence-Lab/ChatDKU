@@ -14,6 +14,7 @@ class MemoryTools:
         self.session_id = session_id
         self.last_memory_search = []
         self.last_searched_times = {}  # memory_id -> last_searched_timestamp
+        self.op_count = 0
         # Setting up agent memory
         memory_config = {
             "vector_store": {
@@ -56,7 +57,7 @@ class MemoryTools:
             content: The fact to be stored in memory.
             metadata: optional dictionary of metadata to associate with the memory.
                       All metadata values must be a single primitive (str, int, float, bool), or None
-                      If you store multiple items(e.g., multiple tags), encode them as a comma-seperated string.
+                      If you store multiple items(e.g., multiple tags), encode them as a comma-separated string.
 
         You should store information related to the user. For example it could be:
             - name of the user
@@ -65,23 +66,49 @@ class MemoryTools:
             - etc
         You should store the information you have asked from the user also.
 
+        Guidelines for time relevance:
+            - "long-term": stable facts that are useful across conversations
+                Examples: 
+                - "User is a computer science major"
+                - "User prefers evening classes"
+            - "short-term": recent or context-specific information
+                Examples:
+                - "User is currently stressed about upcoming exams"
+                - "User is going to be late on an assignment today"
+
         In addition to storing memory content, you should extract metadata from the content and store it as well.
         Metadata can include:
         - category (e.g., academic, personal, preference)
         - entities (e.g., course names, majors, locations)
         - tags (keywords)
-        - time relevance (e.g., temporary, long-term)
-        - relevance score (a numerical score indicating how important or relevant the memory is, on a scale from 0 to 1)
-        - last referenced (timestamp of when the memory was last referenced, can be used to determine recency)
+        - time relevance (e.g., short-term, long-term)
 
+        Do NOT store:
+            - task-specific requests (e.g., "help me plan my schedule")
+            - one-time clarifications (e.g., "I meant Bio110, not Bio101")
+            - general questions or instructions
+            - weak or irrelevant information
+
+        
         Example Usage:
-        store_memory("The user's name is Alice.", metadata={"category": "personal", "entities": "name", "tags": "user_info"}, "time_relevance": "long-term"})
-
+            store_memory(
+                "User will attend a guest lecture today.",
+                metadata={
+                    "category": "academic",
+                    "entities": "lecture",
+                    "tags": "user_info",
+                    "time_relevance": "short-term"
+                }
+            )
         Returns:
             str: The result of the operation.
         """
         try:
             self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
+            self.op_count += 1
+
+            if self.op_count % 10 == 0:
+                self.cleanup_memory()
             return f"Stored memory: {content}"
         except Exception as e:
             return f"Error storing memory: {str(e)}"
@@ -116,18 +143,15 @@ class MemoryTools:
                 limit=limit,
                 filters=filters
             )
-            if not results:
+            if not results or not results.get("results"):
                 self.last_memory_search = []  # Clear last search results if no results found
-                return "No relevant memories found."
+                return "No Relevant memories found."
 
             self.last_memory_search = results["results"]  # Store the last search results
             memory_text = "Relevant memories found:\n"
 
             if not hasattr(self, "memory_access_log"):
                 self.memory_access_log = {}
-
-
-
 
             for idx, mem in enumerate(results["results"]):
                 memory_id = mem["id"]
@@ -195,6 +219,48 @@ class MemoryTools:
             return f"Memory with id:{memory_id} deleted successfully."
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
+
+    def cleanup_memory(self, max_memories: int = 100 ) -> str:
+        """Cleanup unused memories for the user. """
+        try:
+            deleted_count = 0
+            all_memories = self.memory.get_all(user_id=self.user_id)
+            if not all_memories or not all_memories.get("results"):
+                return "No memories to clean."
+
+
+            sorted_mems = sorted(
+                        all_memories["results"],
+                        key=lambda m: self.memory_access_log.get(m["id"], {"last_accessed": 0})["last_accessed"] or 0
+                    )  
+
+            while sorted_mems:
+                memory = sorted_mems[0]  # Get the least recently accessed memory
+                metadata = memory.get("metadata", {}) or {}
+
+                mem_id = memory["id"]
+                to_delete=False
+
+                if metadata.get("time_relevance") == "temporary":
+                    to_delete=True
+                elif len(sorted_mems) > max_memories:
+                    to_delete = True
+
+                if to_delete:
+                    self.memory.delete(memory["id"])
+                    deleted_count += 1
+                    sorted_mems.pop(0) # remove from list
+                    if(mem_id in self.memory_access_log):
+                        del self.memory_access_log[mem_id] # remove from access log
+                else:
+                    break  # Stop deleting if we are under the max memory limit
+
+            return f"Cleanup memories completed successfully. Deleted {deleted_count} memories."
+        except Exception as e:
+            return f"Error cleaning up memories: {str(e)}"
+
+
+
 
 if __name__ == "__main__":
     # Example usage
