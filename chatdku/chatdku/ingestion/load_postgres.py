@@ -266,7 +266,7 @@ def _prepare_batch(valid_pairs, embed_model):
                 groups_val,
                 Json(
                     {
-                        k: (_strip_nul(v) if isinstance(v, str) else v)
+                        k: _strip_nul(v) if isinstance(v, str) else v
                         for k, v in rest.items()
                     }
                 ),
@@ -292,9 +292,11 @@ def _insert_batch(
     # ---- Embed + insert in batches -----------------------------------
     total = len(batch_nodes)
     for batch_start in range(0, total, batch_size):
-        batch = batch_nodes[batch_start: batch_start + batch_size]
+        batch = batch_nodes[batch_start : batch_start + batch_size]
 
-        valid_pairs = [(n, _strip_nul(n.text)) for n in batch if _is_valid_text(n.text)]
+        valid_pairs = [
+            (n, _strip_nul(n.text)) for n in batch if _is_valid_text(n.text)
+        ]
         skipped = len(batch) - len(valid_pairs)
         if skipped:
             logger.warning(

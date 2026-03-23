@@ -45,7 +45,7 @@ _pool: SimpleConnectionPool | None = None
 # +++ added: global concurrency limiter (prevents DB overload under concurrency)
 # Keep this <= maxconn. Default to a conservative value.
 _DB_QUERY_SEMAPHORE = BoundedSemaphore(
-    value=int(getattr(config, "postgres_max_concurrent_queries", 8))
+    value=int(getattr(config, "postgres_max_concurrent_queries", 8)),
 )
 
 
@@ -118,7 +118,7 @@ class PostgresRetriever(BaseDocRetriever):
         sparse_top_k: int | None = None,
         sparse_enabled: bool = True,
         sparse_timeout_ms: int | None = None,
-        verbose: bool = False
+        verbose: bool = False,
     ):
         super().__init__(retriever_top_k, user_id, search_mode, files)
         self.exclude = set()
@@ -307,7 +307,7 @@ class PostgresRetriever(BaseDocRetriever):
 
     # +++ added: Python-side RRF merge (tiny compute: O(k))
     def _rrf_fuse(
-        self, dense: list[_Hit], sparse: list[_Hit]
+        self, dense: list[_Hit], sparse: list[_Hit],
     ) -> list[tuple[_Hit, float]]:
         scores: dict[str, float] = {}
         by_id: dict[str, _Hit] = {}
