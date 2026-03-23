@@ -1,3 +1,5 @@
+import time
+
 from mem0 import Memory
 
 from chatdku.config import config
@@ -11,6 +13,7 @@ class MemoryTools:
         self.user_id = user_id
         self.session_id = session_id
         self.last_memory_search = []
+        self.last_searched_times = {}  # memory_id -> last_searched_timestamp
         # Setting up agent memory
         memory_config = {
             "vector_store": {
@@ -120,11 +123,30 @@ class MemoryTools:
             self.last_memory_search = results["results"]  # Store the last search results
             memory_text = "Relevant memories found:\n"
 
+            if not hasattr(self, "memory_access_log"):
+                self.memory_access_log = {}
+
+
+
+
             for idx, mem in enumerate(results["results"]):
+                memory_id = mem["id"]
+                if memory_id not in self.memory_access_log:
+                    self.memory_access_log[memory_id] = {
+                        "count": 0,
+                        "last_accessed": None
+                    }
+                self.memory_access_log[memory_id]["count"] += 1
+                self.memory_access_log[memory_id]["last_accessed"] = time.time()
+
+                access_info = self.memory_access_log[memory_id]
+
                 memory_text += (
                     f"{idx}. Memory: {mem['memory']}\n"
                     f"   ID: {mem['id']}\n"
                     f"   Metadata: {mem.get('metadata')}\n"
+                    f"   Access Count: {access_info['count']}\n"
+                    f"   Last Accessed: {access_info['last_accessed']}\n"
                 ) 
             return memory_text
         except Exception as e:
