@@ -22,7 +22,6 @@ Performance fixes applied vs original:
 from __future__ import annotations
 from time import perf_counter
 
-import psycopg2
 from psycopg2 import extensions as pg_ext
 from psycopg2.pool import SimpleConnectionPool
 from llama_index.core import Settings
@@ -119,6 +118,7 @@ class PostgresRetriever(BaseDocRetriever):
         sparse_top_k: int | None = None,
         sparse_enabled: bool = True,
         sparse_timeout_ms: int | None = None,
+        verbose: bool = False
     ):
         super().__init__(retriever_top_k, user_id, search_mode, files)
         self.exclude = set()
@@ -159,6 +159,7 @@ class PostgresRetriever(BaseDocRetriever):
             sparse_top_k if sparse_top_k is not None else max(self.retriever_top_k, 25)
         )
         self.sparse_enabled = sparse_enabled
+        self.verbose = verbose
 
     # ------------------------------------------------------------------
     # Helpers
@@ -328,7 +329,7 @@ class PostgresRetriever(BaseDocRetriever):
     # ------------------------------------------------------------------
     # Core query
     # ------------------------------------------------------------------
-    def query(self, query: str) -> list[NodeWithScore]:
+    def query(self, query: str, verbose=False) -> list[NodeWithScore]:
         """
         Concurrency-safe hybrid search:
           1) Dense must succeed (fast with HNSW)
@@ -378,12 +379,13 @@ class PostgresRetriever(BaseDocRetriever):
                 _return(pool, conn)
 
         total = perf_counter() - t0
-        # print(
-        #     "[pg] "
-        #     f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "
-        #     f"dense={dense_s:.3f}s sparse={sparse_s:.3f}s fuse={fuse_s:.3f}s commit={commit_s:.3f}s "
-        #     f"total={total:.3f}s q='{query[:40]}'"
-        # )
+        if verbose:
+            print(
+                "[pg] "
+                f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "
+                f"dense={dense_s:.3f}s sparse={sparse_s:.3f}s fuse={fuse_s:.3f}s commit={commit_s:.3f}s "
+                f"total={total:.3f}s q='{query[:40]}'"
+            )
 
         results: list[NodeWithScore] = []
         for hit, score in fused:
@@ -417,6 +419,7 @@ if __name__ == "__main__":
     parser.add_argument("--user_id", type=str, default="Chat_DKU")
     parser.add_argument("--search_mode", type=int, default=0)
     parser.add_argument("--files", nargs="*", default=None)
+    parser.add_argument("--verbose", default=False, action="store_true")
     args = parser.parse_args()
 
     setup(use_llm=False)

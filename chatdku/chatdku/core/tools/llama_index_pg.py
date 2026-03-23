@@ -5,7 +5,7 @@ import uuid
 
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.reranker import rerank
-from chatdku.core.tools.utils import QueryTimeoutError, timeout
+from chatdku.core.tools.utils import QueryTimeoutError
 from chatdku.core.tools.retriever.postgres_retriever import PostgresRetriever
 from chatdku.config import config
 

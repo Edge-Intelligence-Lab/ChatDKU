@@ -292,7 +292,7 @@ def _insert_batch(
     # ---- Embed + insert in batches -----------------------------------
     total = len(batch_nodes)
     for batch_start in range(0, total, batch_size):
-        batch = batch_nodes[batch_start : batch_start + batch_size]
+        batch = batch_nodes[batch_start: batch_start + batch_size]
 
         valid_pairs = [(n, _strip_nul(n.text)) for n in batch if _is_valid_text(n.text)]
         skipped = len(batch) - len(valid_pairs)

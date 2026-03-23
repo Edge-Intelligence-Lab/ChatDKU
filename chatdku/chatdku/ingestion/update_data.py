@@ -256,13 +256,13 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
 
     new_list = []
     for f in log["file_paths"]:
-        ### filtering event out
+        # filtering event out
         if f.startswith(config.event_path):
             continue
         if f not in removed_files:
             new_list.append(f)
 
-    ### filtering event out
+    # filtering event out
     for f in added_files:
         if not f.startswith(config.event_path):
             new_list.append(f)
