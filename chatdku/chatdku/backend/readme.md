@@ -78,10 +78,12 @@ gunicorn -w 1 -b <server:port> app:app
 For `https`, run this:
 
 ```bash
-gunicorn -w 1 -b <server:port> \
---certfile certs/dev.crt \
---key certs/dev.key \
-agent_app:app
+nohup gunicorn stt_app:app \
+--worker-class eventlet \
+--bind 0.0.0.0:8443 \
+--certfile=/etc/ssl/certs/chatdku.dukekunshan.edu.cn.pem \
+--keyfile=/etc/ssl/updated_certs/chatdku.dukekunshan.edu.cn.key \
+--workers 1 &
 ```
 
 
@@ -95,7 +97,7 @@ The current version of speech-to-text uses `whisper-base` model.
 To run the model, run
 
 ```bash
-gunicorn -w 1 -b <server:port> whisper_model:app 
+nohup gunicorn -w 1 -b  10.200.14.82:8002 whisper_model:app &
 ```
 This should run your `whisper` model in a specific port.
 **Note**: depending on your server port, update the `routes.py` file.
