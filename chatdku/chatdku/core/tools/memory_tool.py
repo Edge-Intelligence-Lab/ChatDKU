@@ -15,6 +15,7 @@ class MemoryTools:
         self.last_memory_search = []
         self.last_searched_times = {}  # memory_id -> last_searched_timestamp
         self.op_count = 0
+        self.memory_access_log = {}  # memory_id -> {"count": int, "last_accessed": timestamp}
         # Setting up agent memory
         memory_config = {
             "vector_store": {
@@ -104,7 +105,8 @@ class MemoryTools:
             str: The result of the operation.
         """
         try:
-            self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
+            result = self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
+            print(" RESULT: ", result)
             self.op_count += 1
 
             if self.op_count % 10 == 0:
@@ -228,20 +230,24 @@ class MemoryTools:
             if not all_memories or not all_memories.get("results"):
                 return "No memories to clean."
 
+            if(len(all_memories["results"]) <= max_memories):
+                return "Memory count is within the limit. No cleanup needed."
 
             sorted_mems = sorted(
-                        all_memories["results"],
-                        key=lambda m: self.memory_access_log.get(m["id"], {"last_accessed": 0})["last_accessed"] or 0
-                    )  
-
-            while sorted_mems:
+                    all_memories["results"],
+                    key=lambda m: self.memory_access_log.get(m["id"], {}).get(
+                        "last_accessed",
+                        m.get("created_at", 0)
+                    )
+                )
+            while len(sorted_mems) > max_memories:
                 memory = sorted_mems[0]  # Get the least recently accessed memory
                 metadata = memory.get("metadata", {}) or {}
 
                 mem_id = memory["id"]
                 to_delete=False
 
-                if metadata.get("time_relevance") == "temporary":
+                if metadata.get("time_relevance") == "short-term":
                     to_delete=True
                 elif len(sorted_mems) > max_memories:
                     to_delete = True
@@ -264,14 +270,18 @@ class MemoryTools:
 
 if __name__ == "__main__":
     # Example usage
-    user_id = "user123"
-    memory_tool = MemoryTools(user_id)
-    print(memory_tool.store_memory("User's name is Alice."))
-    print(memory_tool.search_memories("What is the user's name?"))
-    print(memory_tool.get_all_memories())
-
-    print(memory_tool.update_memory(0, "User's name is Bob."))
-    print(memory_tool.get_all_memories())
-
-    # print(memory_tool.delete_memory(0))
+    user_id = "test_user"
+    mt = MemoryTools(user_id)
+    all_memories = mt.get_all_memories()
+    for mem in mt.memory.get_all(user_id=user_id).get("results", []):
+       print(f"Deleting memory: {mem['memory']} with ID: {mem['id']}")
+       mt.delete_memory(mem["id"])
+    
+    # print(mt.store_memory("User is a computer science major.", metadata={"category": "academic", "entities": "major", "tags": "user_info", "time_relevance": "long-term"}))
+    # print(mt.store_memory("User prefers evening classes.", metadata={"category": "personal", "entities": "classes", "tags": "user_preference", "time_relevance": "temporary"}))
+    # print(mt.get_all_memories())
+    # print(mt.store_memory("User is currently stressed about upcoming exams.", metadata={"category": "personal", "entities": "stress", "tags": "user_emotion", "time_relevance": "temporary"}))
+    result = (mt.store_memory("User's favorite subject is AI.", metadata={"category": "academic", "entities": "subject", "tags": "user_preference", "time_relevance": "long-term"}))
+    print(result)
+    print(mt.get_all_memories())
     os._exit(0)
