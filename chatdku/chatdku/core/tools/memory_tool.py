@@ -1,5 +1,5 @@
 import time
-
+import datetime
 from mem0 import Memory
 
 from chatdku.config import config
@@ -105,8 +105,7 @@ class MemoryTools:
             str: The result of the operation.
         """
         try:
-            result = self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
-            print(" RESULT: ", result)
+            self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
             self.op_count += 1
 
             if self.op_count % 10 == 0:
@@ -229,59 +228,58 @@ class MemoryTools:
             all_memories = self.memory.get_all(user_id=self.user_id)
             if not all_memories or not all_memories.get("results"):
                 return "No memories to clean."
-
             if(len(all_memories["results"]) <= max_memories):
                 return "Memory count is within the limit. No cleanup needed."
 
-            sorted_mems = sorted(
-                    all_memories["results"],
-                    key=lambda m: self.memory_access_log.get(m["id"], {}).get(
-                        "last_accessed",
-                        m.get("created_at", 0)
-                    )
-                )
-            while len(sorted_mems) > max_memories:
-                memory = sorted_mems[0]  # Get the least recently accessed memory
-                metadata = memory.get("metadata", {}) or {}
-
-                mem_id = memory["id"]
-                to_delete=False
-
-                if metadata.get("time_relevance") == "short-term":
-                    to_delete=True
-                elif len(sorted_mems) > max_memories:
-                    to_delete = True
-
-                if to_delete:
-                    self.memory.delete(memory["id"])
-                    deleted_count += 1
-                    sorted_mems.pop(0) # remove from list
-                    if(mem_id in self.memory_access_log):
-                        del self.memory_access_log[mem_id] # remove from access log
+            short_mems = []
+            long_mems = []
+            #Split memories into long and short term memories
+            for m in all_memories["results"]:
+                if m.get("metadata", {}).get("time_relevance") == "short-term":
+                    short_mems.append(m)
                 else:
-                    break  # Stop deleting if we are under the max memory limit
+                    long_mems.append(m)
 
-            return f"Cleanup memories completed successfully. Deleted {deleted_count} memories."
+            short_mems_sorted = sorted(
+                short_mems,
+                key=lambda m: self._to_timestamp(m.get("created_at", 0))
+                )
+            long_mems_sorted = sorted(
+                long_mems,
+                key=lambda m: self._to_timestamp(m.get("last_accessed",
+                m.get("created_at", 0)))
+            )
+            while len(short_mems_sorted) + len(long_mems_sorted) > max_memories and short_mems_sorted:
+                    memory = short_mems_sorted.pop(0)
+                    mem_id = memory["id"]
+
+                    self.memory.delete(mem_id)
+                    deleted_count += 1
+
+                    if mem_id in self.memory_access_log:
+                        del self.memory_access_log[mem_id]
+
+            while len(short_mems_sorted) + len(long_mems_sorted) > max_memories and long_mems_sorted:
+                memory = long_mems_sorted.pop(0)
+                mem_id = memory["id"]
+
+                self.memory.delete(mem_id)
+                deleted_count += 1
+
+                if mem_id in self.memory_access_log:
+                    del self.memory_access_log[mem_id]
+
+            return f"Cleanup completed. Deleted {deleted_count} memories."
         except Exception as e:
             return f"Error cleaning up memories: {str(e)}"
+    def _to_timestamp(self, val): # helper function to convert created_at and last_accessed to comparable timestamps
+        if isinstance(val, (int, float)):
+            return float(val)
+        elif isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val).timestamp() 
+            except:
+                return 0.0
+        else:
+            return 0.0
 
-
-
-
-if __name__ == "__main__":
-    # Example usage
-    user_id = "test_user"
-    mt = MemoryTools(user_id)
-    all_memories = mt.get_all_memories()
-    for mem in mt.memory.get_all(user_id=user_id).get("results", []):
-       print(f"Deleting memory: {mem['memory']} with ID: {mem['id']}")
-       mt.delete_memory(mem["id"])
-    
-    # print(mt.store_memory("User is a computer science major.", metadata={"category": "academic", "entities": "major", "tags": "user_info", "time_relevance": "long-term"}))
-    # print(mt.store_memory("User prefers evening classes.", metadata={"category": "personal", "entities": "classes", "tags": "user_preference", "time_relevance": "temporary"}))
-    # print(mt.get_all_memories())
-    # print(mt.store_memory("User is currently stressed about upcoming exams.", metadata={"category": "personal", "entities": "stress", "tags": "user_emotion", "time_relevance": "temporary"}))
-    result = (mt.store_memory("User's favorite subject is AI.", metadata={"category": "academic", "entities": "subject", "tags": "user_preference", "time_relevance": "long-term"}))
-    print(result)
-    print(mt.get_all_memories())
-    os._exit(0)
