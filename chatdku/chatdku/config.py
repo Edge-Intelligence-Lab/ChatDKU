@@ -79,19 +79,20 @@ class Config:
                 "reranker_model": "Qwen/Qwen3-VL-Reranker-8B",
                 "reranker_api_key": None,
                 # Data
-                "data_dir": "/datapool/chat_dku_advising",
-                "documents_path": "/datapool/chat_dku_advising/parsed.pkl",  # This is Deprecated use nodes instead
-                "nodes_path": "/datapool/chat_dku_advising/nodes.json",
+                "data_dir": "/datapool/chat_dku_public",
+                "documents_path": "/datapool/chat_dku_public/parsed.pkl",  # This is Deprecated use nodes instead
+                "nodes_path": "/datapool/chat_dku_public/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
+                "event_path": "/datapool/chat_dku_public/event_data",
                 # Redis
                 "redis_host": redis_host,
                 "redis_port": 6379,
                 "redis_password": redis_password,
-                "index_name": "chat_dku_advising",
+                "index_name": "chat_dku_public",
                 # Chroma
                 "chroma_db_port": 12400,
-                "chroma_collection": "dku_html_pdf",
+                "chroma_collection": "dku_public",
                 "user_uploads_collection": "user_uploads",
                 # PSQL
                 "psql_uri": SQLALCHEMY_DATABASE_URI,
