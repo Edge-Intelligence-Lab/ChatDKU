@@ -16,7 +16,7 @@ from llama_index.core.schema import BaseNode, Document, TextNode
 from llama_index.readers.file import UnstructuredReader
 from llama_parse import LlamaParse
 from openpyxl import load_workbook
-from html_cleaner import HtmlCleaner
+from improved_html_cleaner import HtmlCleaner
 
 from chatdku.config import config
 
@@ -330,6 +330,10 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
 
 
 def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
+    # Allow callers to pass an empty list (e.g., event folder is empty)
+    if not files:
+        return []
+
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     html_cleaner = HtmlCleaner()
@@ -378,6 +382,11 @@ def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
 def update_events(user_id: str) -> list:
     """Always re-read all event files and generate fresh event nodes."""
     event_files = load_event_files()
+
+    # If the event folder is missing or empty, just skip event ingestion.
+    if not event_files:
+        return []
+
     event_nodes = _read_non_pdf(event_files, user_id)
 
     now = datetime.datetime.now(datetime.timezone.utc)
