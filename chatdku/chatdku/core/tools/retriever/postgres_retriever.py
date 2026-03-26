@@ -35,6 +35,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from threading import BoundedSemaphore
 from typing import Any
+import inspect
+
 
 # ---------------------------------------------------------------------------
 # Fix #4 — module-level connection pool (one pool per process, lazy init)
@@ -101,13 +103,13 @@ class PostgresRetriever(BaseDocRetriever):
     def __init__(
         self,
         retriever_top_k: int = 25,
+        access_type: str = "student",
+        role: str = "student",
         user_id: str = "Chat_DKU",
         search_mode: int = 0,
         files: list | None = None,
         table_name: str | None = None,
         access_table: str | None = None,
-        access_type: str | None = None,
-        role: str | None = None,
         organization: str | None = None,
         source_type: str = "doc",
         rrf_k: int = 60,
@@ -160,6 +162,8 @@ class PostgresRetriever(BaseDocRetriever):
         )
         self.sparse_enabled = sparse_enabled
         self.verbose = verbose
+        # print("PG RETRIEVER LOADED FROM:", __file__)
+        # print("role=", self.role, "access_type=", self.access_type, "table=", self.table_name, "acl=", self.access_table)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -219,27 +223,47 @@ class PostgresRetriever(BaseDocRetriever):
         """
         org = self.organization
 
+        # Caller-role gating rules:
+        #   - public  -> can only see access_type='public'
+        #   - student -> can see access_type in {'public','student'}
+        #   - office  -> can only see access_type='office' (optional org match)
+        # Private docs remain available to their owner (da.user_id = self.user_id),
+        # independent of role.
+        role_norm = (self.role or "student").strip().lower()
+
+        allowed_parts: list[str] = []
+        new_params = list(params)
+
+        if role_norm == "public":
+            allowed_parts.append("da.access_type = 'public'")
+        elif role_norm == "student":
+            allowed_parts.append("da.access_type = 'public'")
+            allowed_parts.append("da.access_type = 'student'")
+        elif role_norm == "office":
+            # Office can only see office docs.
+            # Keep org matching NULL-safe to align with ingestion schema.
+            allowed_parts.append(
+                "(da.access_type = 'office' AND ((da.organization IS NULL AND %s IS NULL) OR da.organization = %s))"
+            )
+            new_params.extend([org, org])
+        else:
+            # Unknown role: default to safest behavior (public only).
+            allowed_parts.append("da.access_type = 'public'")
+
+        # Always allow private docs for the owner.
+        allowed_parts.append("(da.access_type = 'private' AND da.user_id = %s)")
+        new_params.append(self.user_id)
+
         access_cond = (
             f"EXISTS (\n"
             f"  SELECT 1\n"
             f"  FROM {self.access_table} da\n"
             f"  WHERE da.doc_id = {self.table_name}.doc_id\n"
             f"    AND da.source_type = {self.table_name}.source_type\n"
-            f"    AND (\n"
-            f"      da.access_type = 'public'\n"
-            f"      OR (da.access_type = 'student' AND da.role = %s)\n"
-            f"      OR (\n"
-            f"        da.access_type = 'office' AND (\n"
-            f"          (da.organization IS NULL AND %s IS NULL)\n"
-            f"          OR da.organization = %s\n"
-            f"        )\n"
-            f"      )\n"
-            f"      OR (da.access_type = 'private' AND da.user_id = %s)\n"
-            f"    )\n"
+            f"    AND (" + " OR ".join(allowed_parts) + ")\n"
             f")"
         )
 
-        new_params = list(params) + [self.role, org, org, self.user_id]
         if where:
             return f"{where} AND {access_cond}", new_params
         return f"WHERE {access_cond}", new_params
@@ -274,6 +298,9 @@ class PostgresRetriever(BaseDocRetriever):
         hits: list[_Hit] = []
         for row in rows:
             hits.append(_Hit(id=row[0], text=row[1], metadata=row[2], file_name=row[3]))
+        # debug
+        # print("FINAL SQL:", sql)
+        # print("PARAMS:", params)
         return hits
 
     # +++ added: sparse branch (can be disabled / short-timeout / best-effort)
@@ -329,7 +356,7 @@ class PostgresRetriever(BaseDocRetriever):
     # ------------------------------------------------------------------
     # Core query
     # ------------------------------------------------------------------
-    def query(self, query: str, verbose=False) -> list[NodeWithScore]:
+    def query(self, query: str, verbose: bool = False) -> list[NodeWithScore]:
         """
         Concurrency-safe hybrid search:
           1) Dense must succeed (fast with HNSW)
@@ -379,7 +406,7 @@ class PostgresRetriever(BaseDocRetriever):
                 _return(pool, conn)
 
         total = perf_counter() - t0
-        if verbose:
+        if verbose or self.verbose:
             print(
                 "[pg] "
                 f"sem_wait={sem_wait:.3f}s pool_wait={pool_wait:.3f}s "

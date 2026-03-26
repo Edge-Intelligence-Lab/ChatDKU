@@ -9,7 +9,8 @@ from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+# from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.llama_index_pg import DocRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
@@ -190,22 +191,17 @@ def main():
     # )
 
     import time
-
+    role = "student"
+    access_type = "student"  # hard code it for now, need parameter pass from user role
     user_id = "Chat_DKU"
     search_mode = 0
     tools = [
-        KeywordRetrieverOuter(
+        DocRetrieverOuter(
             retriever_top_k=10,
             use_reranker=False,
             reranker_top_n=5,
-            user_id=user_id,
-            search_mode=search_mode,
-            files=[],
-        ),
-        VectorRetrieverOuter(
-            retriever_top_k=10,
-            use_reranker=False,
-            reranker_top_n=5,
+            access_type=access_type,
+            role=role,
             user_id=user_id,
             search_mode=search_mode,
             files=[],

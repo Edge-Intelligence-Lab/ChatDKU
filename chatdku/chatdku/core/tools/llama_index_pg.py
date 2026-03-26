@@ -25,6 +25,8 @@ def DocRetrieverOuter(
     retriever_top_k: int = 25,
     use_reranker: bool = True,
     reranker_top_n: int = 10,
+    access_type: str = "student",
+    role: str = "student",
     user_id: str = "Chat_DKU",
     search_mode: int = 0,
     files: list | None = None,
@@ -33,6 +35,8 @@ def DocRetrieverOuter(
     # signature evolves (we've recently added permission + partition args).
     vector_retriever = PostgresRetriever(
         retriever_top_k=retriever_top_k,
+        access_type=access_type,
+        role=role,
         user_id=user_id,
         search_mode=search_mode,
         files=files,
