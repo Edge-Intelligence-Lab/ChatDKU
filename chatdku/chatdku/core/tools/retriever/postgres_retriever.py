@@ -334,7 +334,9 @@ class PostgresRetriever(BaseDocRetriever):
 
     # +++ added: Python-side RRF merge (tiny compute: O(k))
     def _rrf_fuse(
-        self, dense: list[_Hit], sparse: list[_Hit],
+        self,
+        dense: list[_Hit],
+        sparse: list[_Hit],
     ) -> list[tuple[_Hit, float]]:
         scores: dict[str, float] = {}
         by_id: dict[str, _Hit] = {}
