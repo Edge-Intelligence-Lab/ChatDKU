@@ -9,6 +9,7 @@ from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
+
 # from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.llama_index_pg import DocRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
@@ -191,6 +192,7 @@ def main():
     # )
 
     import time
+
     role = "student"
     access_type = "student"  # hard code it for now, need parameter pass from user role
     user_id = "Chat_DKU"
