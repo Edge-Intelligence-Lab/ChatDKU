@@ -41,7 +41,7 @@ role_str = (
     "Each semesters is divided into two sessions of 7 weeks in duration."
     "Session 3 and 4 respectively refer to sessions 1 and 2 of the Spring semester."
     "We are in the second session of the Spring 2026 Semester of the DKU 2025-2026 academic year, AKA the third semester."
- )
+)
 
 custom_fact_extraction_prompt = """
 Your task is to extract **concrete, storable facts** from user input.
