@@ -12,21 +12,29 @@ import json
 import logging
 import getpass
 from pathlib import Path
-from datetime import datetime
 import hashlib
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, Optional
 import re
 
 # Third-party imports
 import psycopg2
-import psycopg2.extras
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import pymupdf  # PyMuPDF for PDF parsing
 import pdfplumber  # Alternative PDF parser for complex layouts
+
 from docx import Document  # python-docx for DOCX parsing
-import requests
-from jsonschema import validate, ValidationError
+
 import dspy
+
+from chatdku.config import config
+
+curriculum_context = (
+    "Course attribute must be a list of the following string values: [two-credit-writing, ah-foundations, chinese-student-requirements, common-core, language, ns-foundations, quantitative-reasoning, ss-foundations, signature-projects]",
+    "Course code must have a space between the label and number.",
+    "",
+)
+
 
 def remove_think_section(text: str) -> str:
     """
@@ -54,10 +62,12 @@ class DocumentIngestor:
         self.setup_database_connection()
         self.setup_sglang_client()
         self.load_schema()
+        self.logger.info("Creating cursor.")
+        self.cursor = self.conn.cursor()
 
     def setup_logging(self):
         """Setup logging to file in the pool directory"""
-        log_file = Path(self.args.pool) / "ingestor.log"
+        log_file = Path(self.args.pool) / "ingestor_v2.log"
 
         # Create directory if it doesn't exist
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -110,17 +120,15 @@ class DocumentIngestor:
     def setup_sglang_client(self):
         """Setup SGLang client for Qwen3 model"""
         # SGLang serves models via OpenAI-compatible API
-        new_lm = dspy.OpenAI(
-            model="Qwen/Qwen3-8B",
-            api_base=self.args.sglang_url,
-            api_key="dummy",
+        lm = dspy.LM(
+            model="openai/" + config.backup_llm,
+            api_base=config.backup_llm_url,
+            api_key=config.llm_api_key,
             model_type="chat",
-            max_tokens=40960,
-            stop=["<|im_end|>"],
-            temperature=0.1,
-            system_prompt="You must extract structured data from documents based on provided JSON schema, adhering strictly to the schema without adding or omitting required fields.",
+            max_tokens=config.context_window,
+            temperature=config.llm_temperature,
         )
-        dspy.configure(lm=new_lm)
+        dspy.configure(lm=lm)
         self.logger.info(f"SGLang client configured for: {self.args.sglang_url}")
 
     def load_schema(self):
@@ -143,7 +151,7 @@ class DocumentIngestor:
 
     def is_already_processed(self, file_path: Path) -> bool:
         """Check if document was already processed by reading log file"""
-        log_file = Path(self.args.pool) / "ingestor.log"
+        log_file = Path(self.args.pool) / "ingestor_v2.log"
         if not log_file.exists():
             return False
 
@@ -188,7 +196,7 @@ class DocumentIngestor:
                 )
 
             except Exception as e2:
-                self.logger.error(f"Both PDF parsers failed for {file_path.name}: {e2}")
+                self.logger.error(f"All PDF parsers failed for {file_path.name}: {e2}")
                 return ""
 
         return text_content.strip()
@@ -223,7 +231,8 @@ class DocumentIngestor:
             self.logger.error(
                 f"Failed to extract DOCX content from {file_path.name}: {e}"
             )
-            return ""
+            return ""    
+
 
     def extract_structured_data(
         self, content: str, file_name: str
@@ -240,15 +249,26 @@ class DocumentIngestor:
 
             class Extractor(dspy.Signature):
                 """json_schema, parsed_content -> extracted_json"""
-                parsed_content: str = dspy.InputField(desc="A parsed plaintext representation of a Duke Kunshan University syllabus.")
-                json_schema: str = dspy.InputField(desc="A v7 json-schema description of the structured data required for syllabus information extraction.")
-                extracted_json: str = dspy.OutputField(desc="A non-markdown, pure JSON reproduction of the syllabus data.")
+
+                parsed_content: str = dspy.InputField(
+                    desc="A parsed plaintext representation of a Duke Kunshan University syllabus."
+                )
+                json_schema: str = dspy.InputField(
+                    desc="A v7 json-schema description of the structured data required for syllabus information extraction."
+                )
+                curriculum_context: str = dspy.InputField(
+                    desc="Some context useful for parsing the syllabus."
+                )
+                extracted_json: str = dspy.OutputField(
+                    desc="A non-markdown, pure JSON reproduction of the syllabus data."
+                )
 
             extractor = dspy.Predict(Extractor)
             json_text = extractor(
                 parsed_content=content,
                 json_schema=schema_description,
-                ).extracted_json
+                curriculum_context=curriculum_context,
+            ).extracted_json
 
             json_text = remove_think_section(json_text)
             # Clean up response (remove markdown formatting if present)
@@ -258,62 +278,45 @@ class DocumentIngestor:
                 json_text = json_text[:-3]
 
             # Parse and validate JSON
-            self.logger.info(f"LLM response for {file_name}:\n{json_text}")
+            # self.logger.info(f"LLM response for {file_name}:\n{json_text}")
             extracted_data = json.loads(json_text.strip())
-
-            # Validate against schema
-            # validate(instance=extracted_data, schema=self.schema)
-
-            # Add metadata
-            # extracted_data["_metadata"] = {
-            #     "source_file": file_name,
-            #     "extraction_timestamp": datetime.now().isoformat(),
-            #     "model_used": self.args.model_name,
-            # }
 
             self.logger.info(f"Successfully extracted structured data from {file_name}")
             return extracted_data
 
-        except (json.JSONDecodeError, ValidationError) as e:
-            self.logger.error(
-                f"Invalid JSON or schema validation failed for {file_name}: {e}"
-            )
-            return None
         except Exception as e:
             self.logger.error(f"LLM extraction failed for {file_name}: {e}")
             return None
 
-    def store_in_database(self, data: Dict[str, Any], table_name: str = "classes"):
+    def store_in_database(self, data: Dict[str, Any], table_name: str = "curriculum"):
         """Store extracted data in PostgreSQL database, dynamically handling columns and values."""
+
         if not table_name:
             table_name = self.args.table_name
 
         try:
-            from psycopg2 import sql
-            self.logger.info("Creating cursor.")
-            cursor = self.conn.cursor()
-
             # Prepare columns and values
             columns = list(data.keys())
             values = [data[col] for col in columns]
 
             # Build SQL statement safely
-            insert_sql = sql.SQL("INSERT INTO {table} ({fields}) VALUES ({placeholders})").format(
+            insert_sql = sql.SQL(
+                "INSERT INTO {table} ({fields}) VALUES ({placeholders})"
+            ).format(
                 table=sql.Identifier(table_name),
                 fields=sql.SQL(", ").join(map(sql.Identifier, columns)),
-                placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns))
+                placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns)),
             )
 
-            self.logger.info(f"Executing SQL: {insert_sql.as_string(cursor)}")
-            cursor.execute(insert_sql, values)
+            # self.logger.info(f"Executing SQL: {insert_sql.as_string(self.cursor)}")
+            self.cursor.execute(insert_sql, values)
 
-            self.logger.info(
-                f"Data stored in database table '{table_name}'"
-            )
-            cursor.close()
+            self.logger.info(f"Data stored in database table '{table_name}'")
 
         except psycopg2.Error as e:
-            self.logger.error(f"Database storage failed: {e}")
+            self.logger.error(
+                f"Database storage failed. Attempted values: \n{values} \nError: {e}"
+            )
 
     def process_file(self, file_path: Path):
         """Process a single document file"""
@@ -375,12 +378,15 @@ class DocumentIngestor:
 
         # Process each file
         import traceback
+
         for file_path in all_files:
             try:
                 self.process_file(file_path)
             except Exception as e:
                 tb_str = traceback.format_exc()
-                self.logger.error(f"Unexpected error processing {file_path.name}: {e}\nTraceback:\n{tb_str}")
+                self.logger.error(
+                    f"Unexpected error processing {file_path.name}: {e}\nTraceback:\n{tb_str}"
+                )
                 continue
 
         self.logger.info("Processing completed")
@@ -437,13 +443,13 @@ Examples:
     # File and directory arguments
     parser.add_argument(
         "--pool",
-        default="./pdf_pool/",
+        default="/datapool/chatdku_syllabus_store",
         help="Directory containing PDF/DOCX files to process (default: ./pdf_pool/)",
     )
 
     parser.add_argument(
         "--schema",
-        default="classes_schema.json",
+        default="curriculum_schema.json",
         help="JSON schema file for data extraction (default: schema.json)",
     )
 

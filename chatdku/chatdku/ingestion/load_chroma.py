@@ -7,6 +7,8 @@ import json
 import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
+from datetime import datetime, timezone
+
 # from llama_index.core import Settings
 # from llama_index.vector_stores.chroma import ChromaVectorStore
 # from llama_index.core.ingestion import IngestionPipeline
@@ -31,6 +33,42 @@ def nodes_to_dicts(nodes: list):
 
     return result
 
+
+def cleanup_expired_chroma(collection):
+    results = collection.get(include=["metadatas"])
+    if not results or "metadatas" not in results:
+        return
+
+    now = datetime.now(timezone.utc)
+    expired_ids = []
+
+    for _id, meta in zip(results["ids"], results["metadatas"]):
+        expire_at = meta.get("expire_at")
+        if not expire_at:
+            continue
+        try:
+            exp_time = datetime.fromisoformat(expire_at.replace("Z", "+00:00"))
+            if exp_time < now:
+                expired_ids.append(_id)
+        except:
+            continue
+
+    if expired_ids:
+        print(f"Deleting {len(expired_ids)} expired documents from Chroma")
+        collection.delete(ids=expired_ids)
+
+def normalize_metadata(meta: dict):
+    clean = {}
+    for k, v in meta.items():
+        if isinstance(v, bool):
+            clean[k] = "true" if v else "false"
+        elif v is None:
+            clean[k] = ""
+        elif isinstance(v, (int, float, str)):
+            clean[k] = v
+        else:
+            clean[k] = str(v)
+    return clean
 
 def load_chroma(
     collection: str = None,
@@ -57,6 +95,10 @@ def load_chroma(
     with open(nodes_path, "r") as f:
         datas = json.load(f)
     nodes = [TextNode.from_dict(data) for data in datas]
+
+    for n in nodes:
+        n.metadata = normalize_metadata(n.metadata)
+
     if collection is None:
         collection = config.user_uploads_collection
     print("Collection: ", collection)
@@ -81,6 +123,8 @@ def load_chroma(
             "hnsw:sync_threshold": 1024,
         },
     )
+    cleanup_expired_chroma(collection)
+    
     nodes_buffer = []
     for i, node in enumerate(nodes):
         nodes_buffer.append(node)

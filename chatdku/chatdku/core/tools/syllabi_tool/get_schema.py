@@ -5,24 +5,20 @@ from os import getenv
 def fetch_schema(conn):
     # print("Fetching schema...")
     cur = conn.cursor()
-    cur.execute(
-        """
+    cur.execute("""
         SELECT table_name
         FROM information_schema.tables
         WHERE table_name = 'curriculum';
-    """
-    )
+    """)
     # Add more tables ^here if we want the json schema to include tables other than curriculum
     tables = [row[0] for row in cur.fetchall()]
     schema = {}
     for table in tables:
-        cur.execute(
-            f"""
+        cur.execute(f"""
             SELECT column_name, data_type
             FROM information_schema.columns
             WHERE table_name = '{table}';
-        """
-        )
+        """)
         schema[table] = {col: dtype for col, dtype in cur.fetchall()}
     print("Schema fetched!")
     return str(schema)
