@@ -46,12 +46,13 @@ class Config:
         llm_api_key = _env("LLM_API_KEY")
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
+        llamaparse_api = _env("LLAMAPARSE_API")
         SQLALCHEMY_DATABASE_URI = "postgresql://{}:{}@{}:{}/{}".format(
-            os.environ.get("DB_USER", ""),
-            quote_plus(os.environ.get("DB_PASSWORD", "")),
-            os.environ.get("DB_HOST", ""),
-            os.environ.get("DB_PORT", ""),
-            os.environ.get("DB_NAME", ""),
+            os.environ.get("DB_USER", "chatdku_readonly"),
+            quote_plus(os.environ.get("DB_PASSWORD", "alohomora")),
+            os.environ.get("DB_HOST", "localhost"),
+            os.environ.get("DB_PORT", "5432"),
+            os.environ.get("DB_NAME", "chatdku_db"),
         )
 
         self._store.update(
@@ -100,6 +101,8 @@ class Config:
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
+                "llamaparse_api": llamaparse_api,
+                # MISC
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
             }
         )

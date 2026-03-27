@@ -134,4 +134,10 @@ class UploadView(APIView):
 
 class HealthView(APIView):
     def get(self,request):
-        return Response({"status":"okay"},status=status.HTTP_200_OK)
+        try:
+            username=request.session.get("display_name")
+            netid=request.session.get("netid")
+
+            return Response({"netid":netid,"username":username},status=200)
+        except Exception as e:
+            return Response({"error":str(e)},status=500)

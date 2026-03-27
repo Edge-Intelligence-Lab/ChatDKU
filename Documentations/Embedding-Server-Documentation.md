@@ -12,7 +12,10 @@ From what I understand, we are using nginx to have a one port (18080) that can s
     - `/BAAI/bge-large-en-v1.5/embed`: Serves the bge-large-en-v1.5 model
     - `/BAAI/bge-m3/embed`: Serves the bge-m3 model
     - `/BAAI/bge-small-en-v1.5/embed`: Serves the bge-small-large-en-v1.5 model
-
+- OpenAI compatible endpoints:
+    - `/BAAI/bge-large-en-v1.5/embeddings`: Serves the bge-large-en-v1.5 model
+    - `/BAAI/bge-m3/embeddings`: Serves the bge-m3 model
+    - `/BAAI/bge-small-en-v1.5/embeddings`: Serves the bge-small-large-en-v1.5 model
 - Prometheus metrics endpoints:
     - `/BAAI/bge-large-en-v1.5/metrics`: Serves the metrics endpoint for bge-large-en-v1.5
     - `/BAAI/bge-m3/metrics`: Serves the metrics endpoint for bge-m3
@@ -37,7 +40,7 @@ sudo sh ./start_large_m3.sh
 ```
 ---
 
-- **Last Updated**: 2026-01-30
+- **Last Updated**: 2026-03-16
 - **Version**: 1.0.0 
 - **Maintainers**: Temuulen  
 - **Contact**: te100@duke.edu

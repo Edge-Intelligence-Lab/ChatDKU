@@ -66,7 +66,7 @@ class DB:
     """
 
     def __init__(self):
-        print(config.psql_uri)
+        # print(config.psql_uri)
         self.engine = create_engine(
             config.psql_uri, execution_options={"isolation_level": "SERIALIZABLE"}
         )
