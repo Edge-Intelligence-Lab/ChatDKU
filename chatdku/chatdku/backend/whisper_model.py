@@ -8,6 +8,7 @@ import logging
 import gc
 import os
 import tempfile
+
 torch.cuda.empty_cache()
 
 app = Flask(__name__)
@@ -17,11 +18,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Using device: {device}")
 model = whisper.load_model("base").to(device)
 
+
 @app.route("/process_audio", methods=["POST"])
 def process_audio():
     if "audio_bytes" not in request.files:
         return jsonify({"error": "Missing audio_bytes file"}), 400
-    
+
     audio_file = request.files["audio_bytes"]
     audio_bytes = audio_file.read()
     try:
@@ -38,7 +40,7 @@ def process_audio():
 
         audio_np = whisper.load_audio(temp_path)
 
-        return jsonify({"audio_np":audio_np.tolist()})
+        return jsonify({"audio_np": audio_np.tolist()})
     except Exception as e:
         logger.error(f"Audio processing error: {str(e)}")
         raise
@@ -50,6 +52,8 @@ def process_audio():
                 gc.collect()  # forche the garbage collector to run and cleanup
             except Exception as e:
                 logger.warning(f"Could not delete temp file {temp_path}: {str(e)}")
+
+
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
     if not request.json or "audio_np" not in request.json:
@@ -58,14 +62,15 @@ def transcribe():
     try:
         # Convert list back to numpy array
         audio_np = np.array(request.json["audio_np"], dtype=np.float32)
-        
+
         result = model.transcribe(audio_np)
         text = result.get("text", "").strip()
         return jsonify({"text": text})
-    
+
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
         return jsonify({"error": "Transcription failed"}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

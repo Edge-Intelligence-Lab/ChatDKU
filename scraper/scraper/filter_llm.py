@@ -13,16 +13,13 @@ LLM = config.llm
 LLM_URL = config.llm_url
 LLM_API_KEY = ""
 
-client = OpenAI(
-    base_url=LLM_URL,
-    api_key=LLM_API_KEY
-)
+client = OpenAI(base_url=LLM_URL, api_key=LLM_API_KEY)
 
-PROMPT_TEMPLATE=(
+PROMPT_TEMPLATE = (
     "Return ONLY a single word: keep or drop.\n"
     "You are a 'strict' web content filter for students in Duke Kunshan University (DKU).\n"
-    "Your task: Decide if the given page is **LONG-TERM USEFUL** for DKU students.\n" \
-    "RULES:\n" 
+    "Your task: Decide if the given page is **LONG-TERM USEFUL** for DKU students.\n"
+    "RULES:\n"
     "- Be as STRICT as possible. Default to dropping pages unless they clearly match the useful criteria.\n"
     "- Only keep pages that are directly and permanently helpful to DKU students.\n"
     "KEEP ONLY if the page is one of these:\n"
@@ -52,6 +49,7 @@ def html_to_text(html):
     # print("[DEBUG]",lines[:10])
     return "\n".join(lines)
 
+
 def parse_llm_decision(raw: str) -> str:
     """
     Robustly parse LLM output to extract final keep/drop decision.
@@ -69,7 +67,7 @@ def parse_llm_decision(raw: str) -> str:
     lines = [line.strip().lower() for line in cleaned.splitlines() if line.strip()]
     if not lines:
         return "drop"
-    
+
     last_line = lines[-1]  # Real final answer should be here
 
     # reduce noise like "answer: keep", "**drop**", etc.
@@ -90,6 +88,7 @@ def parse_llm_decision(raw: str) -> str:
     print(f"[LLM FILTER WARNING] Failed to parse decision from: {raw}")
     return "drop"
 
+
 class RateLimiter:
     def __init__(self, rate_per_sec: float):
         self.interval = 1.0 / rate_per_sec
@@ -104,7 +103,9 @@ class RateLimiter:
                 await asyncio.sleep(wait_time)
             self.last_time = time.monotonic()
 
+
 rate_limiter = RateLimiter(rate_per_sec=0.3)
+
 
 async def filter_page(html: str, url: str, args) -> bool:
     # print(f"[DEBUG] filter_page called for {url}")

@@ -24,23 +24,18 @@ logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler("error_url.log")
 file_handler.setLevel(logging.INFO)
-file_formatter = logging.Formatter(
-    "%(message)s"
-)
+file_formatter = logging.Formatter("%(message)s")
 file_handler.setFormatter(file_formatter)
 
 error_handler = logging.FileHandler("error.log")
 error_handler.setLevel(logging.ERROR)
-error_formatter = logging.Formatter(
-    "[%(levelname)s] %(message)s"
-)
+error_formatter = logging.Formatter("[%(levelname)s] %(message)s")
 error_handler.setFormatter(error_formatter)
 
 logger.addHandler(file_handler)
 logger.addHandler(error_handler)
 
 logger.info("----URL LOGS for Scrapper----")
-
 
 
 # Store URLs that we already tried to download with `DownloadInfo` to prevent
@@ -170,7 +165,7 @@ def is_included(url: URL) -> bool:
     LOGIN_HOSTS = ["shib.oit.duke.edu", "idp.dku.edu.cn"]
     if url.host in LOGIN_HOSTS:
         return True
-    
+
     # Include all URLs if neither constraints were specified
     if not (args.domains or args.subdomains_of):
         return True
@@ -353,6 +348,7 @@ async def peroidic_report() -> None:
 
         dump_info()
 
+
 def remove_empty_dirs(root: Path) -> None:
     for dirpath, dirnames, filenames in os.walk(root, topdown=False):
         if not dirnames and not filenames:
@@ -362,6 +358,7 @@ def remove_empty_dirs(root: Path) -> None:
                     print(f"Removed empty directory: {dirpath}")
             except OSError:
                 pass
+
 
 async def main() -> None:
     headers = {"User-Agent": args.user_agent}
@@ -501,9 +498,7 @@ if __name__ == "__main__":
         help="Login with SAML 2.0/Shibboleth-based SSO (provide username and password)",
     )
     parser.add_argument(
-        "--use-llm",
-        action="store_true",
-        help="Enable LLM filtering of pages."
+        "--use-llm", action="store_true", help="Enable LLM filtering of pages."
     )
     args = parser.parse_args()
 
@@ -517,6 +512,6 @@ if __name__ == "__main__":
         print("----------------DOWNLOAD INTERRUPTED----------------")
 
     print_summary(tried.values())
-    
+
     dump_info()
     remove_empty_dirs(Path(args.output_root))

@@ -318,7 +318,13 @@ def update(data_dir, user_id):
     schema = IndexSchema.from_yaml(
         os.path.join(config.module_root_dir, "custom_schema.yaml")
     )
-    redis_client = Redis(host=config.redis_host,port=6379,username="default",password=config.redis_password,db=0)
+    redis_client = Redis(
+        host=config.redis_host,
+        port=6379,
+        username="default",
+        password=config.redis_password,
+        db=0,
+    )
     vector_store = RedisVectorStore(
         redis_client=redis_client, schema=schema, overwrite=True
     )

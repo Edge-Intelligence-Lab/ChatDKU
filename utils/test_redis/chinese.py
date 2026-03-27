@@ -12,11 +12,11 @@ client = Redis.from_url("redis://localhost:6379")
 
 # client.hset("cn:doc1", "txt", '一个两个单词')
 
-client.hset("cn:doc2", "txt", 'jumping test')
+client.hset("cn:doc2", "txt", "jumping test")
 
 # print(client.ft("idx:cn").search(Query('支持同步').summarize().highlight()).docs[0].txt)
 
-query = Query('$query_str').summarize().highlight().language("chinese").dialect(2)
+query = Query("$query_str").summarize().highlight().language("chinese").dialect(2)
 params = {"query_str": "jumping"}
 print(client.ft("idx:cn").search(query, params).docs[0].txt)
 

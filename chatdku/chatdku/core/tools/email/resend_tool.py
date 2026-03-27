@@ -4,7 +4,9 @@ from typing import Optional
 try:
     import resend  # type: ignore
 except ImportError:
-    raise ImportError("`resend` not installed. Please install using `pip install resend`.")
+    raise ImportError(
+        "`resend` not installed. Please install using `pip install resend`."
+    )
 
 
 class ResendTools:
@@ -33,7 +35,6 @@ class ResendTools:
             return "Please provide an API key"
         if not to_email:
             return "Please provide an email address to send the email to"
-
 
         resend.api_key = self.api_key
         try:

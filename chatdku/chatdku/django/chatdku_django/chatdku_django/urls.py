@@ -14,8 +14,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
 import chat.urls
 import core
 import core.urls
@@ -25,26 +26,26 @@ import chat
 
 from rest_framework.permissions import IsAdminUser
 
-#URL pattern for language (en/zh-hans)
-urlpatterns=[
-    path('i18n/',include("django.conf.urls.i18n"))
-]
+# URL pattern for language (en/zh-hans)
+urlpatterns = [path("i18n/", include("django.conf.urls.i18n"))]
 
 urlpatterns += i18n_patterns(
-
-    path('admin/', admin.site.urls),
-
+    path("admin/", admin.site.urls),
 )
-#URL for ChatDKU django apps
-urlpatterns+=[
-    path("user/",include(core.urls)),
-    path("api/",include(chat.urls))
-
-]
-#drf spectacular routes
-urlpatterns+= [
-    path('', include('django_prometheus.urls')),
-    path('doc/schema/', SpectacularAPIView.as_view(permission_classes=[IsAdminUser]), name='schema'),
-    path('doc/schema/view/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+# URL for ChatDKU django apps
+urlpatterns += [path("user/", include(core.urls)), path("api/", include(chat.urls))]
+# drf spectacular routes
+urlpatterns += [
+    path("", include("django_prometheus.urls")),
+    path(
+        "doc/schema/",
+        SpectacularAPIView.as_view(permission_classes=[IsAdminUser]),
+        name="schema",
+    ),
+    path(
+        "doc/schema/view/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
     # path('doc/schema/redoc/', SpectacularRedocView.as_view(url_name='schema',), name='redoc'),
 ]

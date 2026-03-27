@@ -8,19 +8,18 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Feedback',
+            name="Feedback",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('user_input', models.TextField()),
-                ('gen_answer', models.TextField()),
-                ('feedback_reason', models.TextField(verbose_name='Feedback reason')),
-                ('question_id', models.IntegerField(verbose_name='Question ID')),
-                ('time', models.DateTimeField(default=django.utils.timezone.now)),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("user_input", models.TextField()),
+                ("gen_answer", models.TextField()),
+                ("feedback_reason", models.TextField(verbose_name="Feedback reason")),
+                ("question_id", models.IntegerField(verbose_name="Question ID")),
+                ("time", models.DateTimeField(default=django.utils.timezone.now)),
             ],
         ),
     ]

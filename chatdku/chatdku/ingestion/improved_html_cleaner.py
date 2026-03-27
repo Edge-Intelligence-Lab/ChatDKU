@@ -17,13 +17,29 @@ class HtmlCleaner(BaseReader):
     """
 
     DEFAULT_NOISE_TAGS = {
-        "script", "style", "meta", "noscript", "header", "footer",
-        "nav", "aside", "iframe", "svg", "link"
+        "script",
+        "style",
+        "meta",
+        "noscript",
+        "header",
+        "footer",
+        "nav",
+        "aside",
+        "iframe",
+        "svg",
+        "link",
     }
 
     DEFAULT_KEYWORDS = {
-        "cookie", "popup", "banner", "subscribe",
-        "alert", "modal", "advert", "ads", "tracking"
+        "cookie",
+        "popup",
+        "banner",
+        "subscribe",
+        "alert",
+        "modal",
+        "advert",
+        "ads",
+        "tracking",
     }
 
     DEFAULT_KEEP_LINK_PATTERNS = [
@@ -35,16 +51,14 @@ class HtmlCleaner(BaseReader):
         noise_tags: Optional[set] = None,
         noise_keywords: Optional[set] = None,
         keep_link_patterns: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ):
         self.noise_tags = noise_tags or self.DEFAULT_NOISE_TAGS
         self.noise_keywords = noise_keywords or self.DEFAULT_KEYWORDS
         self.keep_link_patterns = keep_link_patterns or self.DEFAULT_KEEP_LINK_PATTERNS
 
     def load_data(
-        self,
-        file: Union[str, Path],
-        extra_info: Optional[Dict[str, Any]] = None
+        self, file: Union[str, Path], extra_info: Optional[Dict[str, Any]] = None
     ) -> List[Document]:
         file_path = Path(file)
         if not file_path.exists():
@@ -71,9 +85,9 @@ class HtmlCleaner(BaseReader):
         canonical = self._extract_canonical(soup)
 
         self._remove_noise_tags(soup)
-        self._remove_keywords_nodes(soup)         
+        self._remove_keywords_nodes(soup)
         self._remove_empty_tags(soup)
-        self._preserve_links(soup)                
+        self._preserve_links(soup)
 
         main_text = self._extract_main_text(soup)
         main_text = self._clean_text(main_text)

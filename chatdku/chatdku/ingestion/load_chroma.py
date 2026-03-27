@@ -56,6 +56,7 @@ def cleanup_expired_chroma(collection):
         print(f"Deleting {len(expired_ids)} expired documents from Chroma")
         collection.delete(ids=expired_ids)
 
+
 def normalize_metadata(meta: dict):
     clean = {}
     for k, v in meta.items():
@@ -68,6 +69,7 @@ def normalize_metadata(meta: dict):
         else:
             clean[k] = str(v)
     return clean
+
 
 def load_chroma(
     collection: str = None,
@@ -123,7 +125,7 @@ def load_chroma(
         },
     )
     cleanup_expired_chroma(collection)
-    
+
     nodes_buffer = []
     for i, node in enumerate(nodes):
         nodes_buffer.append(node)

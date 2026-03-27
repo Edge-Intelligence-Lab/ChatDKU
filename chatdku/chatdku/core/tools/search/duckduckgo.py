@@ -4,7 +4,9 @@ from typing import Any, Optional
 try:
     from duckduckgo_search import DDGS
 except ImportError:
-    raise ImportError("`duckduckgo-search` not installed. Please install using `pip install duckduckgo-search`")
+    raise ImportError(
+        "`duckduckgo-search` not installed. Please install using `pip install duckduckgo-search`"
+    )
 
 
 class DuckDuckGo:
@@ -40,8 +42,18 @@ class DuckDuckGo:
         Returns:
             The result from DuckDuckGo.
         """
-        ddgs = DDGS(headers=self.headers, proxy=self.proxy, proxies=self.proxies, timeout=self.timeout)
-        return json.dumps(ddgs.text(keywords=query, max_results=(self.fixed_max_results or max_results)), indent=2)
+        ddgs = DDGS(
+            headers=self.headers,
+            proxy=self.proxy,
+            proxies=self.proxies,
+            timeout=self.timeout,
+        )
+        return json.dumps(
+            ddgs.text(
+                keywords=query, max_results=(self.fixed_max_results or max_results)
+            ),
+            indent=2,
+        )
 
     def duckduckgo_news(self, query: str, max_results: int = 5) -> str:
         """Use this function to get the latest news from DuckDuckGo.
@@ -53,5 +65,15 @@ class DuckDuckGo:
         Returns:
             The latest news from DuckDuckGo.
         """
-        ddgs = DDGS(headers=self.headers, proxy=self.proxy, proxies=self.proxies, timeout=self.timeout)
-        return json.dumps(ddgs.news(keywords=query, max_results=(self.fixed_max_results or max_results)), indent=2)
+        ddgs = DDGS(
+            headers=self.headers,
+            proxy=self.proxy,
+            proxies=self.proxies,
+            timeout=self.timeout,
+        )
+        return json.dumps(
+            ddgs.news(
+                keywords=query, max_results=(self.fixed_max_results or max_results)
+            ),
+            indent=2,
+        )
