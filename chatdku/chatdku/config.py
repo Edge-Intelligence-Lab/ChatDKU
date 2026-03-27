@@ -47,13 +47,14 @@ class Config:
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
         llamaparse_api = _env("LLAMAPARSE_API")
-        SQLALCHEMY_DATABASE_URI = "postgresql://{}:{}@{}:{}/{}".format(
-            os.environ.get("DB_USER", "chatdku_readonly"),
-            quote_plus(os.environ.get("DB_PASSWORD", "alohomora")),
-            os.environ.get("DB_HOST", "localhost"),
-            os.environ.get("DB_PORT", "5432"),
-            os.environ.get("DB_NAME", "chatdku_db"),
-        )
+        psql_uri = _env("PSQL_URI")
+        if not psql_uri:
+            db_user = _env("DB_USER")
+            db_password = _env("DB_PASSWORD")
+            db_host = _env("DB_HOST")
+            db_port = _env("DB_PORT")
+            db_name = _env("DB_NAME")
+            psql_uri = f"postgresql://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
 
         self._store.update(
             {
@@ -84,6 +85,7 @@ class Config:
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
+                "event_path": "/datapool/chat_dku_advising/event_data",
                 # Redis
                 "redis_host": redis_host,
                 "redis_port": 6379,
@@ -94,7 +96,8 @@ class Config:
                 "chroma_collection": "dku_html_pdf",
                 "user_uploads_collection": "user_uploads",
                 # PSQL
-                "psql_uri": SQLALCHEMY_DATABASE_URI,
+                "psql_uri": psql_uri,
+                "postgres_maxconn": 20,
                 # MISC
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
