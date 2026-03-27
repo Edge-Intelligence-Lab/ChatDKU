@@ -35,7 +35,6 @@ from dataclasses import dataclass
 from functools import lru_cache
 from threading import BoundedSemaphore
 from typing import Any
-import inspect
 
 
 # ---------------------------------------------------------------------------
@@ -162,8 +161,6 @@ class PostgresRetriever(BaseDocRetriever):
         )
         self.sparse_enabled = sparse_enabled
         self.verbose = verbose
-        # print("PG RETRIEVER LOADED FROM:", __file__)
-        # print("role=", self.role, "access_type=", self.access_type, "table=", self.table_name, "acl=", self.access_table)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -255,13 +252,13 @@ class PostgresRetriever(BaseDocRetriever):
         new_params.append(self.user_id)
 
         access_cond = (
-            f"EXISTS (\n"
-            f"  SELECT 1\n"
+            "EXISTS (\n"
+            "  SELECT 1\n"
             f"  FROM {self.access_table} da\n"
             f"  WHERE da.doc_id = {self.table_name}.doc_id\n"
             f"    AND da.source_type = {self.table_name}.source_type\n"
             f"    AND (" + " OR ".join(allowed_parts) + ")\n"
-            f")"
+            ")"
         )
 
         if where:

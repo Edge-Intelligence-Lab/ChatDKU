@@ -1,13 +1,10 @@
-import traceback
 import uuid
 from contextlib import suppress
 from time import perf_counter
 
 from chatdku.config import config
-from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.postgres_retriever import PostgresRetriever
 from chatdku.core.tools.retriever.reranker import rerank
-from chatdku.core.tools.utils import QueryTimeoutError
 
 
 def DocRetrieverOuter(

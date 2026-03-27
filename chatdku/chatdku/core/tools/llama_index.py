@@ -2,7 +2,6 @@ import logging
 
 from opentelemetry.trace import get_current_span
 
-from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.keyword_retriever import KeywordRetriever
 from chatdku.core.tools.retriever.reranker import rerank
 from chatdku.core.tools.retriever.vector_retriever import VectorRetriever
