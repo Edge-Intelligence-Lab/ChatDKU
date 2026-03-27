@@ -6,7 +6,6 @@ from chatdku.config import config
 from chatdku.core.dspy_classes.prompt_settings import custom_fact_extraction_prompt
 import os
 
-
 class MemoryTools:
     """Tools for interacting with the Mem0 memory system."""
 
@@ -16,9 +15,7 @@ class MemoryTools:
         self.last_memory_search = []
         self.last_searched_times = {}  # memory_id -> last_searched_timestamp
         self.op_count = 0
-        self.memory_access_log = (
-            {}
-        )  # memory_id -> {"count": int, "last_accessed": timestamp}
+        self.memory_access_log = {}  # memory_id -> {"count": int, "last_accessed": timestamp}
         # Setting up agent memory
         memory_config = {
             "vector_store": {
@@ -53,8 +50,7 @@ class MemoryTools:
 
     def store_memory(
         self,
-        content: str | list[dict[str, str]],
-        metadata: dict | None = None,
+        content: str | list[dict[str, str]], metadata: dict | None = None,
     ) -> str:
         """Store information in memory along with metadata.
 
@@ -73,7 +69,7 @@ class MemoryTools:
 
         Guidelines for time relevance:
             - "long-term": stable facts that are useful across conversations
-                Examples:
+                Examples: 
                 - "User is a computer science major"
                 - "User prefers evening classes"
             - "short-term": recent or context-specific information
@@ -94,7 +90,7 @@ class MemoryTools:
             - general questions or instructions
             - weak or irrelevant information
 
-
+        
         Example Usage:
             store_memory(
                 "User will attend a guest lecture today.",
@@ -109,9 +105,7 @@ class MemoryTools:
             str: The result of the operation.
         """
         try:
-            self.memory.add(
-                content, user_id=self.user_id, run_id=self.session_id, metadata=metadata
-            )
+            self.memory.add(content, user_id=self.user_id, run_id=self.session_id, metadata=metadata)
             self.op_count += 1
 
             if self.op_count % 10 == 0:
@@ -133,7 +127,7 @@ class MemoryTools:
             query: The text string to search for in memory.
             limit: The maximum number of relevant memories to return, defaults to 5
             filters: Optional dictionary of metadata filters to apply to the search.
-                     Example:
+                     Example: 
                      {
                         "category": "academic",
                         "entities": "Bio110",
@@ -145,17 +139,16 @@ class MemoryTools:
         """
         try:
             results = self.memory.search(
-                query, user_id=self.user_id, limit=limit, filters=filters
+                query,
+                user_id=self.user_id,
+                limit=limit,
+                filters=filters
             )
             if not results or not results.get("results"):
-                self.last_memory_search = (
-                    []
-                )  # Clear last search results if no results found
+                self.last_memory_search = []  # Clear last search results if no results found
                 return "No Relevant memories found."
 
-            self.last_memory_search = results[
-                "results"
-            ]  # Store the last search results
+            self.last_memory_search = results["results"]  # Store the last search results
             memory_text = "Relevant memories found:\n"
 
             if not hasattr(self, "memory_access_log"):
@@ -166,7 +159,7 @@ class MemoryTools:
                 if memory_id not in self.memory_access_log:
                     self.memory_access_log[memory_id] = {
                         "count": 0,
-                        "last_accessed": None,
+                        "last_accessed": None
                     }
                 self.memory_access_log[memory_id]["count"] += 1
                 self.memory_access_log[memory_id]["last_accessed"] = time.time()
@@ -179,7 +172,7 @@ class MemoryTools:
                     f"   Metadata: {mem.get('metadata')}\n"
                     f"   Access Count: {access_info['count']}\n"
                     f"   Last Accessed: {access_info['last_accessed']}\n"
-                )
+                ) 
             return memory_text
         except Exception as e:
             return f"Error searching memories: {str(e)}"
@@ -207,21 +200,15 @@ class MemoryTools:
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
 
-    def update_memory(
-        self,
-        idx: int,
-        new_content: str,
-    ) -> str:
+    def update_memory(self, idx: int, new_content: str, ) -> str:
         """Update an existing memory."""
         try:
-            if idx >= len(self.last_memory_search):
+            if(idx>=len(self.last_memory_search)):
                 return "Invalid memory index. Please search for memories again to get the correct index."
-
-            memory_id = self.last_memory_search[idx][
-                "id"
-            ]  # Get the memory ID using the index from the last search results
+            
+            memory_id = self.last_memory_search[idx]["id"]  # Get the memory ID using the index from the last search results
             self.memory.update(memory_id, new_content)
-
+            
             return f"Updated memory {idx} with new content: {new_content}"
         except Exception as e:
             return f"Error updating memory: {str(e)}"
@@ -234,19 +221,19 @@ class MemoryTools:
         except Exception as e:
             return f"Error deleting memory: {str(e)}"
 
-    def cleanup_memory(self, max_memories: int = 100) -> str:
-        """Cleanup unused memories for the user."""
+    def cleanup_memory(self, max_memories: int = 100 ) -> str:
+        """Cleanup unused memories for the user. """
         try:
             deleted_count = 0
             all_memories = self.memory.get_all(user_id=self.user_id)
             if not all_memories or not all_memories.get("results"):
                 return "No memories to clean."
-            if len(all_memories["results"]) <= max_memories:
+            if(len(all_memories["results"]) <= max_memories):
                 return "Memory count is within the limit. No cleanup needed."
 
             short_mems = []
             long_mems = []
-            # Split memories into long and short term memories
+            #Split memories into long and short term memories
             for m in all_memories["results"]:
                 if m.get("metadata", {}).get("time_relevance") == "short-term":
                     short_mems.append(m)
@@ -254,31 +241,25 @@ class MemoryTools:
                     long_mems.append(m)
 
             short_mems_sorted = sorted(
-                short_mems, key=lambda m: self._to_timestamp(m.get("created_at", 0))
-            )
+                short_mems,
+                key=lambda m: self._to_timestamp(m.get("created_at", 0))
+                )
             long_mems_sorted = sorted(
                 long_mems,
-                key=lambda m: self._to_timestamp(
-                    m.get("last_accessed", m.get("created_at", 0))
-                ),
+                key=lambda m: self._to_timestamp(m.get("last_accessed",
+                m.get("created_at", 0)))
             )
-            while (
-                len(short_mems_sorted) + len(long_mems_sorted) > max_memories
-                and short_mems_sorted
-            ):
-                memory = short_mems_sorted.pop(0)
-                mem_id = memory["id"]
+            while len(short_mems_sorted) + len(long_mems_sorted) > max_memories and short_mems_sorted:
+                    memory = short_mems_sorted.pop(0)
+                    mem_id = memory["id"]
 
-                self.memory.delete(mem_id)
-                deleted_count += 1
+                    self.memory.delete(mem_id)
+                    deleted_count += 1
 
-                if mem_id in self.memory_access_log:
-                    del self.memory_access_log[mem_id]
+                    if mem_id in self.memory_access_log:
+                        del self.memory_access_log[mem_id]
 
-            while (
-                len(short_mems_sorted) + len(long_mems_sorted) > max_memories
-                and long_mems_sorted
-            ):
+            while len(short_mems_sorted) + len(long_mems_sorted) > max_memories and long_mems_sorted:
                 memory = long_mems_sorted.pop(0)
                 mem_id = memory["id"]
 
@@ -291,16 +272,14 @@ class MemoryTools:
             return f"Cleanup completed. Deleted {deleted_count} memories."
         except Exception as e:
             return f"Error cleaning up memories: {str(e)}"
-
-    def _to_timestamp(
-        self, val
-    ):  # helper function to convert created_at and last_accessed to comparable timestamps
+    def _to_timestamp(self, val): # helper function to convert created_at and last_accessed to comparable timestamps
         if isinstance(val, (int, float)):
             return float(val)
         elif isinstance(val, str):
             try:
-                return datetime.fromisoformat(val).timestamp()
+                return datetime.fromisoformat(val).timestamp() 
             except:
                 return 0.0
         else:
             return 0.0
+

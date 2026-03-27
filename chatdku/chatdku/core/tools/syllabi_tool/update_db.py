@@ -139,15 +139,13 @@ def test_db_connection():
         print(f"PostgreSQL version: {version}")
 
         # Test if the classes table exists
-        cur.execute(
-            """
+        cur.execute("""
             SELECT EXISTS (
                 SELECT FROM pg_tables
                 WHERE schemaname = 'public'
                 AND tablename = 'classes'
             );
-        """
-        )
+        """)
         table_exists = cur.fetchone()[0]
         if not table_exists:
             print("WARNING: 'classes' table does not exist!")

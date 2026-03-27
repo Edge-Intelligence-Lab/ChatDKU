@@ -17,14 +17,12 @@ from llama_index.core import Settings
 from chatdku.setup import setup
 
 
-from chatdku.config import config
 
+from chatdku.config import config
 
 def cleanup_expired_events(redis_client, index_name):
     """Delete expired event nodes from Redis index."""
-    now = (
-        datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-    )
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
     # RedisVectorStore key prefix: {index_name}_doc:{node_id}
     prefix = f"{index_name}_doc"
@@ -60,7 +58,6 @@ def cleanup_expired_events(redis_client, index_name):
                 deleted += 1
 
     print(f"[cleanup] Deleted {deleted} expired events")
-
 
 def clean_file_name(file_name: str) -> str:
     return os.path.splitext(file_name)[0]

@@ -287,18 +287,21 @@ class FeedbackView(APIView):
 
 
 @extend_schema_view(
-    get=extend_schema(
-        description="GET request for session",
-        parameters=PARAMETERS,
-        responses={
-            200: OpenApiResponse(
-                response={
-                    "type": "object",
-                    "properties": {"session_id": {"type": "string", "format": "uuid"}},
-                }
-            )
-        },
-    )
+        get=extend_schema(
+            description="GET request for session",
+            parameters=PARAMETERS,
+            responses={
+                200:OpenApiResponse(response={
+                    'type':'object',
+                    'properties':{
+                        'session_id':{
+                            'type':'string',
+                            'format':'uuid'
+                        }
+                    }
+                })
+            }
+        )  
 )
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer

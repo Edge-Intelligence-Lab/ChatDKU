@@ -231,7 +231,8 @@ class DocumentIngestor:
             self.logger.error(
                 f"Failed to extract DOCX content from {file_path.name}: {e}"
             )
-            return ""
+            return ""    
+
 
     def extract_structured_data(
         self, content: str, file_name: str

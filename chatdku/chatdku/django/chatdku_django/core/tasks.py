@@ -17,11 +17,12 @@ import logging
 
 from chatdku.backend.user_data_interface import update
 
-logger = logging.getLogger(__name__)
+logger=logging.getLogger(__name__)
 
 dotenv.load_dotenv()
 
-FOLDER_PATH = os.environ.get("MEDIA_ROOT")
+FOLDER_PATH=os.environ.get("MEDIA_ROOT")
+
 
 
 def remove_from_db(filename):
@@ -33,17 +34,18 @@ def remove_from_db(filename):
         logger.error(f"Failed to remove {filename} from DB: {e}")
 
 
+
 # @shared_task
 def remove_files():
-    db_filenames = set(UploadedFile.objects.values_list("filename", flat=True))
+    db_filenames=set(UploadedFile.objects.values_list('filename',flat=True))
 
     for item in os.listdir(FOLDER_PATH):
-        user_path = os.path.join(FOLDER_PATH, item)
+        user_path=os.path.join(FOLDER_PATH,item)
 
         if os.path.isdir(user_path):
 
             for filename in os.listdir(user_path):
-                file_path = os.path.join(user_path, filename)
+                file_path=os.path.join(user_path,filename)
                 try:
                     if os.path.isfile(file_path):
                         if filename in db_filenames:
@@ -53,41 +55,36 @@ def remove_files():
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    logger.warning(f"Failed to delete {file_path}: {e}")
-
+                    logger.warning(f'Failed to delete {file_path}: {e}')
 
 # @shared_task
 def update_user_embedding():
     try:
-        query = UserModel.objects.values_list("username", "folder")
+        query=UserModel.objects.values_list('username','folder')
         if not query:
             return "No User Found"
-        user_names, user_folders = zip(*query)
+        user_names,user_folders=zip(*query)
 
-        for name, folder in zip(user_names, user_folders):
-            if str(name).startswith("admin"):
+        for name,folder in zip(user_names,user_folders):
+            if str(name).startswith('admin'):
                 continue
             else:
                 try:
-                    data_dir = os.path.join(FOLDER_PATH, folder)
+                    data_dir=os.path.join(FOLDER_PATH,folder)
                     update(user_id=str(name), data_dir=str(data_dir))
                 except Exception as e:
-                    logger.error(
-                        f"Failed to update user {name} with folder {folder}: {e}"
-                    )
+                    logger.error(f"Failed to update user {name} with folder {folder}: {e}")
         return "Finished Updating"
-
+    
     except Exception as e:
         logger.error(f"Failed to update, Error occured: {e}")
 
-
-# Redis queue for user upload
-
+#Redis queue for user upload
 
 @shared_task(bind=True, max_retries=5)
 def update_user_chroma(self, netid):
     try:
-        while metadata := redis_client.lpop(f"queue_key:{netid}"):
+        while (metadata := redis_client.lpop(f"queue_key:{netid}")):
             metadata_info = json.loads(metadata.decode("utf-8"))
             lock_key = metadata_info["lock_key"]
 
@@ -104,13 +101,9 @@ def update_user_chroma(self, netid):
                         with open(json_path, "w") as f:
                             json.dump({}, f)
 
-                    redis_client.hset(
-                        f"task:{metadata_info['id']}", "status", "running"
-                    )
+                    redis_client.hset(f"task:{metadata_info['id']}", "status", "running")
                     update(user_id=str(netid), data_dir=folder)
-                    redis_client.hset(
-                        f"task:{metadata_info['id']}", "status", "completed"
-                    )
+                    redis_client.hset(f"task:{metadata_info['id']}", "status", "completed")
 
             except Exception as e:
                 logger.error(f"User {netid} task error: {e}")
@@ -133,9 +126,8 @@ def update_user_chroma(self, netid):
 #     except Exception as e:
 #         ActiveLM.objects.update_or_create(id=1,defaults={"name":"backup"})
 
-
 # @shared_task(bind=True,max_retries=5)
-def load_redis_task(self, script_path=None, python_bin=None):
+def load_redis_task(self,script_path=None,python_bin=None):
     """
     Run a python script for ingestion
     args:
@@ -145,24 +137,29 @@ def load_redis_task(self, script_path=None, python_bin=None):
     """
 
     if script_path is None:
-        script_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..", "ingestion", "load_redis.py"
-        )
-    python_exe = python_bin or sys.executable
+        script_path=os.path.join(os.path.dirname(__file__),"..","..","..","ingestion","load_redis.py")
+    python_exe=python_bin or sys.executable
 
     if not os.path.isfile(script_path):
         logger.error("[Ingestion] Script not found: %s", script_path)
-        raise
+        raise 
 
-    cmd = [python_exe, script_path]
-    env = os.environ.copy()
+
+
+    cmd=[python_exe,script_path]
+    env=os.environ.copy()
 
     try:
-        # Run subprocess for the script and capture output, errors
-        process = subprocess.run(
-            cmd, env=env, check=True, capture_output=True, text=True, timeout=600
+        #Run subprocess for the script and capture output, errors
+        process=subprocess.run(
+            cmd,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=600
         )
-        logger.info("[Ingestion] Load redis activated stdout: %s", process.stdout)
+        logger.info("[Ingestion] Load redis activated stdout: %s",process.stdout)
         return process.stdout
     except subprocess.CalledProcessError as e:
         logger.error(
@@ -170,8 +167,11 @@ def load_redis_task(self, script_path=None, python_bin=None):
             e.returncode,
             getattr(e, "stdout", ""),
             getattr(e, "stderr", ""),
-        )
-        raise self.retry(exc=e, countdown=5)
+        )        
+        raise self.retry(exc=e,countdown=5)
     except Exception as e:
         logger.error("[Ingestion] Error occured during Ingestion")
-        raise self.retry(exc=e, countdown=5)
+        raise self.retry(exc=e,countdown=5)
+
+
+

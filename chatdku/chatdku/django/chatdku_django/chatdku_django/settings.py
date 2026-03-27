@@ -123,7 +123,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_prometheus",
     "drf_spectacular",
-    "drf_spectacular_sidecar",
+    'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
@@ -140,6 +140,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.rate_limit_middleware.RateLimitMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
+
+
 ]
 
 
@@ -173,7 +175,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS":'drf_spectacular.openapi.AutoSchema',
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     # "PAGE_SIZE":20
 }
@@ -242,8 +244,8 @@ LOCALE_PATHS = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 if DEBUG:
-    STATIC_URL = "/static/"
-    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+    STATIC_URL="/static/"
+    STATIC_ROOT=os.path.join(BASE_DIR,"staticfiles")
 else:
     STATIC_URL = "https://chatdku.dukekunshan.edu.cn/django_static/"
     STATIC_ROOT = os.path.join("/var/www/chatdku_backend/", "django_staticfiles")
@@ -266,81 +268,66 @@ EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_TO = os.getenv("EMAIL_TO")
+EMAIL_TO=os.getenv("EMAIL_TO")
 # EMAIL_HOST_PASSWORD=os.getenv("EMAIL_HOST_PASSWORD")
 
 
-# Cache Setup
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
-REDIS_HOST = os.getenv("REDIS_HOST")
+#Cache Setup
+REDIS_PASSWORD=os.getenv("REDIS_PASSWORD")
+REDIS_HOST=os.getenv("REDIS_HOST")
 
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0",
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+CACHES={
+    "default":{
+        "BACKEND":"django_redis.cache.RedisCache",
+        "LOCATION":f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:6379/0",
+        "OPTIONS":{
+            
+            "CLIENT_CLASS":"django_redis.client.DefaultClient"
+        }
     }
 }
 
 
-# OpenAPI Setup with drf-spectacular
+#OpenAPI Setup with drf-spectacular
 SPECTACULAR_SETTINGS = {
-    "SWAGGER_UI_DIST": "SIDECAR",  # shorthand to use the sidecar instead
-    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
-    "REDOC_DIST": "SIDECAR",
-    "TITLE": "ChatDKU",
-    "DESCRIPTION": "ChatDKU",
-    "VERSION": "2.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
+    'SWAGGER_UI_DIST': 'SIDECAR',  # shorthand to use the sidecar instead
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+    'TITLE': 'ChatDKU',
+    'DESCRIPTION': 'ChatDKU',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # Prometheus Settings
 
-PROMETHEUS_LATENCY_BUCKETS = (
-    0.01,
-    0.025,
-    0.05,
-    0.075,
-    0.1,
-    0.25,
-    0.5,
-    0.75,
-    1.0,
-    2.5,
-    5.0,
-    7.5,
-    10.0,
-    25.0,
-    50.0,
-    75.0,
-    float("inf"),
-)
+PROMETHEUS_LATENCY_BUCKETS = (0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, 25.0, 50.0, 75.0, float("inf"),)
 
 # Rate Limit Configurations
 
-RATE_LIMIT_DEFAULT = 60  # Default: 60 requests per minute
-RATE_LIMIT_API = 60  # API endpoints: 60 requests per minute
-RATE_LIMIT_STRICT = 20  # Strict operations: 20 requests per 30 seconds
-RATE_LIMIT_WINDOW = 60  # Default window: 60 seconds
+RATE_LIMIT_DEFAULT = 60      # Default: 60 requests per minute
+RATE_LIMIT_API = 60        # API endpoints: 60 requests per minute  
+RATE_LIMIT_STRICT = 20       # Strict operations: 20 requests per 30 seconds
+RATE_LIMIT_WINDOW = 60       # Default window: 60 seconds
 RATE_LIMIT_STRICT_WINDOW = 30  # Strict window: 30 seconds
 
 # Paths exempt from rate limiting
 RATE_LIMIT_EXEMPT_PATHS = [
-    "/admin/",
-    "/static/",
-    "/media/",
-    "/health/",
-    "/docs/",
-    "/metrics",
+    '/admin/',
+    '/static/',
+    '/media/',
+    '/health/',
+    '/docs/',
+    '/metrics'
 ]
 
 # Path to rate limit type mapping
 RATE_LIMIT_PATH_MAPPINGS = {
-    "/api/": "api",
-    "/chat/": "api",
-    "/query/": "api",
-    "/upload/": "strict",
-    "/scrape/": "strict",
-    "/batch/": "strict",
+    '/api/': 'api',
+    '/chat/': 'api',
+    '/query/': 'api',
+    '/upload/': 'strict',
+    '/scrape/': 'strict',
+    '/batch/': 'strict',
 }

@@ -2,7 +2,6 @@
 # TODO: Support chat history
 
 import eventlet
-
 eventlet.monkey_patch()
 
 from flask import Flask, request
@@ -37,13 +36,9 @@ from chatdku.core.agent import Agent, CustomClient
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.wsgi_app = ProxyFix(
-    app.wsgi_app, x_proto=1, x_host=1
-)  # Let flask know it is behind a reverse proxy.
+app.wsgi_app=ProxyFix(app.wsgi_app,x_proto=1,x_host=1) #Let flask know it is behind a reverse proxy.
 CORS(app)
-socketio = SocketIO(
-    app, cors_allowed_origins="*", async_mode="eventlet"
-)  # Socket IO to receive audio
+socketio = SocketIO(app, cors_allowed_origins="*",async_mode="eventlet") #Socket IO to receive audio 
 
 setup()
 use_phoenix()
@@ -60,7 +55,7 @@ admin = Admin(name="Dashboard", template_mode="bootstrap4", app=app)
 db.init_app(app)
 migrate.init_app(app, db)
 admin.init_app(app)
-admin.add_view(AdminView(Feedback, db.session))
+admin.add_view(AdminView(Feedback,db.session))
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 logger.info(f"Using device: {device}")
@@ -100,8 +95,7 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# NOTE: This has not been implemented here
+#NOTE: This has not been implemented here
 def ollama_response(data):
     response: ChatResponse = chat(
         model="llama3.2",
@@ -175,25 +169,21 @@ def handle_audio(data):
         logger.error(f"Transcription failed: {str(e)}")
         emit("audio_received", {"status": "error", "message": str(e)})
 
-
-@app.route("/save-feedback", methods=["POST"])
+@app.route('/save-feedback', methods=['POST'])
 def save_feedback():
     try:
         data = request.get_json()
-        user_input = data["userInput"]
-        bot_answer = data["botAnswer"]
-        feedback_reason = data["feedbackReason"]
-        question_id = data["chatHistoryId"]
+        user_input = data['userInput']
+        bot_answer = data['botAnswer']
+        feedback_reason = data['feedbackReason']
+        question_id = data['chatHistoryId']
 
-        feedback = Feedback(
-            user_input=user_input,
-            bot_answer=bot_answer,
-            feedback_reason=feedback_reason,
-            question_id=question_id,
-        )
+        feedback=Feedback(user_input=user_input,bot_answer=bot_answer,feedback_reason=feedback_reason,question_id=question_id)
         db.session.add(feedback)
         db.session.commit()
         print("data recorded")
-        return jsonify({"message": "Feedback saved successfully"})
+        return jsonify({'message': 'Feedback saved successfully'})
     except Exception as e:
-        return jsonify({"message": str(e)})
+        return jsonify({"message":str(e)})
+
+

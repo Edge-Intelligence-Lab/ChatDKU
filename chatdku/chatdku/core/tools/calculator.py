@@ -1,7 +1,6 @@
 import json
 import math
 
-
 class Calculator:
     def __init__(
         self,
@@ -84,9 +83,7 @@ class Calculator:
             str: JSON string of the result.
         """
         if b == 0:
-            return json.dumps(
-                {"operation": "division", "error": "Division by zero is undefined"}
-            )
+            return json.dumps({"operation": "division", "error": "Division by zero is undefined"})
         try:
             result = a / b
         except Exception as e:
@@ -116,12 +113,7 @@ class Calculator:
             str: JSON string of the result.
         """
         if n < 0:
-            return json.dumps(
-                {
-                    "operation": "factorial",
-                    "error": "Factorial of a negative number is undefined",
-                }
-            )
+            return json.dumps({"operation": "factorial", "error": "Factorial of a negative number is undefined"})
         result = math.factorial(n)
         return json.dumps({"operation": "factorial", "result": result})
 
@@ -151,12 +143,7 @@ class Calculator:
             str: JSON string of the result.
         """
         if n < 0:
-            return json.dumps(
-                {
-                    "operation": "square_root",
-                    "error": "Square root of a negative number is undefined",
-                }
-            )
+            return json.dumps({"operation": "square_root", "error": "Square root of a negative number is undefined"})
 
         result = math.sqrt(n)
         return json.dumps({"operation": "square_root", "result": result})

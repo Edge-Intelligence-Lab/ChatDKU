@@ -1,3 +1,4 @@
+
 import eventlet
 import eventlet.wsgi
 import ssl
@@ -14,15 +15,12 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(
-    app, async_mode="eventlet", cors_allowed_origins="*"
-)  # Socket.IO to receive audio
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")  # Socket.IO to receive audio
 
 # Logging setup
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 WHISPER_MODEL_URI = os.getenv("WHISPER_MODEL_URI")
-
 
 @socketio.on("audio_data")
 def handle_audio(data):
@@ -55,21 +53,25 @@ def handle_audio(data):
         emit("audio_received", {"status": "error", "message": str(e)})
 
 
-if __name__ == "__main__":
 
-    cert_file = "/etc/ssl/certs/chatdku.dukekunshan.edu.cn.pem"
-    key_file = "/etc/ssl/updated_certs/chatdku.dukekunshan.edu.cn.key"
+
+
+
+if __name__ == "__main__":
+    
+    cert_file = '/etc/ssl/certs/chatdku.dukekunshan.edu.cn.pem'
+    key_file = '/etc/ssl/updated_certs/chatdku.dukekunshan.edu.cn.key'
     ssl_args = {
-        "certfile": cert_file,
-        "keyfile": key_file,
-        "server_side": True,
-        "ssl_version": ssl.PROTOCOL_TLS_SERVER,
+        'certfile': cert_file,
+        'keyfile': key_file,
+        'server_side': True,
+        'ssl_version': ssl.PROTOCOL_TLS_SERVER,
     }
 
-    # Create raw socket
-    sock = eventlet.listen(("0.0.0.0", 8007))
+     #Create raw socket
+    sock = eventlet.listen(('0.0.0.0', 8007))
     wrapped_socket = eventlet.wrap_ssl(sock, **ssl_args)
 
     logger.info("Running secure Socket.IO server on http://0.0.0.0:8007")
     eventlet.wsgi.server(wrapped_socket, app)
-    # socketio.run(app, host="0.0.0.0", port=8007)
+    #socketio.run(app, host="0.0.0.0", port=8007)

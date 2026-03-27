@@ -4,16 +4,12 @@ from typing import Any, Optional, List, Dict
 try:
     from googlesearch import search
 except ImportError:
-    raise ImportError(
-        "`googlesearch-python` not installed. Please install using `pip install googlesearch-python`"
-    )
+    raise ImportError("`googlesearch-python` not installed. Please install using `pip install googlesearch-python`")
 
 try:
     from pycountry import pycountry
 except ImportError:
-    raise ImportError(
-        "`pycountry` not installed. Please install using `pip install pycountry`"
-    )
+    raise ImportError("`pycountry` not installed. Please install using `pip install pycountry`")
 
 
 class GoogleSearch:
@@ -47,9 +43,7 @@ class GoogleSearch:
 
         self.register(self.google_search)
 
-    def google_search(
-        self, query: str, max_results: int = 5, language: str = "en"
-    ) -> str:
+    def google_search(self, query: str, max_results: int = 5, language: str = "en") -> str:
         """
         Use this function to search Google for a specified query.
 
@@ -73,9 +67,7 @@ class GoogleSearch:
                 language = "en"
 
         # Perform Google search using the googlesearch-python package
-        results = list(
-            search(query, num_results=max_results, lang=language, advanced=True)
-        )
+        results = list(search(query, num_results=max_results, lang=language, advanced=True))
 
         # Collect the search results
         res: List[Dict[str, str]] = []
