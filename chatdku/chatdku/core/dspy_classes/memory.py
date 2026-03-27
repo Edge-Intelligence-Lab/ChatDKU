@@ -32,53 +32,53 @@ class ConversationMemoryEntry(BaseModel):
 
 class PermanentMemorySignature(dspy.Signature):
     """
-You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
+    You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
 
-    You have access to the following tools to manage the long-term memory:
-     - store_memory(content: str, metadata: dict | None = None): Store the content in the long-term memory.
-     - search_memories(query: str, filters: dict | None = None): Search for memories based on the query and filters.
-     - update_memory(idx: int, new_content: str): Update the memory at the given index to have the new_content.
-     - delete_memory(memory_id: str): Delete the memory with the given ID.
-     - finish(): stop when no action is needed
+        You have access to the following tools to manage the long-term memory:
+         - store_memory(content: str, metadata: dict | None = None): Store the content in the long-term memory.
+         - search_memories(query: str, filters: dict | None = None): Search for memories based on the query and filters.
+         - update_memory(idx: int, new_content: str): Update the memory at the given index to have the new_content.
+         - delete_memory(memory_id: str): Delete the memory with the given ID.
+         - finish(): stop when no action is needed
 
 
-    And you can see your past trajectory so far. Your goal is to use one or more of the
-    supplied tools to store OR update OR delete any useful facts about the user from the
-    most_recent_conversation.
-    To do this, you will produce next_thought, next_tool_name, and next_tool_args in each turn,
-    and also when finishing the task.
-    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
-    When writing next_thought, you may reason about the current situation and plan for future steps.
-    When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
+        And you can see your past trajectory so far. Your goal is to use one or more of the
+        supplied tools to store OR update OR delete any useful facts about the user from the
+        most_recent_conversation.
+        To do this, you will produce next_thought, next_tool_name, and next_tool_args in each turn,
+        and also when finishing the task.
+        After each tool call, you receive a resulting observation, which gets appended to your trajectory.
+        When writing next_thought, you may reason about the current situation and plan for future steps.
+        When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
 
-    For your convenience, all the user_memories are given to you. Based on the latest conversation,
-    you may update any memory that needs updating and may also delete any memory that is no longer relevant.
+        For your convenience, all the user_memories are given to you. Based on the latest conversation,
+        you may update any memory that needs updating and may also delete any memory that is no longer relevant.
 
-    When storing memories:
-     1. ALWAYS call search_memories first to check if a similar memory already exists to avoid duplicates.
-        - Use a descriptive query that matches the content or metadata of the memory you want to update or delete
-        - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
-     2. If a similar memory is found, update it instead of creating a new one.
-     3. If the new information is a correction of an existing memory, delete the old one and create a new one
-     4. If no relevant memories are found, then store the memory.
-     5. Only call one tool per turn and wait for the observation before next action
+        When storing memories:
+         1. ALWAYS call search_memories first to check if a similar memory already exists to avoid duplicates.
+            - Use a descriptive query that matches the content or metadata of the memory you want to update or delete
+            - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
+         2. If a similar memory is found, update it instead of creating a new one.
+         3. If the new information is a correction of an existing memory, delete the old one and create a new one
+         4. If no relevant memories are found, then store the memory.
+         5. Only call one tool per turn and wait for the observation before next action
 
-    When updating or deleting memories:
-     1.  ALWAYS call search_memories first to get the relevant memories and their indices.
-        - Use a descriptive query that matches the content or metadata of the memory you want to update or delete
-        - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
-     2.  Then use the index (idx) from the search results to specify which memory to update or delete.
-     3.  Memory IDs are for reference only. Do NOT generate or guess memory IDs.
-     4.  Only call one tool per turn and wait for the observation before next action
+        When updating or deleting memories:
+         1.  ALWAYS call search_memories first to get the relevant memories and their indices.
+            - Use a descriptive query that matches the content or metadata of the memory you want to update or delete
+            - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
+         2.  Then use the index (idx) from the search results to specify which memory to update or delete.
+         3.  Memory IDs are for reference only. Do NOT generate or guess memory IDs.
+         4.  Only call one tool per turn and wait for the observation before next action
 
-    Guidelines:
-     - Avoid duplicate memories
-     - if a similar memory already exists, update it instead of creating a new one.
-     - Delete memories only if they are no longer relevant or if the information is incorrect
-        - For example, if the user has changed their major, you should delete the old memory and store the new one.
+        Guidelines:
+         - Avoid duplicate memories
+         - if a similar memory already exists, update it instead of creating a new one.
+         - Delete memories only if they are no longer relevant or if the information is incorrect
+            - For example, if the user has changed their major, you should delete the old memory and store the new one.
 
-    If the most_recent_conversation does not contain any useful information,
-    you should immediately use "finish" tool.
+        If the most_recent_conversation does not contain any useful information,
+        you should immediately use "finish" tool.
     """
 
     # need to tweak prompt to include guidelines for temp and long term memories
