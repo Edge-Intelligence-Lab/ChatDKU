@@ -248,8 +248,8 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
     llama_parse_api_key = "llx-6IAg1KqUtB2S3nfMrlWujujfSEU9N3kCerJDXHQrDKtkVcs7"
 
     parser = SentenceSplitter(
-        chunk_size=1024,
-        chunk_overlap=20,
+        chunk_size=config.chunk_size,
+        chunk_overlap=config.chunk_overlap,
     )
     pdf_reader = LlamaParse(
         api_key=llama_parse_api_key,

@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
 
-from redis import Redis
-from redisvl.schema import IndexSchema
-from llama_index.vector_stores.redis import RedisVectorStore
-
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.schema import TextNode
-
-import os
 import argparse
 import json
+import os
 
 ######
 from llama_index.core import Settings
-from chatdku.setup import setup
-
-
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.schema import TextNode
+from llama_index.vector_stores.redis import RedisVectorStore
+from redis import Redis
+from redisvl.schema import IndexSchema
 
 from chatdku.config import config
+from chatdku.setup import setup
 
 
 def clean_file_name(file_name: str) -> str:
@@ -80,14 +76,14 @@ def load_redis(
             "fields": [
                 # Required fields for llamaindex
                 {"type": "tag", "name": "id"},
-                {"type": "tag", "name": "user_id", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "user_id"},
                 {"type": "tag", "name": "doc_id"},
                 {"type": "text", "name": "text"},
-                {"type": "tag", "name": "file_name", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "file_name"},
                 {"type": "tag", "name": "page_number"},
                 # Custom metadata fields
                 {"type": "tag", "name": "groups"},
-                {"type": "tag", "name": "file_path", "attrs": {"sortable": True}},
+                {"type": "tag", "name": "file_path"},
                 {"type": "tag", "name": "last_modified_date"},
                 # Custom vector embeddings field definition
                 {

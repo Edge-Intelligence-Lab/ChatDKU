@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 # import os
-import json
-import chromadb
 import argparse
+import json
+
+import chromadb
 from chromadb.utils.embedding_functions import HuggingFaceEmbeddingServer
 
 # from llama_index.core import Settings
@@ -158,7 +159,7 @@ def load_chroma(
 
 def main(nodes_path=None, collection_name=None):
     load_chroma(
-        reset=False,
+        reset=True,
         nodes_path=nodes_path,
         collection=collection_name,
     )
