@@ -156,7 +156,7 @@ class ChatView(APIView):
                 search_mode=search_mode,
                 files=docs,
             ),
-            QueryCurriculumOuter(),
+            # QueryCurriculumOuter(),
         ]
 
         try:
