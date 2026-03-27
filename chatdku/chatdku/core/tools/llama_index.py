@@ -11,16 +11,6 @@ from chatdku.core.tools.utils import QueryTimeoutError, timeout
 logger = logging.getLogger(__name__)
 
 
-def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
-    result = []
-    for node in nodes:
-        if isinstance(node, NodeWithScore):
-            result.append([{"text": node.text, "metadata": node.metadata}])
-        if isinstance(node, str):
-            result.append(node)
-    return result
-
-
 def VectorRetrieverOuter(
     retriever_top_k: int = 25,
     use_reranker: bool = True,
@@ -93,8 +83,7 @@ def VectorRetrieverOuter(
         except Exception as e:
             raise Exception(f"Vector retrieval failed: {e}")
 
-        overall_dicts = nodes_to_dicts(vector_result)
-        return overall_dicts
+        return vector_result
 
     return VectorQuery
 
@@ -174,7 +163,6 @@ def KeywordRetrieverOuter(
         except Exception as e:
             raise Exception(f"Keyword retrieval failed: {e}")
 
-        overall_dict = nodes_to_dicts(keyword_result)
-        return overall_dict
+        return keyword_result
 
     return KeywordQuery
