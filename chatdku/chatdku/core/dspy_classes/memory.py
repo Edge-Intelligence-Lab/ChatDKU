@@ -31,11 +31,12 @@ class ConversationMemoryEntry(BaseModel):
 
 
 class PermanentMemorySignature(dspy.Signature):
-    """You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
+    """
+You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
 
     You have access to the following tools to manage the long-term memory:
      - store_memory(content: str, metadata: dict | None = None): Store the content in the long-term memory.
-     - search_memories(query: str, filters: dict | None = None): Search for relevant memories based on the query and filters.
+     - search_memories(query: str, filters: dict | None = None): Search for memories based on the query and filters.
      - update_memory(idx: int, new_content: str): Update the memory at the given index to have the new_content.
      - delete_memory(memory_id: str): Delete the memory with the given ID.
      - finish(): stop when no action is needed
@@ -58,7 +59,7 @@ class PermanentMemorySignature(dspy.Signature):
         - Use a descriptive query that matches the content or metadata of the memory you want to update or delete
         - You may also use optional metadata filters to narrow down results (e.g., {"category": "academic"})
      2. If a similar memory is found, update it instead of creating a new one.
-     3. If the new information is a correction of an existing memory (e.g., user changed major), delete the old memory and store the new one.
+     3. If the new information is a correction of an existing memory, delete the old one and create a new one
      4. If no relevant memories are found, then store the memory.
      5. Only call one tool per turn and wait for the observation before next action
 
@@ -73,7 +74,8 @@ class PermanentMemorySignature(dspy.Signature):
     Guidelines:
      - Avoid duplicate memories
      - if a similar memory already exists, update it instead of creating a new one.
-     - Delete memories only if they are no longer relevant or if the information is incorrect. For example, if the user has changed their major, you should delete the old memory and store the new one.
+     - Delete memories only if they are no longer relevant or if the information is incorrect
+        - For example, if the user has changed their major, you should delete the old memory and store the new one.
 
     If the most_recent_conversation does not contain any useful information,
     you should immediately use "finish" tool.

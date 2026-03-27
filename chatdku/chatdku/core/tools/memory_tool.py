@@ -4,7 +4,6 @@ from mem0 import Memory
 
 from chatdku.config import config
 from chatdku.core.dspy_classes.prompt_settings import custom_fact_extraction_prompt
-import os
 
 
 class MemoryTools:
@@ -227,7 +226,7 @@ class MemoryTools:
             return f"Error updating memory: {str(e)}"
 
     def delete_memory(self, memory_id: str) -> str:
-        """Delete a specific memory. Important: call search_memories first to get the memory_id, do NOT guess or generate memory IDs."""
+        """Delete a specific memory. Important: call search_memories first to get the memory_id, do NOT guess or generate memory IDs."""  # noqa:E501
         try:
             self.memory.delete(memory_id)
             return f"Memory with id:{memory_id} deleted successfully."
@@ -300,7 +299,7 @@ class MemoryTools:
         elif isinstance(val, str):
             try:
                 return datetime.fromisoformat(val).timestamp()
-            except:
+            except ValueError:
                 return 0.0
         else:
             return 0.0
