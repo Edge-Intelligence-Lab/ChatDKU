@@ -97,3 +97,7 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["chatdku"]
+
+[tool.flake8]
+ignore = ["E203"]
+max-line-length = 120
