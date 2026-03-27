@@ -32,7 +32,8 @@ class ConversationMemoryEntry(BaseModel):
 
 class PermanentMemorySignature(dspy.Signature):
     """
-    You are a Memory Management Agent. Your goal is to store, update, or delete long-term useful information about the user.
+    You are a Memory Management Agent.
+    Your goal is to store, update, or delete long-term useful information about the user.
 
         You have access to the following tools to manage the long-term memory:
          - store_memory(content: str, metadata: dict | None = None): Store the content in the long-term memory.
