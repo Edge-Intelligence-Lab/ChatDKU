@@ -57,7 +57,7 @@ def _get_pool() -> SimpleConnectionPool:
             minconn=1,
             # keep pool bounded; high values cause connection storms under load
             maxconn=int(getattr(config, "postgres_maxconn", 20)),
-            dsn=config.psql_uri,
+            dsn=config.pg_ingest_uri,
         )
     return _pool
 

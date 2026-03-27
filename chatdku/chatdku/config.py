@@ -47,6 +47,7 @@ class Config:
         redis_host = _env("REDIS_HOST")
         redis_password = _env("REDIS_PASSWORD")
         llamaparse_api = _env("LLAMAPARSE_API")
+        pg_ingest_uri = _env("PG_INGEST_URI")
         psql_uri = _env("PSQL_URI")
         if not psql_uri:
             db_user = _env("DB_USER")
@@ -97,6 +98,7 @@ class Config:
                 "user_uploads_collection": "user_uploads",
                 # PSQL
                 "psql_uri": psql_uri,
+                "pg_ingest_uri": pg_ingest_uri,
                 "postgres_maxconn": 20,
                 # MISC
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",

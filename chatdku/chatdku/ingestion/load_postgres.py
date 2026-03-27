@@ -209,7 +209,7 @@ CREATE INDEX IF NOT EXISTS document_access_filter_idx
 
 
 def _get_connection() -> psycopg2.extensions.connection:
-    return psycopg2.connect(config.psql_uri)
+    return psycopg2.connect(config.pg_ingest_uri)
 
 
 def _prepare_batch(valid_pairs, embed_model):
