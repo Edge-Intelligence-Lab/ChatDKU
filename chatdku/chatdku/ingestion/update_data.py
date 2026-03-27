@@ -115,8 +115,9 @@ def custom_metadata(user_id: str):
             "file_path": file_path,
             "page_number": "Not given.",
             "file_name": os.path.basename(file_path),
-            "file_type": mimetypes.guess_type(file_path)[0]
-            or "application/octet-stream",
+            "file_type": (
+                mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            ),
             "file_size": stat.st_size,
             "creation_date": datetime.datetime.fromtimestamp(
                 stat.st_ctime, datetime.UTC
