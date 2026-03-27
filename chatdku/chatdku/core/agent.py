@@ -199,8 +199,8 @@ def main():
     search_mode = 0
     tools = [
         DocRetrieverOuter(
-            retriever_top_k=10,
-            use_reranker=False,
+            retriever_top_k=25,
+            use_reranker=True,
             reranker_top_n=5,
             access_type=access_type,
             role=role,

@@ -3,6 +3,7 @@ from contextlib import suppress
 from time import perf_counter
 
 from chatdku.config import config
+from chatdku.core.tools.utils import nodes_to_dicts
 from chatdku.core.tools.retriever.postgres_retriever import PostgresRetriever
 from chatdku.core.tools.retriever.reranker import rerank
 
@@ -30,7 +31,7 @@ def DocRetrieverOuter(
 
     def DocumentRetriever(
         semantic_query: str,
-    ) -> tuple[list, dict]:
+    ) -> list:
         vector_result: list = []
 
         try:
@@ -89,6 +90,6 @@ def DocRetrieverOuter(
         #         if isinstance(node, NodeWithScore)
         #     }
         # }
-        return vector_result
-
+        return nodes_to_dicts(vector_result)
+    
     return DocumentRetriever
