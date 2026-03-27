@@ -66,6 +66,9 @@ dependencies = [
     "ollama==0.4.9",
     "plotly==6.1.2",
     "ffmpeg==1.4",
+    "python-docx",
+    "pdfplumber",
+    "pymupdf",
     #Django backend
     "Django~=5.2.3",
     "django-appconf~=1.1.0",

@@ -12,6 +12,8 @@ from chatdku.core.tools.syllabi_tool.generate_sql import GenerateSQL
 from chatdku.core.utils import span_ctx_start
 from chatdku.setup import DB
 
+table_name = "curriculum"
+
 
 def QueryCurriculumOuter(N=3):
     db = DB()
@@ -60,7 +62,7 @@ def QueryCurriculumOuter(N=3):
 
                 try:
                     rows = db.execute(sql)
-                    __import__("pprint").pprint(rows)
+                    # __import__("pprint").pprint(rows)
                     tool_out = str(rows)
                     for i, row in enumerate(rows):
                         nodes.append(
@@ -92,28 +94,28 @@ def QueryCurriculumOuter(N=3):
 
 
 def fetch_schema(db: DB) -> str:
-    """Fetch simple schema description from the 'classes' table."""
-    sql = """
+    """Fetch simple schema description from the table."""
+    sql = f"""
         SELECT column_name, data_type
         FROM information_schema.columns
-        WHERE table_name = 'classes';
+        WHERE table_name = '{table_name}';
     """
     distinct_values_sql = {
-        "year": """
+        "year": f"""
         SELECT DISTINCT year
-        FROM classes;
+        FROM {table_name};
         """,
-        "semester": """
+        "semester": f"""
         SELECT DISTINCT semester
-        FROM classes;
+        FROM {table_name};
         """,
-        "semester_session": """
+        "semester_session": f"""
         SELECT DISTINCT semester_session
-        FROM classes;
+        FROM {table_name};
         """,
     }
     rows = db.execute(sql)
-    schema = {"classes": {col: dtype for col, dtype in rows}}
+    schema = {f"{table_name}": {col: dtype for col, dtype in rows}}
     for key, sql in distinct_values_sql.items():
         rows = db.execute(sql)
         schema[key] = {"distinct_values": rows}

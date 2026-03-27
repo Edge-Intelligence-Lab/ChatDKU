@@ -31,6 +31,8 @@ from rest_framework.views import APIView
 
 from chatdku.core.agent import Agent
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +121,7 @@ class ChatView(APIView):
         test = request.data.get("test", False)
 
         mode = request.data.get("mode", "default")
-        max_iteration = 3 if mode == "agent" else 2
+        max_iteration = 4 if mode == "agent" else 2
         source_serializer = SourceSerializer(data=request.data)
         source_serializer.is_valid(raise_exception=True)
         search_mode, docs = (
@@ -154,6 +156,7 @@ class ChatView(APIView):
                 search_mode=search_mode,
                 files=docs,
             ),
+            QueryCurriculumOuter(),
         ]
 
         try:
@@ -284,18 +287,21 @@ class FeedbackView(APIView):
 
 
 @extend_schema_view(
-    get=extend_schema(
-        description="GET request for session",
-        parameters=PARAMETERS,
-        responses={
-            200: OpenApiResponse(
-                response={
-                    "type": "object",
-                    "properties": {"session_id": {"type": "string", "format": "uuid"}},
-                }
-            )
-        },
-    )
+        get=extend_schema(
+            description="GET request for session",
+            parameters=PARAMETERS,
+            responses={
+                200:OpenApiResponse(response={
+                    'type':'object',
+                    'properties':{
+                        'session_id':{
+                            'type':'string',
+                            'format':'uuid'
+                        }
+                    }
+                })
+            }
+        )  
 )
 class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer

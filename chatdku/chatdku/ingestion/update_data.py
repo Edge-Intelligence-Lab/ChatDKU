@@ -344,8 +344,8 @@ def _read_pdf(
     total_nodes = []
 
     parser = SentenceSplitter(
-        chunk_size=1024,
-        chunk_overlap=20,
+        chunk_size=config.chunk_size,
+        chunk_overlap=config.chunk_overlap,
     )
     pdf_reader = LlamaParse(
         api_key=config.llamaparse_api,
@@ -400,6 +400,10 @@ def _read_pdf(
 def _read_non_pdf(
     files: list, user_id, access_type, role, organization
 ) -> list[BaseNode]:
+
+    # Allow callers to pass an empty list (e.g., event folder is empty)
+    if not files:
+        return []
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     html_cleaner = HtmlCleaner()
@@ -472,6 +476,11 @@ def _read_non_pdf(
 def update_events(user_id: str) -> list:
     """Always re-read all event files and generate fresh event nodes."""
     event_files = load_event_files()
+    
+    # If the event folder is missing or empty, just skip event ingestion.
+    if not event_files:
+        return []
+
     event_nodes = _read_non_pdf(
         event_files,
         user_id,
