@@ -1,5 +1,6 @@
 
 .harper-dictionary.txt
+.ruff_cache
 
 .idea/
 .vscode/

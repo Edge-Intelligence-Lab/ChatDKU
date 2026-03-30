@@ -6,11 +6,13 @@ from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttribu
 from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
-from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
+from chatdku.core.dspy_classes.memory import ConversationMemory, PermanentMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 
-# from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+# from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter # Import unused
+from chatdku.core.tools.memory_tool import MemoryTools
+
 from chatdku.core.tools.llama_index_pg import DocRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import load_conversation, span_start
@@ -126,7 +128,8 @@ class Agent(dspy.Module):
 
             plan = self.planner(
                 current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
+                conversation_history=self.conversation_memory.history_str(),
+                conversation_summary=self.conversation_memory.summary,
             )
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -180,7 +183,7 @@ def main():
         api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
-        max_tokens=config.context_window,
+        max_tokens=config.output_window,
         temperature=config.llm_temperature,
     )
     dspy.configure(lm=lm)
@@ -197,6 +200,7 @@ def main():
     access_type = "student"  # hard code it for now, need parameter pass from user role
     user_id = "Chat_DKU"
     search_mode = 0
+    memory = MemoryTools(user_id)
     tools = [
         DocRetrieverOuter(
             retriever_top_k=25,
@@ -209,6 +213,8 @@ def main():
             files=[],
         ),
         QueryCurriculumOuter(),
+        memory.search_memories,
+        memory.get_all_memories,
     ]
 
     agent = Agent(
@@ -218,6 +224,8 @@ def main():
         tools=tools,
     )
 
+    permanent_memory = PermanentMemory(user_id=user_id)
+    conversations = []
     while True:
         try:
             print("*" * 10)
@@ -225,10 +233,10 @@ def main():
             start_time = time.time()
             responses_gen = agent(
                 current_user_message=current_user_message,
-            )
+            ).response
             first_token = True
             print("Response:")
-            for r in responses_gen.response:
+            for r in responses_gen:
                 if first_token:
                     end_time = time.time()
                     print(f"first token时间:{end_time - start_time}")
@@ -236,17 +244,16 @@ def main():
                 print(r, end="")
             print()
 
-            # for i, r in enumerate(responses_gen):
-            #     print("-" * 10)
-            #     print(f"Round {i} response:")
-            #     for r in r.response:
-            #         if first_token:
-            #             end_time = time.time()
-            #             print(f"first token时间:{end_time-start_time}")
-            #             first_token = False
-            #         print(r, end="")
-            #     print()
-            #     print("-" * 10)
+            recent_conversation = [
+                {"role": "user", "content": current_user_message},
+                {"role": "assistant", "content": responses_gen.get_full_response()},
+            ]
+            permanent_memory(
+                session_conversation=conversations,
+                most_recent_conversation=recent_conversation,
+            )
+            conversations.append(recent_conversation)
+
         except EOFError:
             break
 

@@ -66,7 +66,8 @@ class Config:
                 "backup_llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "backup_llm_url": "http://localhost:18085/v1",
                 "llm_temperature": 0.7,
-                "context_window": 32000,
+                "context_window": 20000,
+                "output_window": 10000,
                 "response_type": "Multiple Paragraphs",
                 # Embedding
                 "embedding": "BAAI/bge-m3",
@@ -101,6 +102,7 @@ class Config:
                 "pg_ingest_uri": pg_ingest_uri,
                 "postgres_maxconn": 20,
                 # MISC
+                "memory_collection": "user_memory",  # Memory collection name
                 "docstore_path": "/datapool/docstores/bge_m3_docstore",
                 "graph_data_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU/output/20240715-182239/artifacts",
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
