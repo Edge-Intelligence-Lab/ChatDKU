@@ -183,7 +183,7 @@ CREATE INDEX IF NOT EXISTS {table_name}_source_type_idx
 -- ACL lookup index (doc_id is the join key in retriever)
 CREATE INDEX IF NOT EXISTS document_access_doc_id_idx
     ON document_access (doc_id);
-CREATE UNIQUE INDEX document_access_unique_idx
+CREATE UNIQUE INDEX IF NOT EXISTS document_access_unique_idx
     ON document_access (
         doc_id, source_type, access_type, role, organization, user_id
     );
