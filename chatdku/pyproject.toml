@@ -13,12 +13,15 @@ authors = [
     { name="Temuulen Enkhtamir" },
     { name="Anar Nyambayar" },
     { name="Munish Lohani" },
-    { name="Zhiwei" },
+    { name="Sean Allen Siegfreid R. Bugarin" },
+    { name="Zhiwei Li" },
     { name="Youran Wang" },
     { name="Zeyu Yu" },
-    { name="Jingxuan" },
+    { name="Jingxuan Lin" },
     { name="Ruihan Yin" },
-
+    { name="Haroon Butt" },
+    { name="Halfi Khan" },
+    { name="Kurtis Kwan" },
 ]
 description = ""
 readme = ""
