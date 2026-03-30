@@ -82,7 +82,7 @@ def VectorRetrieverOuter(
         except Exception as e:
             raise Exception(f"Vector retrieval failed: {e}")
 
-        return vector_result
+        return str(vector_result)
 
     return VectorQuery
 
@@ -162,6 +162,6 @@ def KeywordRetrieverOuter(
         except Exception as e:
             raise Exception(f"Keyword retrieval failed: {e}")
 
-        return keyword_result
+        return str(keyword_result)
 
     return KeywordQuery

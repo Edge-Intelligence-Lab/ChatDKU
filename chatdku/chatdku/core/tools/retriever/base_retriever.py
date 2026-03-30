@@ -107,6 +107,7 @@ class BaseDocRetriever:
                     }
                 )
                 span.set_status(Status(StatusCode.ERROR))
+                raise e
             return retrieved_nodes
 
 
