@@ -42,10 +42,7 @@ class KeywordRetriever(BaseDocRetriever):
             db=0,
         )
 
-        schema = IndexSchema.from_yaml(
-            os.path.join(config.module_root_dir, "custom_schema.yaml")
-        )
-        index_name = schema.index.name
+        index_name = f"idx:{config.index_name}"
 
         # Escape all punctuation, e.g. "can't" -> "can\'t"
         def _escape_strs(strs: list[str]):
