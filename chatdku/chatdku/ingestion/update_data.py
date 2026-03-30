@@ -18,6 +18,10 @@ from typing import Any, Dict, List, Optional
 from llama_index.core.schema import Document
 import pandas as pd
 from openpyxl import load_workbook
+import hashlib
+
+# Import structure-aware PDF chunker
+from structure_chunker import process_pdf as process_pdf_structure_aware
 
 
 # Override detect_filetype so that html files containing JavaScript code are loaded in html format.
@@ -32,16 +36,13 @@ from custom_partation import partition
 
 unstructured.partition.auto.partition = partition
 
-import hashlib
-
-
 
 class XlsxReader(BaseReader):
     def __init__(
         self,
     ) -> None:
         super().__init__()
-
+    
     
     def xlsx_load(self,file: Path) -> str:
         wb = load_workbook(file)
@@ -150,6 +151,8 @@ def update_data(data_dir):
         result_type="markdown",
         verbose=True,
     )
+    
+    # Use SimpleDirectoryReader to load all documents
     documents = SimpleDirectoryReader(
         data_dir,
         recursive=True,
@@ -165,6 +168,7 @@ def update_data(data_dir):
         },
     ).load_data()
 
+    # Process HTML files to convert to markdown
     for doc in documents:
         if doc.metadata["file_type"] == "text/html":
             with open(doc.metadata["file_path"], "r") as f:
@@ -173,6 +177,41 @@ def update_data(data_dir):
                 doc.text = md(html)
             except:
                 print(f"fail trans to md:{doc.metadata['file_path']}")
+
+    # ========== NEW: Process PDF documents with structure-aware chunking ==========
+    # After loading all documents, replace PDF documents with structure-aware chunks
+    
+    structure_aware_documents = []
+    pdf_count = 0
+    pdf_chunk_count = 0
+    
+    for doc in documents:
+        # Check if this is a PDF document
+        file_path = doc.metadata.get("file_path", "")
+        file_type = doc.metadata.get("file_type", "")
+        
+        if file_path.lower().endswith('.pdf') or file_type == "application/pdf":
+            try:
+                # Process PDF with structure-aware chunking
+                chunked_docs = process_pdf_structure_aware(
+                    file_path,
+                    max_chunk_size=800,
+                    min_chunk_size=80
+                )
+                structure_aware_documents.extend(chunked_docs)
+                pdf_count += 1
+                pdf_chunk_count += len(chunked_docs)
+            except Exception as e:
+                # Fall back to original document
+                structure_aware_documents.append(doc)
+        else:
+            # Non-PDF documents remain unchanged
+            structure_aware_documents.append(doc)
+    
+    # Replace documents with the processed ones
+    documents = structure_aware_documents
+    
+    # ========== END NEW CODE ==========
 
     with open(documents_path, "wb") as f:
         pickle.dump(documents, f)
