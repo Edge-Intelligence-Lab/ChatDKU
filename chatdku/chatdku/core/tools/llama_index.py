@@ -2,23 +2,12 @@ import logging
 
 from opentelemetry.trace import get_current_span
 
-from chatdku.core.tools.retriever.base_retriever import NodeWithScore
 from chatdku.core.tools.retriever.keyword_retriever import KeywordRetriever
 from chatdku.core.tools.retriever.reranker import rerank
 from chatdku.core.tools.retriever.vector_retriever import VectorRetriever
 from chatdku.core.tools.utils import QueryTimeoutError, timeout
 
 logger = logging.getLogger(__name__)
-
-
-def nodes_to_dicts(nodes: list[NodeWithScore]) -> list:
-    result = []
-    for node in nodes:
-        if isinstance(node, NodeWithScore):
-            result.append([{"text": node.text, "metadata": node.metadata}])
-        if isinstance(node, str):
-            result.append(node)
-    return result
 
 
 def VectorRetrieverOuter(
@@ -93,8 +82,7 @@ def VectorRetrieverOuter(
         except Exception as e:
             raise Exception(f"Vector retrieval failed: {e}")
 
-        overall_dicts = nodes_to_dicts(vector_result)
-        return overall_dicts
+        return vector_result
 
     return VectorQuery
 
@@ -174,7 +162,6 @@ def KeywordRetrieverOuter(
         except Exception as e:
             raise Exception(f"Keyword retrieval failed: {e}")
 
-        overall_dict = nodes_to_dicts(keyword_result)
-        return overall_dict
+        return keyword_result
 
     return KeywordQuery

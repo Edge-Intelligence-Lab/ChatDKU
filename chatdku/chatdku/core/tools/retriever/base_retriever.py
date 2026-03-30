@@ -24,6 +24,16 @@ class NodeWithScore:
     metadata: dict
     score: float
 
+    def __str__(self):
+        dict = {
+            "node_id": self.node_id,
+            "text": self.text,
+            "metadata": self.metadata,
+            "score": self.score,
+        }
+
+        return dict.__str__()
+
 
 class BaseDocRetriever:
     def __init__(
@@ -150,3 +160,13 @@ def _flatten(
             if isinstance(value, Enum):
                 value = value.value
             yield key, value
+
+
+if __name__ == "__main__":
+    test_node = NodeWithScore(
+        node_id="test_id",
+        text="test_text",
+        metadata={"test_metadata": "test_value"},
+        score=0.5,
+    )
+    print(test_node)

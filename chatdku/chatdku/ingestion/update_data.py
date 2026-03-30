@@ -6,6 +6,8 @@ import os
 import uuid
 from pathlib import Path
 from typing import Dict, List, Optional
+import hashlib
+
 
 import pandas as pd
 from llama_index.core import SimpleDirectoryReader
@@ -14,6 +16,7 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import BaseNode, Document, TextNode
 from llama_index.readers.file import UnstructuredReader
+from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
 from llama_parse import LlamaParse
 from openpyxl import load_workbook
 from improved_html_cleaner import HtmlCleaner
@@ -21,10 +24,59 @@ from improved_html_cleaner import HtmlCleaner
 from chatdku.config import config
 
 
+def _safe_lower(x):
+    return x.strip().lower() if isinstance(x, str) else None
+
+
 def _import_data(nodes_path: str) -> list:
     with open(nodes_path, "r") as f:
         datas = json.load(f)
     return [TextNode.from_dict(data) for data in datas]
+
+
+def _ensure_permission_metadata(
+    metadata: dict,
+    *,
+    user_id: str,
+    access_type: str | None = None,
+    role: str | None = None,
+    organization: str | None = None,
+) -> dict:
+    """Ensure required permission fields exist in node metadata.
+
+    This function sets minimal defaults for ordinary (non-event) nodes.
+
+    Required:
+      - access_type: defaults to 'student'
+    Optional:
+      - role: defaults to 'student' for access_type=='student'
+      - organization: None
+      - user_id: already present in current metadata, but we keep it consistent
+    """
+    md = dict(metadata or {})
+    if access_type:
+        md["access_type"] = access_type.strip().lower()
+    else:
+        md["access_type"] = md.get("access_type", "student")
+
+    if md["access_type"] == "student":
+        md["role"] = _safe_lower(role) or md.get("role") or "student"
+
+    elif md["access_type"] == "office":
+        org = _safe_lower(organization) or md.get("organization")
+        if not org:
+            raise ValueError("organization is required when access_type == 'office'")
+        md["organization"] = org
+
+    elif md["access_type"] == "private":
+        md["user_id"] = _safe_lower(user_id)
+
+    # fallback
+    md.setdefault("role", "student")
+    md.setdefault("organization", None)
+    md.setdefault("user_id", _safe_lower(user_id))
+
+    return md
 
 
 def load_event_files():
@@ -63,8 +115,9 @@ def custom_metadata(user_id: str):
             "file_path": file_path,
             "page_number": "Not given.",
             "file_name": os.path.basename(file_path),
-            "file_type": mimetypes.guess_type(file_path)[0]
-            or "application/octet-stream",
+            "file_type": (
+                mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            ),
             "file_size": stat.st_size,
             "creation_date": datetime.datetime.fromtimestamp(
                 stat.st_ctime, datetime.UTC
@@ -204,13 +257,13 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
 
     new_list = []
     for f in log["file_paths"]:
-        ### filtering event out
+        # filtering event out
         if f.startswith(config.event_path):
             continue
         if f not in removed_files:
             new_list.append(f)
 
-    ### filtering event out
+    # filtering event out
     for f in added_files:
         if not f.startswith(config.event_path):
             new_list.append(f)
@@ -286,12 +339,14 @@ def clean_expired_nodes(nodes):
     return kept
 
 
-def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
+def _read_pdf(
+    file_paths: list[str], user_id, access_type, role, organization
+) -> list[TextNode]:
     total_nodes = []
 
     parser = SentenceSplitter(
-        chunk_size=1024,
-        chunk_overlap=20,
+        chunk_size=config.chunk_size,
+        chunk_overlap=config.chunk_overlap,
     )
     pdf_reader = LlamaParse(
         api_key=config.llamaparse_api,
@@ -306,14 +361,23 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
         pdf_loader = pdf_reader.parse(file_path)
 
         for i, page in enumerate(pdf_loader.pages):
-            metadata = custom_metadata(user_id)(file_path)
+            base_metadata = custom_metadata(user_id)(file_path)
             # Adding page number
-            metadata["page_number"] = page.page
+            base_metadata["page_number"] = page.page
+
+            # Permission defaults for ordinary nodes
+            base_metadata = _ensure_permission_metadata(
+                base_metadata,
+                user_id=user_id,
+                access_type=access_type,
+                role=role,
+                organization=organization,
+            )
 
             chunks = parser.split_text(page.md)
             for chunk in chunks:
                 chunk_id = str(uuid.uuid4())
-
+                metadata = dict(base_metadata)
                 metadata["chunk_id"] = chunk_id
 
                 node = TextNode(
@@ -323,17 +387,24 @@ def _read_pdf(file_paths: list[str], user_id) -> list[TextNode]:
                 )
                 if node.text == "":
                     continue
+                doc_id = os.path.abspath(file_path)
+                node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+                    node_id=hashlib.md5(doc_id.encode()).hexdigest()
+                )
+
                 total_nodes.append(node)
         print(f"Finished loading {file_path}.")
 
     return total_nodes
 
 
-def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
+def _read_non_pdf(
+    files: list, user_id, access_type, role, organization
+) -> list[BaseNode]:
+
     # Allow callers to pass an empty list (e.g., event folder is empty)
     if not files:
         return []
-
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
     html_cleaner = HtmlCleaner()
@@ -366,8 +437,32 @@ def _read_non_pdf(files: list, user_id) -> list[BaseNode]:
             continue
         node.node_id = str(uuid.uuid4())
         node.metadata["chunk_id"] = node.node_id
-        if node.metadata["file_name"].endswith(".pptx"):
-            node.metadata["extraction_errors"] = str(node.metadata["extraction_errors"])
+
+        # Permission defaults for ordinary nodes
+        node.metadata = _ensure_permission_metadata(
+            node.metadata,
+            user_id=user_id,
+            access_type=access_type,
+            role=role,
+            organization=organization,
+        )
+
+        file_path = (
+            node.metadata.get("file_path")
+            or node.metadata.get("source")
+            or node.metadata.get("file_name")
+        )
+        if not file_path:
+            raise ValueError("Cannot determine file_path for node")
+        doc_id = os.path.abspath(file_path) if file_path else "unknown"
+        node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+            node_id=hashlib.md5(doc_id.encode()).hexdigest()
+        )
+
+        if str(node.metadata.get("file_name", "")).endswith(".pptx"):
+            node.metadata["extraction_errors"] = str(
+                node.metadata.get("extraction_errors")
+            )
             node.metadata["extraction_warnings"] = str(
                 node.metadata["extraction_warnings"]
             )
@@ -387,7 +482,13 @@ def update_events(user_id: str) -> list:
     if not event_files:
         return []
 
-    event_nodes = _read_non_pdf(event_files, user_id)
+    event_nodes = _read_non_pdf(
+        event_files,
+        user_id,
+        access_type="student",
+        role="student",
+        organization=None,
+    )
 
     now = datetime.datetime.now(datetime.timezone.utc)
     expire = now + datetime.timedelta(days=7)
@@ -399,7 +500,14 @@ def update_events(user_id: str) -> list:
     return event_nodes
 
 
-def update(data_dir: str, user_id: str, verbose: bool = False):
+def update(
+    data_dir: str,
+    user_id: str,
+    access_type: str,
+    role: str,
+    organization: str = None,
+    verbose: bool = False,
+):
     # detect add/remove only in NON-EVENT dir
     nodes_path = os.path.join(data_dir, "nodes.json")
 
@@ -424,10 +532,14 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
         if non_pdf_files:
-            new_nodes.extend(_read_non_pdf(non_pdf_files, user_id))
+            new_nodes.extend(
+                _read_non_pdf(non_pdf_files, user_id, access_type, role, organization)
+            )
 
         if pdf_files:
-            new_nodes.extend(_read_pdf(pdf_files, user_id))
+            new_nodes.extend(
+                _read_pdf(pdf_files, user_id, access_type, role, organization)
+            )
 
         print("Total added nodes:", len(new_nodes))
 
@@ -455,13 +567,17 @@ def update(data_dir: str, user_id: str, verbose: bool = False):
     print("Document load done!")
 
 
-def main(data_dir, user_id, verbose=False):
+def main(data_dir, user_id, access_type, role, organization=None, verbose=False):
     if data_dir is None:
         data_dir = config.data_dir
     if user_id is None:
         user_id = "Chat_DKU"
+    if access_type is None:
+        access_type = "student"
+    if role is None:
+        role = "student"
 
-    update(data_dir, user_id, verbose)
+    update(data_dir, user_id, access_type, role, organization, verbose=verbose)
 
 
 if __name__ == "__main__":
@@ -479,8 +595,33 @@ if __name__ == "__main__":
         help="ID of the user. Defaults to Chat_DKU if none given.",
     )
     parser.add_argument(
+        "--access_type",
+        type=str,
+        default="student",
+        help="Access type for the nodes. Including 'public', 'student', 'office', 'private'. Defaults to 'student'.",
+    )
+    parser.add_argument(
+        "--role",
+        type=str,
+        default="student",
+        help="Role for the nodes. Defaults to 'student'.",
+    )
+    parser.add_argument(
+        "--organization",
+        type=str,
+        default=None,
+        help="Organization for the nodes. Required when access_type == 'office'.",
+    )
+    parser.add_argument(
         "-v", type=bool, default=True, help="Whether to print extra information."
     )
     args = parser.parse_args()
 
-    main(args.data_dir, args.user_id, args.v)
+    main(
+        args.data_dir,
+        args.user_id,
+        args.access_type,
+        args.role,
+        args.organization,
+        args.v,
+    )
