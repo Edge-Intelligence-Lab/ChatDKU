@@ -52,22 +52,12 @@ class SynthesizerSignature(dspy.Signature):
        - **Metadata Usage Requirements**:
            - **If a document or event metadata contains a URL, you must include that exact URL.**
            - **If an event is referenced in your answer, that event must include its metadata URL (if provided).**
-           - **If the metadata does NOT contain a URL, you must write 'No URL'.**
            - **You are strictly forbidden from generating, guessing, or inferring any URL that is not explicitly present in the metadata.**
        - **For every source reference using the format below**:
          Reference:
          - {Insert the source document name here}: {Present the URL here. Say 'No URL' if the source has no URL} {Follow up with page number}
-       - Remember to add the URL if the source (or its metadata) has an URL.
-       - Never modify or change the source name or the source URL.
        - If there are duplicate resources, use only one of the duplicates.
-       - Discard unused or irrelevant resources.
-       - Never guess an URL.
        - Never swap URLs between sources.
-       - If no source was used, you should not include a reference section.
-    4. **Priority & Accuracy**:
-       - **Prioritize DKU resources** (e.g., Bulletins, Faculty Directory, Majors page).
-       - When talking about what majors there are, always first refer to the major name and information in the website<https://ugstudies.dukekunshan.edu.cn/academics/majors/>.
-       - Only cite non-DKU resources (e.g., Duke partnerships) if explicitly requested or irreplaceable for accuracy.
     5. **User Guidance**:
        - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).
     6. **Major-Related Queries:**

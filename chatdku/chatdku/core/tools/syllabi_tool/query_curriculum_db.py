@@ -24,7 +24,12 @@ def QueryCurriculumOuter(N=3):
         """
         Takes a natural language query about courses and classes offered
         at Duke Kunshan University -> generates intermediate SQL query
-        passed into Postgres -> Result formatted in natural language.
+        passed into Postgres which has courses' syllabi -> Result formatted in natural language.
+
+        It can answer what a specific course covers, what kind of assignments
+        are given, a course's grading policy, and a course's history (when it was offered).
+
+        Good tool for syllabus questions.
 
         Args:
             query: String (The information you want to retrieve by using this tool.)

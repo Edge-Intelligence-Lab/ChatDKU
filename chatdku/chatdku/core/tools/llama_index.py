@@ -20,6 +20,7 @@ def VectorRetrieverOuter(
 ):
     """
     Retrieve reranked relevant documents using semantic search.
+    Good tool for general knowledge search and retrieval.
 
     Args:
         user_id: If set anything other than Chat_DKU, means the net_id of the user
@@ -97,6 +98,7 @@ def KeywordRetrieverOuter(
 ):
     """
     Retrieve relevant documents using BM25 keyword matching.
+    Good tool for exact term matching from general knowledge.
 
     Args:
         user_id: If set anything other than Chat_DKU, means the net_id of the user
