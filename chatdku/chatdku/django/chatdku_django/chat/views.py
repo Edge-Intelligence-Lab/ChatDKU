@@ -32,7 +32,7 @@ from rest_framework.views import APIView
 from chatdku.core.agent import Agent
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
-
+from chat.tools import get_tools
 
 logger = logging.getLogger(__name__)
 
@@ -139,25 +139,7 @@ class ChatView(APIView):
         if not messages:
             return Response({"error": "No message provided"}, status=400)
 
-        tools = [
-            KeywordRetrieverOuter(
-                retriever_top_k=10,
-                use_reranker=False,
-                reranker_top_n=5,
-                user_id=user_id,
-                search_mode=search_mode,
-                files=docs,
-            ),
-            VectorRetrieverOuter(
-                retriever_top_k=10,
-                use_reranker=False,
-                reranker_top_n=5,
-                user_id=user_id,
-                search_mode=search_mode,
-                files=docs,
-            ),
-            QueryCurriculumOuter(),
-        ]
+        tools = get_tools(user_id=user_id,search_mode=search_mode,docs=docs)
 
         try:
             message_content = messages[-1]["content"]
