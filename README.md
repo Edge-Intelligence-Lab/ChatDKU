@@ -14,10 +14,8 @@
   - `backend.whisper_model`: Whisper API using Flask
 - [Django Backend](./chatdku/django) : Django-based backend and apps
 ## Setup
-
-## Usage
-
-Install Python 3.9 or above; install Python package virtualenv.
+1. SSH into our lab-server-3.
+2. Install Python package virtualenv.
 
 Create and activate the virtual environment:
 ```bash
@@ -26,30 +24,16 @@ source .venv/bin/activate # For Unix-like operating systems
 .venv\bin\activate.bat    # For Windows
 ```
 
-_All the following commands are assumed to be executed in the current directory (`project_root/chatdku`)._
+_All the following commands are assumed to be executed in the current directory (`project_root`)._
 
 Do an editable install with pip to get the dependencies.
 ```bash
 pip install -e .
 ```
-
-For the sake of easy monitoring and long-term running, the commands will all be executed with "nohup".
-
-### Frontend
-
-First, we need to turn this folder into a Python server so that users can see the index.html file when they access the corresponding port.
+3. Start the agent and talk with it:
 ```bash
-nohup python -u -m http.server 9014 -d chatdku/frontend > ./logs/python_server_logs.txt &
-disown -h
+python3 chatdku/core/agent.py
 ```
-
-### Main Backend
-
-Set the Phoenix authentication token in the environment variable:
-```bash
-export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6NCJ9.63j_N4wrKUZL4ZumPhqyM2svLifie-LwqFDqao7ZJrQ'
-```
-_This is considered [unsecure](https://github.com/Glitterccc/ChatDKU/issues/15), but only a temporary convenience during development._
 
 #### Backend Documentation
 Check [`chatdku.django/`](chatdku/django) for more details
@@ -102,13 +86,13 @@ To specify the embedding model and the LLM, use `-E` and `-L` respectively.
 
 Run
 ```bash
-./load_and_index.py
+python3 chatdku/ingestion/update-data.py --data_dir [specify-data-directory]
+python3 chatdku/ingestion/load_chroma.py --nodes_path [specified-data-directory]
+python3 chatdku/ingestion/load_redist.py --nodes_path [specified-data-directory]
 ```
 and the vector-indexed nodes (chunked and metadata-attached texts) would be stored in
 the Chroma DB collection `dku_html_pdf` of the vector store, and the nodes would also
 be be stored in the specified document store.
-
-Use `-d` to specify the directory to load data from.
 
 ### Perform RAG Queries
 
@@ -128,30 +112,6 @@ each stage of the RAG pipeline is run and their respective inputs/outputs. __Not
 Port collision may happen if you run multiple instances of `query.py`, which in turn
 starts multiple instances of Phoenix. To avoid this issue, set a different port for
 Phoenix by changing the environment variable `PHOENIX_PORT`.__
-
-## About
-
-This is a minimal working RAG pipeline using [LlamaIndex](https://www.llamaindex.ai/)
-and Llama 3. It provides the functionality of loading and indexing the
-original data, storing them in a `Chroma DB` vector database, and querying the
-relevant information in the database to synthesize the response.
-
-The [unstructured](https://github.com/Unstructured-IO/unstructured) data preprocessing
-library is used for reading data from HTML (including .htm) and PDF files. Only these
-two file formats are considered as the remaining data are just a few images that do
-not provide much information. (I believe there might also be some DOC files on DKU
-website, but the crawler might encountered some network issues at the time of
-crawling.) Using `unstructured` is preferred over the default document reader as:
-- It parses the HTML files to extract their text instead of adding the entire
-  file.
-- It provides advanced processing functionalities for PDF files such as OCR,
-      though I did not use these functions yet.
-
-The `UnstructuredReader` provided by LlamaIndex has a issue with HTML files
-containing large amounts of JavaScript, which would have their file types misidentified
-by `unstructured.partition.auto.partion` as code and treated as plain text.
-Therefore, `unstructured.file_utils.filetype.detect_filetype` has been overridden
-with a custom function to mitigate this issue.
 
 
 - `scraper`: The recursive web scraper Python package mostly for scraping the DKU website.
