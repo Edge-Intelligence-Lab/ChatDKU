@@ -6,21 +6,20 @@ nest_asyncio.apply()
 
 import pickle
 import argparse
-from llama_index.core import SimpleDirectoryReader
+import json
 from llama_index.core.readers.base import BaseReader
 from llama_index.readers.file import UnstructuredReader
-from llama_parse import LlamaParse
 from chatdku.config import config
 from markdownify import markdownify as md
 from tqdm import tqdm
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from llama_index.core.schema import Document
+from llama_index.core.schema import Document, TextNode
 import pandas as pd
 from openpyxl import load_workbook
 import hashlib
 
-# Import structure-aware PDF chunker
+# Import structure-aware PDF chunker (local parsing, replaces LlamaParse)
 from structure_chunker import process_pdf as process_pdf_structure_aware
 
 
@@ -145,143 +144,84 @@ def update_data(data_dir):
 
     reader = UnstructuredReader()
     xlsx_reader = XlsxReader()
-    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
-    pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key,
-        result_type="markdown",
-        verbose=True,
-    )
     
-    # Use SimpleDirectoryReader to load all documents
-    documents = SimpleDirectoryReader(
-        data_dir,
-        recursive=True,
-        required_exts=[".html", ".htm", ".pdf", ".csv", ".jpg", ".xlsx"],
-        file_extractor={
-            ".htm": reader,
-            ".html": reader,
-            ".pdf": pdf_parser,
-            ".csv": reader,
-            ".jpg": reader,
-            ".xlsx": xlsx_reader,
-
-        },
-    ).load_data()
-
-    # Process HTML files to convert to markdown
-    for doc in documents:
-        if doc.metadata["file_type"] == "text/html":
-            with open(doc.metadata["file_path"], "r") as f:
-                html = f.read()
+    all_documents = []
+    
+    # Walk through directory and process files by type
+    for root, dirs, files in os.walk(data_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_ext = os.path.splitext(file)[1].lower()
+            
             try:
-                doc.text = md(html)
-            except:
-                print(f"fail trans to md:{doc.metadata['file_path']}")
-
-    # ========== NEW: Process PDF documents with structure-aware chunking ==========
-    # After loading all documents, replace PDF documents with structure-aware chunks
+                # PDF files: use structure_chunker (local parsing)
+                if file_ext == '.pdf':
+                    chunked_docs = process_pdf_structure_aware(
+                        file_path,
+                        max_chunk_size=800,
+                        min_chunk_size=80
+                    )
+                    all_documents.extend(chunked_docs)
+                
+                # HTML/HTM files
+                elif file_ext in ['.html', '.htm']:
+                    docs = reader.load_data(file_path)
+                    for doc in docs:
+                        # 处理文档
+                        if doc.metadata.get("file_type") == "text/html":
+                            with open(file_path, "r") as f:
+                                html = f.read()
+                            try:
+                                doc.text = md(html)
+                            except:
+                                pass
+                        all_documents.append(doc)
+                
+                # XLSX files
+                elif file_ext == '.xlsx':
+                    docs = xlsx_reader.load_data(Path(file_path))
+                    all_documents.extend(docs)
+                
+                # CSV files
+                elif file_ext == '.csv':
+                    docs = reader.load_data(file_path)
+                    all_documents.extend(docs)
+                
+                # Image files
+                elif file_ext in ['.jpg', '.jpeg', '.png']:
+                    docs = reader.load_data(file_path)
+                    all_documents.extend(docs)
+                
+                # Other supported file types
+                elif file_ext in ['.txt', '.docx', '.doc']:
+                    docs = reader.load_data(file_path)
+                    all_documents.extend(docs)
+                    
+            except Exception:
+                continue
     
-    structure_aware_documents = []
-    pdf_count = 0
-    pdf_chunk_count = 0
+    # Convert Document to TextNode for compatibility with load_redis/load_chroma/load_postgres
+    nodes = []
+    for doc in all_documents:
+        node = TextNode(
+            text=doc.text,
+            metadata=doc.metadata,
+            id_=doc.id_ if hasattr(doc, 'id_') else None
+        )
+        nodes.append(node)
     
-    for doc in documents:
-        # Check if this is a PDF document
-        file_path = doc.metadata.get("file_path", "")
-        file_type = doc.metadata.get("file_type", "")
-        
-        if file_path.lower().endswith('.pdf') or file_type == "application/pdf":
-            try:
-                # Process PDF with structure-aware chunking
-                chunked_docs = process_pdf_structure_aware(
-                    file_path,
-                    max_chunk_size=800,
-                    min_chunk_size=80
-                )
-                structure_aware_documents.extend(chunked_docs)
-                pdf_count += 1
-                pdf_chunk_count += len(chunked_docs)
-            except Exception as e:
-                # Fall back to original document
-                structure_aware_documents.append(doc)
-        else:
-            # Non-PDF documents remain unchanged
-            structure_aware_documents.append(doc)
+    # Save as nodes.json (used by downstream loaders)
+    nodes_path = config.nodes_path if hasattr(config, 'nodes_path') else os.path.join(data_dir, "nodes.json")
+    os.makedirs(os.path.dirname(nodes_path), exist_ok=True)
     
-    # Replace documents with the processed ones
-    documents = structure_aware_documents
+    with open(nodes_path, 'w') as f:
+        json.dump([node.to_dict() for node in nodes], f, indent=2, default=str)
     
-    # ========== END NEW CODE ==========
-
+    # Also save as documents.pkl for backward compatibility
     with open(documents_path, "wb") as f:
-        pickle.dump(documents, f)
-    print(f"Documents stored in {documents_path}")
-    print("Length of documents:", len(documents))
-    return documents
-
-# def update_sub_data():
-    reader = UnstructuredReader()
-
-    documents_path = "sub_documents.pkl"  # 这里可以根据需要修改路径
-
-    llama_parse_api_key = "llx-ruUEWvib0ZlDnk75bwLWfvNh1x117Kl2Z6ecpPL0tLLnJMdK"
-    pdf_parser = LlamaParse(
-        api_key=llama_parse_api_key,
-        result_type="markdown",
-        verbose=True,
-    )
-
-    with open('/home/Glitterccc/ChatDKU/RAG/sub_data_list.pkl', 'rb') as f:
-        file_paths = pickle.load(f)
-
-    documents = []
-
-    num = 0
-    for file_path in tqdm(file_paths):
-        try:
-            # 检查文件扩展名并处理
-            num += 1
-            if file_path.endswith((".html", ".htm", ".pdf", ".csv",".jpg",".jpeg",".png",".docx",".doc")):
-                if file_path.endswith((".htm", ".html")):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".pdf"):
-                    doc = pdf_parser.parse(file_path)
-                elif file_path.endswith(".csv"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".jpg"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".jpeg"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith(".png"):
-                    doc = reader.load_data(file_path)
-                elif file_path.endswith((".docx",".doc")):
-                    doc = reader.load_data(file_path)
-                if len(doc) != 1:
-                    print('-------Wrong----')
-                    print(doc)
-                doc = doc[0]
-                # 处理文档
-                if doc.metadata["filetype"] == "text/html":
-                    with open(file_path, "r") as f:
-                        html = f.read()
-                    try:
-                        doc.text = md(html)
-                    except Exception as e:
-                        print(f"Failed to convert to markdown: {file_path}, Error: {e}")
-
-                documents.append(doc)
-        except:
-            continue
-
-        with open(documents_path, "wb") as f:
-            pickle.dump(documents, f)
-
-    with open(documents_path, "wb") as f:
-        pickle.dump(documents, f)
-
-    print(f"Documents stored in {documents_path}")
-    print("Length of documents:", len(documents))
-    return documents
+        pickle.dump(all_documents, f)
+    
+    return all_documents
 
 
 def main(data_dir=None):
