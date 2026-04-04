@@ -17,11 +17,13 @@ from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import BaseNode, Document, TextNode
 from llama_index.readers.file import UnstructuredReader
 from llama_index.core.schema import NodeRelationship, RelatedNodeInfo
-from llama_parse import LlamaParse
 from openpyxl import load_workbook
 from improved_html_cleaner import HtmlCleaner
 
 from chatdku.config import config
+
+# Import structure-aware PDF chunker (local parsing, replaces LlamaParse)
+from structure_chunker import process_pdf as process_pdf_structure_aware
 
 
 def _safe_lower(x):
@@ -194,8 +196,6 @@ class XlsxReader(BaseReader):
             else:
                 columns = [c if c else "Unnamed" for c in data[0]]
                 df = pd.DataFrame(data[1:], columns=columns)
-                # columns = next(data)[0:]  # 获取第一行作为列名
-                # df = pd.DataFrame(data, columns=columns)
 
             # 处理 DataFrame 中的回车符
             df = df.map(
@@ -218,11 +218,6 @@ class XlsxReader(BaseReader):
                 )
                 structured_rows.append(row_text)
 
-            # 将 DataFrame 转换为 Markdown 格式
-            # markdown_output = df.to_markdown(index=False)
-            # markdown_menu += sheet_name + "菜单：\n"
-            # markdown_menu += markdown_output
-            # markdown_menu += "\n\n\n\n"
             markdown_menu += (
                 f"Work Sheet {sheet_name}:\n" + "\n".join(structured_rows) + "\n\n"
             )
@@ -342,30 +337,43 @@ def clean_expired_nodes(nodes):
 def _read_pdf(
     file_paths: list[str], user_id, access_type, role, organization
 ) -> list[TextNode]:
+    """
+    Read PDF files using local structure-aware chunker (pdfplumber).
+    Replaces the previous LlamaParse-based implementation.
+    
+    Args:
+        file_paths: List of PDF file paths to process
+        user_id: User ID for metadata
+        access_type: Access type (public/student/office/private)
+        role: User role
+        organization: Organization name (required for office access)
+    
+    Returns:
+        List of TextNode objects with structure-aware chunks
+    """
     total_nodes = []
-
-    parser = SentenceSplitter(
-        chunk_size=config.chunk_size,
-        chunk_overlap=config.chunk_overlap,
-    )
-    pdf_reader = LlamaParse(
-        api_key=config.llamaparse_api,
-        result_type="json",
-        verbose=True,
-        disable_image_extraction=True,
-    )
+    
     for file_path in file_paths:
-        print(f"Reading: {file_path}")  # Debugging output
-        if not os.path.exists(file_path):
-            print(f"Error: The directory '{file_path}' does not exist.")
-        pdf_loader = pdf_reader.parse(file_path)
-
-        for i, page in enumerate(pdf_loader.pages):
+        print(f"Reading PDF with structure_chunker: {file_path}")
+        
+        # Use local structure-aware chunker instead of LlamaParse
+        chunked_docs = process_pdf_structure_aware(
+            file_path,
+            max_chunk_size=config.chunk_size,
+            min_chunk_size=80
+        )
+        
+        for doc in chunked_docs:
+            # Generate unique ID for the chunk
+            chunk_id = str(uuid.uuid4())
+            
+            # Build metadata with permission fields
             base_metadata = custom_metadata(user_id)(file_path)
-            # Adding page number
-            base_metadata["page_number"] = page.page
-
-            # Permission defaults for ordinary nodes
+            base_metadata["page_number"] = doc.metadata.get("page_number", "Not given")
+            base_metadata["chunk_id"] = chunk_id
+            base_metadata["chunking_method"] = doc.metadata.get("chunking_method", "structure_aware")
+            
+            # Apply permission metadata
             base_metadata = _ensure_permission_metadata(
                 base_metadata,
                 user_id=user_id,
@@ -373,34 +381,46 @@ def _read_pdf(
                 role=role,
                 organization=organization,
             )
-
-            chunks = parser.split_text(page.md)
-            for chunk in chunks:
-                chunk_id = str(uuid.uuid4())
-                metadata = dict(base_metadata)
-                metadata["chunk_id"] = chunk_id
-
-                node = TextNode(
-                    text=chunk,
-                    id_=chunk_id,
-                    metadata=metadata,
-                )
-                if node.text == "":
-                    continue
-                doc_id = os.path.abspath(file_path)
-                node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
-                    node_id=hashlib.md5(doc_id.encode()).hexdigest()
-                )
-
-                total_nodes.append(node)
-        print(f"Finished loading {file_path}.")
-
+            
+            # Create TextNode
+            node = TextNode(
+                text=doc.text,
+                id_=chunk_id,
+                metadata=base_metadata,
+            )
+            
+            if node.text == "":
+                continue
+            
+            # Set source relationship
+            doc_id = os.path.abspath(file_path)
+            node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
+                node_id=hashlib.md5(doc_id.encode()).hexdigest()
+            )
+            
+            total_nodes.append(node)
+        
+        print(f"Finished loading {file_path}. Generated {len(chunked_docs)} chunks.")
+    
     return total_nodes
 
 
 def _read_non_pdf(
     files: list, user_id, access_type, role, organization
 ) -> list[BaseNode]:
+    """
+    Read non-PDF files using UnstructuredReader and other readers.
+    
+    Args:
+        files: List of file paths to process
+        user_id: User ID for metadata
+        access_type: Access type (public/student/office/private)
+        role: User role
+        organization: Organization name (required for office access)
+    
+    Returns:
+        List of BaseNode objects
+    """
 
     # Allow callers to pass an empty list (e.g., event folder is empty)
     if not files:
@@ -508,6 +528,25 @@ def update(
     organization: str = None,
     verbose: bool = False,
 ):
+    """
+    Main update function that processes all documents and generates nodes.
+    
+    This function:
+    1. Detects added/removed files since last run
+    2. Processes new PDF files using local structure-aware chunker
+    3. Processes new non-PDF files using UnstructuredReader
+    4. Removes nodes from deleted files
+    5. Generates fresh event nodes
+    6. Saves all nodes to nodes.json
+    
+    Args:
+        data_dir: Root directory containing documents
+        user_id: User ID for metadata
+        access_type: Access type (public/student/office/private)
+        role: User role
+        organization: Organization name (required for office access)
+        verbose: Whether to print detailed information
+    """
     # detect add/remove only in NON-EVENT dir
     nodes_path = os.path.join(data_dir, "nodes.json")
 
@@ -568,6 +607,17 @@ def update(
 
 
 def main(data_dir, user_id, access_type, role, organization=None, verbose=False):
+    """
+    Main entry point for the document processing script.
+    
+    Args:
+        data_dir: Directory containing documents to process
+        user_id: User ID for metadata
+        access_type: Access type (public/student/office/private)
+        role: User role
+        organization: Organization name (required for office access)
+        verbose: Whether to print detailed information
+    """
     if data_dir is None:
         data_dir = config.data_dir
     if user_id is None:
