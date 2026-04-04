@@ -434,15 +434,6 @@ This project is open-sourced under the MIT License - see [LICENSE](./LICENSE) fi
 
 ---
 
-## 👥 Team
-
-- **Mingxi Li** - Project Lead
-- **Yuxiang Lin** - Core Developer
-- **Cody Qin** - Core Developer
-- **Ningyuan Yang** - Core Developer
-
----
-
 ## 🙏 Acknowledgments
 
 Thanks to the following open-source projects:
@@ -455,7 +446,7 @@ Thanks to the following open-source projects:
 
 ## 📮 Contact
 
-- 📧 Email: theta.lin@yandex.com
+- 📧 Email: te100@duke.edu
 - 🐛 Issues: [GitHub Issues](https://github.com/Edge-Intelligence-Lab/ChatDKU/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/Edge-Intelligence-Lab/ChatDKU/discussions)
 
