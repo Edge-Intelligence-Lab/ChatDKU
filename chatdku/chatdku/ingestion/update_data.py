@@ -173,8 +173,9 @@ def update_data(data_dir):
                                 html = f.read()
                             try:
                                 doc.text = md(html)
-                            except:
-                                pass
+                            except Exception as e:
+                                # Fallback: keep original text if markdown conversion fails
+                                print(f"Warning: failed to convert HTML to markdown for {file_path}: {e}")
                         all_documents.append(doc)
                 
                 # XLSX files
