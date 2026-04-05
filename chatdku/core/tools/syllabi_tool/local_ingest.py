@@ -2,7 +2,7 @@
 """
 Local PDF/DOCX Ingestor
 A command line utility that extracts structured data from PDFs and DOCX files
-using SGLang hosted Qwen3 model and stores results in PostgreSQL database.
+using large language model and stores results in PostgreSQL database.
 """
 
 import argparse
@@ -60,7 +60,7 @@ class DocumentIngestor:
         self.args = args
         self.setup_logging()
         self.setup_database_connection()
-        self.setup_sglang_client()
+        self.setup_llm()
         self.load_schema()
         self.logger.info("Creating cursor.")
         self.cursor = self.conn.cursor()
@@ -117,9 +117,7 @@ class DocumentIngestor:
             self.logger.error(f"Failed to connect to database: {e}")
             sys.exit(1)
 
-    def setup_sglang_client(self):
-        """Setup SGLang client for Qwen3 model"""
-        # SGLang serves models via OpenAI-compatible API
+    def setup_llm(self):
         lm = dspy.LM(
             model="openai/" + config.backup_llm,
             api_base=config.backup_llm_url,
@@ -129,7 +127,7 @@ class DocumentIngestor:
             temperature=config.llm_temperature,
         )
         dspy.configure(lm=lm)
-        self.logger.info(f"SGLang client configured for: {self.args.sglang_url}")
+        self.logger.info(f"LLM client configured for: {self.args.llm_url}")
 
     def load_schema(self):
         """Load and validate JSON schema"""
@@ -236,7 +234,7 @@ class DocumentIngestor:
     def extract_structured_data(
         self, content: str, file_name: str
     ) -> Optional[Dict[str, Any]]:
-        """Use SGLang + Qwen3 to extract structured data from content"""
+        """Use LLM to extract structured data from content"""
 
         # Create prompt for structured extraction based on schema
         schema_description = json.dumps(self.schema, indent=2)
@@ -339,7 +337,6 @@ class DocumentIngestor:
             self.logger.error(f"No content extracted from {file_path.name}")
             return
 
-        # Extract structured data using SGLang + Qwen3
         structured_data = self.extract_structured_data(content, file_path.name)
 
         if structured_data:
@@ -429,7 +426,7 @@ def create_default_schema():
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="Extract structured data from PDFs and DOCX files using SGLang + Qwen3",
+        description="Extract structured data from PDFs and DOCX files.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -478,17 +475,16 @@ Examples:
         help="Database table name for storing extracted data (default: documents)",
     )
 
-    # SGLang configuration
     parser.add_argument(
-        "--sglang-url",
+        "--llm-url",
         default="http://localhost:8000/v1",
-        help="SGLang server URL (default: http://localhost:8000/v1)",
+        help="LLM server URL (default: http://localhost:8000/v1)",
     )
 
     parser.add_argument(
         "--model-name",
         default="Qwen/Qwen3-8B",
-        help="Model name for SGLang (default: Qwen/Qwen3-8B)",
+        help="Model name (default: Qwen/Qwen3-8B)",
     )
 
     # Utility arguments
