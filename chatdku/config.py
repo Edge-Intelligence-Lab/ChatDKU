@@ -107,6 +107,8 @@ class Config:
                 "llamaparse_api": llamaparse_api,
                 # MISC
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
+                # External data
+                "prereq_csv_path": "/datapool/chatdku_external_data/DK_SR_PREREQ_CRSE_CHATDKU.csv",
             }
         )
         # refresh read-only view
