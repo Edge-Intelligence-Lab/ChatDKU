@@ -55,22 +55,22 @@ def PrerequisiteLookupOuter(prereq_csv_path: str):
         prereq_csv_path: Path to the prerequisites CSV file.
     """
 
-    def PrerequisiteLookup(course_name: str) -> str:
+    def PrerequisiteLookup(course_names: list[str]) -> str:
         """
-        Look up the prerequisites for a course at Duke Kunshan University.
+        Look up the prerequisites for one or more courses at Duke Kunshan University.
 
-        Given a course name (e.g. "STATS 202", "COMPSCI 201", "MATH 206"),
-        returns the prerequisite and anti-requisite requirements.
+        Given a list of course names (e.g. ["STATS 202", "COMPSCI 201", "MATH 206"]),
+        returns the prerequisite and anti-requisite requirements for each course.
         Uses the latest available version of the course requirements.
 
         Good tool for answering questions about what courses are needed
-        before taking a specific course.
+        before taking specific courses.
 
         Args:
-            course_name (str): The course to look up, e.g. "STATS 202" or "COMPSCI 101".
+            course_names (list[str]): The courses to look up, e.g. ["STATS 202", "COMPSCI 101"].
 
         Returns:
-            String describing the prerequisites, or a message if none are found.
+            String describing the prerequisites for each course, separated by newlines.
         """
         with span_ctx_start(
             "PrerequisiteLookup", OpenInferenceSpanKindValues.TOOL
@@ -78,14 +78,15 @@ def PrerequisiteLookupOuter(prereq_csv_path: str):
             span.set_attributes(
                 {
                     SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(course_name=course_name)
+                        dict(course_names=course_names)
                     ),
                     SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
 
             try:
-                result = get_prereq(course_name, prereq_csv_path)
+                results = [get_prereq(course, prereq_csv_path) for course in course_names]
+                result = "\n".join(results)
                 span.set_attributes(
                     {
                         SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
@@ -119,4 +120,5 @@ if __name__ == "__main__":
         "chatdku_external_data",
         "DK_SR_PREREQ_CRSE_CHATDKU.csv",
     )
-    print(get_prereq("STATS 202", local_csv))
+    lookup = PrerequisiteLookupOuter(local_csv)
+    print(lookup(["STATS 202", "COMPSCI 201"]))
