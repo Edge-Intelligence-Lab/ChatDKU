@@ -43,7 +43,7 @@ def get_prereq(course: str, data_file_path: str) -> str:
         return f"No prerequisites found for {course_subject} {course_catalog}.\n(Source: DKUHub)"
 
     except FileNotFoundError:
-        raise
+        raise FileNotFoundError('Could not find the prerequisites data file')
     except Exception as e:
         logger.error("ERROR IN PREREQUISITE LOOKUP: %s", e)
         return f"Unknown error in finding prerequisite for {course}."
