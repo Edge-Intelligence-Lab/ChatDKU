@@ -14,8 +14,11 @@ from typing import Dict, List, Optional, Tuple
 
 try:
     import fitz  # PyMuPDF
-except ImportError:
-    raise ImportError("PyMuPDF (fitz) is required. Install with: pip install pymupdf")
+    import pymupdf4llm
+except ImportError as e:
+    raise ImportError(
+        "PyMuPDF and PyMuPDF4LLM are required. Install with: pip install pymupdf pymupdf4llm"
+    ) from e
 
 
 MAJORS_TO_EXTRACT: List[str] = [
@@ -108,7 +111,7 @@ def extract_majors(
             major_pattern = make_major_pattern(major)
             if major_pattern.search(text):
                 current_major = major
-                major_contents[current_major] = {"text": ""}
+                major_contents[current_major] = {"md": ""}
                 break
 
         if current_major:
@@ -116,7 +119,8 @@ def extract_majors(
             # Without this, it was returning the following major's
             # descriptions, which was irrelevant to the current major
             if course_code_pattern.search(text):
-                major_contents[current_major]["text"] += text + "\n"
+                md_text = pymupdf4llm.to_markdown(doc, pages=[page_num])
+                major_contents[current_major]["md"] += md_text
 
     doc.close()
     return major_contents
@@ -141,18 +145,8 @@ def save_major_content(major_name: str, content: Dict, output_dir: Path):
         "",
         "## Requirements",
         "",
+        content.get("md", ""),
     ]
-
-    # Add tables first
-    if content.get("tables"):
-        for table in content["tables"]:
-            md_lines.append(table)
-            md_lines.append("")
-
-    # Add text content
-    if content.get("text"):
-        md_lines.append(content["text"])
-        md_lines.append("")
 
     # Write to file
     output_path.write_text("\n".join(md_lines), encoding="utf-8")
@@ -186,8 +180,8 @@ def main():
         print(f"Error: Start page must be between 1 and {total_pages}")
         return 1
 
-    # Create output directory
-    output_dir = Path(args.output_dir)
+    # Create output directory named after the input file
+    output_dir = Path(args.output_dir) / pdf_path.stem
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Determine majors to extract
@@ -209,7 +203,7 @@ def main():
     saved_count = 0
     print(major_contents.keys())
     for major, content in major_contents.items():
-        if content.get("text"):
+        if content.get("md"):
             save_major_content(major, content, output_dir)
             saved_count += 1
         else:
