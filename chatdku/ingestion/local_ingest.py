@@ -30,7 +30,10 @@ import dspy
 from chatdku.config import config
 
 curriculum_context = (
-    "Course attribute must be a list of the following string values: [two-credit-writing, ah-foundations, chinese-student-requirements, common-core, language, ns-foundations, quantitative-reasoning, ss-foundations, signature-projects]",
+    "Course attribute must be a list of the following string values: "
+    "[two-credit-writing, ah-foundations, chinese-student-requirements, "
+    "common-core, language, ns-foundations, quantitative-reasoning, "
+    "ss-foundations, signature-projects]",
     "Course code must have a space between the label and number.",
     "",
 )
@@ -251,7 +254,8 @@ class DocumentIngestor:
                     desc="A parsed plaintext representation of a Duke Kunshan University syllabus."
                 )
                 json_schema: str = dspy.InputField(
-                    desc="A v7 json-schema description of the structured data required for syllabus information extraction."
+                    desc="A v7 json-schema description of the structured data "
+                    "required for syllabus information extraction."
                 )
                 curriculum_context: str = dspy.InputField(
                     desc="Some context useful for parsing the syllabus."
