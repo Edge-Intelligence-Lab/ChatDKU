@@ -94,6 +94,10 @@ def extract_majors(
 
     end_pattern = re.compile(r"Course Descriptions", re.IGNORECASE)
 
+    another_end_pattern = re.compile(
+        r"Majors (listed in alphabetical order)", re.IGNORECASE
+    )
+
     def make_major_pattern(major: str) -> re.Pattern:
         return re.compile(
             rf"{re.escape(major)}",
@@ -106,11 +110,14 @@ def extract_majors(
 
         if end_pattern.search(text):
             break
+        if another_end_pattern.search(text):
+            break
 
         for major in majors:
             major_pattern = make_major_pattern(major)
             if major_pattern.search(text):
                 current_major = major
+                print(f"Found major: {current_major}")
                 major_contents[current_major] = {"md": ""}
                 break
 
@@ -119,7 +126,7 @@ def extract_majors(
             # Without this, it was returning the following major's
             # descriptions, which was irrelevant to the current major
             if course_code_pattern.search(text):
-                md_text = pymupdf4llm.to_markdown(doc, pages=[page_num])
+                md_text = pymupdf4llm.to_markdown(doc, pages=[page_num], use_ocr=False)
                 major_contents[current_major]["md"] += md_text
 
     doc.close()
