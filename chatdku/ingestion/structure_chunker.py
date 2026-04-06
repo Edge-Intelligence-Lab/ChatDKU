@@ -294,10 +294,9 @@ def structure_aware_chunking(
     
     return filtered_chunks
 
-
 def process_pdf(
     pdf_path: str,
-    max_chunk_size: int = 800,
+    max_chunk_size: int = 512,
     min_chunk_size: int = 80,
 ) -> List[Document]:
     """
@@ -310,24 +309,45 @@ def process_pdf(
     
     Args:
         pdf_path: Path to the PDF file
-        max_chunk_size: Maximum chunk size in characters (default: 800)
+        max_chunk_size: Maximum chunk size in characters (default: 512, matches config)
         min_chunk_size: Minimum chunk size for merging (default: 80)
     
     Returns:
-        List of Document objects, each containing a chunk of text
+        List of Document objects, each containing a chunk of text with metadata
     """
+    # Parse PDF and extract text lines with detected heading levels and page numbers
     items = pdf_to_items(pdf_path)
+    
+    # Perform structure-aware chunking based on heading levels
     chunks = structure_aware_chunking(items, max_chunk_size, min_chunk_size)
-    chunk_texts = [''.join(chunk) for chunk in chunks]
     
     documents = []
-    for text in chunk_texts:
+    for idx, chunk_lines in enumerate(chunks):
+        # Join all lines in this chunk into a single text block
+        text = '\n'.join(chunk_lines)
+        
+        # Collect all unique page numbers where this chunk's lines appear
+        pages = set()
+        for line in chunk_lines:
+            for item in items:
+                if item['text'] == line:
+                    # Convert from 0-indexed (pdfplumber) to 1-indexed (user-facing)
+                    pages.add(item['page'] + 1)
+                    break
+        
+        # Format page numbers as a comma-separated string (required by load_redis)
+        page_number_str = ', '.join(str(p) for p in sorted(pages)) if pages else "Not given"
+        
+        # Create Document with metadata expected by downstream loaders
         doc = Document(
             text=text,
             metadata={
                 "source": pdf_path,
                 "chunking_method": "structure_aware",
                 "is_pdf": True,
+                "page_number": page_number_str,  # Required by load_redis.py
+                "chunk_index": idx,
+                "total_chunks": len(chunks),
             }
         )
         documents.append(doc)
