@@ -7,10 +7,9 @@ Splits the PDF by major and outputs each major's content as a markdown file.
 """
 
 import argparse
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 try:
     import fitz  # PyMuPDF
@@ -158,6 +157,35 @@ def save_major_content(major_name: str, content: Dict, output_dir: Path):
     # Write to file
     output_path.write_text("\n".join(md_lines), encoding="utf-8")
     print(f"Saved: {output_path}")
+
+
+def run_ingest(pdf_path: str, start_page: int, output_dir: str) -> int:
+    pdf_path = Path(pdf_path)
+    if not pdf_path.exists():
+        return 1
+
+    doc = fitz.open(str(pdf_path))
+    total_pages = len(doc)
+    doc.close()
+
+    if start_page < 1 or start_page > total_pages:
+        return 1
+
+    out_dir = Path(output_dir) / pdf_path.stem
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if not MAJORS_TO_EXTRACT:
+        return 0
+
+    major_contents = extract_majors(pdf_path, start_page, MAJORS_TO_EXTRACT)
+
+    saved_count = 0
+    for major, content in major_contents.items():
+        if content.get("md"):
+            save_major_content(major, content, out_dir)
+            saved_count += 1
+
+    return 0
 
 
 def main():
