@@ -35,12 +35,15 @@ def get_prereq(course: str, data_file_path: str) -> str:
             latest = matched.sort_values("_eff_date", ascending=False).iloc[0]
             descr = latest.iloc[13]
             if pd.notna(descr) and descr.strip():
-                return f"For {course_subject} {course_catalog}, {descr.strip()}\n(Source: DKUHub)"
+                return (
+                    f"For {course_subject} {course_catalog}, "
+                    f"{str: descr.strip()}\n(Source: DKUHub)"
+                )
 
         return f"No prerequisites found for {course_subject} {course_catalog}.\n(Source: DKUHub)"
 
     except FileNotFoundError:
-        return "Prerequisites file not found."
+        raise
     except Exception as e:
         logger.error("ERROR IN PREREQUISITE LOOKUP: %s", e)
         return f"Unknown error in finding prerequisite for {course}."
@@ -109,7 +112,7 @@ def PrerequisiteLookupOuter(prereq_csv_path: str):
                     }
                 )
                 span.set_status(Status(StatusCode.ERROR), str(e))
-                raise
+                raise e
 
     return PrerequisiteLookup
 
