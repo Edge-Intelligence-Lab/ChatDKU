@@ -5,17 +5,14 @@ This guide assumes that you know how DSPy works. If you do not, please take a lo
 ***
 
 # Running Agent
-You can run `agent.py` to directly talk with out agent. In the first two arguments it asks `UserID` and `Files`, you can just enter and input blank.
+You can run `agent.py` to directly talk with out agent.
 
 # About Agent
 
-The agent consists of 4 big DSPy sub-modules:
+The agent consists of 3 big DSPy sub-modules:
 - Planner
-- Judge
 - Synthesizer
 - Conversation Memory
-
-In the Planner, we have only 2 tools and doesn't really need the planner, but once we implement more tools we wil turn on the planner. 
 
 As of 2026-03-12, our pipeline is as the following:
 
@@ -34,18 +31,6 @@ All off these modules are using:
 - `span` to telemeterize the inputs and outputs to `Phoenix`, our analytical tool. More info in [this documentation](/Documentations/Phoenix.md). 
 - truncation on inputs to accomodate for too much tokens if the model context window is small
 - DSPy [refinement](https://dspy.ai/api/modules/Refine/) to see if the model gave an answer in correct format (e.g. "Yes" or "No" for Judge).
-
-### Query rewriter (NOT USED)
-
-This module's purpose is to:
-1. Clean the user query for any misspellings
-2. If there is any conversation before this query, add conversation context to the query
-    > For example: 
-    >Say, the user is talking about CS courses and then asks "which of these course are required for Applied Math computer science track?".
-    > Then, the added context could be "From these CS courses (*list of CS courses*), which ones are required for Applied Math computer science track?"
-    > If not added context, the tools will use this text as is and will retrieve uncorelated contexts. 
-3. Create the text used for **context retrieval** 
-
 
 ### Planner
 

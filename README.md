@@ -19,17 +19,17 @@
 
 ChatDKU is a **Retrieval-Augmented Generation (RAG) intelligent Q&A system** designed for Duke Kunshan University (DKU) faculty and students. The system adopts an Agentic RAG architecture, capable of retrieving relevant content from multi-source data including campus policies, course information, and academic resources, and generating accurate, citable answers through large language models.
 
-- [Core](./chatdku/core): Core agent and RAG logic. 
+- [Core](./chatdku/core/README.md): Core agent and RAG logic. 
   - [chatdku.core.agent](chatdku/core/agent.py): The main agent class.
   - `chatdku.core.compile`: (WIP) Uses DSPy for automatic prompt optimization.
   - `chatdku.core.tools`: The vector retriever uses ChromaDB, while the keyword retriever directly uses Redis (should consider putting it into a separate module).
   - `chatdku.core.dspy_common`: Helpers for interacting with DSPy.
   - `chatdku.core.utils`: Utility functions.
 
-- [Flask Backend](./chatdku/backend): Backend Flask apps. 
+- [Flask Backend](./chatdku/backend/readme.md): Backend Flask apps. 
   - `backend.stt_app`: Speech-to-Text app
   - `backend.whisper_model`: Whisper API using Flask
-- [Django Backend](./chatdku/django) : Django-based backend and apps
+- [Django Backend](./chatdku/django/readme.md) : Django-based backend and apps
 
 ---
 
@@ -144,8 +144,7 @@ sequenceDiagram
 #### 1. DSPy-Driven Agent Architecture
 
 Implement optimizable LLM programs using DSPy:
-- **QueryRewrite**: Rewrite queries with conversation history
-- **Judge**: Evaluate retrieval result sufficiency (Chain-of-Thought)
+- **Planner**: Plan the necessary tool calls, the tool's parameters for a successful **context retrieval**.
 - **Synthesizer**: Generate answers based on context
 - **ConversationMemory**: Intelligently compress conversation history
 
