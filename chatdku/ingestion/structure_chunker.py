@@ -1,6 +1,6 @@
 """
 Structure-aware PDF chunker using pdfplumber.
-Detects heading levels and chunks hierarchically to preserve document structure.
+Detects heading levels and chunks according to structure.
 """
 
 import re
@@ -20,7 +20,8 @@ def pdf_to_items(pdf_path: str) -> List[Dict[str, Any]]:
     Returns:
         List of dictionaries, each containing:
             - text: The line text
-            - level: Heading level (0=normal text, 1=level1 heading, 2=level2, 3=level3)
+            - level: Heading level
+              (0=normal text, 1=level1 heading, 2=level2, 3=level3)
             - page: Page number (0-indexed)
     """
     items = []
@@ -32,11 +33,13 @@ def pdf_to_items(pdf_path: str) -> List[Dict[str, Any]]:
                 continue
 
             chars = page.chars if page.chars else []
-            lines = text.split('\n')
+            lines = text.split("\n")
 
             # Calculate the most common font size on this page
-            font_sizes = [char.get('size', 0) for char in chars if char.get('size')]
-            common_size = max(set(font_sizes), key=font_sizes.count) if font_sizes else 12
+            font_sizes = [char.get("size", 0) for char in chars if char.get("size")]
+            common_size = (
+                max(set(font_sizes), key=font_sizes.count) if font_sizes else 12
+            )
 
             for line in lines:
                 line = line.strip()
@@ -47,20 +50,17 @@ def pdf_to_items(pdf_path: str) -> List[Dict[str, Any]]:
                 line_font_size = common_size
                 if chars:
                     line_chars = [
-                        c for c in chars
-                        if c.get('text') and c['text'] in line
+                        c for c in chars if c.get("text") and c["text"] in line
                     ]
                     if line_chars:
-                        line_font_size = line_chars[0].get('size', common_size)
+                        line_font_size = line_chars[0].get("size", common_size)
 
                 # Detect heading level based on content and formatting
                 level = detect_title_level(line, line_font_size, common_size)
 
-                items.append({
-                    "text": line,
-                    "level": level,
-                    "page": page_num  # 0-indexed
-                })
+                items.append(
+                    {"text": line, "level": level, "page": page_num}  # 0-indexed
+                )
 
     return items
 
@@ -92,43 +92,41 @@ def detect_title_level(text: str, font_size: float, default_size: float) -> int:
         return 1
 
     # Rule 2: Numbered sections (1., 1.1, 1.2.3, etc.)
-    match = re.match(r'^(\d+(?:\.\d+)*)\.?\s+', text)
+    match = re.match(r"^(\d+(?:\.\d+)*)\.?\s+", text)
     if match:
         num_str = match.group(1)
-        dot_count = num_str.count('.')
+        dot_count = num_str.count(".")
         if dot_count == 0:
-            return 1      # "1. Section"
+            return 1  # "1. Section"
         elif dot_count == 1:
-            return 2      # "1.1 Subsection"
+            return 2  # "1.1 Subsection"
         else:
-            return 3      # "1.1.1 Subsubsection"
+            return 3  # "1.1.1 Subsubsection"
 
     # Rule 3: Roman numerals (I., II., III., etc.)
-    if re.match(r'^[IVXLCDM]+\.\s+', text_upper):
+    if re.match(r"^[IVXLCDM]+\.\s+", text_upper):
         return 1
 
     # Rule 4: Chapter/Section/Part keywords
-    if re.match(r'^(Chapter|Section|Part)\s+\d+', text, re.IGNORECASE):
+    if re.match(r"^(Chapter|Section|Part)\s+\d+", text, re.IGNORECASE):
         return 1
 
     # Rule 5: Larger font size indicates heading
     if font_size > default_size * 1.2:
         if font_size > default_size * 1.5:
-            return 1      # Significantly larger -> level 1
+            return 1  # Significantly larger -> level 1
         else:
-            return 2      # Slightly larger -> level 2
+            return 2  # Slightly larger -> level 2
 
     # Rule 6: Ends with colon or em dash (often a subheading)
-    if text.endswith(':') or text.endswith('——'):
+    if text.endswith(":") or text.endswith("——"):
         return 2
 
     return 0  # Normal text
 
 
 def split_items_by_level(
-    items: List[Dict],
-    target_level: int,
-    max_chunk_size: int
+    items: List[Dict], target_level: int, max_chunk_size: int
 ) -> List[List[str]]:
     """
     Split a list of items by a specific heading level.
@@ -145,8 +143,8 @@ def split_items_by_level(
     current_sub = []
 
     for item in items:
-        level = item.get('level', 0)
-        text = item.get('text', '')
+        level = item.get("level", 0)
+        text = item.get("text", "")
 
         if not text:
             continue
@@ -168,8 +166,7 @@ def split_items_by_level(
 
 
 def split_text_by_sentences(
-    text_lines: List[str],
-    max_chunk_size: int
+    text_lines: List[str], max_chunk_size: int
 ) -> List[List[str]]:
     """
     Split text by sentence boundaries for lines that exceed max_chunk_size.
@@ -184,7 +181,7 @@ def split_text_by_sentences(
     if not text_lines:
         return []
 
-    total_text = '\n'.join(text_lines)
+    total_text = "\n".join(text_lines)
     if len(total_text) <= max_chunk_size:
         return [text_lines]
 
@@ -204,7 +201,7 @@ def split_text_by_sentences(
                 current_size = 0
 
             # Split the long line by sentence boundaries
-            sentences = re.split(r'([。！？\.!\?])', line)
+            sentences = re.split(r"([。！？\.!\?])", line)
             sentence_parts = []
             for i in range(0, len(sentences) - 1, 2):
                 if i + 1 < len(sentences):
@@ -276,9 +273,9 @@ def structure_aware_chunking(
     prev_j = None
 
     for j, item in enumerate(items):
-        if item.get('level') == 1:
+        if item.get("level") == 1:
             if len(temp_list) > 0:
-                temp_text = '\n'.join(temp_list)
+                temp_text = "\n".join(temp_list)
                 if len(temp_text) > max_chunk_size:
                     # Section too large - split by level-2 headings
                     sub_chunks = split_items_by_level(
@@ -289,19 +286,17 @@ def structure_aware_chunking(
                     chunked_list.append(temp_list)
                 temp_list = []
             prev_j = j
-            temp_list.append(item.get('text', ''))
+            temp_list.append(item.get("text", ""))
         else:
-            text = item.get('text', '')
+            text = item.get("text", "")
             if text:
                 temp_list.append(text)
 
     # Handle the last section
     if temp_list:
-        temp_text = '\n'.join(temp_list)
+        temp_text = "\n".join(temp_list)
         if len(temp_text) > max_chunk_size:
-            sub_chunks = split_items_by_level(
-                items[prev_j:], 2, max_chunk_size
-            )
+            sub_chunks = split_items_by_level(items[prev_j:], 2, max_chunk_size)
             chunked_list.extend(sub_chunks)
         else:
             chunked_list.append(temp_list)
@@ -309,7 +304,7 @@ def structure_aware_chunking(
     # Second pass: split oversized chunks by sentence boundaries
     final_chunks = []
     for chunk in chunked_list:
-        chunk_text = '\n'.join(chunk)
+        chunk_text = "\n".join(chunk)
         if len(chunk_text) > max_chunk_size:
             sub_chunks = split_text_by_sentences(chunk, max_chunk_size)
             final_chunks.extend(sub_chunks)
@@ -319,7 +314,7 @@ def structure_aware_chunking(
     # Third pass: merge very small chunks with previous ones
     filtered_chunks = []
     for chunk in final_chunks:
-        chunk_text = ''.join(chunk)
+        chunk_text = "".join(chunk)
         if len(chunk_text) >= min_chunk_size:
             filtered_chunks.append(chunk)
         else:
@@ -362,20 +357,20 @@ def process_pdf(
     documents = []
     for idx, chunk_lines in enumerate(chunks):
         # Join all lines in this chunk into a single text block
-        text = '\n'.join(chunk_lines)
+        text = "\n".join(chunk_lines)
 
         # Collect all unique page numbers where this chunk's lines appear
         pages = set()
         for line in chunk_lines:
             for item in items:
-                if item['text'] == line:
+                if item["text"] == line:
                     # Convert from 0-indexed to 1-indexed (user-facing)
-                    pages.add(item['page'] + 1)
+                    pages.add(item["page"] + 1)
                     break
 
-        # Format page numbers as comma-separated string (required by load_redis)
+        # Format page numbers (required by load_redis)
         if pages:
-            page_number_str = ', '.join(str(p) for p in sorted(pages))
+            page_number_str = ", ".join(str(p) for p in sorted(pages))
         else:
             page_number_str = "Not given"
 
@@ -389,7 +384,7 @@ def process_pdf(
                 "page_number": page_number_str,  # Required by load_redis.py
                 "chunk_index": idx,
                 "total_chunks": len(chunks),
-            }
+            },
         )
         documents.append(doc)
 

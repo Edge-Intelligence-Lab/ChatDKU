@@ -145,25 +145,25 @@ class XlsxReader(BaseReader):
 
     def xlsx_load(self, file: Path) -> str:
         wb = load_workbook(file)
-        # 获取所有工作表的名称
+        # Get all sheet names
         sheet_names = wb.sheetnames
 
         markdown_menu = ""
 
-        # 遍历每一个工作表
+        # Iterate through each sheet
         for sheet_name in sheet_names:
             sub_wb = wb[sheet_name]
-            merged_cells = list(sub_wb.merged_cells.ranges)  # 转换为列表
+            merged_cells = list(sub_wb.merged_cells.ranges)
 
-            # 遍历每一个合并单元格
+            # Iterate through each merged cell
             for merged_cell in merged_cells:
                 min_row, max_row = merged_cell.min_row, merged_cell.max_row
                 min_col, max_col = merged_cell.min_col, merged_cell.max_col
 
-                # 获取合并单元格的值
+                # Get the value of the merged cell
                 cell_value = sub_wb.cell(row=min_row, column=min_col).value
 
-                # 解除合并单元格
+                # Unmerge the cell
                 sub_wb.unmerge_cells(
                     start_row=min_row,
                     start_column=min_col,
@@ -171,7 +171,7 @@ class XlsxReader(BaseReader):
                     end_column=max_col,
                 )
 
-                # 将值填充到之前合并单元格的所有单元格中
+                # Fill the value to all cells in the merged range
                 for col in range(min_col, max_col + 1):
                     for row in range(min_row, max_row + 1):
                         sub_wb.cell(row=row, column=col, value=cell_value)
@@ -197,16 +197,16 @@ class XlsxReader(BaseReader):
                 columns = [c if c else "Unnamed" for c in data[0]]
                 df = pd.DataFrame(data[1:], columns=columns)
 
-            # 处理 DataFrame 中的回车符
+            # Handle newlines in DataFrame
             df = df.map(
                 lambda x: str(x).replace("\n", " ") if isinstance(x, str) else x
             )
 
-            # 去掉全为空值的行和列
+            # Drop rows and columns that are completely empty
             df.dropna(how="all", inplace=True)
             df.dropna(axis=1, how="all", inplace=True)
 
-            # 去掉全为 None 的行和列
+            # Drop rows and columns that are completely None
             df = df.map(lambda x: None if x == "None" else x)
             df.dropna(how="all", inplace=True)
             df.dropna(axis=1, how="all", inplace=True)
@@ -243,7 +243,8 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
     Args:
         data_dir: The directory that log.json and all the data is in.
         added_files: Set of added files, that was returned from read_changes()
-        removed_files: Set of removed files, that was returned from read_changes()
+        removed_files: Set of removed files, that was returned from
+        read_changes()
     """
     log_path = os.path.join(data_dir, "log.json")
 
@@ -276,7 +277,8 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
     Args:
         data_dir: The directory that log.json and all the data is in.
     Returns:
-        tuple(added_files, removed_files): A tuple of sets with the added files and removed files.
+        tuple(added_files, removed_files): A tuple of sets with the added
+        files and removed files.
     """
     log_path = os.path.join(data_dir, "log.json")
 
@@ -340,39 +342,39 @@ def _read_pdf(
     """
     Read PDF files using local structure-aware chunker (pdfplumber).
     Replaces the previous LlamaParse-based implementation.
-    
+
     Args:
         file_paths: List of PDF file paths to process
         user_id: User ID for metadata
         access_type: Access type (public/student/office/private)
         role: User role
         organization: Organization name (required for office access)
-    
+
     Returns:
         List of TextNode objects with structure-aware chunks
     """
     total_nodes = []
-    
+
     for file_path in file_paths:
         print(f"Reading PDF with structure_chunker: {file_path}")
-        
+
         # Use local structure-aware chunker instead of LlamaParse
         chunked_docs = process_pdf_structure_aware(
-            file_path,
-            max_chunk_size=config.chunk_size,
-            min_chunk_size=80
+            file_path, max_chunk_size=config.chunk_size, min_chunk_size=80
         )
-        
+
         for doc in chunked_docs:
             # Generate unique ID for the chunk
             chunk_id = str(uuid.uuid4())
-            
+
             # Build metadata with permission fields
             base_metadata = custom_metadata(user_id)(file_path)
             base_metadata["page_number"] = doc.metadata.get("page_number", "Not given")
             base_metadata["chunk_id"] = chunk_id
-            base_metadata["chunking_method"] = doc.metadata.get("chunking_method", "structure_aware")
-            
+            base_metadata["chunking_method"] = doc.metadata.get(
+                "chunking_method", "structure_aware"
+            )
+
             # Apply permission metadata
             base_metadata = _ensure_permission_metadata(
                 base_metadata,
@@ -381,27 +383,26 @@ def _read_pdf(
                 role=role,
                 organization=organization,
             )
-            
+
             # Create TextNode
             node = TextNode(
                 text=doc.text,
                 id_=chunk_id,
                 metadata=base_metadata,
             )
-            
+
             if node.text == "":
                 continue
-            
+
             # Set source relationship
             doc_id = os.path.abspath(file_path)
             node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
                 node_id=hashlib.md5(doc_id.encode()).hexdigest()
             )
-            
+
             total_nodes.append(node)
-        
+
         print(f"Finished loading {file_path}. Generated {len(chunked_docs)} chunks.")
-    
     return total_nodes
 
 
@@ -410,14 +411,14 @@ def _read_non_pdf(
 ) -> list[BaseNode]:
     """
     Read non-PDF files using UnstructuredReader and other readers.
-    
+
     Args:
         files: List of file paths to process
         user_id: User ID for metadata
         access_type: Access type (public/student/office/private)
         role: User role
         organization: Organization name (required for office access)
-    
+
     Returns:
         List of BaseNode objects
     """
@@ -530,7 +531,7 @@ def update(
 ):
     """
     Main update function that processes all documents and generates nodes.
-    
+
     This function:
     1. Detects added/removed files since last run
     2. Processes new PDF files using local structure-aware chunker
@@ -538,7 +539,7 @@ def update(
     4. Removes nodes from deleted files
     5. Generates fresh event nodes
     6. Saves all nodes to nodes.json
-    
+
     Args:
         data_dir: Root directory containing documents
         user_id: User ID for metadata
@@ -609,7 +610,7 @@ def update(
 def main(data_dir, user_id, access_type, role, organization=None, verbose=False):
     """
     Main entry point for the document processing script.
-    
+
     Args:
         data_dir: Directory containing documents to process
         user_id: User ID for metadata
@@ -648,7 +649,10 @@ if __name__ == "__main__":
         "--access_type",
         type=str,
         default="student",
-        help="Access type for the nodes. Including 'public', 'student', 'office', 'private'. Defaults to 'student'.",
+        help=(
+            "Access type for the nodes. Including 'public', 'student', "
+            "'office', 'private'. Defaults to 'student'."
+        ),
     )
     parser.add_argument(
         "--role",
@@ -660,10 +664,14 @@ if __name__ == "__main__":
         "--organization",
         type=str,
         default=None,
-        help="Organization for the nodes. Required when access_type == 'office'.",
+        help=("Organization for the nodes. " "Required when access_type == 'office'."),
     )
     parser.add_argument(
-        "-v", type=bool, default=True, help="Whether to print extra information."
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=True,
+        help="Whether to print extra information.",
     )
     args = parser.parse_args()
 
