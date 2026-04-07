@@ -236,7 +236,6 @@ def main():
 
     # Save each major to file
     saved_count = 0
-    print(major_contents.keys())
     for major, content in major_contents.items():
         if content.get("md"):
             save_major_content(major, content, output_dir)
