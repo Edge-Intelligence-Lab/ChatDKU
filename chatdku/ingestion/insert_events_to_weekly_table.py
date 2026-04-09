@@ -9,14 +9,12 @@ from bs4 import BeautifulSoup
 import psycopg2
 from psycopg2.extras import execute_values
 
-# ========== 配置 ==========
-DATA_ROOT = "/datapool/chat_dku_advising/event_homepage"  # 改为学长的正式路径
+DATA_ROOT = "/datapool/chat_dku_advising/event_homepage"
 DATABASE_URL = os.getenv("PG_INGEST_URI", "postgresql://chatdku_retrieval:securepassword123@localhost:5432/chatdku_ingestion")
 
 def get_current_week_range():
-    """返回本周的周一和周日日期（基于当前系统日期）"""
+    """Return the Monday and Sunday dates of this week (based on the current system date)"""
     today = date.today()
-    # 周一是一周的开始（weekday=0 是周一）
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
     return start_of_week, end_of_week
@@ -159,36 +157,32 @@ def extract_events_from_html(html_path):
     return events
 
 def main():
-    # 自动获取本周的周一和周日
     week_start, week_end = get_current_week_range()
-    print(f"当前周范围: {week_start} 至 {week_end}")
+    print(f"Current week range: {week_start} to {week_end}")
 
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
-    # 清空旧数据
+    # Clear the old data
     cur.execute("TRUNCATE TABLE weekly_events;")
-    print("已清空 weekly_events 表")
+    print("The weekly_events table has been cleared")
 
-    # 遍历所有页面
     all_events = []
     for page_num in range(0, 7):
         page_dir = os.path.join(DATA_ROOT, f'page_{page_num}')
         if not os.path.isdir(page_dir):
-            print(f"警告: 目录不存在 {page_dir}")
+            print(f"Warning: The directory does not exist {page_dir}")
             continue
         html_file = find_index_html(page_dir)
         if not html_file:
-            print(f"警告: 在 {page_dir} 下未找到 index.html")
+            print(f"Warning: index.html was not found under {page_dir}")
             continue
-        print(f"处理: {html_file}")
+        print(f"Processing: {html_file}")
         events = extract_events_from_html(html_file)
-        # 只保留本周范围内的活动
         for ev in events:
             if week_start <= ev['date'] <= week_end:
                 all_events.append(ev)
 
-    # 批量插入
     insert_sql = """
         INSERT INTO weekly_events 
         (title, event_date, start_time, end_time, location, sponsor, open_to, speaker, url)
@@ -210,9 +204,9 @@ def main():
     if values:
         execute_values(cur, insert_sql, values)
         conn.commit()
-        print(f"成功插入 {len(values)} 条事件到 weekly_events 表")
+        print(f"Successfully inserted {len(values)} events into the weekly_events table")
     else:
-        print("本周没有找到任何事件")
+        print("No events were found this week")
 
     cur.close()
     conn.close()
