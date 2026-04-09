@@ -87,6 +87,7 @@ class Config:
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
                 "event_path": "/datapool/chat_dku_advising/event_data",
+                "event_homepage_path": "/datapool/chat_dku_advising/event_homepage",
                 # Redis
                 "redis_host": redis_host,
                 "redis_port": 6379,
