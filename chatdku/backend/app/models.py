@@ -85,3 +85,19 @@ class UploadedFile(db.Model):
         sa.ForeignKey("user_model.id"), index=True
     )
     user: so.Mapped["UserModel"] = so.relationship(back_populates="files")
+
+
+class WeeklyEvent(db.Model):
+    __tablename__ = 'weekly_events'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(500), nullable=False)
+    event_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time)
+    end_time = db.Column(db.Time)
+    location = db.Column(db.String(200))
+    sponsor = db.Column(db.String(200))
+    open_to = db.Column(db.String(200))
+    speaker = db.Column(db.String(200))
+    url = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
