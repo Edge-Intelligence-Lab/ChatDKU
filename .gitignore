@@ -224,3 +224,7 @@ benchmarks/questions.json
 
 #For testing
 **/benchmarks
+
+# Local temporary files
+.python-version
+*.csv
