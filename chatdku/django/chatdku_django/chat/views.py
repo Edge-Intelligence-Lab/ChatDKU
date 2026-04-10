@@ -398,7 +398,7 @@ class SessionViewSet(viewsets.ModelViewSet):
 
 
 class WeeklyEventsView(APIView):
-    permission_classes = []  
+    permission_classes = [IsAuthenticated]  
 
     def get(self, request):
         start_date = request.query_params.get('start_date')
