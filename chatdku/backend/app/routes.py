@@ -11,10 +11,6 @@ from datetime import datetime, timezone, date
 from werkzeug.utils import secure_filename
 import uuid
 from app.utils import shib_attrs, allowed_file, ALLOWED_EXTENSIONS
-from flask import jsonify, request
-from datetime import datetime
-from .models import WeeklyEvent
-from .extensions import db
 
 load_dotenv()
 
