@@ -411,7 +411,7 @@ class WeeklyEventsView(APIView):
         except ValueError:
             return Response({'error': 'Invalid date format, use YYYY-MM-DD'}, status=400)
 
-        events = WeeklyEvent.objects.filter(event_date__range=(start, end)).order_by('event_date', 'start_time')
+        events = WeeklyEvent.objects.using("ingestion").filter(event_date__range=(start, end)).order_by('event_date', 'start_time')
         data = [{
             'title': e.title,
             'date': e.event_date.isoformat(),

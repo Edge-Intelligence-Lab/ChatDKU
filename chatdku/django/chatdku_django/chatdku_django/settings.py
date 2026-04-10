@@ -189,6 +189,14 @@ DATABASES = {
         "PASSWORD": os.getenv("PASSWORD_DB"),
         "HOST": os.getenv("HOST_DB"),
         "PORT": os.getenv("PORT_DB"),
+    },
+    "ingestion":{
+        "ENGINE": "django_prometheus.db.backends.postgresql",
+        "NAME": os.getenv("NAME_DB_INGESTION"),
+        "USER": os.getenv("USER_DB_INGESTION"),
+        "PASSWORD": os.getenv("PASSWORD_DB"),
+        "HOST": os.getenv("HOST_DB"),
+        "PORT": os.getenv("PORT_DB"),
     }
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
