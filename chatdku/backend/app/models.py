@@ -85,4 +85,3 @@ class UploadedFile(db.Model):
         sa.ForeignKey("user_model.id"), index=True
     )
     user: so.Mapped["UserModel"] = so.relationship(back_populates="files")
-
