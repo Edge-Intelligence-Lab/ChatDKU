@@ -1,11 +1,10 @@
 import os
 
-import transformers
 from llama_index.core import Settings
 from llama_index.embeddings.text_embeddings_inference import TextEmbeddingsInference
 from phoenix.otel import register
 from sqlalchemy import create_engine, text
-from transformers import AutoTokenizer
+from tokenizers import Tokenizer
 
 from chatdku.config import config
 
@@ -24,14 +23,12 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     )
     print(f"Using embedding model {config.embedding}")
 
-    # Suppress warning
-    # "Special tokens have been added in the vocabulary,
-    # make sure the associated word embeddings are fine-tuned or trained."
-    transformers.logging.set_verbosity_error()
-
     # The same tokenizer as used by the LLM is used to count the number of tokens
-    # accurately.
-    Settings.tokenizer = AutoTokenizer.from_pretrained(config.tokenizer)
+    # accurately. Uses the `tokenizers` library (Rust) to avoid a PyTorch dependency.
+    _hf_tokenizer = Tokenizer.from_file(config.tokenizer + "/tokenizer.json")
+    Settings.tokenizer = lambda text: _hf_tokenizer.encode(
+        text, add_special_tokens=False
+    ).ids
     print("Loaded tokenizer")
 
 

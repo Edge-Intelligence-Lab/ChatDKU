@@ -15,6 +15,7 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
+    format_trajectory,
     span_ctx_start,
     token_limit_ratio_to_count,
     truncate_tokens_all,
@@ -223,14 +224,6 @@ class Planner(dspy.Module):
             trajectory_to_discard=earliest_trajectory,
         )
         return summary.new_summary, trajectory
-
-
-# From the DSPY.react code
-# https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
-def format_trajectory(trajectory: dict[str, Any]):
-    adapter = dspy.settings.adapter or dspy.ChatAdapter()
-    trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
-    return adapter.format_user_message_content(trajectory_signature, trajectory)
 
 
 def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:

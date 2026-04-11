@@ -102,7 +102,9 @@ class SynthesizerSignature(dspy.Signature):
     trajectory_summary: str = dspy.InputField()
     current_date: date = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
-    response: str = dspy.OutputField(desc="You response to the Current User Message.")
+    response: str = dspy.OutputField(
+        desc="You response to the Current User Message. Answer under 500 words."
+    )
 
 
 class Synthesizer(dspy.Module):

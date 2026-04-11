@@ -1,15 +1,14 @@
 import re
-from functools import partial
 from inspect import Signature, signature
 from typing import Any, Callable, Optional
 
+import dspy
 from llama_index.core import Settings
 from llama_index.core.node_parser import TokenTextSplitter
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceMimeTypeValues, SpanAttributes
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic.fields import FieldInfo
-from transformers import PreTrainedTokenizerBase
 
 from chatdku.config import config
 
@@ -137,11 +136,6 @@ def truncate_tokens(
 ) -> str:
     """Truncate string so that it does not exceed the given number of tokens."""
 
-    # NOTE: This is to maintain consistency with LlamaIndex.
-    # See: https://github.com/run-llama/llama_index/blob/cc63a3832126f1dc391f9b8df264205cca19e48f/llama-index-core/llama_index/core/settings.py#L122-L136  # noqa E501
-    if isinstance(tokenizer, PreTrainedTokenizerBase):
-        tokenizer = partial(tokenizer.encode, add_special_tokens=False)
-
     splitter = TokenTextSplitter(
         chunk_size=int(abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
     )
@@ -188,3 +182,11 @@ def load_conversation(history: list[tuple[str, str]]) -> list[tuple[str, str]]:
             bot_message = bot_msg[1]
             past_messages.append(tuple([user_message, bot_message]))
     return past_messages
+
+
+# From the DSPY.react code
+# https://github.com/stanfordnlp/dspy/blob/bb110a0262f2373150d864792bcc92e76f43cd62/dspy/predict/react.py#L91-L94
+def format_trajectory(trajectory: dict[str, Any]):
+    adapter = dspy.settings.adapter or dspy.ChatAdapter()
+    trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
+    return adapter.format_user_message_content(trajectory_signature, trajectory)
