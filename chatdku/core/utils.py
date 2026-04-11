@@ -2,6 +2,7 @@ import re
 from inspect import Signature, signature
 from typing import Any, Callable, Optional
 
+import dspy
 from llama_index.core import Settings
 from llama_index.core.node_parser import TokenTextSplitter
 from openinference.instrumentation import safe_json_dumps

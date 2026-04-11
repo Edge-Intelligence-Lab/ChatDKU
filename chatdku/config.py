@@ -66,7 +66,8 @@ class Config:
                 "backup_llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
                 "backup_llm_url": "http://localhost:18085/v1",
                 "llm_temperature": 0.7,
-                "context_window": 32000,
+                "context_window": 22000,
+                "output_window": 10000,
                 "response_type": "Multiple Paragraphs",
                 # Embedding
                 "embedding": "BAAI/bge-m3",
