@@ -9,8 +9,8 @@ from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
+from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
@@ -251,17 +251,6 @@ def main():
                 print(r, end="")
             print()
 
-            # for i, r in enumerate(responses_gen):
-            #     print("-" * 10)
-            #     print(f"Round {i} response:")
-            #     for r in r.response:
-            #         if first_token:
-            #             end_time = time.time()
-            #             print(f"first token时间:{end_time-start_time}")
-            #             first_token = False
-            #         print(r, end="")
-            #     print()
-            #     print("-" * 10)
         except EOFError:
             break
 

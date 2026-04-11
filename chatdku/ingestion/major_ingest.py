@@ -121,8 +121,8 @@ def extract_majors(
                 break
 
         if current_major:
-            # Check if the page contains a course code
-            # Without this, it was returning the following major's
+            # NOTE:Check if the page contains a course code
+            # Without this, it was returning the next major's
             # descriptions, which was irrelevant to the current major
             if course_code_pattern.search(text):
                 md_text = pymupdf4llm.to_markdown(doc, pages=[page_num], use_ocr=False)
