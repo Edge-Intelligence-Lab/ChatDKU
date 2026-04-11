@@ -41,6 +41,7 @@ dependencies = [
     "llama-index-retrievers-bm25~=0.6.2",
     "chromadb~=1.0.15",
     "arize-phoenix",
+    "arize-phoenix-evals==2.13.0",
     "opentelemetry-api",
     "opentelemetry-sdk",
     "openinference-instrumentation",
