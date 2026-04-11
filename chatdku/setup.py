@@ -26,7 +26,9 @@ def setup(add_system_prompt: bool = False, use_llm: bool = True) -> None:
     # The same tokenizer as used by the LLM is used to count the number of tokens
     # accurately. Uses the `tokenizers` library (Rust) to avoid a PyTorch dependency.
     _hf_tokenizer = Tokenizer.from_file(config.tokenizer + "/tokenizer.json")
-    Settings.tokenizer = lambda text: _hf_tokenizer.encode(text, add_special_tokens=False).ids
+    Settings.tokenizer = lambda text: _hf_tokenizer.encode(
+        text, add_special_tokens=False
+    ).ids
     print("Loaded tokenizer")
 
 
