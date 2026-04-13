@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from chatdku.backend.fastAPI.main import app
