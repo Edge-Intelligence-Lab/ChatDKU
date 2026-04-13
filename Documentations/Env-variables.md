@@ -1,6 +1,16 @@
 # Delete this for public version
 
-Put these environment variables in your `.bashrc` or `.zshrc`.
+Put these environment variables in `~/.profile`.
+
+Prefer `~/.profile` over `.bashrc` or `.zshrc` because:
+- It is shell-agnostic (works for both bash and zsh users).
+- It is sourced by login shells, so variables are available to all programs started from that session — including scripts that SSH in non-interactively.
+- Unlike `.bashrc`/`.zshrc`, it is not loaded in interactive-only contexts that can cause errors in scripts (prompts, completions, plugins, etc.).
+
+If you use zsh and `~/.profile` is not being sourced automatically, add this to your `~/.zprofile`:
+```bash
+source ~/.profile
+```
 
 ```
 export OPENAI_API_KEY='dummy'
