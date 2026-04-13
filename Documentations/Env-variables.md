@@ -4,8 +4,14 @@ Put these environment variables in `~/.profile`.
 
 Prefer `~/.profile` over `.bashrc` or `.zshrc` because:
 - It is shell-agnostic (works for both bash and zsh users).
-- It is sourced by login shells, so variables are available to all programs started from that session — including scripts that SSH in non-interactively.
+- It is sourced by login shells, so variables are available to all programs started from interactive login sessions.
 - Unlike `.bashrc`/`.zshrc`, it is not loaded in interactive-only contexts that can cause errors in scripts (prompts, completions, plugins, etc.).
+
+**Important:** `~/.profile` is NOT sourced by non-interactive, non-login shells created by default for OpenSSH remote commands. For environment variables to be available in non-interactive SSH sessions, consider:
+- Using `ssh -t` to force a pseudo-terminal and login shell (as done in `devsync.sh`)
+- Setting `AcceptEnv` in SSH client config and `AcceptEnv`/`SetEnv` in sshd_config
+- Using `~/.ssh/environment` (if `PermitUserEnvironment` is enabled on the server)
+- Exporting variables directly in the remote command string
 
 If you use zsh and `~/.profile` is not being sourced automatically, add this to your `~/.zprofile`:
 ```bash
