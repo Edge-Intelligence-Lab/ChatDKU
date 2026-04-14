@@ -154,7 +154,7 @@ def extract_structured_data_from_file(jsonl_path: str, flawed_data_file: str = N
 
             structured_data = {
                 "question": data.get("question"),
-                "ground_truth": data.get("ground_truth", {}).get("target", []),
+                "ground_truth": [data.get("ground_truth", {}).get("target", [])],
                 "reward": data.get("reward"),
                 "is_correct": data.get("is_correct") == 1.0,
                 "trace": trace,

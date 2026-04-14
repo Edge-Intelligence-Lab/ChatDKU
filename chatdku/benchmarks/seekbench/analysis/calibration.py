@@ -63,9 +63,23 @@ plt.rcParams.update({
 
 # Global model color palette (align with groundness/recovery analyses)
 MODEL_COLOR_PALETTE = {
-    'Qwen3-30B-A3B-Instruct-2507': '#460057',          
+    'Base (Qwen)': '#460057',          
+    'Few-shot (Qwen)': '#423e81',      
+    'CoT (Qwen)': '#8b5a9f',
+    'ReAct (Qwen)': '#a67db8',
+    'Structured (Qwen)': '#c19fd1',
+    'Self-Consistency (Qwen)': '#d9bce5',
+    'GPT-5': '#e74c3c',
+    'GPT-4o': '#e67e22',
+    'Tongyi DeepResearch': '#3498db',
+    'Claude Sonnet 4.5': '#9b59b6',
     'Qwen3-30B-A3B': '#1abc9c',
-      
+    'DeepResearcher': '#2e5d88',       
+    'ReSearch': '#159988',             
+    'SearchR1': '#6ece5d',            
+    'ASearcher': '#fee837',   
+    'Qwen3-30B-A3B-Instruct-2507': '#460057',          
+    'Qwen3-30B-A3B': '#1abc9c',        
 }
 
 def get_model_color(model_name: str) -> str:
@@ -133,6 +147,15 @@ def load_traces(path: str):
             except json.JSONDecodeError:
                 continue
     return rows
+
+
+def is_base_trace(t: dict) -> bool:
+    _, cat = clean_and_categorize_model(t.get('model', ''))
+    return cat == 'Base'
+
+
+def filter_traces_to_base(traces: list) -> list:
+    return [t for t in traces if is_base_trace(t)]
 
 
 def map_evidence_level(iq: str, ic: str) -> int:
@@ -915,9 +938,13 @@ def main():
     ap.add_argument('--policy_threshold', type=str, default='high', choices=['high','medium'], help='Primary threshold E>=2; sensitivity E>=1')
     ap.add_argument('--group_by', type=str, default='category', choices=['category','model'], help='Aggregate by category (Base/Few-shot/RL Agents) or by model name')
     ap.add_argument('--ce_prevalence', type=str, default='global', choices=['global','group'], help='Use global or group-specific P(E) for CE computation')
+    ap.add_argument('--model_filter', type=str, default='base', choices=['all', 'base'], help='Keep all models or only Base models')
     args = ap.parse_args()
 
     traces = load_traces(args.input)
+    if args.model_filter == 'base':
+        traces = filter_traces_to_base(traces)
+        print(f"Filtered to Base models only: {len(traces)} trajectories remain")
 
     # Build turn-level df (A1/A2/A4)
     turn_df = build_turn_level_df(traces)

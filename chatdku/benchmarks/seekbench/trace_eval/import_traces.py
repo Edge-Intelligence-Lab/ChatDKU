@@ -3,7 +3,7 @@ import dotenv
 import os
 import json
 import pandas as pd
-from utils.qa_em import compute_score_f1
+from qa_em import compute_score_f1
 import argparse
 import uuid
 
@@ -175,7 +175,8 @@ def main():
 
     traces = client.spans.get_spans_dataframe(
         project_identifier="seekbench_eval",
-        timeout=500
+        timeout=500,
+        limit=100000
     )
 
     output_file = os.path.abspath(args.output_path)

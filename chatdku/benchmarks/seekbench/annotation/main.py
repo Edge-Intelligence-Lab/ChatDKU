@@ -642,7 +642,7 @@ async def main():
             try:
                 # Make a deep copy to avoid modifying original data in case of partial failure
                 processed_trace = json.loads(json.dumps(trace_data['trace']))
-                ground_truth = trace_data.get('ground_truth')
+                ground_truth = [trace_data.get('ground_truth')]
                 question = trace_data.get('question') # <-- Get the question
 
 

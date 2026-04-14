@@ -3,7 +3,7 @@ echo "Annotating files...."
 INPUTFILE=outputs/parsed_traces.jsonl
 OUTPUTFILE=outputs/annotated_traces.jsonl 
 ONTOLOGYFILE=annotation/ontology.json
-MODEL=openai/gpt-oss-120b
+MODEL=gpt-4.1-nano
 CONCURRENCY=30
 
 
