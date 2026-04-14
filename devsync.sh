@@ -22,17 +22,17 @@ REMOTE_DIR="${CHATDKU_REMOTE_DIR:-~/ChatDKU-DevSync}"
 LOCAL_DIR="$(git rev-parse --show-toplevel)"
 
 step "preparing remote directory $REMOTE_DIR on $SERVER"
-ssh "${SERVER}" "mkdir -p \"${REMOTE_DIR}\""
+ssh "${SERVER}" "mkdir -p ${REMOTE_DIR}"
 
 step "linking ~/.env → ${REMOTE_DIR}/.env"
-ssh "${SERVER}" "
+ssh "${SERVER}" '
   if [ -f ~/.env ]; then
-    ln -sf ~/.env \"${REMOTE_DIR}\"/.env
+    ln -sf ~/.env '"${REMOTE_DIR}"'/.env
   else
-    echo \"WARN: ~/.env not found on server — skipping link\"
+    echo "WARN: ~/.env not found on server — skipping link"
   fi
-"
-if ssh "${SERVER}" "[ ! -f \"${REMOTE_DIR}\"/.env ]"; then
+'
+if ssh "${SERVER}" '[ ! -f '"${REMOTE_DIR}"'/.env ]'; then
   warn "no .env in ${REMOTE_DIR} — the agent may fail to start"
 fi
 
@@ -53,4 +53,4 @@ rsync -avz --delete \
 success "synced"
 
 info "connecting to ${BOLD}$SERVER${RESET}${CYAN} — running agent"
-ssh -t "${SERVER}" "bash -l -c 'cd \"${REMOTE_DIR}\" && uv sync && uv run python -m chatdku.core.agent'"
+ssh -t "${SERVER}" "bash -l -c 'cd ${REMOTE_DIR} && uv sync && uv run python -m chatdku.core.agent'"
