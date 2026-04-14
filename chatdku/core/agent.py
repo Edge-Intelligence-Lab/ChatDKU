@@ -10,6 +10,7 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.executor import Executor
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
+from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
@@ -242,6 +243,7 @@ def main():
         ),
         QueryCurriculumOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
+        CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
     ]
 
     agent = Agent(

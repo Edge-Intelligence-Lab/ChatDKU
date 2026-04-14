@@ -111,6 +111,7 @@ class Config:
                 "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
                 # External data
                 "prereq_csv_path": "/datapool/chatdku_external_data/DK_SR_PREREQ_CRSE_CHATDKU.csv",
+                "classdata_csv_path": "/datapool/chatdku_external_data/cleaned_classdata.csv",
                 "major_requirements_dir": "/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
             }
         )
