@@ -213,7 +213,7 @@ class MemoryTools:
     ) -> str:
         """Update an existing memory."""
         try:
-            if idx >= len(self.last_memory_search):
+            if idx <0 or idx >= len(self.last_memory_search):
                 return "Invalid memory index. Please search for memories again to get the correct index."
 
             memory_id = self.last_memory_search[idx][
@@ -258,7 +258,9 @@ class MemoryTools:
             long_mems_sorted = sorted(
                 long_mems,
                 key=lambda m: self._to_timestamp(
-                    m.get("last_accessed", m.get("created_at", 0))
+                    self.memory_access_log.get(m.get("id"), {}).get(
+                        "last_accessed", m.get("last_accessed", m.get("created_at", 0))
+                    )
                 ),
             )
             while (
@@ -298,7 +300,7 @@ class MemoryTools:
             return float(val)
         elif isinstance(val, str):
             try:
-                return datetime.fromisoformat(val).timestamp()
+                return datetime.datetime.fromisoformat(val).timestamp()
             except ValueError:
                 return 0.0
         else:

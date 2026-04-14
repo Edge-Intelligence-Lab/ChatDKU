@@ -151,7 +151,7 @@ class PermanentMemory(dspy.Module):
         return dspy.Prediction()
 
     def _call_with_potential_conversation_truncation(
-        self, module, session_conversation: dict, **input_args
+        self, module, session_conversation: list[dict[str, str]], **input_args
     ):
         for _ in range(3):
             try:
@@ -167,14 +167,12 @@ class PermanentMemory(dspy.Module):
             "The context window was exceeded even after 3 attempts to truncate the trajectory."
         )
 
-    def truncate_conversation(self, conversation: dict) -> dict:
+    def truncate_conversation(self, conversation: list[dict[str, str]]) -> list[dict[str, str]]:
         """Truncates the earliest conversation so that it fits in the context window."""
-        keys = list(conversation.keys())
-
-        for key in keys[:2]:
-            conversation.pop(key)
-
-        return conversation
+        # Remove the first 2 messages (oldest) from the conversation list
+        if len(conversation) > 2:
+            return conversation[2:]
+        return [] 
 
 
 class CompressConversationMemorySignature(dspy.Signature):
@@ -277,6 +275,7 @@ class ConversationMemory(dspy.Module):
                 }
             )
             span.set_status(Status(StatusCode.OK))
+        return dspy.Prediction(history=self.history, summary=self.summary)
 
     def register_history(self, role: str, content: str):
         new_entry = ConversationMemoryEntry(role=role, content=content)

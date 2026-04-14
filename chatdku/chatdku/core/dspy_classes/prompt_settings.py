@@ -77,15 +77,15 @@ Input: I prefer evening classes and like AI.
 Output: {"facts": ["Prefers evening classes", "Interested in AI"]}
 
 # DKU student examples
-Input: What classes should I take with Stats302?
-Output: {"facts": ["Course of interest: Stats302", "Needs guidance on classes to take with Stats302"]}
+Input: Class at 2pm Tuesdays conflicts with lab position
+Output: {"facts": ["Class time: 2pm Tuesdays", "Has lab position", "Class time conflicts with lab position"],}
 
-Input: How do I leave a note for a student on DKUHub?
-Output: {"facts": ["Platform: DKUHub", "Needs instructions to leave a note for a student"]}
+Input: I usually study late at night and prefer online classes
+Output: {"facts": ["Prefers studying late at night", "Prefers online classes"]}
 
 # DKU faculty examples
-Input: A student only has 8 credits left. Do they need to submit an underload request?
-Output: {"facts": ["Student has 8 credits remaining", "Question about underload requirement"]}
+Input: I'm teaching Math 105 this semester and I need to schedule office hours
+Output: {"facts": ["Teaching course: Math 105", "Needs to schedule office hours"]}
 
 # Edge cases
 Input: Hi there!
