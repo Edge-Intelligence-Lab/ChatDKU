@@ -106,6 +106,7 @@ class Agent(dspy.Module):
                 current_user_message=current_user_message,
                 conversation_history=self.conversation_memory.history_str(),
                 trajectory=format_trajectory({}),
+                assessment="",
             )
 
             # Clear internal memory for each user message
@@ -144,7 +145,7 @@ class Agent(dspy.Module):
                 synthesizer_args = dict(
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
-                    trajectory=execution.trajectory,
+                    relevant_context=execution.relevant_context,
                     trajectory_summary=execution.summary,
                     streaming=self.streaming,
                 )

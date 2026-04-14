@@ -23,9 +23,9 @@ Planner  ──── send_message ────► response (skip executor/synth
    plan
     │
     ▼
-Executor  (ReAct loop — calls tools to gather information)
+Executor  (Assess-Act loop — calls tools guided by the plan)
     │
- trajectory
+ relevant_context (distilled)
     │
     ▼
 Synthesizer  ──► final response
@@ -33,9 +33,9 @@ Synthesizer  ──► final response
 
 **Planner** — Decides what to do with the user's message. If the question can be answered from conversation history or is a casual exchange, it responds directly (`send_message`). If information is missing (e.g. asking to build a schedule without providing a major), it asks the user. Otherwise it produces a free-form plan describing what information needs to be gathered.
 
-**Executor** — Receives the plan and executes it via a ReAct loop: think → call tool → observe → repeat. Handles tool errors with workarounds and truncates the trajectory when the context window fills up.
+**Executor** — Receives the plan and runs a two-phase loop per iteration: (1) **Assess** what has been gathered vs. what's still needed, then decide to continue or finish; (2) **Act** by picking a tool based on the gap analysis. After the loop, a **Distill** step extracts only the relevant information from the trajectory, discarding executor reasoning and failed calls.
 
-**Synthesizer** — Receives the executor's trajectory and generates the final response with citations.
+**Synthesizer** — Receives the distilled context from the executor and generates the final response with citations.
 
 **ConversationMemory** — Compresses and maintains conversation history across turns.
 
