@@ -214,7 +214,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test MajorRequirementsLookup")
     parser.add_argument(
         "--dir",
-        default="/home/anar/Documents/major_requirements_2023-2024",
+        default="/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
         help="Path to the requirements markdown directory",
     )
     parser.add_argument("--major", required=True, help="Major name to look up")

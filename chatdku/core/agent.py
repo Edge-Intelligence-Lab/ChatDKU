@@ -224,7 +224,7 @@ def main():
         #     files=[],
         # ),
         MajorRequirementsLookupOuter(
-            requirements_dir="/home/anar/Documents/major_requirements_2023-2024"
+            requirements_dir="/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024"
         ),
         QueryCurriculumOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
