@@ -5,7 +5,7 @@ This guide is intended for **newcomers**, as well as, our **members**.
 I (Temuulen) will be explaining our core dependencies as well as any other useful stuff you should learn about before getting into coding.
 
 > [!IMPORTANT]
-> This is a work in progess. Please tell me what you don't understand about this guide and our project and I will add it to this document for future use.
+> This is a work in progress. Please tell me what you don't understand about this guide and our project and I will add it to this document for future use.
 
 When I was coming into this project, even though it was structured very clearly, it was hard to get my head around everything.
 I felt like the code was just very messy and there were just a lot of things that did not have clear explanations.
@@ -29,7 +29,7 @@ First, obviously you need to know python. While we don't require you to be a pyt
 This is completely subjective, but there are some qualities that you can start from:
 
 - Functions have [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html)
-- Account for future contributers to understand the code
+- Account for future contributors to understand the code
 - Obvious naming practices and using python naming practices.
 
 I mean I can go on and on about coding practices. What you need to understand is that you need to build scalable code, accounting for any other person to review your code and understand it.
@@ -58,18 +58,18 @@ Typically, to do this in a Git-based workflow, you would:
 
 Please read these articles:
 
-- [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow)
+- [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)
 - [Always start with an issue](https://web.archive.org/web/20230214040753/https://about.gitlab.com/blog/2016/03/03/start-with-an-issue/)
   - Try creating an issue now on what you want to do next.
   - Also if you don't see our issue board under the projects tab in our repo. Please contact Mingxi and ask to be added to the Project issue board.
 - [Write good commit messages!](https://cbea.ms/git-commit/)
 - [Issue board](https://about.gitlab.com/blog/announcing-the-gitlab-issue-board/)
-  - While we are not using Gitlab, Github has the same feature called "Project".
+  - While we are not using GitLab, GitHub has the same feature called "Project".
 - [It's all connected in Gitlab](https://about.gitlab.com/2016/03/08/gitlab-tutorial-its-all-connected/)
-  - Again, Github has the equilavent features at [here](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls)
+  - Again, GitHub has the equivalent features at [here](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls)
 
-As you incorperate these steps into your developer journey, you will be better equipped for real world team-coding.
-All the industry experts follow some form of stardards using GIT. You should learn to use it properly while you are here with us.
+As you incorporate these steps into your developer journey, you will be better equipped for real world team-coding.
+All the industry experts follow some form of standards using GIT. You should learn to use it properly while you are here with us.
 
 And [here is a longer video](https://www.youtube.com/watch?v=1ffBJ4sVUb4) that gives you more in-depth details on how GIT works.
 
@@ -81,13 +81,13 @@ Using the terminal, you can do a lot of stuff with it. I assure you that to get 
 All of us started out like that. Here are some of the common commands I use when working with CHATDKU:
 
 - `ssh`: Used to connect to our server
-- `git`: Working with github
+- `git`: Working with GitHub
 - `sftp`: ssh like file transferring
 - `nvidia-smi`: Used to inspect GPUs
 
 Again, just google these stuff and learn. Good luck! It will be worth it.
 
-## Role-specific guides
+## Role-specific Guides
 
 Please be careful when interacting with Docker. It hosts our Embedding Model, Vector Database, and Redis Database.
 
@@ -99,7 +99,7 @@ Please be careful when interacting with Docker. It hosts our Embedding Model, Ve
 
 ### Iterating on the agent with `devsync.sh`
 
-Edit code on your laptop, then push and run it on the shared dev box in one
+Edit code on your laptop, then push and run it on the shared dev server in one
 command. From the repo root:
 
 ```bash
@@ -119,7 +119,7 @@ Windows-specific notes, and troubleshooting. If you're new, also skim
 admin adds you to `chatdku_devs`, all project secrets load into your remote
 shell automatically, no `.env` copying needed.
 
-### Document ingestion
+### Document Ingestion
 
 - Llamaindex for document ingestion: https://developers.llamaindex.ai/python/framework/getting_started/concepts
 - ChromaDB for vector store: https://docs.trychroma.com/docs/overview/introduction
