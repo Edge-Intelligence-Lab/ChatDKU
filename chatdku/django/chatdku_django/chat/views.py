@@ -30,7 +30,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from chatdku.core.agent import Agent
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.llama_index_tools import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chat.tools import get_tools
 

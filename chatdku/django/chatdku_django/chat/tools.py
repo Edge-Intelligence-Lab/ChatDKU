@@ -1,4 +1,4 @@
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.llama_index_tools import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 
 
