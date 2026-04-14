@@ -7,13 +7,14 @@ from opentelemetry.trace import Status, StatusCode, use_span
 
 from chatdku.config import config
 from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
-from chatdku.core.dspy_classes.plan import Planner, format_trajectory
+from chatdku.core.dspy_classes.executor import Executor
+from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
 from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
-from chatdku.core.utils import load_conversation, span_start
+from chatdku.core.utils import format_trajectory, load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
 # When `--dev` is passed to the script, enable additional debug prints in this module.
@@ -55,7 +56,8 @@ class Agent(dspy.Module):
         # Edit (Temuulen): nahhh it is causing issues.
         self.internal_memory = {}
 
-        self.planner = Planner(tools, max_iterations)
+        self.planner = Planner(tools)
+        self.executor = Executor(tools, max_iterations)
 
         self.conversation_memory = ConversationMemory()
 
@@ -97,10 +99,9 @@ class Agent(dspy.Module):
             # want DSPy to change prompt dynamically.
 
             # These limits are for compressing both tool and conversation memory.
-            # Technically this only ensures that these memories would fit sufficiently
-            # in `Planner` and not e.g. `QueryRewrite`, but this should be sufficient for now.
-            # TODO: We could notify user when their input is too long.
-            limits = self.planner.get_token_limits(
+            # Uses the executor's token limits as the executor has the largest context needs.
+            limits = self.executor.get_token_limits(
+                plan="",
                 current_user_message=current_user_message,
                 conversation_history=self.conversation_memory.history_str(),
                 trajectory=format_trajectory({}),
@@ -123,19 +124,32 @@ class Agent(dspy.Module):
                     max_history_size=limits["conversation_history"],
                 )
 
-            plan = self.planner(
+            plan_result = self.planner(
                 current_user_message=current_user_message,
                 conversation_memory=self.conversation_memory,
-            )
-            synthesizer_args = dict(
-                current_user_message=current_user_message,
-                conversation_memory=self.conversation_memory,
-                trajectory=plan.trajectory,
-                trajectory_summary=plan.summary,
-                streaming=self.streaming,
             )
 
-            self.prev_response = self.synthesizer(**synthesizer_args).response
+            if plan_result.action_type == "send_message":
+                # Short-circuit: planner responded directly (follow-up question,
+                # conversational reply, or request for more info).
+                self.prev_response = plan_result.action
+            else:
+                # Planner produced a plan — hand it to the executor.
+                execution = self.executor(
+                    plan=plan_result.action,
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                )
+                synthesizer_args = dict(
+                    current_user_message=current_user_message,
+                    conversation_memory=self.conversation_memory,
+                    trajectory=execution.trajectory,
+                    trajectory_summary=execution.summary,
+                    streaming=self.streaming,
+                )
+
+                self.prev_response = self.synthesizer(**synthesizer_args).response
+
             self.conversation_memory(
                 role="user",
                 content=current_user_message,
