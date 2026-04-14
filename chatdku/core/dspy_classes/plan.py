@@ -43,6 +43,29 @@ class PlannerSignature(dspy.Signature):
             INSTGOV, LIT, MATH, MATSCI, MEDIA, MEDIART, NEUROSCI, PHIL, PHYS, PHYSEDU,
             POLECON, POLSCI, PPE, PSYCH, PUBPOL, SOCIOL, SOSC, STATS, USTUD, WOC, RELIG,
             MINITERM
+
+    Schedule and course-planning questions:
+        When the user asks for a next-semester schedule, course plan, or "what courses should
+        I take", you MUST collect ALL of the following before calling finish:
+            1. The student's major (and track, if applicable).
+            2. Their current year or standing (Year 1 / Year 2 / Year 3 / Year 4).
+            3. Courses they have already completed OR are currently taking.
+        If any of these are missing from the current message and the conversation history,
+        do NOT guess — set finish aside and let the Synthesizer ask the user for the
+        missing details instead. Do this by calling finish immediately so the Synthesizer
+        can formulate the follow-up question.
+
+        Once you have all three pieces of information, follow this sequence:
+            a. Call MajorRequirementsLookup with the student's major to retrieve the
+               full list of required and elective courses.
+            b. Call MajorRequirementsLookup with major="requirements for all majors"
+               to retrieve the university-wide common-core requirements.
+            c. Identify courses that still need to be completed (i.e. not in the
+               completed/in-progress list and not yet satisfied by equivalents).
+            d. For each course you plan to recommend, call PrerequisiteLookup to
+               verify the student has met its prerequisites given their completed courses.
+            e. Call finish once you have enough information to produce a concrete,
+               prerequisite-safe schedule recommendation.
     """
 
     current_user_message: str = dspy.InputField()
