@@ -191,7 +191,7 @@ def main():
     use_phoenix()
 
     lm = dspy.LM(
-        model="ollama_chat/" + config.backup_llm,
+        model="openai/" + config.backup_llm,
         api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
         model_type="chat",

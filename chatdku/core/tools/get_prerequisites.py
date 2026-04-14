@@ -37,7 +37,7 @@ def get_prereq(course: str, data_file_path: str) -> str:
             if pd.notna(descr) and descr.strip():
                 return (
                     f"For {course_subject} {course_catalog}, "
-                    f"{str: descr.strip()}\n(Source: DKUHub)"
+                    f"{descr.strip()}\n(Source: DKUHub)"
                 )
 
         return f"No prerequisites found for {course_subject} {course_catalog}.\n(Source: DKUHub)"
