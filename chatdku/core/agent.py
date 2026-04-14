@@ -10,7 +10,7 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.plan import Planner, format_trajectory
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.llama_index_tools import KeywordRetrieverOuter, VectorRetrieverOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix

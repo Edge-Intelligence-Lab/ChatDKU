@@ -21,7 +21,7 @@ pip install arize-phoenix
 
 ## Setup
 
-Run the following command, or set it in your .bashrc:
+Run the following command, or set it in your `~/.profile` (see `Env-variables.md`):
 
 ```bash
 export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6MyJ9.TTBhMzMyyevVPEQIGqVPbdzSW6V9QhnYQtErH-KCeqM'

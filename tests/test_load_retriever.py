@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import List
 
-from chatdku.core.tools.llama_index import DocRetrieverOuter
+from chatdku.core.tools.llama_index_tools import DocRetrieverOuter
 
 DocumentRetriever = DocRetrieverOuter({})
 
