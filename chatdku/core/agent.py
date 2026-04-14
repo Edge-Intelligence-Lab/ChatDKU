@@ -191,7 +191,7 @@ def main():
     use_phoenix()
 
     lm = dspy.LM(
-        model="openai/" + config.backup_llm,
+        model="ollama_chat/" + config.backup_llm,
         api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
@@ -239,9 +239,7 @@ def main():
         #     search_mode=search_mode,
         #     files=[],
         # ),
-        MajorRequirementsLookupOuter(
-            requirements_dir="/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024"
-        ),
+        MajorRequirementsLookupOuter(config.major_requirements_dir),
         QueryCurriculumOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
         CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),

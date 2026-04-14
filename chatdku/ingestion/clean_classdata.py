@@ -13,10 +13,11 @@ Usage:
 """
 
 import argparse
+
 import pandas as pd
 
 # ── Constants ────────────────────────────────────────────────────────────────
-INPUT_PATH = "DK_SR_CLASSDATA_CHATDKU.csv"
+INPUT_PATH = "/datapool/chatdku_external_data/DK_SR_CLASSDATA_CHATDKU.csv"
 OUTPUT_PATH = "/datapool/chatdku_external_data/cleaned_classdata.csv"  # TODO: set final output folder
 
 # ── Session mapping ──────────────────────────────────────────────────────────
