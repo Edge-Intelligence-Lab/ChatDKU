@@ -26,7 +26,7 @@ def _ensure_nltk_resource(resource_path: str, download_name: str) -> None:
             file=sys.stderr,
             flush=True,
         )
-        nltk.download(download_name, quiet=True)
+        nltk.download(download_name, quiet=True, raise_on_error=True)
         print(
             f"[keyword_retriever] NLTK resource '{download_name}' ready.",
             file=sys.stderr,
