@@ -112,12 +112,12 @@ class Agent(dspy.Module):
 
             # Add previous response to conversation memory
             if self.prev_response is not None:
-                if self.streaming:
-                    # Note that this would essentially "invalidate" the previous response generator
+                if isinstance(self.prev_response, str):
+                    prev_response = self.prev_response
+                else:
+                    # NOTE: that this would essentially "invalidate" the previous response generator
                     # as calling `get_full_response()` would exhaust the iterations.
                     prev_response = self.prev_response.get_full_response()
-                else:
-                    prev_response = self.prev_response
                 self.conversation_memory(
                     role="assistant",
                     content=prev_response,
