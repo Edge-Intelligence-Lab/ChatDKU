@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import argparse
+import sys
 import traceback
 
 import dspy
@@ -189,7 +191,8 @@ class Agent(dspy.Module):
                 return i
 
 
-def main():
+def build_agent(streaming: bool = True, max_iterations: int = 3) -> "Agent":
+    """Configure DSPy and return a ready-to-use Agent instance."""
     setup()
     use_phoenix()
 
@@ -202,17 +205,13 @@ def main():
         temperature=config.llm_temperature,
     )
     dspy.configure(lm=lm)
-    # To disable cache:
 
+    # To disable cache:
     # dspy.configure_cache(
     # enable_disk_cache=False,
     # enable_memory_cache=False
     # )
 
-    import time
-
-    # role = "student"
-    # access_type = "student"  # hard code it for now, need parameter pass from user role
     user_id = "Chat_DKU"
     search_mode = 0
     tools = [
@@ -232,28 +231,58 @@ def main():
             search_mode=search_mode,
             files=[],
         ),
-        # DocRetrieverOuter(
-        #     retriever_top_k=25,
-        #     use_reranker=True,
-        #     reranker_top_n=5,
-        #     access_type=access_type,
-        #     role=role,
-        #     user_id=user_id,
-        #     search_mode=search_mode,
-        #     files=[],
-        # ),
         MajorRequirementsLookupOuter(config.major_requirements_dir),
         QueryCurriculumOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
         CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
     ]
 
-    agent = Agent(
-        max_iterations=3,
-        streaming=True,
+    return Agent(
+        max_iterations=max_iterations,
+        streaming=streaming,
         get_intermediate=False,
         tools=tools,
     )
+
+
+def run_query(query: str, agent: "Agent | None" = None) -> str:
+    """Run a single query and return the full response as a string.
+
+    Suitable for programmatic use from Python:
+        from chatdku.core.agent import run_query
+        print(run_query("What are the CS major requirements?"))
+    """
+    if agent is None:
+        agent = build_agent(streaming=False)
+    result = agent(current_user_message=query)
+    response = result.response
+    if isinstance(response, str):
+        return response
+    # Streaming generator — collect.
+    return "".join(response)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="ChatDKU agent.")
+    parser.add_argument(
+        "query",
+        nargs="*",
+        help="Query to run once and exit. If omitted, starts interactive mode.",
+    )
+    args = parser.parse_args()
+
+    if args.query:
+        query = " ".join(args.query)
+        print(run_query(query))
+        return
+
+    _main_interactive()
+
+
+def _main_interactive():
+    import time
+
+    agent = build_agent(streaming=True)
 
     while True:
         try:
@@ -282,5 +311,5 @@ if __name__ == "__main__":
         main()
     except Exception:
         print(traceback.format_exc())
-
-    input()
+        if sys.stdin.isatty():
+            input()

@@ -36,11 +36,20 @@ fi
 
 TARGET="${1:-}"
 if [[ -n "$TARGET" ]]; then
-    if [[ "$TARGET" != *"/"* && "$TARGET" != *.py ]]; then
-        # Looks like a module (e.g. chatdku.core.agent) — run with -m
+    if [[ "$TARGET" == *.py || "$TARGET" == */* ]]; then
+        :  # file path — handled below
+    elif [[ "$TARGET" =~ ^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$ ]]; then
+        # Valid Python module name (e.g. chatdku.core.agent) — run with -m
         REMOTE_RUN_CMD="uv run python -m $(printf %q "$TARGET")"
         RUN_DESC="python -m $TARGET"
+        TARGET=""  # signal: already handled
     else
+        # Anything else — treat as a natural-language query for the agent.
+        REMOTE_RUN_CMD="uv run python -m chatdku.core.agent $(printf %q "$TARGET")"
+        RUN_DESC="agent query: $TARGET"
+        TARGET=""
+    fi
+    if [[ -n "$TARGET" ]]; then
         # Treat as a file path
         if [[ "$TARGET" = /* ]]; then
             TARGET="${TARGET#"$LOCAL_DIR"/}"
