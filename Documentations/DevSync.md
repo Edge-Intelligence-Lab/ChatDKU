@@ -7,8 +7,14 @@ into an interactive SSH session running the agent.
 Run from anywhere inside the repo:
 
 ```bash
-./devsync.sh
+./devsync.sh                          # default: python -m chatdku.core.agent
+./devsync.sh chatdku/core/agent.py    # as a file path
+./devsync.sh chatdku.core.agent       # as a module (runs with python -m)
 ```
+
+Arguments containing `/` or ending in `.py` are run as file paths. Everything
+else is treated as a module name and run with `python -m`. Absolute local
+paths are accepted and automatically stripped to repo-relative before sync.
 
 ## What it does
 

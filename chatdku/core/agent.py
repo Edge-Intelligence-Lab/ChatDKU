@@ -12,7 +12,10 @@ from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
 from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
-from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieverOuter
+from chatdku.core.tools.llama_index_tools import (
+    KeywordRetrieverOuter,
+    VectorRetrieverOuter,
+)
 from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import format_trajectory, load_conversation, span_start

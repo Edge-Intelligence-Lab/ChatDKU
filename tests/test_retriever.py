@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from chatdku.core.tools.llama_index import (
+from chatdku.core.tools.llama_index_tools import (
     KeywordRetrieverOuter,
     QueryTimeoutError,
     VectorRetrieverOuter,
