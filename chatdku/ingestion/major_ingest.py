@@ -137,7 +137,7 @@ def sanitize_filename(name: str) -> str:
     # Remove or replace unsafe characters
     safe = re.sub(r"[^\w\s-]", "", name)
     safe = re.sub(r"[-\s]+", "-", safe)
-    return safe.strip("-").lower()
+    return safe.strip().lower()
 
 
 def save_major_content(major_name: str, content: Dict, output_dir: Path):
