@@ -1,8 +1,10 @@
 import os
 import re
 import string
+import sys
 from itertools import combinations
 
+import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from redis import Redis
@@ -12,6 +14,28 @@ from redisvl.schema import IndexSchema
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore
 from chatdku.core.tools.utils import get_url
+
+
+def _ensure_nltk_resource(resource_path: str, download_name: str) -> None:
+    try:
+        nltk.data.find(resource_path)
+    except LookupError:
+        print(
+            f"[keyword_retriever] NLTK resource '{download_name}' not found — "
+            f"downloading now (one-time setup in this environment)...",
+            file=sys.stderr,
+            flush=True,
+        )
+        nltk.download(download_name, quiet=True, raise_on_error=True)
+        print(
+            f"[keyword_retriever] NLTK resource '{download_name}' ready.",
+            file=sys.stderr,
+            flush=True,
+        )
+
+
+_ensure_nltk_resource("corpora/stopwords", "stopwords")
+_ensure_nltk_resource("tokenizers/punkt_tab", "punkt_tab")
 
 
 class KeywordRetriever(BaseDocRetriever):

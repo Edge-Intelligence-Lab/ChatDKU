@@ -1,460 +1,153 @@
 # ChatDKU
-<div align="center">
 
-**Intelligent Campus Q&A System | Agentic RAG System**
+**Agentic RAG system for Duke Kunshan University**
 
-[![Watch Demo Video](https://img.shields.io/badge/▶️_Watch-Demo_Video-red?style=for-the-badge)](https://youtu.be/SdItulvqdLo)
+[![Watch Demo Video](https://img.shields.io/badge/Watch-Demo_Video-red?style=flat-square)](https://youtu.be/SdItulvqdLo)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://www.docker.com/)
-
-[English](./README_EN.md) | [中文文档](./README.md)
-
-</div>
+ChatDKU is a campus assistant that answers questions about DKU policies, courses, requirements, faculty, and academic resources. It retrieves information from DKU documents and databases, then generates accurate, answers with citations.
 
 ---
 
-## Overview
+## Architecture
 
-ChatDKU is a **Retrieval-Augmented Generation (RAG) intelligent Q&A system** designed for Duke Kunshan University (DKU) faculty and students. The system adopts an Agentic RAG architecture, capable of retrieving relevant content from multi-source data including campus policies, course information, and academic resources, and generating accurate, citable answers through large language models.
+The agent is composed of three DSPy modules that run in sequence for each user message:
 
-- [Core](./chatdku/core/README.md): Core agent and RAG logic. 
-  - [chatdku.core.agent](chatdku/core/agent.py): The main agent class.
-  - `chatdku.core.compile`: (WIP) Uses DSPy for automatic prompt optimization.
-  - `chatdku.core.tools`: The vector retriever uses ChromaDB, while the keyword retriever directly uses Redis (should consider putting it into a separate module).
-  - `chatdku.core.dspy_common`: Helpers for interacting with DSPy.
-  - `chatdku.core.utils`: Utility functions.
-
-- [Flask Backend](./chatdku/backend/readme.md): Backend Flask apps. 
-  - `backend.stt_app`: Speech-to-Text app
-  - `backend.whisper_model`: Whisper API using Flask
-- [Django Backend](./chatdku/django/readme.md) : Django-based backend and apps
-
----
-
-## 🏗️ System Architecture
-
-### Overall Architecture
-
-```mermaid
-flowchart TB
-    subgraph Frontend["Frontend Layer"]
-        UI[Next.js Web UI]
-    end
-
-    subgraph Backend["Backend Layer"]
-        API[Django REST API]
-        Agent[Core Agent]
-    end
-
-    subgraph AgentCore["Agent Core"]
-        QR[QueryRewrite<br/>Query Rewriting]
-        Judge[Judge<br/>Sufficiency Judging]
-        Synth[Synthesizer<br/>Answer Synthesis]
-        Memory[ConversationMemory<br/>Conversation Memory]
-    end
-
-    subgraph Retrieval["Retrieval Layer"]
-        DR[DocumentRetriever<br/>Document Retriever]
-        VR[VectorRetriever<br/>Vector Retrieval]
-        KR[KeywordRetriever<br/>Keyword Retrieval]
-        RR[Reranker<br/>Reranking]
-    end
-
-    subgraph Storage["Storage Layer"]
-        Chroma[(ChromaDB<br/>Vector Database)]
-        Redis[(Redis<br/>BM25 Index)]
-        PG[(PostgreSQL<br/>User Data)]
-    end
-
-    subgraph External["External Services"]
-        LLM[LLM Server<br/>OpenAI-compatible]
-        Embed[TEI Server<br/>Embedding Service]
-        Phoenix[Phoenix<br/>Observability]
-    end
-
-    UI --> API
-    API --> Agent
-    Agent --> QR
-    QR --> DR
-    DR --> VR
-    DR --> KR
-    VR --> Chroma
-    KR --> Redis
-    DR --> RR
-    RR --> Judge
-    Judge -->|Insufficient| QR
-    Judge -->|Sufficient| Synth
-    Synth --> LLM
-    Agent <--> Memory
-    Agent --> Phoenix
-    API --> PG
-    VR --> Embed
+```
+User message
+    │
+    ▼
+Planner  ──── send_message ────► response (skip executor/synthesizer)
+    │
+   plan
+    │
+    ▼
+Executor  (Assess-Act loop — calls tools guided by the plan)
+    │
+ relevant_context (distilled)
+    │
+    ▼
+Synthesizer  ──► final response
 ```
 
-### Data Flow
+**Planner** — Decides what to do with the user's message. If the question can be answered from conversation history or is a casual exchange, it responds directly (`send_message`). If information is missing (e.g. asking to build a schedule without providing a major), it asks the user. Otherwise it produces a free-form plan describing what information needs to be gathered.
 
-```mermaid
-sequenceDiagram
-    participant User as User
-    participant Agent as Agent
-    participant QR as QueryRewrite
-    participant Retriever as Hybrid Retrieval
-    participant Judge as Judge
-    participant Synth as Synthesizer
-    participant LLM as LLM
+**Executor** — Receives the plan and runs a two-phase loop per iteration: (1) **Assess** what has been gathered vs. what's still needed, then decide to continue or finish; (2) **Act** by picking a tool based on the gap analysis. After the loop, a **Distill** step extracts only the relevant information from the trajectory, discarding executor reasoning and failed calls.
 
-    User->>Agent: Ask Question
-    Agent->>QR: Query Rewriting (with history)
-    QR->>Retriever: Semantic Query + Keyword Query
-    Retriever->>Retriever: Vector Retrieval + BM25 Retrieval
-    Retriever->>Retriever: Reranking
-    Retriever->>Judge: Return Retrieval Results
-    Judge->>Judge: Evaluate Retrieval Sufficiency
-    alt Insufficient Retrieval
-        Judge->>QR: Re-retrieve
-    else Sufficient Retrieval
-        Judge->>Synth: Pass Context
-        Synth->>LLM: Generate Answer
-        LLM->>User: Stream Answer
-    end
-    Agent->>Agent: Update Conversation Memory
-```
+**Synthesizer** — Receives the distilled context from the executor and generates the final response with citations.
 
----
+**ConversationMemory** — Compresses and maintains conversation history across turns.
 
-## 🛠️ Tech Stack
+### Tools
 
-### Core Frameworks
+| Tool | Purpose |
+|------|---------|
+| `VectorQuery` | Semantic search over DKU documents (ChromaDB) |
+| `KeywordQuery` | BM25 keyword search over DKU documents (Redis) |
+| `MajorRequirementsLookup` | Retrieves full major/track requirement lists |
+| `QueryCurriculum` | Queries course schedule and syllabus database (PostgreSQL) |
+| `PrerequisiteLookup` | Checks prerequisites for a given course |
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| **Agent Framework** | DSPy | 3.0.3 | LLM programmatic orchestration and optimization |
-| **Retrieval Framework** | LlamaIndex | 0.13.1 | Document indexing and retrieval |
-| **Vector Database** | ChromaDB | 1.0.15 | Semantic vector storage |
-| **Cache/Index** | Redis | 5.2.1 | BM25 keyword index |
-| **Backend Framework** | Django | 5.2.3 | REST API and user management |
-| **Frontend Framework** | Next.js | 15+ | React server-side rendering |
-| **Task Queue** | Celery | 5.5.3 | Asynchronous task processing |
-| **Observability** | Phoenix (Arize) | 11.36.0 | Chain tracing and monitoring |
+### Infrastructure
 
-### Technical Highlights
-
-#### 1. DSPy-Driven Agent Architecture
-
-Implement optimizable LLM programs using DSPy:
-- **Planner**: Plan the necessary tool calls, the tool's parameters for a successful **context retrieval**.
-- **Synthesizer**: Generate answers based on context
-- **ConversationMemory**: Intelligently compress conversation history
-
-#### 2. Hybrid Retrieval + Reranking
-
-```python
-# Retrieval Pipeline
-Vector Retrieval (ChromaDB) + Keyword Retrieval (Redis BM25)
-    ↓
-Merge Candidate Documents (top_k=20)
-    ↓
-Reranking (Reranker, top_k=5)
-    ↓
-Judge Sufficiency
-```
-
-#### 3. Iterative Retrieval
-
-Implement closed-loop retrieval through Judge module:
-- Insufficient retrieval → Rewrite query → Re-retrieve (max 3 rounds)
-- Sufficient retrieval → Proceed to answer generation
+| Component | Technology |
+|-----------|-----------|
+| Agent framework | DSPy |
+| Document retrieval | LlamaIndex |
+| Vector database | ChromaDB |
+| Keyword index | Redis (BM25) |
+| Course database | PostgreSQL |
+| Backend API | Django |
+| Frontend | Next.js |
+| Observability | Arize Phoenix |
 
 ---
 
-## 🚀 Quick Start
+## Setup
 
 ### Prerequisites
 
-- **Docker** & **Docker Compose** (recommended)
-- **Python 3.11+** (local development)
-- **LLM Service**: OpenAI API or compatible service (e.g., sglang, vLLM)
-- **Embedding Service**: TEI (Text Embeddings Inference) or compatible service
+- Python 3.11+
+- Running ChromaDB, Redis, and PostgreSQL instances
+- An OpenAI-compatible LLM endpoint (e.g. vLLM, SGLang)
+- A text embedding endpoint (e.g. TEI with `BAAI/bge-m3`)
 
-### Method 1: Docker Quick Deployment (Recommended)
-
-#### Agent-Only Version (5 minutes)
-
-Suitable for quick testing, CLI interaction, API integration:
+### Install
 
 ```bash
-# 1. Clone project
 git clone https://github.com/Edge-Intelligence-Lab/ChatDKU.git
 cd ChatDKU
-
-# 2. Configure environment variables
-cp .env.example .env
-# Edit .env file, configure LLM_BASE_URL, LLM_API_KEY, TEI_URL, etc.
-
-# 3. Start services (Redis + ChromaDB + Agent)
-docker compose -f docker-compose.agent.yml up --build
-
-# 4. Initialize data
-bash scripts/setup_agent_data.sh
-
-# 5. Use CLI interaction
-docker compose -f docker-compose.agent.yml exec agent python -m chatdku.core.agent
+uv sync
 ```
 
-📖 Detailed documentation: [Agent-Only Quick Start](./Documentations/Agent-Only-Quick-Start_EN.md)
+### Configure
 
-#### Full Version (Complete Web Application)
-
-Includes frontend, backend, user management, file upload, and other complete features:
+Copy `.env.example` to `.env` and fill in the required values:
 
 ```bash
-# 1. Configure environment variables
-cp .env.example .env
-# Configure database, Redis, LLM, and other services
-
-# 2. Start complete service stack
-docker compose up --build
-
-# 3. Access Web interface
-# http://localhost:3005
-```
-
-📖 Detailed documentation: [Full Version Deployment Guide](./Documentations/Full-Deployment-Guide_EN.md)
-
----
-
-## 📦 Deployment Version Comparison
-
-| Feature | Agent-Only | Full |
-|---------|-----------|------|
-| **Deployment Time** | 5-10 minutes | 30-60 minutes |
-| **Resource Requirements** | 2C4G | 8C16G+ |
-| **Interaction Method** | CLI / API | Web UI |
-| **User Management** | ❌ | ✅ |
-| **File Upload** | ❌ | ✅ |
-| **Feedback System** | ❌ | ✅ |
-| **Async Tasks** | ❌ | ✅ (Celery) |
-| **Use Cases** | Testing, Development, Integration | Production Environment |
-
----
-
-## 💡 Usage Examples
-
-### CLI Interaction
-
-```bash
-$ python -m chatdku.core.agent
-
-ChatDKU Agent (type 'quit' to exit)
-> Please introduce the core courses of the Data Science major
-
-[Retrieving...]
-According to the retrieved course information, the core courses of the Data Science major include:
-1. COMPSCI 201 - Data Structures and Algorithms
-2. STATS 210 - Probability and Statistical Inference
-3. COMPSCI 316 - Database Systems
-...
-
-> What are the prerequisites for these courses?
-
-[Retrieving...]
-According to the course syllabus:
-- COMPSCI 201 requires COMPSCI 101 as prerequisite
-- STATS 210 requires MATH 105 or equivalent
-...
-```
-
-### Python API Call
-
-```python
-from chatdku.core.agent import Agent
-
-# Initialize Agent
-agent = Agent()
-
-# Single-turn conversation
-response = agent.query("What is DKU's academic integrity policy?")
-print(response)
-
-# Multi-turn conversation
-conversation_id = "user_123"
-agent.query("Introduce the Computer Science major", conversation_id=conversation_id)
-agent.query("What are the tracks in this major?", conversation_id=conversation_id)
-```
-
-### REST API Call
-
-```bash
-# Send question
-curl -X POST http://localhost:8007/api/chat/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "What research centers does DKU have?",
-    "session_id": "session_123"
-  }'
-
-# Streaming response
-curl -X POST http://localhost:8007/api/chat/stream/ \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Introduce the Environmental Science major"}' \
-  --no-buffer
-```
-
----
-
-## 📊 Data Preparation
-
-### Data Formats
-
-Supports multiple document formats:
-- 📄 PDF, Word (`.docx`), PowerPoint (`.pptx`)
-- 📝 Markdown (`.md`), Plain text (`.txt`)
-- 🌐 HTML web pages
-
-### Data Import Process
-
-```bash
-# 1. Place documents in data/ directory
-cp your_documents/* ./data/
-
-# 2. Run data processing script
-cd chatdku/chatdku/ingestion
-python update_data.py --data_dir ./data --user_id Chat_DKU -v True
-
-# 3. Load to vector database
-python load_chroma.py --nodes_path ./data/nodes.json --collection_name chatdku_docs
-
-# 4. Load to Redis (BM25 index)
-python -m chatdku.ingestion.load_redis --nodes_path ./data/nodes.json --index_name chatdku
-```
-
-📖 Detailed documentation: [Data Import Guide](./data/README.md)
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Key configuration items (`.env` file):
-
-```bash
-# LLM Service
-LLM_BASE_URL=http://your-llm-server:18085/v1
+# LLM
+LLM_BASE_URL=http://your-llm-server/v1
 LLM_API_KEY=your_api_key
-LLM_MODEL=Qwen/Qwen3.5-4B
+LLM_MODEL=your-model-name
 
-# Embedding Service
+# Embedding
 TEI_URL=http://your-tei-server:8080
 EMBEDDING_MODEL=BAAI/bge-m3
 
-# Vector Database
-CHROMA_HOST=chromadb
+# Vector database
+CHROMA_HOST=localhost
 CHROMA_DB_PORT=8010
 
 # Redis
-REDIS_HOST=redis
+REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=your_redis_password
 
-# Agent Configuration
-MAX_ITERATIONS=3          # Maximum retrieval rounds
-CONTEXT_WINDOW=4096       # LLM context window
-LLM_TEMPERATURE=0.1       # Generation temperature
-
-# Frontend Configuration (Full version)
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8007
+# Agent
+MAX_ITERATIONS=5
+CONTEXT_WINDOW=8192
+LLM_TEMPERATURE=0.1
 ```
 
-Complete configuration reference: [.env.example](./.env.example)
-
----
-
-## 📚 Documentation Navigation
-
-- 📖 [Agent-Only Quick Start](./Documentations/Agent-Only-Quick-Start_EN.md)
-- 📖 [Agent-Only Complete Deployment](./Documentations/Agent-Only-Deployment_EN.md)
-- 📖 [Full Version Deployment Guide](./Documentations/Full-Deployment-Guide_EN.md)
-- 📖 [Architecture and Port Documentation](./Documentations/Architecture-Ports_EN.md)
-- 📖 [Technical Report (English)](./Technical_Report_EN.md)
-- 📖 [技术报告（中文）](./技术报告_中文.md)
-
----
-
-## 🔍 Monitoring and Debugging
-
-### Phoenix Observability
-
-System integrates Arize Phoenix for full-chain tracing:
+### Ingest documents
 
 ```bash
-# Access Phoenix UI
-http://localhost:6006
+cd chatdku/ingestion
 
-# View content:
-# - Agent execution traces
-# - Retrieval result quality
-# - LLM call details
-# - Performance bottleneck analysis
+# Parse and chunk documents
+python update_data.py --data_dir ./data --user_id Chat_DKU
+
+# Load into ChromaDB
+python load_chroma.py --nodes_path ./data/nodes.json --collection_name chatdku_docs
+
+# Load into Redis (BM25)
+python -m chatdku.ingestion.load_redis --nodes_path ./data/nodes.json --index_name chatdku
 ```
 
-### Log Viewing
+### Run
 
 ```bash
-# Docker logs
-docker compose logs -f agent
-docker compose logs -f backend
+# CLI
+python -m chatdku.core.agent
 
-# Local logs
-tail -f logs/backend_$(date +%Y%m%d).log
+# Django backend
+python manage.py runserver
 ```
 
 ---
 
-## 🤝 Contributing
+## Development
 
-Contributions, issue reports, and suggestions are welcome!
+See [GUIDE.md](./GUIDE.md) for a new contributor guide covering the tech stack, git workflow, and role-specific resources.
 
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Submit Pull Request
+See [chatdku/core/README.md](./chatdku/core/README.md) for a deeper explanation of the agent modules.
 
-See: [CONTRIBUTING.md](./CONTRIBUTING.md)
+See [Documentations/](./Documentations/) for deployment guides and Phoenix observability setup.
 
 ---
 
-## 📄 License
+## Contact
 
-This project is open-sourced under the MIT License - see [LICENSE](./LICENSE) file for details
-
----
-
-## 🙏 Acknowledgments
-
-Thanks to the following open-source projects:
-- [DSPy](https://github.com/stanfordnlp/dspy) - LLM programmatic framework
-- [LlamaIndex](https://github.com/run-llama/llama_index) - Data framework
-- [ChromaDB](https://github.com/chroma-core/chroma) - Vector database
-- [Phoenix](https://github.com/Arize-ai/phoenix) - LLM observability
-
----
-
-## 📮 Contact
-
-- 📧 Email: te100@duke.edu
-- 🐛 Issues: [GitHub Issues](https://github.com/Edge-Intelligence-Lab/ChatDKU/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/Edge-Intelligence-Lab/ChatDKU/discussions)
-
----
-
-<div align="center">
-
-**⭐ If this project helps you, please give us a Star!**
-
-Made with ❤️ by ChatDKU Team
-
-</div>
+- Email: te100@duke.edu
+- Issues: [GitHub Issues](https://github.com/Edge-Intelligence-Lab/ChatDKU/issues)

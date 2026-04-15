@@ -98,7 +98,12 @@ class SynthesizerSignature(dspy.Signature):
 
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
-    trajectory: str = dspy.InputField()
+    relevant_context: str = dspy.InputField(
+        desc=(
+            "Organized extraction of information relevant to answering the "
+            "user's question, distilled from tool call results."
+        ),
+    )
     trajectory_summary: str = dspy.InputField()
     current_date: date = dspy.InputField()
     current_user_message: str = CURRENT_USER_MESSAGE_FIELD
@@ -115,7 +120,7 @@ class Synthesizer(dspy.Module):
             "current_user_message": 2 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
-            "trajectory": 5 / 15,
+            "relevant_context": 5 / 15,
             "trajectory_summary": 1 / 15,
         }
 
@@ -128,7 +133,7 @@ class Synthesizer(dspy.Module):
         self,
         current_user_message: str,
         conversation_memory: ConversationMemory,
-        trajectory: str,
+        relevant_context: str,
         trajectory_summary: str,
         streaming: bool,
     ):
@@ -137,7 +142,7 @@ class Synthesizer(dspy.Module):
                 current_user_message=current_user_message,
                 conversation_history=conversation_memory.history_str(),
                 conversation_summary=conversation_memory.summary,
-                trajectory=trajectory,
+                relevant_context=relevant_context,
                 trajectory_summary=trajectory_summary,
             )
             synthesizer_args = truncate_tokens_all(

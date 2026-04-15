@@ -202,6 +202,18 @@ class DocumentIngestor:
 
         return text_content.strip()
 
+    def extract_markdown_content(self, file_path: Path) -> str:
+        """Extract text content from a Markdown file"""
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            self.logger.info(f"Extracted text from Markdown file: {file_path.name}")
+            return content.strip()
+        except Exception as e:
+            self.logger.error(
+                f"Failed to extract Markdown content from {file_path.name}: {e}"
+            )
+            return ""
+
     def extract_docx_content(self, file_path: Path) -> str:
         """Extract text content from DOCX file"""
         try:
@@ -251,7 +263,10 @@ class DocumentIngestor:
                 """json_schema, parsed_content -> extracted_json"""
 
                 parsed_content: str = dspy.InputField(
-                    desc="A parsed plaintext representation of a Duke Kunshan University syllabus."
+                    desc=(
+                        "A parsed plaintext representation of a "
+                        "Duke Kunshan University syllabus."
+                    )
                 )
                 json_schema: str = dspy.InputField(
                     desc="A v7 json-schema description of the structured data "
@@ -290,10 +305,7 @@ class DocumentIngestor:
             return None
 
     def store_in_database(self, data: Dict[str, Any], table_name: str = "curriculum"):
-        """Store extracted data in PostgreSQL database, dynamically handling columns and values."""
-
-        if not table_name:
-            table_name = self.args.table_name
+        """Store extracted data in PostgreSQL database, dynamically handling columns."""
 
         try:
             # Prepare columns and values
@@ -333,6 +345,8 @@ class DocumentIngestor:
             content = self.extract_pdf_content(file_path)
         elif file_path.suffix.lower() == ".docx":
             content = self.extract_docx_content(file_path)
+        elif file_path.suffix.lower() == ".md":
+            content = self.extract_markdown_content(file_path)
         else:
             self.logger.warning(f"Unsupported file type: {file_path.suffix}")
             return
@@ -355,22 +369,24 @@ class DocumentIngestor:
             )
 
     def process_pool(self):
-        """Process all PDF and DOCX files recursively in the pool directory and its subdirectories"""
+        """Process all PDF, DOCX, and Markdown files recursively in the pool dir."""
         pool_path = Path(self.args.pool)
 
         if not pool_path.exists():
             self.logger.error(f"Pool directory does not exist: {pool_path}")
             sys.exit(1)
 
-        # Find all PDF and DOCX files recursively
+        # Find all PDF, DOCX, and Markdown files recursively
         pdf_files = list(pool_path.rglob("*.pdf")) + list(pool_path.rglob("*.PDF"))
         docx_files = list(pool_path.rglob("*.docx")) + list(pool_path.rglob("*.DOCX"))
+        md_files = list(pool_path.rglob("*.md")) + list(pool_path.rglob("*.MD"))
 
-        all_files = pdf_files + docx_files
+        all_files = pdf_files + docx_files + md_files
 
         if not all_files:
             self.logger.info(
-                "No PDF or DOCX files found in pool directory or its subdirectories"
+                "No PDF, DOCX, or Markdown files found in pool directory "
+                "or its subdirectories"
             )
             return
 
@@ -385,7 +401,8 @@ class DocumentIngestor:
             except Exception as e:
                 tb_str = traceback.format_exc()
                 self.logger.error(
-                    f"Unexpected error processing {file_path.name}: {e}\nTraceback:\n{tb_str}"
+                    f"Unexpected error processing {file_path.name}: {e}"
+                    f"\nTraceback:\n{tb_str}"
                 )
                 continue
 

@@ -1,8 +1,7 @@
-from typing import Any, Literal
+from typing import Literal
 
 import dspy
 from dspy import Tool
-from litellm import ContextWindowExceededError
 from openinference.instrumentation import safe_json_dumps
 from openinference.semconv.trace import OpenInferenceSpanKindValues as SpanKind
 
@@ -15,7 +14,6 @@ from chatdku.core.dspy_classes.prompt_settings import (
 )
 from chatdku.core.dspy_common import get_template
 from chatdku.core.utils import (
-    format_trajectory,
     span_ctx_start,
     token_limit_ratio_to_count,
     truncate_tokens_all,
@@ -24,107 +22,136 @@ from chatdku.core.utils import (
 
 class PlannerSignature(dspy.Signature):
     """
-    You are a Planner Agent for Duke Kunshan University (DKU). In each episode, you are given available tools.
-    And you can see your past trajectory so far. Your goal is to use one or more of the
-    supplied tools to collect any necessary information for answering the user's question.
-    To do this, you will produce next_thought, next tool name, and next tool args in each turn,
-    and also when finishing the task.
-    After each tool call, you receive a resulting observation, which gets appended to your trajectory.
-    When writing next_thought, you may reason about the current situation and plan for future steps.
-    When selecting the next_tool_name and its next_tool_args, the tool must be one of the provided tools.
+    You are a Planner Agent for Duke Kunshan University (DKU). You are given the user's
+    current message and the conversation history. Your job is to decide what to do next:
 
-    The user's question might be complex and require multiple hops of tool calls. If it is complex,
-    break down the question into small tool calls to get whatever information you need to answer.
+    1. If you can answer the user directly from the conversation history or general knowledge
+       (e.g. a follow-up question, clarification, or casual conversation), choose action_type
+       "send_message" and write your response in action.
 
-    Useful facts:
-        - Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
-            ARHU, ARTS, BEHAVSCI, BIOL, CHEM, CHINESE, COMPDSGN, COMPSCI, CULANTH, CULMOVE,
-            CULSOC, EAP, ECON, ENVIR, ETHLDR, GCHINA, GCULS, GLHLTH, HIST, HUM, INFOSCI,
-            INSTGOV, LIT, MATH, MATSCI, MEDIA, MEDIART, NEUROSCI, PHIL, PHYS, PHYSEDU,
-            POLECON, POLSCI, PPE, PSYCH, PUBPOL, SOCIOL, SOSC, STATS, USTUD, WOC, RELIG,
-            MINITERM
+    2. If information is missing and you need to ask the user a question before you can
+       proceed (e.g. their major, year, or completed courses for a schedule request),
+       choose action_type "send_message" and write the follow-up question in action.
+
+    3. If the user's question requires looking up information using the available tools,
+       choose action_type "plan" and write a free-form plan in action describing what
+       information needs to be gathered and why. The plan will be handed to an Executor
+       who has access to the same tools and will decide which specific tools to call.
+
+    You are given descriptions of the available tools so you know what actions are possible.
+    Write plans at a high level — describe *what* information is needed, not the exact
+    tool calls. The Executor will figure out the specifics.
+
+    Schedule and course-planning questions:
+        When the user asks for a next-semester schedule, course plan, or "what courses should
+        I take", you MUST verify ALL of the following are known before choosing action_type
+        "plan":
+            1. The student's major (and track, if applicable).
+            2. Their year of matriculation (Class of 20XX).
+            3. Courses they have already completed OR are currently taking.
+        If any of these are missing from the current message and the conversation history,
+        choose action_type "send_message" and ask for the missing information.
+
+        Once you have all three pieces of information, your plan should include:
+            a. Look up the requirements for the student's major.
+            b. Look up the university-wide common-core requirements.
+            c. Identify courses that still need to be completed.
+            d. Verify prerequisites for each recommended course.
     """
 
     current_user_message: str = dspy.InputField()
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     chatbot_role: str = ROLE_PROMPT
-
-
-class SummarizerSignature(dspy.Signature):
-    """
-    You have a Tool History storing all the tool calls you made for answering the Current User Message.
-    Your Tool History has become too long, so the oldest entries have to be discarded.
-    You keep a Summary of the discarded tool history.
-    Given the History To Discard and Previous Summary, update the Summary.
-    Remove the information not relevant to answer the Current User Message
-    and keep all the relevant information if possible.
-    Use Markdown in Summary.
-    """
-
-    # "Store the sources that you retrieved these information from."
-    current_user_message: str = dspy.InputField()
-    trajectory_to_discard: str = dspy.InputField(
+    available_tools: str = dspy.InputField(
+        desc="Descriptions of the tools available to the Executor.",
+        format=lambda x: x,
+    )
+    action_type: str = dspy.OutputField(type=Literal["plan", "send_message"])
+    action: str = dspy.OutputField(
         desc=(
-            "The tool calls that would be removed from Tool History"
-            "You should extract relevant information from these tool calls."
+            'If action_type is "plan": a free-form plan describing what information '
+            "to gather and why. "
+            'If action_type is "send_message": the message to send to the user.'
         ),
     )
 
-    previous_summary: str = dspy.InputField()
 
-    new_summary: str = dspy.OutputField()
+PLANNER_DEMOS = [
+    dspy.Example(
+        current_user_message="What is CR/NC policy?",
+        action_type="plan",
+        action=(
+            "The user is asking about DKU's Credit/No Credit (CR/NC) grading policy. "
+            "This is a university policy question that requires searching DKU's documents. "
+            "Search for information about the CR/NC policy, including eligibility, deadlines, "
+            "and how it affects GPA."
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message=(
+            "list all major requirements for molecular biosciences track in genetics and genomics"
+        ),
+        action_type="plan",
+        action=(
+            "The user wants the full list of requirements for the Molecular Bioscience major, "
+            "Genetics and Genomics track. Look up the major-specific requirements for this "
+            "major and track combination. Also retrieve the university-wide common-core "
+            "requirements that apply to all majors."
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message="where is jia yan's office?",
+        action_type="plan",
+        action=(
+            "The user is looking for the office location of a person named Jia Yan, "
+            "likely a faculty or staff member at DKU. Search for information about "
+            "Jia Yan including their office location, building, and room number."
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message="a+，a，a-什么的呢？你这个不全呀",
+        action_type="plan",
+        action=(
+            "The user is asking about the full grading scale at DKU (A+, A, A-, etc.), "
+            "and seems unsatisfied with a previous incomplete answer. Search for the "
+            "complete DKU grading scale including all letter grades, their GPA point "
+            "values, and any related grading policies."
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message="what courses should I take next semester?",
+        action_type="send_message",
+        action=(
+            "I'd be happy to help you plan your courses for next semester! "
+            "To give you a good recommendation, I'll need a few details:\n"
+            "1. What is your major (and track, if applicable)?\n"
+            "2. What is your year of matriculation (e.g. Class of 2027)?\n"
+            "3. What courses have you already completed or are currently taking?"
+        ),
+    ).with_inputs("current_user_message"),
+]
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools, max_iterations=5):
+    def __init__(self, tools):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
-        tools = {tool.name: tool for tool in tools}
 
-        instr = (
-            [f"{PlannerSignature.instructions}\n"]
-            if PlannerSignature.instructions
-            else []
-        )
+        tool_descriptions = []
+        for idx, tool in enumerate(tools):
+            tool_descriptions.append(f"({idx + 1}) {tool}")
 
-        tools["finish"] = Tool(
-            func=lambda: "Completed.",
-            name="finish",
-            desc=(
-                "Marks the task as complete. That is, signals that all information"
-                " for asnwering the current_user_message are now available to be extracted."
-            ),
-            args={},
-        )
-
-        for idx, tool in enumerate(tools.values()):
-            instr.append(f"({idx + 1}) {tool}")
-        instr.append(
-            "When providing `next_tool_args`, the value inside the field must be in JSON format"
-        )
-
-        react_signature = (
-            dspy.Signature({**PlannerSignature.input_fields}, "\n".join(instr))
-            .append("trajectory", dspy.InputField(), type_=str)
-            .append("next_thought", dspy.OutputField(), type_=str)
-            .append(
-                "next_tool_name", dspy.OutputField(), type_=Literal[tuple(tools.keys())]
-            )
-            .append("next_tool_args", dspy.OutputField(), type_=dict[str, Any])
-        )
-
-        self.tools = tools
-        self.planner = dspy.Predict(react_signature)
+        self.tool_descriptions_str = "\n".join(tool_descriptions)
+        self.planner = dspy.Predict(PlannerSignature)
+        self.planner.demos = PLANNER_DEMOS
         self.token_ratios: dict[str, float] = {
-            "current_user_message": 2 / 15,
-            "conversation_history": 3 / 15,
-            "conversation_summary": 1 / 15,
-            "chatbot_role": 2 / 15,
-            "trajectory": 6 / 15,
+            "current_user_message": 2 / 12,
+            "conversation_history": 3 / 12,
+            "conversation_summary": 1 / 12,
+            "chatbot_role": 2 / 12,
+            "available_tools": 2 / 12,
         }
-        self.trajectory_summary = ""
-        self.max_iterations = max_iterations
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.planner, **kwargs))
@@ -140,103 +167,28 @@ class Planner(dspy.Module):
             conversation_history=conversation_memory.history_str(),
             conversation_summary=conversation_memory.summary,
             chatbot_role=role_str,
+            available_tools=self.tool_descriptions_str,
         )
 
-        trajectory = {}
         with span_ctx_start("Planner", SpanKind.AGENT) as span:
             span.set_attribute("agent.name", "Planner")
             span.set_attribute("input.value", safe_json_dumps(planner_inputs))
 
-            # Tool calling iterations
-            for idx in range(self.max_iterations):
-                planner_inputs = truncate_tokens_all(
-                    planner_inputs,
-                    self.get_token_limits(**planner_inputs),
-                )
-
-                try:
-                    plan = self._call_with_potential_trajectory_truncation(
-                        self.planner, trajectory, **planner_inputs
-                    )
-                except ValueError:
-                    break
-
-                trajectory[f"thought_{idx}"] = plan.next_thought
-                trajectory[f"tool_name_{idx}"] = plan.next_tool_name
-                trajectory[f"tool_args_{idx}"] = plan.next_tool_args
-
-                try:
-                    trajectory[f"observation_{idx}"] = self.tools[plan.next_tool_name](
-                        **plan.next_tool_args
-                    )
-                except Exception as err:
-                    trajectory[f"observation_{idx}"] = (
-                        f"Execution error in {plan.next_tool_name}: {_fmt_exc(err)}"
-                    )
-                if plan.next_tool_name == "finish":
-                    break
-            span.set_attribute("output.value", safe_json_dumps(trajectory))
-        return dspy.Prediction(
-            trajectory=format_trajectory(trajectory),
-            summary=self.trajectory_summary,
-        )
-
-    def _call_with_potential_trajectory_truncation(
-        self, module, trajectory, **input_args
-    ):
-        for _ in range(3):
-            try:
-                return module(
-                    **input_args,
-                    trajectory=format_trajectory(trajectory),
-                )
-            except ContextWindowExceededError:
-                # Trajectory exceeded the context window
-                # truncating the oldest tool call information.
-                new_summary, trajectory = self.truncate_trajectory(
-                    trajectory, input_args["current_user_message"]
-                )
-                self.trajectory_summary = new_summary
-        raise ValueError(
-            "The context window was exceeded even after 3 attempts to truncate the trajectory."
-        )
-
-    def truncate_trajectory(self, trajectory: dict, current_user_message: str):
-        """Truncates the trajectory so that it fits in the context window.
-
-        Summarizes by using a LLM on the earliest trajectory set.
-        """
-        summarizer = dspy.Predict(SummarizerSignature)
-        keys = list(trajectory.keys())
-        if len(keys) < 4:
-            # Every tool call has 4 keys: thought, tool_name, tool_args, and observation.
-            raise ValueError(
-                "The trajectory is too long so your prompt exceeded the context window, but the trajectory cannot be "
-                "truncated because it only has one tool call."
+            planner_inputs = truncate_tokens_all(
+                planner_inputs,
+                self.get_token_limits(**planner_inputs),
             )
 
-        earliest_trajectory = ""
-        for key in keys[:4]:
-            earliest_trajectory += str(key) + ":" + trajectory.pop(key) + "\n"
-        summary = summarizer(
-            current_user_message=current_user_message,
-            previous_summary=self.trajectory_summary,
-            trajectory_to_discard=earliest_trajectory,
+            result = self.planner(**planner_inputs)
+
+            span.set_attribute(
+                "output.value",
+                safe_json_dumps(
+                    {"action_type": result.action_type, "action": result.action}
+                ),
+            )
+
+        return dspy.Prediction(
+            action_type=result.action_type,
+            action=result.action,
         )
-        return summary.new_summary, trajectory
-
-
-def _fmt_exc(err: BaseException, *, limit: int = 5) -> str:
-    """
-    Return a one-string traceback summary.
-    * `limit` - how many stack frames to keep (from the innermost outwards).
-    """
-
-    import traceback
-
-    return (
-        "\n"
-        + "".join(
-            traceback.format_exception(type(err), err, err.__traceback__, limit=limit)
-        ).strip()
-    )
