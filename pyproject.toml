@@ -62,6 +62,7 @@ dependencies = [
     "sqlalchemy",
     "pytest",
     "pre-commit",
+    "textual>=0.83.0",
 ]
 
 [project.optional-dependencies]
