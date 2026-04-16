@@ -17,7 +17,6 @@ from openinference.semconv.trace import (
 )
 from opentelemetry.trace import Status, StatusCode
 
-from chatdku.setup import use_phoenix
 from chatdku.core.utils import span_ctx_start
 
 
@@ -156,6 +155,8 @@ def CourseScheduleLookupOuter(classdata_csv_path: str):
 # CLI smoke-test
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
+    from chatdku.setup import use_phoenix
+
     use_phoenix()
     import argparse
 

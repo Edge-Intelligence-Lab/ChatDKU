@@ -98,10 +98,13 @@ def extract_majors(
     )
 
     def make_major_pattern(major: str) -> re.Pattern:
-        return re.compile(
-            rf"{re.escape(major)}",
-            re.IGNORECASE,
-        )
+        pattern = re.compile(rf"{re.escape(major)}", re.IGNORECASE)
+        # NOTE: Because of DKU's inconsistent formatting
+        # We have to create an exception for Data Science
+        if major == "Data Science":
+            pattern = re.compile(r"Data Science\s+Divisional")
+
+        return pattern
 
     for page_num in range(page_start - 1, len(doc)):
         page = doc[page_num]
@@ -135,9 +138,9 @@ def extract_majors(
 def sanitize_filename(name: str) -> str:
     """Convert a major name to a safe filename."""
     # Remove or replace unsafe characters
-    safe = re.sub(r"[^\w\s-]", "", name)
+    safe = re.sub(r"[^\w\s-]", "-", name)
     safe = re.sub(r"[-\s]+", "-", safe)
-    return safe.strip("-").lower()
+    return safe.strip().lower()
 
 
 def save_major_content(major_name: str, content: Dict, output_dir: Path):

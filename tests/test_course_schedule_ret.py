@@ -4,9 +4,6 @@ from chatdku.core.tools.course_schedule import (
     _parse_course,
 )
 
-CSV_PATH = "/tmp/cleaned_classdata.csv"
-df = pd.read_csv(CSV_PATH)
-
 
 def test_parse_course():
     assert _parse_course("COMPSCI 101") == ("COMPSCI", "101")
@@ -17,4 +14,10 @@ def test_parse_course():
 
 
 def test_lookup():
+    df = pd.DataFrame(
+        {
+            "Subject": ["COMPSCI", "MATH"],
+            "Catalog": ["101", "201"],
+        }
+    )
     assert _lookup("ASTROLOGY 1239", df) == []

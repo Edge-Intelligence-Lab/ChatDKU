@@ -31,6 +31,7 @@ from openinference.semconv.trace import (
     SpanAttributes,
 )
 from opentelemetry.trace import Status, StatusCode
+from thefuzz import fuzz, process
 
 from chatdku.core.utils import span_ctx_start
 
@@ -42,42 +43,44 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _tokenize(s: str) -> set[str]:
-    """Lowercase, drop punctuation/separators, return word-token set."""
-    s = s.lower()
-    s = re.sub(r"[/\\&,\-]", " ", s)
-    s = re.sub(r"[^a-z0-9 ]", "", s)
-    return set(s.split())
+def _build_stem_dict(stems: list[str]) -> dict[str, str]:
+    """Build a dictionary of stems to their normalized versions.
+    For example: {"data-science": "data science"}
+    """
+
+    def _replace_hyphens(stem: str) -> str:
+        return [stem.replace("-", " ")]
+
+    stem_dict = {}
+    for stem in stems:
+        stem_dict[stem] = _replace_hyphens(stem)
+    return stem_dict
 
 
-def _jaccard(a: set[str], b: set[str]) -> float:
-    union = a | b
-    if not union:
-        return 0.0
-    return len(a & b) / len(union)
+def _clean_query(query: str) -> str:
+    query = query.lower()
+    query = re.sub(r"[/\\&,\-]", " ", query)
+    query = re.sub(r"[^a-z0-9 ]", "", query)
+    return query
 
 
 def _best_match(query: str, stems: list[str]) -> str | None:
     """
-    Return the filename stem that best matches *query* by Jaccard similarity
+    Return the filename stem that best matches *query* by Levenshtein distance
     on word tokens.  Returns None when no candidate shares any token with
     the query.
     """
-    q_tokens = _tokenize(query)
-    if not q_tokens:
-        return None
+    stems_dict = _build_stem_dict(stems)
+    query = _clean_query(query)
 
-    best_stem: str | None = None
-    best_score = 0.0
+    matches = process.extract(
+        query,
+        stems_dict,
+        scorer=fuzz.token_set_ratio,
+        limit=1,
+    )
 
-    for stem in stems:
-        c_tokens = _tokenize(stem)
-        score = _jaccard(q_tokens, c_tokens)
-        if score > best_score:
-            best_score = score
-            best_stem = stem
-
-    return best_stem if best_score > 0.0 else None
+    return matches[0][2] if matches else None
 
 
 def _list_stems(requirements_dir: Path) -> list[str]:
@@ -210,6 +213,10 @@ def MajorRequirementsLookupOuter(requirements_dir: str):
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     import argparse
+
+    from chatdku.setup import use_phoenix
+
+    use_phoenix()
 
     parser = argparse.ArgumentParser(description="Test MajorRequirementsLookup")
     parser.add_argument(
