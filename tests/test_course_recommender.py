@@ -12,7 +12,6 @@ from opentelemetry.trace import StatusCode
 
 from chatdku.core.tools.course_recommender import (
     CourseRecommenderOuter,
-    _run_recommendation,
     parse_course_codes,
     prerequisites_met,
 )
@@ -74,15 +73,86 @@ def prereq_csv_with_ds_courses(tmp_path):
     """
     csv_path = tmp_path / "prereq_ds.csv"
     rows = [
-        [1, "09/01/2024", "MATH", "201", "", "", "", "", "", "", "", "", "", "Prerequisite: MATH 101 or MATH 105"],
-        [2, "09/01/2024", "STATS", "302", "", "", "", "", "", "", "", "", "",
-         "Prerequisite: MATH 201, MATH 202, MATH 206, and COMPSCI 201. Anti-requisite: MATH 405"],
-        [3, "09/01/2024", "COMPSCI", "301", "", "", "", "", "", "", "", "", "",
-         "COMPSCI 201, Anti-requisites: COMPSCI 308 and 310"],
-        [4, "09/01/2024", "GLOCHALL", "201", "", "", "", "", "", "", "", "", "",
-         "Prerequisite: GCHINA 101 and sophomore standing"],
-        [5, "09/01/2024", "ETHLDR", "201", "", "", "", "", "", "", "", "", "",
-         "Prerequisite: GLOCHALL 201 and junior standing"],
+        [
+            1,
+            "09/01/2024",
+            "MATH",
+            "201",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Prerequisite: MATH 101 or MATH 105",
+        ],
+        [
+            2,
+            "09/01/2024",
+            "STATS",
+            "302",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Prerequisite: MATH 201, MATH 202, MATH 206, and COMPSCI 201. Anti-requisite: MATH 405",
+        ],
+        [
+            3,
+            "09/01/2024",
+            "COMPSCI",
+            "301",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "COMPSCI 201, Anti-requisites: COMPSCI 308 and 310",
+        ],
+        [
+            4,
+            "09/01/2024",
+            "GLOCHALL",
+            "201",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Prerequisite: GCHINA 101 and sophomore standing",
+        ],
+        [
+            5,
+            "09/01/2024",
+            "ETHLDR",
+            "201",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Prerequisite: GLOCHALL 201 and junior standing",
+        ],
     ]
     columns = [f"col{i}" for i in range(14)]
     df = pd.DataFrame(rows, columns=columns)
@@ -129,7 +199,11 @@ class TestParseCourseCode:
     def test_preserves_insertion_order(self):
         text = "COMPSCI 201 then STATS 302 then MATH 201"
         codes = parse_course_codes(text)
-        assert codes.index("COMPSCI 201") < codes.index("STATS 302") < codes.index("MATH 201")
+        assert (
+            codes.index("COMPSCI 201")
+            < codes.index("STATS 302")
+            < codes.index("MATH 201")
+        )
 
     def test_does_not_match_two_digit_catalog(self):
         # Catalog numbers must be 3 digits — "MATH 20" should not match
@@ -193,7 +267,24 @@ class TestPrerequisitesMet:
         our heuristic returns eligible with an unstructured note."""
         # Inject a row with standing-only prereq
         extra = pd.DataFrame(
-            [[99, "01/01/2024", "ECON", "201", "", "", "", "", "", "", "", "", "", "Sophomore standing required"]],
+            [
+                [
+                    99,
+                    "01/01/2024",
+                    "ECON",
+                    "201",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "Sophomore standing required",
+                ]
+            ],
             columns=[f"col{i}" for i in range(14)],
         )
         df = pd.concat([self.prereq_df, extra], ignore_index=True)
@@ -212,7 +303,11 @@ class TestCourseRecommenderScenarios:
 
     # TC1 — Simple: freshman with no completed courses
     def test_tc1_no_completed_courses(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC1 (Simple): Student has no completed courses.
 
@@ -244,7 +339,11 @@ class TestCourseRecommenderScenarios:
 
     # TC2 — Normal: student with foundational courses done
     def test_tc2_student_with_calculus_done(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC2 (Normal): Student has completed MATH 101 (and thus MATH 201 is now eligible).
 
@@ -267,7 +366,11 @@ class TestCourseRecommenderScenarios:
         for line in lines:
             if "Recommended" in line and "eligible" in line.lower():
                 recommended_section = True
-            if recommended_section and "MATH 201" in line and line.strip().startswith("-"):
+            if (
+                recommended_section
+                and "MATH 201" in line
+                and line.strip().startswith("-")
+            ):
                 math201_in_recommended = True
                 break
             if line.startswith("###") and "Recommended" not in line:
@@ -279,11 +382,18 @@ class TestCourseRecommenderScenarios:
         )
 
         # STATS 302 should still be in 'not eligible'
-        assert "prerequisites not met" in result.lower() or "not eligible" in result.lower()
+        assert (
+            "prerequisites not met" in result.lower()
+            or "not eligible" in result.lower()
+        )
 
     # TC3 — OR prerequisite: second option satisfies
     def test_tc3_or_prereq_satisfied_by_alternate(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC3 (OR prereq): Student has MATH 105 (not MATH 101).
 
@@ -303,7 +413,11 @@ class TestCourseRecommenderScenarios:
         for line in lines:
             if "Recommended" in line and "eligible" in line.lower():
                 recommended_section = True
-            if recommended_section and "MATH 201" in line and line.strip().startswith("-"):
+            if (
+                recommended_section
+                and "MATH 201" in line
+                and line.strip().startswith("-")
+            ):
                 math201_in_recommended = True
                 break
             if line.startswith("###") and "Recommended" not in line:
@@ -316,7 +430,11 @@ class TestCourseRecommenderScenarios:
 
     # TC4 — Complex multi-prereq chain: STATS 302 with all prereqs done
     def test_tc4_all_prereqs_for_stats302(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC4 (Complex): Student completed all prereqs for STATS 302.
 
@@ -337,7 +455,11 @@ class TestCourseRecommenderScenarios:
         for line in lines:
             if "Recommended" in line and "eligible" in line.lower():
                 recommended_section = True
-            if recommended_section and "STATS 302" in line and line.strip().startswith("-"):
+            if (
+                recommended_section
+                and "STATS 302" in line
+                and line.strip().startswith("-")
+            ):
                 stats302_in_recommended = True
                 break
             if line.startswith("###") and "Recommended" not in line:
@@ -350,7 +472,11 @@ class TestCourseRecommenderScenarios:
 
     # TC5 — Edge case: all required courses already completed
     def test_tc5_all_courses_completed(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC5 (Edge case): Student has completed every required course.
 
@@ -358,8 +484,16 @@ class TestCourseRecommenderScenarios:
         of an empty recommendation grid.
         """
         # Extract all codes from the requirements fixtures to simulate full completion
-        all_ds = ["COMPSCI 201", "STATS 302", "STATS 303", "STATS 401",
-                  "MATH 201", "MATH 202", "MATH 206", "COMPSCI 301"]
+        all_ds = [
+            "COMPSCI 201",
+            "STATS 302",
+            "STATS 303",
+            "STATS 401",
+            "MATH 201",
+            "MATH 202",
+            "MATH 206",
+            "COMPSCI 301",
+        ]
         all_core = ["GCHINA 101", "GLOCHALL 201", "ETHLDR 201"]
         completed = all_ds + all_core
 
@@ -370,13 +504,17 @@ class TestCourseRecommenderScenarios:
         )
         result = recommender(major="data science", completed_courses=completed)
 
-        assert "completed all required courses" in result.lower(), (
-            f"Expected completion message, got:\n{result}"
-        )
+        assert (
+            "completed all required courses" in result.lower()
+        ), f"Expected completion message, got:\n{result}"
 
     # TC6 — Unknown major
     def test_tc6_unknown_major(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC6: User provides a major that doesn't exist in the requirements dir."""
         recommender = CourseRecommenderOuter(
@@ -389,7 +527,11 @@ class TestCourseRecommenderScenarios:
 
     # TC7 — Common-core courses: ETHLDR 201 chain
     def test_tc7_common_core_prereq_chain(
-        self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
     ):
         """TC7 (Complex): Tests the common-core prerequisite chain.
 
@@ -407,8 +549,14 @@ class TestCourseRecommenderScenarios:
         # Also complete DS courses so the report focuses on core courses
         completed = [
             "GCHINA 101",  # satisfies GLOCHALL 201's prereq
-            "COMPSCI 201", "STATS 302", "STATS 303", "STATS 401",
-            "MATH 201", "MATH 202", "MATH 206", "COMPSCI 301",
+            "COMPSCI 201",
+            "STATS 302",
+            "STATS 303",
+            "STATS 401",
+            "MATH 201",
+            "MATH 202",
+            "MATH 206",
+            "COMPSCI 301",
         ]
         result = recommender(major="data science", completed_courses=completed)
 
@@ -416,25 +564,26 @@ class TestCourseRecommenderScenarios:
         lines = result.split("\n")
         recommended_section = False
         glochall_recommended = False
-        ethldr_not_eligible = False
 
         for line in lines:
             if "Recommended" in line and "eligible" in line.lower():
                 recommended_section = True
-            if recommended_section and "GLOCHALL 201" in line and line.strip().startswith("-"):
+            if (
+                recommended_section
+                and "GLOCHALL 201" in line
+                and line.strip().startswith("-")
+            ):
                 glochall_recommended = True
             if line.startswith("###") and "Recommended" not in line:
                 recommended_section = False
-            if "not eligible" in line.lower() or "prerequisites not met" in line.lower():
-                pass  # Just note we're in the not-eligible section
-            if "ETHLDR 201" in line and ("not eligible" in result.lower()):
-                ethldr_not_eligible = True
 
         assert glochall_recommended, (
             "GLOCHALL 201 should be recommended (GCHINA 101 done, GLOCHALL 201 is offered).\n"
             f"Full output:\n{result}"
         )
-        assert "ETHLDR 201" in result, "ETHLDR 201 should appear somewhere in the report"
+        assert (
+            "ETHLDR 201" in result
+        ), "ETHLDR 201 should appear somewhere in the report"
 
 
 # ---------------------------------------------------------------------------
@@ -443,28 +592,64 @@ class TestCourseRecommenderScenarios:
 
 
 class TestCourseRecommenderInfra:
-    def test_returns_callable(self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses):
-        fn = CourseRecommenderOuter(req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses)
+    def test_returns_callable(
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
+    ):
+        fn = CourseRecommenderOuter(
+            req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        )
         assert callable(fn)
 
-    def test_nonexistent_requirements_dir_raises(self, mock_span_ctx, sample_classdata_real_csv, prereq_csv_with_ds_courses):
-        fn = CourseRecommenderOuter("/nonexistent/path", sample_classdata_real_csv, prereq_csv_with_ds_courses)
+    def test_nonexistent_requirements_dir_raises(
+        self, mock_span_ctx, sample_classdata_real_csv, prereq_csv_with_ds_courses
+    ):
+        fn = CourseRecommenderOuter(
+            "/nonexistent/path", sample_classdata_real_csv, prereq_csv_with_ds_courses
+        )
         with pytest.raises(FileNotFoundError):
             fn(major="data science", completed_courses=[])
 
-    def test_span_status_ok_on_success(self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses):
-        fn = CourseRecommenderOuter(req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses)
+    def test_span_status_ok_on_success(
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
+    ):
+        fn = CourseRecommenderOuter(
+            req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        )
         fn(major="data science", completed_courses=[])
         calls = mock_span_ctx.set_status.call_args_list
         assert any(c.args[0].status_code == StatusCode.OK for c in calls if c.args)
 
-    def test_span_attributes_set(self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses):
-        fn = CourseRecommenderOuter(req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses)
+    def test_span_attributes_set(
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
+    ):
+        fn = CourseRecommenderOuter(
+            req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        )
         fn(major="data science", completed_courses=[])
         assert mock_span_ctx.set_attributes.called
 
-    def test_report_contains_summary_counts(self, mock_span_ctx, req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses):
-        fn = CourseRecommenderOuter(req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses)
+    def test_report_contains_summary_counts(
+        self,
+        mock_span_ctx,
+        req_dir,
+        sample_classdata_real_csv,
+        prereq_csv_with_ds_courses,
+    ):
+        fn = CourseRecommenderOuter(
+            req_dir, sample_classdata_real_csv, prereq_csv_with_ds_courses
+        )
         result = fn(major="data science", completed_courses=[])
         # Report should have summary header stats
         assert "Total required courses" in result
