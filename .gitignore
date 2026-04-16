@@ -224,3 +224,13 @@ benchmarks/questions.json
 
 #For testing
 **/benchmarks
+
+# Claude local and transient stuff
+.claude/settings.local.json
+.claude/skills/.cache/
+.claude/skills/*.log
+.claude/skills/state/
+.claude/skills/tmp/
+.claude/conversations/
+.claude/sessions/
+.claude/checkpoints/
