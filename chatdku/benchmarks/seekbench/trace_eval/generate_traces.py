@@ -3,7 +3,7 @@ from chatdku.core.tools.llama_index import KeywordRetrieverOuter, VectorRetrieve
 import dspy
 import ray
 import argparse
-import torch
+# import torch
 
 from openinference.instrumentation import dangerously_using_project
 from opentelemetry import trace
@@ -18,17 +18,17 @@ parser.add_argument(
     required=True
 )
 
-num_gpu=torch.cuda.device_count() if (torch.cuda.device_count()>=1 and torch.cuda.device_count()<=4) else 0
+# num_gpu=torch.cuda.device_count() if (torch.cuda.device_count()>=1 and torch.cuda.device_count()<=4) else 0
 
 
 def read_questions_parquet(path: str) -> list[dict]:
     ds = ray.data.read_parquet(path)
     df = ds.to_pandas()
     records = df[["question", "max_iteration"]].to_dict(orient="records")
-    return records
+    return records[:50] #Return only 50 questions
 
 
-@ray.remote(num_gpus=num_gpu)
+@ray.remote(num_gpus=1)
 def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
     """Use the custom agent to generate reasoning traces"""
 
@@ -39,7 +39,7 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
     use_phoenix()
 
     print(f"Tracing setup completed for idx {idx}")
-    print(f"Using {num_gpu} gpu")
+    print(f"Using 1 gpu")
 
 
     lm = dspy.LM(
@@ -52,6 +52,12 @@ def _run_agent_remote(idx: int, question: str, max_iterations: int = 2) -> None:
     )
 
     dspy.configure(lm=lm)
+
+    dspy.configure_cache(
+    enable_disk_cache=False,
+    enable_memory_cache=False
+    )
+
 
     user_id = "ChatDKU"
     search_mode = 0

@@ -55,10 +55,10 @@ MODEL_COLOR_PALETTE = {
     'Tongyi DeepResearch': '#3498db',
     'Claude Sonnet 4.5': '#9b59b6',
     'Qwen3-30B-A3B': '#1abc9c',
-    'DeepResearcher': '#2e5d88',       
+    'Qwen3': '#2e5d88',       
     'ReSearch': '#159988',             
     'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',   
+    'Qwen3.5-35B': '#fee837',   
     'Qwen3-30B-A3B-Instruct-2507': '#460057',          
     'Qwen3-30B-A3B': '#1abc9c',        
 }
@@ -334,12 +334,12 @@ def clean_and_categorize_model(model_name: str):
         return "Base (Qwen)", "Base"
     if "SearchR1" in model_name:
         return "SearchR1", "RL Agents"
-    if "DeepResearcher" in model_name:
-        return "DeepResearcher", "RL Agents"
+    if "Qwen3" in model_name:
+        return "Qwen3", "Base"
     if "ReSearch" in model_name:
         return "ReSearch", "RL Agents"
-    if "ASearcher" in model_name:
-        return "ASearcher", "RL Agents"
+    if "Qwen3.5-35B" in model_name:
+        return "Qwen3.5-35B", "Base"
     return "Other", "Other"
 
 def load_traces(path):

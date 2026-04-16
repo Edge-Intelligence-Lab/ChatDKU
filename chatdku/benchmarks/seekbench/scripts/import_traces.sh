@@ -1,6 +1,7 @@
 FILEPATH="data/chatdku_dataset.parquet"
 OUTPUTPATH="outputs/raw_traces.jsonl"
-MODEL="Qwen3-30B-A3B"
+MODEL=Qwen3-30B-A3B-Instruct-2507
+
 DATASET="chatdku_dataset"
 
 echo "Importing Traces..."

@@ -85,10 +85,10 @@ MODEL_COLOR_PALETTE = {
     'GPT-4o': '#e67e22',
     'Tongyi DeepResearch': '#3498db',
     'Claude Sonnet 4.5': '#9b59b6',
-    'DeepResearcher': '#2e5d88',       
+    'Qwen3': '#2e5d88',       
     'ReSearch': '#159988',             
     'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',   
+    'Qwen3.5-35B': '#fee837',   
     'Qwen3-30B-A3B-Instruct-2507': '#460057',          
     'Qwen3-30B-A3B': '#1abc9c',        
 }
@@ -109,7 +109,7 @@ def clean_and_categorize_model(model_name: str):
     if "claude-sonnet-4-5-thinking" in model_name or "claude-sonnet-4-5-thinking-all" in model_name:
         return "Claude Sonnet 4.5", "DeepResearch"
     if "Qwen3-30B-A3B-Instruct-2507" in model_name or "Qwen3-30B-A3B" in model_name:
-        return "Qwen3-30B-A3B", "DeepResearch"
+        return "Qwen3-30B-A3B", "Base"
     # Legacy models
     if "fewshot-Qwen2.5-7B-Instruct" in model_name:
         return "Few-shot (Qwen)", "Few-shot"
@@ -121,17 +121,17 @@ def clean_and_categorize_model(model_name: str):
         return "Base (Qwen)", "Base"
     if "SearchR1" in model_name:
         return "SearchR1", "Trained"
-    if "DeepResearcher" in model_name:
-        return "DeepResearcher", "Trained"
+    if "Qwen3.5-35B" in model_name:
+        return "Qwen3.5-35B", "Base"
+    if "Qwen3" in model_name:
+        return "Qwen3", "Base"
     if "ReSearch" in model_name:
         return "ReSearch", "Trained"
-    if "ASearcher" in model_name:
-        return "ASearcher", "Trained"
     return "Other", "Other"
 
 def get_model_order():
     """Return the desired model order for consistent sorting across all plots."""
-    return ["Base (Qwen)", "Few-shot (Qwen)", "CoT (Qwen)", "ReAct (Qwen)", "Structured (Qwen)", "Self-Consistency (Qwen)", "GPT-5", "GPT-4o", "Tongyi DeepResearch", "Claude Sonnet 4.5", "Qwen3-30B-A3B", "DeepResearcher", "ReSearch", "SearchR1", "ASearcher"]
+    return ["Base (Qwen)", "Few-shot (Qwen)", "CoT (Qwen)", "ReAct (Qwen)", "Structured (Qwen)", "Self-Consistency (Qwen)", "GPT-5", "GPT-4o", "Tongyi DeepResearch", "Claude Sonnet 4.5", "Qwen3-30B-A3B", "Qwen3", "ReSearch", "SearchR1", "Qwen3.5-35B"]
 
 def load_traces(path: str):
     rows = []
@@ -169,7 +169,7 @@ def compute_rqi(trace_steps: list, category: str = None) -> float:
         
         reasoning_type = ann.get('type', 'Unknown')
         is_reasoning_step = False
-        if reasoning_type in ["InformationSynthesis", "PlanFormation", "StateAssessment"]:
+        if reasoning_type in ["InformationSynthesis", "PlanFormation", "StateAssessment","PlanFormation"]:
             is_reasoning_step = True
         elif category == 'DeepResearch' and step.get('type') == 'search':
             is_reasoning_step = True
@@ -207,7 +207,7 @@ def compute_rqi_by_reasoning_type(trace_steps: list, category: str = None) -> di
         is_reasoning_step = False
         if reasoning_type in ["InformationSynthesis", "PlanFormation", "StateAssessment"]:
             is_reasoning_step = True
-        elif category == 'DeepResearch' and step.get('type') == 'search':
+        elif category == 'Base' and step.get('type') == 'search':
             is_reasoning_step = True
             reasoning_type = "PlanFormation"  # Map search to PlanFormation for these models
 
@@ -232,7 +232,6 @@ def compute_rqi_by_reasoning_type(trace_steps: list, category: str = None) -> di
             'grounded_count': grounded,
             'grounded_ratio': ratio
         }
-    
     return result
 
 def compute_turns_to_first_sufficient(trace_steps: list, require_clear: bool = True) -> float:
@@ -1091,6 +1090,7 @@ def print_summary_results(df_all: pd.DataFrame, outdir: str, n_boot: int = 2000)
         sub_df = df_used[df_used['model'] == m]
         stats = aggregate_rqi_by_reasoning_type(sub_df)
         for t in type_list:
+            print(t)
             pooled_counts[t] += stats.get(t, {}).get('total_count', 0)
     total = sum(pooled_counts.values()) or 1
     ref_weights = {t: (pooled_counts[t] / total) for t in type_list}
@@ -1148,7 +1148,7 @@ def debug_grounding_comparison(traces: list):
             is_reasoning_step = False
             if rt in eligible_types:
                 is_reasoning_step = True
-            elif cat == 'DeepResearch' and step.get('type') == 'search':
+            elif cat == '' and step.get('type') == 'search':
                 is_reasoning_step = True
                 # Map search to PlanFormation for consistent counting with rqi_by_type
                 rt = "PlanFormation"

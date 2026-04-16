@@ -191,6 +191,11 @@ def main():
     )
 
     print("Done.")
+    try:
+        print("----Deleting Project----")
+        client.projects.delete("seekbench_eval")
+    except Exception as e:
+        raise e
 
 
 if __name__ == '__main__':

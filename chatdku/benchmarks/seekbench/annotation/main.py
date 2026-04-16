@@ -661,7 +661,7 @@ async def main():
 
     output_file=os.path.abspath(args.output_file)
 
-    with open(output_file, 'w') as outfile:
+    with open(output_file, 'a') as outfile:
         for future in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Annotating Traces"):
             result = await future
             if result:

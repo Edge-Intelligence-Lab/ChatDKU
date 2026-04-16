@@ -64,8 +64,6 @@ plt.rcParams.update({
 # Global model color palette (align with groundness/recovery analyses)
 MODEL_COLOR_PALETTE = {
     'Base (Qwen)': '#460057',          
-    'Few-shot (Qwen)': '#423e81',      
-    'CoT (Qwen)': '#8b5a9f',
     'ReAct (Qwen)': '#a67db8',
     'Structured (Qwen)': '#c19fd1',
     'Self-Consistency (Qwen)': '#d9bce5',
@@ -74,19 +72,20 @@ MODEL_COLOR_PALETTE = {
     'Tongyi DeepResearch': '#3498db',
     'Claude Sonnet 4.5': '#9b59b6',
     'Qwen3-30B-A3B': '#1abc9c',
-    'DeepResearcher': '#2e5d88',       
+    'Qwen3': '#2e5d88',       
     'ReSearch': '#159988',             
     'SearchR1': '#6ece5d',            
-    'ASearcher': '#fee837',   
+    'Qwen3.5-35B': '#fee837',   
     'Qwen3-30B-A3B-Instruct-2507': '#460057',          
-    'Qwen3-30B-A3B': '#1abc9c',        
+    'Qwen3-30B-A3B': '#1abc9c', 
+           
 }
 
 def get_model_color(model_name: str) -> str:
     return MODEL_COLOR_PALETTE.get(model_name, '#7f7f7f')
 
 def get_model_order():
-    return ["Qwen3-30B-A3B-Instruct-2507 (Qwen)", "Qwen3-30B-A3B'(Qwen)"]
+    return ["Qwen3-30B-A3B-Instruct-2507 (Qwen)", "Qwen3-30B-A3B (Qwen)", "Qwen3 (Qwen)", "Qwen3.5-35B (Qwen)"]
 
 
 def ensure_dir(p: str):
@@ -119,8 +118,8 @@ def clean_and_categorize_model(model_name: str):
         return "Qwen3-30B-A3B-Instruct-2507", "Base" 
     if "Qwen3-30B-A3B" in model_name  in model_name:
         return "Qwen3-30B-A3B", "Base"
-    if "fewshot-Qwen2.5-7B-Instruct" in model_name:
-        return "Few-shot (Qwen)", "Few-shot"
+    if "Qwen3" in model_name:
+        return "Qwen3", "Base"
     if "cot-Qwen2.5-7B-Instruct" in model_name:
         return "CoT (Qwen)", "CoT (Qwen)"
     if "react-Qwen2.5-7B-Instruct" in model_name:
@@ -129,12 +128,12 @@ def clean_and_categorize_model(model_name: str):
         return "Base (Qwen)", "Base"
     if "SearchR1" in model_name:
         return "SearchR1", "RL Agents"
-    if "DeepResearcher" in model_name:
-        return "DeepResearcher", "RL Agents"
+    if "Qwen3" in model_name:
+        return "Qwen3", "Base"
     if "ReSearch" in model_name:
         return "ReSearch", "RL Agents"
-    if "ASearcher" in model_name:
-        return "ASearcher", "RL Agents"
+    if "Qwen3.5-35B" in model_name:
+        return "Qwen3.5-35B", "Base"
     return "Other", "Other"
 
 

@@ -159,7 +159,8 @@ def extract_structured_data_from_file(jsonl_path: str, flawed_data_file: str = N
                 "is_correct": data.get("is_correct") == 1.0,
                 "trace": trace,
                 "final_answer": parsed_info["final_answer"],
-                "queries": parsed_info["queries"]
+                "queries": parsed_info["queries"],
+                "model":data.get('model')
             }
             structured_results.append(structured_data)
     if flawed_data_file:
