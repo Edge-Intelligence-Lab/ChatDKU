@@ -1,12 +1,20 @@
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from chatdku.core.dspy_classes.memory import PermanentMemory
 from chatdku.core.tools.memory_tool import MemoryTools
 
 app = FastAPI()
+
+
+def run_permanent_memory(user_id: str, session_conversation: list[dict[str, str]], most_recent_conversation: list[dict[str, str]]):
+    permanent_memory = PermanentMemory(user_id)
+    permanent_memory(
+        session_conversation=session_conversation,
+        most_recent_conversation=most_recent_conversation,
+    )
 
 
 class MemoryRequestBase(BaseModel):
@@ -34,7 +42,7 @@ async def root():
     return {"status": "ok"}
 
 @app.post("/memory")
-async def memory_agent(request: MemoryAgentRequest):
+async def memory_agent(request: MemoryAgentRequest, background_tasks: BackgroundTasks):
     if request.most_recent_conversation is None:
         raise HTTPException(
             status_code=422,
@@ -42,10 +50,16 @@ async def memory_agent(request: MemoryAgentRequest):
         )
     if request.session_conversation is None:
         request.session_conversation = []
-    permanent_memory = PermanentMemory(request.user_id)
-    permanent_memory(
-        session_conversation=request.session_conversation,
-        most_recent_conversation=request.most_recent_conversation,
+
+    background_tasks.add_task(
+        run_permanent_memory,
+        request.user_id,
+        request.session_conversation,
+        request.most_recent_conversation,
     )
+
     request.session_conversation.extend(request.most_recent_conversation)
-    return {"conversations": request.session_conversation}
+    return {
+        "status": "scheduled",
+        "conversations": request.session_conversation,
+    }
