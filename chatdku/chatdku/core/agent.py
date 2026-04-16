@@ -252,7 +252,7 @@ def main():
                 session_conversation=conversations,
                 most_recent_conversation=recent_conversation,
             )
-            conversations.append(recent_conversation)
+            conversations.extend(recent_conversation)
 
         except EOFError:
             break
