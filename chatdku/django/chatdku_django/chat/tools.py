@@ -1,5 +1,5 @@
 from chatdku.core.tools.llama_index_tools import KeywordRetrieverOuter, VectorRetrieverOuter
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
+from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
 
 
 def get_tools(user_id: str, search_mode, docs):
@@ -21,7 +21,7 @@ def get_tools(user_id: str, search_mode, docs):
             search_mode=search_mode,
             files=docs,
         ),
-        QueryCurriculumOuter(),
+        SyllabusLookupOuter(),
     ]
 
     return base_tools

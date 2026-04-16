@@ -26,7 +26,7 @@ from chatdku.core.tools.llama_index_tools import (
     VectorRetrieverOuter,
 )
 from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
+from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
 from chatdku.core.utils import format_trajectory, load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
@@ -239,7 +239,7 @@ def build_agent(streaming: bool = True, max_iterations: int = 5) -> "Agent":
             files=[],
         ),
         MajorRequirementsLookupOuter(config.major_requirements_dir),
-        QueryCurriculumOuter(),
+        SyllabusLookupOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
         CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
         CourseRecommenderOuter(

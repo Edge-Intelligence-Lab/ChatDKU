@@ -26,9 +26,9 @@ from chatdku.config import config; t = lap("import config", t)  # noqa: E402,E40
 from chatdku.core.tools.retriever.keyword_retriever import KeywordRetriever; t = lap("import KeywordRetriever (+ NLTK check)", t)  # noqa: E402,E401,E501
 from chatdku.core.tools.retriever.vector_retriever import VectorRetriever; t = lap("import VectorRetriever (+ chromadb)", t)  # noqa: E402,E401,E501
 from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter; t = lap("import MajorRequirementsLookupOuter", t)  # noqa: E402,E401,E501
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter; t = lap("import QueryCurriculumOuter (+ DB)", t)  # noqa: E402,E401,E501
-from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter; t = lap("import PrerequisiteLookupOuter", t)  # noqa: E402,E401,E501
-from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter; t = lap("import CourseScheduleLookupOuter", t)  # noqa: E402,E401,E501
+from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter; t = lap("import QueryCurriculumOuter (+ DB)", t)  # noqa: E402,E401,E501
+t = lap("import PrerequisiteLookupOuter", t)  # noqa: E402,E401,E501
+t = lap("import CourseScheduleLookupOuter", t)  # noqa: E402,E401,E501
 from chatdku.setup import setup, use_phoenix; t = lap("import setup, use_phoenix", t)  # noqa: E402,E401
 
 # --- initialization ---
@@ -58,7 +58,7 @@ t = lap("VectorRetriever() init", t)
 MajorRequirementsLookupOuter(config.major_requirements_dir)
 t = lap("MajorRequirementsLookupOuter() init", t)
 
-QueryCurriculumOuter()
+SyllabusLookupOuter()
 t = lap("QueryCurriculumOuter() init (DB connect + schema fetch)", t)
 
 print(f"\n=== total: {t - _t0:.2f}s ===")

@@ -26,7 +26,7 @@ def mock_span_ctx(monkeypatch):
         "chatdku.core.tools.course_recommender.span_ctx_start",
         "chatdku.core.tools.get_prerequisites.span_ctx_start",
         "chatdku.core.tools.major_requirements.span_ctx_start",
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.span_ctx_start",
+        "chatdku.core.tools.syllabi.query_curriculum_db.span_ctx_start",
         "chatdku.core.tools.retriever.base_retriever.span_ctx_start",
     ]
     for target in targets:
