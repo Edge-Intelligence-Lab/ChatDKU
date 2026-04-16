@@ -62,6 +62,8 @@ dependencies = [
     "sqlalchemy",
     "pytest",
     "pre-commit",
+    "seaborn",
+    "ray"
 ]
 
 [project.optional-dependencies]
