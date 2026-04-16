@@ -64,6 +64,7 @@ dependencies = [
     "pytest",
     "pre-commit",
     "textual>=0.83.0",
+    "pyfiglet>=1.0.2",
 ]
 
 [project.optional-dependencies]

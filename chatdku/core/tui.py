@@ -9,13 +9,36 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from pathlib import Path
 
+import pyfiglet
+from rich.table import Table
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widgets import Footer, Header, Input, Static
 
 from chatdku.core.agent import build_agent
+
+_LOGO_PATH = Path(__file__).parent / "ascii_logo"
+
+
+def _build_splash() -> Table:
+    """Build the startup splash: ANSI logo beside a figlet 'ChatDKU' title."""
+    try:
+        logo_text = Text.from_ansi(_LOGO_PATH.read_text())
+    except OSError:
+        logo_text = Text("")
+
+    figlet_str = "\n" * 4 + pyfiglet.figlet_format("ChatDKU", font="slant")
+    title_text = Text(figlet_str, style="bold #4aa7ff")
+
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(no_wrap=True)
+    grid.add_column(no_wrap=True)
+    grid.add_row(logo_text, title_text)
+    return grid
 
 
 class Message(Static):
@@ -31,8 +54,8 @@ class Message(Static):
         max-width: 90%;
         height: auto;
     }
-    Message.user     { border: round #8fd694; color: #d6f5d6; }
-    Message.agent    { border: round #7ab7ff; color: #d6e6ff; }
+    Message.user     { border: round #7fe684; color: #d6f5d6; }
+    Message.agent    { border: round #4aa7ff; color: #d6e6ff; }
     Message.system   { border: round #5c616d; color: #9aa0ab; }
     Message.pending  { border: round #4a4f5a; color: #7c8290; }
     """
@@ -57,7 +80,8 @@ class Message(Static):
 
 
 class ChatDKUApp(App):
-    ENABLE_COMMAND_PALETTE = False
+    ENABLE_COMMAND_PALETTE = True
+    COLOR_SYSTEM = "truecolor"
 
     CSS = """
     Screen { layout: vertical; background: transparent; }
@@ -105,6 +129,9 @@ class ChatDKUApp(App):
         self.call_from_thread(self._boot_done)
 
     async def _boot_done(self) -> None:
+        log = self.query_one("#log", VerticalScroll)
+        await log.mount(Static(_build_splash()))
+        log.scroll_end(animate=False)
         await self._post("system", "Ready.")
 
     async def _post(self, role: str, content: str) -> Message:
