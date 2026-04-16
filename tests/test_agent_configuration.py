@@ -34,31 +34,35 @@ class TestPlannerConfiguration:
             for kw in ("policy", "policies", "mandatory courses", "year-specific")
         ), "Planner must instruct Executor to retrieve year-specific policies"
         # Should still mention CourseRecommender
-        assert "CourseRecommender" in instructions, (
-            "Planner must still reference CourseRecommender as the baseline tool"
-        )
+        assert (
+            "CourseRecommender" in instructions
+        ), "Planner must still reference CourseRecommender as the baseline tool"
 
-    def test_planner_instructions_mention_vector_or_keyword_retriever_for_policies(self):
+    def test_planner_instructions_mention_vector_or_keyword_retriever_for_policies(
+        self,
+    ):
         """Planner must name VectorRetriever or KeywordRetriever for policy lookup."""
         instructions = PlannerSignature.__doc__ or ""
-        assert "VectorRetriever" in instructions or "KeywordRetriever" in instructions, (
-            "Planner must instruct use of VectorRetriever/KeywordRetriever for policy lookup"
-        )
+        assert (
+            "VectorRetriever" in instructions or "KeywordRetriever" in instructions
+        ), "Planner must instruct use of VectorRetriever/KeywordRetriever for policy lookup"
 
     def test_planner_missing_info_demo_asks_for_all_three(self):
         """The 'missing info' demo must ask for major, year, and completed courses."""
         missing_info_demo = next(
             (d for d in PLANNER_DEMOS if d.action_type == "send_message"), None
         )
-        assert missing_info_demo is not None, "PLANNER_DEMOS must have a send_message example"
+        assert (
+            missing_info_demo is not None
+        ), "PLANNER_DEMOS must have a send_message example"
         action = missing_info_demo.action.lower()
         assert "major" in action, "Missing-info message must ask for major"
-        assert any(kw in action for kw in ("year", "matriculation", "class of")), (
-            "Missing-info message must ask for year of matriculation"
-        )
-        assert any(kw in action for kw in ("completed", "taken", "taking")), (
-            "Missing-info message must ask for completed courses"
-        )
+        assert any(
+            kw in action for kw in ("year", "matriculation", "class of")
+        ), "Missing-info message must ask for year of matriculation"
+        assert any(
+            kw in action for kw in ("completed", "taken", "taking")
+        ), "Missing-info message must ask for completed courses"
 
     def test_planner_schedule_demo_is_policy_first(self):
         """The full schedule planning demo must mention policy retrieval before CourseRecommender."""
@@ -67,26 +71,38 @@ class TestPlannerConfiguration:
         schedule_demo = next(
             (d for d in plan_demos if "Class of" in d.current_user_message), None
         )
-        assert schedule_demo is not None, (
-            "PLANNER_DEMOS must include a complete schedule planning example with class year"
-        )
+        assert (
+            schedule_demo is not None
+        ), "PLANNER_DEMOS must include a complete schedule planning example with class year"
         action = schedule_demo.action
         # Policy step should appear before CourseRecommender call in the action text
-        policy_keywords = ["policy", "policies", "mandatory", "retrieve", "VectorRetriever",
-                           "KeywordRetriever", "year-specific", "requirements"]
+        policy_keywords = [
+            "policy",
+            "policies",
+            "mandatory",
+            "retrieve",
+            "VectorRetriever",
+            "KeywordRetriever",
+            "year-specific",
+            "requirements",
+        ]
         has_policy_step = any(kw.lower() in action.lower() for kw in policy_keywords)
-        assert has_policy_step, (
-            f"Schedule planning demo must include a policy-retrieval step.\nAction:\n{action}"
-        )
+        assert (
+            has_policy_step
+        ), f"Schedule planning demo must include a policy-retrieval step.\nAction:\n{action}"
         policy_pos = min(
-            (action.lower().find(kw.lower()) for kw in policy_keywords if kw.lower() in action.lower()),
+            (
+                action.lower().find(kw.lower())
+                for kw in policy_keywords
+                if kw.lower() in action.lower()
+            ),
             default=-1,
         )
         recommender_pos = action.find("CourseRecommender")
         assert recommender_pos != -1, "Demo must mention CourseRecommender"
-        assert policy_pos < recommender_pos, (
-            "Policy retrieval step must come BEFORE CourseRecommender in the demo plan"
-        )
+        assert (
+            policy_pos < recommender_pos
+        ), "Policy retrieval step must come BEFORE CourseRecommender in the demo plan"
 
 
 # ---------------------------------------------------------------------------
@@ -112,15 +128,15 @@ class TestExecutorConfiguration:
             "AssessSignature must use 'current_agenda' (not 'plan') to indicate "
             "the agenda can grow beyond the original plan"
         )
-        assert "plan" not in input_fields, (
-            "AssessSignature must not use the old 'plan' field name"
-        )
+        assert (
+            "plan" not in input_fields
+        ), "AssessSignature must not use the old 'plan' field name"
 
     def test_assess_signature_decision_field_exists_as_output(self):
         """AssessSignature must have a 'decision' output field."""
-        assert "decision" in AssessSignature.output_fields, (
-            "AssessSignature must define a 'decision' output field"
-        )
+        assert (
+            "decision" in AssessSignature.output_fields
+        ), "AssessSignature must define a 'decision' output field"
         # Verify it is not accidentally an input field.
         assert "decision" not in AssessSignature.input_fields
 
@@ -129,11 +145,17 @@ class TestExecutorConfiguration:
         doc = AssessSignature.__doc__ or ""
         assert any(
             kw in doc.lower()
-            for kw in ("new investigation", "agenda extension", "revealed", "discovered")
+            for kw in (
+                "new investigation",
+                "agenda extension",
+                "revealed",
+                "discovered",
+            )
         ), "AssessSignature docstring must explain when to extend the agenda"
 
     def test_executor_get_token_limits_accepts_current_agenda(self, tmp_path):
         """Executor.get_token_limits must accept 'current_agenda' (not 'plan')."""
+
         # Build a minimal Executor with a trivial tool.
         def dummy_tool(query: str) -> str:
             """A dummy tool for testing. Args: query (str): The query."""
@@ -158,6 +180,7 @@ class TestExecutorConfiguration:
     def test_executor_max_iterations_default_is_five_or_more(self):
         """Executor default max_iterations should be >= 5 for policy-aware planning."""
         import inspect
+
         sig = inspect.signature(Executor.__init__)
         default = sig.parameters["max_iterations"].default
         assert default >= 5, (

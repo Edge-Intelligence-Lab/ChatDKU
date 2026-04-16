@@ -37,13 +37,57 @@ _COURSE_CODE_RE = re.compile(r"\b([A-Z]{2,10})\s+(\d{3}[A-Z]?)\b")
 
 # Known DKU subject codes — used to filter false positives from the markdown.
 _KNOWN_SUBJECTS = {
-    "DKU", "GERMAN", "INDSTU", "JAPANESE", "KOREAN", "MUSIC", "SPANISH",
-    "ARHU", "ARTS", "BEHAVSCI", "BIOL", "CHEM", "CHINESE", "COMPDSGN",
-    "COMPSCI", "CULANTH", "CULMOVE", "CULSOC", "EAP", "ECON", "ENVIR",
-    "ETHLDR", "GCHINA", "GCULS", "GLHLTH", "GLOCHALL", "HIST", "HUM", "INFOSCI",
-    "INSTGOV", "LIT", "MATH", "MATSCI", "MEDIA", "MEDIART", "NEUROSCI",
-    "PHIL", "PHYS", "PHYSEDU", "POLECON", "POLSCI", "PPE", "PSYCH",
-    "PUBPOL", "SOCIOL", "SOSC", "STATS", "USTUD", "WOC", "RELIG", "MINITERM",
+    "DKU",
+    "GERMAN",
+    "INDSTU",
+    "JAPANESE",
+    "KOREAN",
+    "MUSIC",
+    "SPANISH",
+    "ARHU",
+    "ARTS",
+    "BEHAVSCI",
+    "BIOL",
+    "CHEM",
+    "CHINESE",
+    "COMPDSGN",
+    "COMPSCI",
+    "CULANTH",
+    "CULMOVE",
+    "CULSOC",
+    "EAP",
+    "ECON",
+    "ENVIR",
+    "ETHLDR",
+    "GCHINA",
+    "GCULS",
+    "GLHLTH",
+    "GLOCHALL",
+    "HIST",
+    "HUM",
+    "INFOSCI",
+    "INSTGOV",
+    "LIT",
+    "MATH",
+    "MATSCI",
+    "MEDIA",
+    "MEDIART",
+    "NEUROSCI",
+    "PHIL",
+    "PHYS",
+    "PHYSEDU",
+    "POLECON",
+    "POLSCI",
+    "PPE",
+    "PSYCH",
+    "PUBPOL",
+    "SOCIOL",
+    "SOSC",
+    "STATS",
+    "USTUD",
+    "WOC",
+    "RELIG",
+    "MINITERM",
 }
 
 
@@ -144,12 +188,18 @@ def prerequisites_met(
         if satisfied:
             return True, ""
         missing = [c for c in codes_in_prereq if c not in completed_set]
-        return False, f"Requires one of: {', '.join(codes_in_prereq)} (missing: {', '.join(missing)})"
+        return (
+            False,
+            f"Requires one of: {', '.join(codes_in_prereq)} (missing: {', '.join(missing)})",
+        )
     else:
         missing = [c for c in codes_in_prereq if c not in completed_set]
         if not missing:
             return True, ""
-        return False, f"Requires: {', '.join(codes_in_prereq)} (missing: {', '.join(missing)})"
+        return (
+            False,
+            f"Requires: {', '.join(codes_in_prereq)} (missing: {', '.join(missing)})",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -157,7 +207,9 @@ def prerequisites_met(
 # ---------------------------------------------------------------------------
 
 
-def _get_offered_courses(course_codes: list[str], classdata_csv_path: str) -> dict[str, list[dict]]:
+def _get_offered_courses(
+    course_codes: list[str], classdata_csv_path: str
+) -> dict[str, list[dict]]:
     """Return a mapping of course_code → list of schedule rows for offered courses.
 
     Courses not found in the schedule CSV are omitted from the result.
@@ -209,7 +261,11 @@ def _format_schedule_rows(rows: list[dict]) -> str:
         status = str(row.get("Class Status", "")).strip()
 
         # Build day string from individual boolean columns.
-        days = "".join(abbr for col, abbr in _DAY_COLS if str(row.get(col, "N")).strip().upper() == "Y")
+        days = "".join(
+            abbr
+            for col, abbr in _DAY_COLS
+            if str(row.get(col, "N")).strip().upper() == "Y"
+        )
 
         line_parts = []
         if section:
@@ -277,14 +333,20 @@ def CourseRecommenderOuter(
         Returns:
             A Markdown-formatted recommendation report.
         """
-        with span_ctx_start("CourseRecommender", OpenInferenceSpanKindValues.TOOL) as span:
-            span.set_attributes({
-                SpanAttributes.INPUT_VALUE: safe_json_dumps({
-                    "major": major,
-                    "completed_courses": completed_courses,
-                }),
-                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-            })
+        with span_ctx_start(
+            "CourseRecommender", OpenInferenceSpanKindValues.TOOL
+        ) as span:
+            span.set_attributes(
+                {
+                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                        {
+                            "major": major,
+                            "completed_courses": completed_courses,
+                        }
+                    ),
+                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
 
             try:
                 result = _run_recommendation(
@@ -294,18 +356,22 @@ def CourseRecommenderOuter(
                     classdata_csv_path=classdata_csv_path,
                     prereq_csv_path=prereq_csv_path,
                 )
-                span.set_attributes({
-                    SpanAttributes.OUTPUT_VALUE: result[:500],
-                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
-                })
+                span.set_attributes(
+                    {
+                        SpanAttributes.OUTPUT_VALUE: result[:500],
+                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
+                    }
+                )
                 span.set_status(Status(StatusCode.OK))
                 return result
 
             except Exception as e:
-                span.set_attributes({
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps({"error": str(e)}),
-                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                })
+                span.set_attributes(
+                    {
+                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps({"error": str(e)}),
+                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    }
+                )
                 span.set_status(Status(StatusCode.ERROR), str(e))
                 raise
 
@@ -344,14 +410,18 @@ def _run_recommendation(
     common_core_stem = _best_match("requirements for all majors", stems)
     common_core_courses: list[str] = []
     if common_core_stem:
-        common_core_md = (req_dir / f"{common_core_stem}.md").read_text(encoding="utf-8")
+        common_core_md = (req_dir / f"{common_core_stem}.md").read_text(
+            encoding="utf-8"
+        )
         common_core_courses = parse_course_codes(common_core_md)
 
     # --- 3. Compute remaining required courses ---
     completed_set = {c.strip().upper() for c in completed_courses}
     # Normalize completed_courses to "SUBJECT NNN" format for comparison.
     # Users might type "CS 101" or "compsci 101" — handle by uppercasing.
-    all_required = list(dict.fromkeys(major_courses + common_core_courses))  # preserve order, deduplicate
+    all_required = list(
+        dict.fromkeys(major_courses + common_core_courses)
+    )  # preserve order, deduplicate
     remaining = [c for c in all_required if c.upper() not in completed_set]
 
     if not remaining:
@@ -372,9 +442,9 @@ def _run_recommendation(
         prereq_df = None
         prereq_available = False
 
-    eligible_and_offered: list[tuple[str, str]] = []      # (course, schedule_summary)
+    eligible_and_offered: list[tuple[str, str]] = []  # (course, schedule_summary)
     eligible_not_offered: list[str] = []
-    not_eligible: list[tuple[str, str]] = []              # (course, reason)
+    not_eligible: list[tuple[str, str]] = []  # (course, reason)
     no_schedule_data: list[str] = []
 
     for course in remaining:

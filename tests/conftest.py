@@ -112,15 +112,33 @@ def sample_classdata_real_csv(tmp_path):
             "Grading": ["GRD"] * 5,
             "Start Date": ["08/25/2026"] * 5,
             "End Date": ["10/08/2026"] * 5,
-            "Mtg Start": ["9:00:00.000000AM", "10:00:00.000000AM", "2:00:00.000000PM", "8:00:00.000000AM", "9:00:00.000000AM"],
-            "Mtg End": ["9:50:00.000000AM", "10:50:00.000000AM", "2:50:00.000000PM", "8:50:00.000000AM", "9:50:00.000000AM"],
+            "Mtg Start": [
+                "9:00:00.000000AM",
+                "10:00:00.000000AM",
+                "2:00:00.000000PM",
+                "8:00:00.000000AM",
+                "9:00:00.000000AM",
+            ],
+            "Mtg End": [
+                "9:50:00.000000AM",
+                "10:50:00.000000AM",
+                "2:50:00.000000PM",
+                "8:50:00.000000AM",
+                "9:50:00.000000AM",
+            ],
             "Mon": ["Y", "Y", "N", "Y", "Y"],
             "Tues": ["N", "N", "Y", "N", "N"],
             "Wed": ["Y", "Y", "N", "Y", "Y"],
             "Thurs": ["N", "N", "Y", "N", "N"],
             "Fri": ["Y", "Y", "N", "Y", "Y"],
             "Room No": ["IB1001"] * 5,
-            "Instructor": ["Smith,Alice", "Jones,Bob", "Lee,Carol", "Kim,Dave", "Wu,Eve"],
+            "Instructor": [
+                "Smith,Alice",
+                "Jones,Bob",
+                "Lee,Carol",
+                "Kim,Dave",
+                "Wu,Eve",
+            ],
         }
     )
     df.to_csv(csv_path, index=False)

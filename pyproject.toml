@@ -100,3 +100,8 @@ packages = ["chatdku"]
 [tool.flake8]
 ignore = ["E203","W503"]
 max-line-length = 120
+
+[dependency-groups]
+dev = [
+    "flake8>=7.3.0",
+]
