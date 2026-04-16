@@ -25,6 +25,7 @@ from opentelemetry.trace import Status, StatusCode
 
 from chatdku.core.tools.major_requirements import _best_match, _list_stems
 from chatdku.core.utils import span_ctx_start
+from chatdku.config import config
 
 # ---------------------------------------------------------------------------
 # Course code parsing
@@ -37,57 +38,15 @@ _COURSE_CODE_RE = re.compile(r"\b([A-Z]{2,10})\s+(\d{3}[A-Z]?)\b")
 
 # Known DKU subject codes — used to filter false positives from the markdown.
 _KNOWN_SUBJECTS = {
-    "DKU",
-    "GERMAN",
-    "INDSTU",
-    "JAPANESE",
-    "KOREAN",
-    "MUSIC",
-    "SPANISH",
-    "ARHU",
-    "ARTS",
-    "BEHAVSCI",
-    "BIOL",
-    "CHEM",
-    "CHINESE",
-    "COMPDSGN",
-    "COMPSCI",
-    "CULANTH",
-    "CULMOVE",
-    "CULSOC",
-    "EAP",
-    "ECON",
-    "ENVIR",
-    "ETHLDR",
-    "GCHINA",
-    "GCULS",
-    "GLHLTH",
-    "GLOCHALL",
-    "HIST",
-    "HUM",
-    "INFOSCI",
-    "INSTGOV",
-    "LIT",
-    "MATH",
-    "MATSCI",
-    "MEDIA",
-    "MEDIART",
-    "NEUROSCI",
-    "PHIL",
-    "PHYS",
-    "PHYSEDU",
-    "POLECON",
-    "POLSCI",
-    "PPE",
-    "PSYCH",
-    "PUBPOL",
-    "SOCIOL",
-    "SOSC",
-    "STATS",
-    "USTUD",
-    "WOC",
-    "RELIG",
-    "MINITERM",
+    "DKU", "GERMAN", "INDSTU", "JAPANESE", "KOREAN", "MUSIC",
+    "SPANISH", "ARHU", "ARTS", "BEHAVSCI", "BIOL", "CHEM",
+    "CHINESE", "COMPDSGN", "COMPSCI", "CULANTH", "CULMOVE", "CULSOC",
+    "EAP", "ECON", "ENVIR", "ETHLDR", "GCHINA", "GCULS",
+    "GLHLTH", "GLOCHALL", "HIST", "HUM", "INFOSCI", "INSTGOV",
+    "LIT", "MATH", "MATSCI", "MEDIA", "MEDIART", "NEUROSCI",
+    "PHIL", "PHYS", "PHYSEDU", "POLECON", "POLSCI", "PPE",
+    "PSYCH", "PUBPOL", "SOCIOL", "SOSC", "STATS", "USTUD",
+    "WOC", "RELIG", "MINITERM",
 }
 
 
@@ -288,94 +247,76 @@ def _format_schedule_rows(rows: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def CourseRecommenderOuter(
-    requirements_dir: str,
-    classdata_csv_path: str,
-    prereq_csv_path: str,
-):
+def CourseRecommender(
+    major: str,
+    completed_courses: list[str],
+) -> str:
     """
-    DSPy tool factory for generating a structured next-semester course recommendation.
+    Generate a structured next-semester course recommendation for a DKU student.
 
-    Combines major requirements data, schedule availability, and prerequisite
-    satisfaction into a single structured report, so the Executor only needs
-    one tool call to get a complete recommendation.
+    Given the student's major and the courses they have already completed,
+    this tool:
+      1. Looks up the graduation requirements for the student's major.
+      2. Looks up the university-wide common-core requirements.
+      3. Identifies which required courses still need to be completed.
+      4. Checks which remaining courses are offered next semester.
+      5. Checks whether the student meets prerequisites for each available course.
+      6. Returns a grouped report: recommended, eligible-but-not-offered,
+         prerequisites-not-met, and no-schedule-data categories.
 
     Args:
-        requirements_dir: Directory containing per-major Markdown requirement files.
-        classdata_csv_path: Path to the cleaned class-schedule CSV.
-        prereq_csv_path: Path to the prerequisites CSV (UTF-16LE encoded).
+        major (str): The student's major and optional track, e.g. "data science"
+                     or "computation and design computer science".
+        completed_courses (list[str]): Courses the student has already completed
+            or is currently taking, e.g. ["COMPSCI 101", "MATH 105", "STATS 201"].
+
+    Returns:
+        A Markdown-formatted recommendation report.
     """
-    req_dir = Path(requirements_dir)
+    req_dir = config.major_req_dir
+    classdata_csv_path = config.classdata_csv_path
+    prereq_csv_path = config.prereq_csv_path
+    with span_ctx_start(
+        "CourseRecommender", OpenInferenceSpanKindValues.TOOL
+    ) as span:
+        span.set_attributes(
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                    {
+                        "major": major,
+                        "completed_courses": completed_courses,
+                    }
+                ),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
 
-    def CourseRecommender(
-        major: str,
-        completed_courses: list[str],
-    ) -> str:
-        """
-        Generate a structured next-semester course recommendation for a DKU student.
-
-        Given the student's major and the courses they have already completed,
-        this tool:
-          1. Looks up the graduation requirements for the student's major.
-          2. Looks up the university-wide common-core requirements.
-          3. Identifies which required courses still need to be completed.
-          4. Checks which remaining courses are offered next semester.
-          5. Checks whether the student meets prerequisites for each available course.
-          6. Returns a grouped report: recommended, eligible-but-not-offered,
-             prerequisites-not-met, and no-schedule-data categories.
-
-        Args:
-            major (str): The student's major and optional track, e.g. "data science"
-                         or "computation and design computer science".
-            completed_courses (list[str]): Courses the student has already completed
-                or is currently taking, e.g. ["COMPSCI 101", "MATH 105", "STATS 201"].
-
-        Returns:
-            A Markdown-formatted recommendation report.
-        """
-        with span_ctx_start(
-            "CourseRecommender", OpenInferenceSpanKindValues.TOOL
-        ) as span:
+        try:
+            result = _run_recommendation(
+                major=major,
+                completed_courses=completed_courses,
+                req_dir=req_dir,
+                classdata_csv_path=classdata_csv_path,
+                prereq_csv_path=prereq_csv_path,
+            )
             span.set_attributes(
                 {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        {
-                            "major": major,
-                            "completed_courses": completed_courses,
-                        }
-                    ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    SpanAttributes.OUTPUT_VALUE: result[:500],
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
                 }
             )
+            span.set_status(Status(StatusCode.OK))
+            return result
 
-            try:
-                result = _run_recommendation(
-                    major=major,
-                    completed_courses=completed_courses,
-                    req_dir=req_dir,
-                    classdata_csv_path=classdata_csv_path,
-                    prereq_csv_path=prereq_csv_path,
-                )
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: result[:500],
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
-                    }
-                )
-                span.set_status(Status(StatusCode.OK))
-                return result
-
-            except Exception as e:
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps({"error": str(e)}),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                    }
-                )
-                span.set_status(Status(StatusCode.ERROR), str(e))
-                raise
-
-    return CourseRecommender
+        except Exception as e:
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps({"error": str(e)}),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.ERROR), str(e))
+            raise e
 
 
 # ---------------------------------------------------------------------------
@@ -529,18 +470,6 @@ if __name__ == "__main__":
     use_phoenix()
 
     parser = argparse.ArgumentParser(description="Test CourseRecommender")
-    parser.add_argument(
-        "--requirements-dir",
-        default="/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
-    )
-    parser.add_argument(
-        "--classdata-csv",
-        default="/datapool/chatdku_external_data/cleaned_classdata.csv",
-    )
-    parser.add_argument(
-        "--prereq-csv",
-        default="/datapool/chatdku_external_data/DK_SR_PREREQ_CRSE_CHATDKU.csv",
-    )
     parser.add_argument("--major", required=True, help="Student's major")
     parser.add_argument(
         "--completed",
@@ -550,9 +479,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    recommender = CourseRecommenderOuter(
-        requirements_dir=args.requirements_dir,
-        classdata_csv_path=args.classdata_csv,
-        prereq_csv_path=args.prereq_csv,
-    )
-    print(recommender(major=args.major, completed_courses=args.completed))
+    __import__('pprint').pprint(CourseRecommender(major=args.major, completed_courses=args.completed))

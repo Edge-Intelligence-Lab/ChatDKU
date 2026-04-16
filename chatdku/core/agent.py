@@ -18,14 +18,14 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.executor import Executor
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.tools.course_recommender import CourseRecommenderOuter
-from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter
-from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
+from chatdku.core.tools.course_recommender import CourseRecommender
+from chatdku.core.tools.course_schedule import CourseScheduleLookup
+from chatdku.core.tools.get_prerequisites import PrerequisiteLookup
 from chatdku.core.tools.llama_index_tools import (
     KeywordRetrieverOuter,
     VectorRetrieverOuter,
 )
-from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
+from chatdku.core.tools.major_requirements import MajorRequirementsLookup
 from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
 from chatdku.core.utils import format_trajectory, load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
@@ -238,15 +238,11 @@ def build_agent(streaming: bool = True, max_iterations: int = 5) -> "Agent":
             search_mode=search_mode,
             files=[],
         ),
-        MajorRequirementsLookupOuter(config.major_requirements_dir),
         SyllabusLookupOuter(),
-        PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
-        CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
-        CourseRecommenderOuter(
-            requirements_dir=config.major_requirements_dir,
-            classdata_csv_path=config.classdata_csv_path,
-            prereq_csv_path=config.prereq_csv_path,
-        ),
+        MajorRequirementsLookup,
+        PrerequisiteLookup,
+        CourseRecommender,
+        CourseScheduleLookup,
     ]
 
     return Agent(

@@ -34,6 +34,7 @@ from opentelemetry.trace import Status, StatusCode
 from thefuzz import fuzz, process
 
 from chatdku.core.utils import span_ctx_start
+from chatdku.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -97,120 +98,109 @@ def _list_stems(requirements_dir: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def MajorRequirementsLookupOuter(requirements_dir: str):
+def MajorRequirementsLookup(major: str) -> str:
     """
-    DSPy tool factory for looking up DKU major/track degree requirements.
+    Look up the graduation requirements for a Duke Kunshan University major.
+
+    Given a major (and optional track) name, returns the full list of
+    required and elective courses from the UG Bulletin (2023-2024).
+
+    Pass major="list" to get the names of all available majors/tracks.
+    Pass major="requirements for all majors" to retrieve the university-wide
+    core requirements that every student must complete regardless of major.
+
+    Examples of valid major strings:
+        "data science"
+        "computation and design / computer science"
+        "behavioral science psychology"
+        "global health biology"
+        "requirements for all majors"
+        "list"
 
     Args:
-        requirements_dir: Path to the directory containing per-major
-            Markdown files from the UG Bulletin.
+        major (str): Major (and optionally track) name, e.g. "data science".
+                     Pass "list" to enumerate available majors.
+
+    Returns:
+        Markdown text of the major's requirements, or an error message when
+        no match is found.
     """
-    req_dir = Path(requirements_dir)
+    req_dir = config.major_req_dir
+    with span_ctx_start(
+        "MajorRequirementsLookup", OpenInferenceSpanKindValues.TOOL
+    ) as span:
+        span.set_attributes(
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(major=major)),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
 
-    def MajorRequirementsLookup(major: str) -> str:
-        """
-        Look up the graduation requirements for a Duke Kunshan University major.
+        try:
+            if not req_dir.is_dir():
+                raise FileNotFoundError(
+                    f"Requirements directory not found: {req_dir}"
+                )
 
-        Given a major (and optional track) name, returns the full list of
-        required and elective courses from the UG Bulletin (2023-2024).
+            stems = _list_stems(req_dir)
+            if not stems:
+                raise FileNotFoundError(f"No requirement files found in {req_dir}")
 
-        Pass major="list" to get the names of all available majors/tracks.
-        Pass major="requirements for all majors" to retrieve the university-wide
-        core requirements that every student must complete regardless of major.
-
-        Examples of valid major strings:
-            "data science"
-            "computation and design / computer science"
-            "behavioral science psychology"
-            "global health biology"
-            "requirements for all majors"
-            "list"
-
-        Args:
-            major (str): Major (and optionally track) name, e.g. "data science".
-                         Pass "list" to enumerate available majors.
-
-        Returns:
-            Markdown text of the major's requirements, or an error message when
-            no match is found.
-        """
-        with span_ctx_start(
-            "MajorRequirementsLookup", OpenInferenceSpanKindValues.TOOL
-        ) as span:
-            span.set_attributes(
-                {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(dict(major=major)),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                }
-            )
-
-            try:
-                if not req_dir.is_dir():
-                    raise FileNotFoundError(
-                        f"Requirements directory not found: {req_dir}"
-                    )
-
-                stems = _list_stems(req_dir)
-                if not stems:
-                    raise FileNotFoundError(f"No requirement files found in {req_dir}")
-
-                # Special: list all available majors
-                if major.strip().lower() == "list":
-                    result = "Available DKU majors/tracks:\n" + "\n".join(
-                        f"  - {s}" for s in stems
-                    )
-                    span.set_attributes(
-                        {
-                            SpanAttributes.OUTPUT_VALUE: result,
-                            SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
-                        }
-                    )
-                    span.set_status(Status(StatusCode.OK))
-                    return result
-
-                matched = _best_match(major, stems)
-                if matched is None:
-                    result = (
-                        f"No matching major found for '{major}'. "
-                        "Call with major='list' to see all available majors."
-                    )
-                    span.set_attributes(
-                        {
-                            SpanAttributes.OUTPUT_VALUE: result,
-                            SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
-                        }
-                    )
-                    span.set_status(Status(StatusCode.OK))
-                    return result
-
-                md_path = req_dir / f"{matched}.md"
-                content = md_path.read_text(encoding="utf-8")
-                result = f"# Requirements: {matched}\n\n{content}"
-
+            # Special: list all available majors
+            if major.strip().lower() == "list":
+                result = "Available DKU majors/tracks:\n" + "\n".join(
+                    f"  - {s}" for s in stems
+                )
                 span.set_attributes(
                     {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(matched_file=matched, char_count=len(result))
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                        SpanAttributes.OUTPUT_VALUE: result,
+                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
                     }
                 )
                 span.set_status(Status(StatusCode.OK))
                 return result
 
-            except Exception as e:
+            matched = _best_match(major, stems)
+            if matched is None:
+                result = (
+                    f"No matching major found for '{major}'. "
+                    "Call with major='list' to see all available majors."
+                )
                 span.set_attributes(
                     {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(error=str(e))
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                        SpanAttributes.OUTPUT_VALUE: result,
+                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
                     }
                 )
-                span.set_status(Status(StatusCode.ERROR), str(e))
-                raise
+                span.set_status(Status(StatusCode.OK))
+                return result
 
-    return MajorRequirementsLookup
+            md_path = req_dir / f"{matched}.md"
+            content = md_path.read_text(encoding="utf-8")
+            result = f"# Requirements: {matched}\n\n{content}"
+
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                        dict(matched_file=matched, char_count=len(result))
+                    ),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.OK))
+            return result
+
+        except Exception as e:
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                        dict(error=str(e))
+                    ),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.ERROR), str(e))
+            raise e
 
 
 # ---------------------------------------------------------------------------
@@ -224,13 +214,8 @@ if __name__ == "__main__":
     use_phoenix()
 
     parser = argparse.ArgumentParser(description="Test MajorRequirementsLookup")
-    parser.add_argument(
-        "--dir",
-        default="/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
-        help="Path to the requirements markdown directory",
-    )
     parser.add_argument("--major", required=True, help="Major name to look up")
     args = parser.parse_args()
 
-    lookup = MajorRequirementsLookupOuter(args.dir)
-    print(lookup(args.major))
+    lookup = MajorRequirementsLookup(args.major)
+    __import__('pprint').pprint(lookup)

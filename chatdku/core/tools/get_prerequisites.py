@@ -11,6 +11,7 @@ from openinference.semconv.trace import (
 from opentelemetry.trace import Status, StatusCode
 
 from chatdku.core.utils import span_ctx_start
+from chatdku.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -49,81 +50,63 @@ def get_prereq(course: str, data_file_path: str) -> str:
         return f"Unknown error in finding prerequisite for {course}."
 
 
-def PrerequisiteLookupOuter(prereq_csv_path: str):
+def PrerequisiteLookup(course_names: list[str]) -> str:
     """
-    DSPy tool factory for looking up course prerequisites.
-    Returns a Phoenix-observable callable for the agent's tool list.
+    Look up the prerequisites for one or more courses at Duke Kunshan University.
+
+    Given a list of course names (e.g. ["STATS 202", "COMPSCI 201", "MATH 206"]),
+    returns the prerequisite and anti-requisite requirements for each course.
+    Uses the latest available version of the course requirements.
+
+    Good tool for answering questions about what courses are needed
+    before taking specific courses.
 
     Args:
-        prereq_csv_path: Path to the prerequisites CSV file.
+        course_names (list[str]): The courses to look up, e.g. ["STATS 202", "COMPSCI 101"].
+
+    Returns:
+        String describing the prerequisites for each course, separated by newlines.
     """
+    prereq_csv_path = config.prereq_csv_path
+    with span_ctx_start(
+        "PrerequisiteLookup", OpenInferenceSpanKindValues.TOOL
+    ) as span:
+        span.set_attributes(
+            {
+                SpanAttributes.INPUT_VALUE: safe_json_dumps(
+                    dict(course_names=course_names)
+                ),
+                SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+            }
+        )
 
-    def PrerequisiteLookup(course_names: list[str]) -> str:
-        """
-        Look up the prerequisites for one or more courses at Duke Kunshan University.
-
-        Given a list of course names (e.g. ["STATS 202", "COMPSCI 201", "MATH 206"]),
-        returns the prerequisite and anti-requisite requirements for each course.
-        Uses the latest available version of the course requirements.
-
-        Good tool for answering questions about what courses are needed
-        before taking specific courses.
-
-        Args:
-            course_names (list[str]): The courses to look up, e.g. ["STATS 202", "COMPSCI 101"].
-
-        Returns:
-            String describing the prerequisites for each course, separated by newlines.
-        """
-        with span_ctx_start(
-            "PrerequisiteLookup", OpenInferenceSpanKindValues.TOOL
-        ) as span:
+        try:
+            results = [
+                get_prereq(course, prereq_csv_path) for course in course_names
+            ]
+            result = "\n".join(results)
             span.set_attributes(
                 {
-                    SpanAttributes.INPUT_VALUE: safe_json_dumps(
-                        dict(course_names=course_names)
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                        dict(result=result)
                     ),
-                    SpanAttributes.INPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
-
-            try:
-                results = [
-                    get_prereq(course, prereq_csv_path) for course in course_names
-                ]
-                result = "\n".join(results)
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(result=result)
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                    }
-                )
-                span.set_status(Status(StatusCode.OK))
-                return result
-            except Exception as e:
-                span.set_attributes(
-                    {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(error=str(e))
-                        ),
-                        SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
-                    }
-                )
-                span.set_status(Status(StatusCode.ERROR), str(e))
-                raise e
-
-    return PrerequisiteLookup
+            span.set_status(Status(StatusCode.OK))
+            return result
+        except Exception as e:
+            span.set_attributes(
+                {
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
+                        dict(error=str(e))
+                    ),
+                    SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
+                }
+            )
+            span.set_status(Status(StatusCode.ERROR), str(e))
+            raise e
 
 
 if __name__ == "__main__":
-    import os
-
-    local_csv = os.path.join(
-        os.path.dirname(__file__),
-        "chatdku_external_data",
-        "DK_SR_PREREQ_CRSE_CHATDKU.csv",
-    )
-    lookup = PrerequisiteLookupOuter(local_csv)
-    print(lookup(["STATS 202", "COMPSCI 201"]))
+    print(PrerequisiteLookup(["STATS 202", "COMPSCI 201"]))
