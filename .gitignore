@@ -222,3 +222,10 @@ benchmarks/questions.json
 **/dku_website
 **/locust_logs
 
+#For testing
+# Local temporary files
+.python-version
+*.csv
+
+update_events_weekly.sh
+*.sh
