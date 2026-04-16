@@ -55,7 +55,7 @@ class Config:
             db_host = _env("DB_HOST")
             db_port = _env("DB_PORT")
             db_name = _env("DB_NAME")
-            psql_uri = f"postgresql://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
+            psql_uri = f"postgresql://{db_user}:{quote_plus(db_password or '')}@{db_host}:{db_port}/{db_name}"
 
         self._store.update(
             {

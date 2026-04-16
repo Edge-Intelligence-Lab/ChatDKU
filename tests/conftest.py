@@ -23,6 +23,7 @@ def mock_span_ctx(monkeypatch):
     targets = [
         "chatdku.core.utils.span_ctx_start",
         "chatdku.core.tools.course_schedule.span_ctx_start",
+        "chatdku.core.tools.course_recommender.span_ctx_start",
         "chatdku.core.tools.get_prerequisites.span_ctx_start",
         "chatdku.core.tools.major_requirements.span_ctx_start",
         "chatdku.core.tools.syllabi_tool.query_curriculum_db.span_ctx_start",
@@ -68,6 +69,58 @@ def sample_classdata_csv(tmp_path):
             "Start Time": ["09:00", "10:30", "11:00", "14:00", "13:00"],
             "End Time": ["09:50", "11:45", "11:50", "15:15", "13:50"],
             "Enrollment": [30, 25, 40, 15, 20],
+        }
+    )
+    df.to_csv(csv_path, index=False)
+    return str(csv_path)
+
+
+@pytest.fixture()
+def sample_classdata_real_csv(tmp_path):
+    """Classdata CSV matching the actual cleaned_classdata.csv column layout.
+
+    Uses Mon/Tues/Wed/Thurs/Fri boolean columns and Mtg Start/Mtg End for times,
+    matching what clean_classdata.py produces on the server.
+    """
+    csv_path = tmp_path / "classdata_real.csv"
+    df = pd.DataFrame(
+        {
+            "Course ID": [1001, 1002, 1003, 1004, 1005],
+            "Term": [2268] * 5,
+            "Session": ["7W1", "7W1", "7W2", "7W1", "7W2"],
+            "Section": ["001", "001", "001", "001", "001"],
+            "Subject": ["COMPSCI", "MATH", "MATH", "STATS", "GLOCHALL"],
+            "Catalog": ["201", "201", "202", "302", "201"],
+            "Descr": [
+                "Intro to Programming and Data Structures",
+                "Multivariable Calculus",
+                "Linear Algebra",
+                "Principles of Machine Learning",
+                "Global Challenges",
+            ],
+            "Class Nbr": [100, 101, 102, 103, 104],
+            "Enrollment Status": ["Open"] * 5,
+            "Class Status": ["Active"] * 5,
+            "Enrollment Capacity": [40] * 5,
+            "Wait List Capacity": [8] * 5,
+            "Enrollment Total": [20] * 5,
+            "Wait List Total": [0] * 5,
+            "Seats Open": ["20/40"] * 5,
+            "Waitlist Open": ["8/8"] * 5,
+            "Attributes": [""] * 5,
+            "Prgrss Unt": [4.0] * 5,
+            "Grading": ["GRD"] * 5,
+            "Start Date": ["08/25/2026"] * 5,
+            "End Date": ["10/08/2026"] * 5,
+            "Mtg Start": ["9:00:00.000000AM", "10:00:00.000000AM", "2:00:00.000000PM", "8:00:00.000000AM", "9:00:00.000000AM"],
+            "Mtg End": ["9:50:00.000000AM", "10:50:00.000000AM", "2:50:00.000000PM", "8:50:00.000000AM", "9:50:00.000000AM"],
+            "Mon": ["Y", "Y", "N", "Y", "Y"],
+            "Tues": ["N", "N", "Y", "N", "N"],
+            "Wed": ["Y", "Y", "N", "Y", "Y"],
+            "Thurs": ["N", "N", "Y", "N", "N"],
+            "Fri": ["Y", "Y", "N", "Y", "Y"],
+            "Room No": ["IB1001"] * 5,
+            "Instructor": ["Smith,Alice", "Jones,Bob", "Lee,Carol", "Kim,Dave", "Wu,Eve"],
         }
     )
     df.to_csv(csv_path, index=False)

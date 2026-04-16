@@ -6,57 +6,12 @@ from opentelemetry.trace import StatusCode
 from chatdku.core.tools.major_requirements import (
     MajorRequirementsLookupOuter,
     _best_match,
-    _jaccard,
     _list_stems,
-    _tokenize,
 )
 
 
 # ---------------------------------------------------------------------------
-# _tokenize (pure)
-# ---------------------------------------------------------------------------
-
-
-class TestTokenize:
-    def test_lowercases(self):
-        assert _tokenize("Data Science") == {"data", "science"}
-
-    def test_strips_separators(self):
-        result = _tokenize("data-science/track")
-        assert "data" in result
-        assert "science" in result
-        assert "track" in result
-
-    def test_removes_punctuation(self):
-        result = _tokenize("hello! world?")
-        assert result == {"hello", "world"}
-
-    def test_empty_string(self):
-        assert _tokenize("") == set()
-
-
-# ---------------------------------------------------------------------------
-# _jaccard (pure)
-# ---------------------------------------------------------------------------
-
-
-class TestJaccard:
-    def test_identical_sets(self):
-        assert _jaccard({"a", "b"}, {"a", "b"}) == 1.0
-
-    def test_disjoint_sets(self):
-        assert _jaccard({"a"}, {"b"}) == 0.0
-
-    def test_partial_overlap(self):
-        # intersection={b,c}, union={a,b,c,d} → 2/4 = 0.5
-        assert _jaccard({"a", "b", "c"}, {"b", "c", "d"}) == 0.5
-
-    def test_empty_sets(self):
-        assert _jaccard(set(), set()) == 0.0
-
-
-# ---------------------------------------------------------------------------
-# _best_match (pure)
+# _best_match (pure — uses thefuzz token_set_ratio under the hood)
 # ---------------------------------------------------------------------------
 
 

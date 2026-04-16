@@ -64,11 +64,13 @@ def _clean_query(query: str) -> str:
     return query
 
 
+_MIN_MATCH_SCORE = 40  # below this, treat as no match
+
+
 def _best_match(query: str, stems: list[str]) -> str | None:
     """
-    Return the filename stem that best matches *query* by Levenshtein distance
-    on word tokens.  Returns None when no candidate shares any token with
-    the query.
+    Return the filename stem that best matches *query* by token-set ratio.
+    Returns None when the best score is below _MIN_MATCH_SCORE.
     """
     stems_dict = _build_stem_dict(stems)
     query = _clean_query(query)
@@ -80,7 +82,10 @@ def _best_match(query: str, stems: list[str]) -> str | None:
         limit=1,
     )
 
-    return matches[0][2] if matches else None
+    if not matches:
+        return None
+    score, key = matches[0][1], matches[0][2]
+    return key if score >= _MIN_MATCH_SCORE else None
 
 
 def _list_stems(requirements_dir: Path) -> list[str]:

@@ -68,16 +68,13 @@ fi
 step "preparing remote directory $REMOTE_DIR on $SERVER"
 ssh "${SERVER}" "mkdir -p ${REMOTE_DIR}"
 
-step "linking ~/.env → ${REMOTE_DIR}/.env"
-ssh "${SERVER}" '
-  if [ -f ~/.env ]; then
-    ln -sf ~/.env '"${REMOTE_DIR}"'/.env
-  else
-    echo "WARN: ~/.env not found on server — skipping link"
-  fi
-'
-if ssh "${SERVER}" '[ ! -f '"${REMOTE_DIR}"'/.env ]'; then
-  warn "no .env in ${REMOTE_DIR} — the agent may fail to start"
+# Secrets are loaded automatically from /datapool/secrets/chatdku_env.sh via
+# /etc/profile.d/chatdku.sh for all chatdku_devs group members.
+# No ~/.env file is needed or expected — see Documentations/Shared-Secrets.md.
+step "verifying shared secrets are loaded on $SERVER"
+if ! ssh "${SERVER}" 'bash -l -c "[ -n \"\${REDIS_HOST:-}\" ]"' 2>/dev/null; then
+  warn "shared secrets not loaded on $SERVER — are you in the chatdku_devs group?"
+  warn "Run: groups | grep chatdku_devs    (if missing, ask an admin to run add_user.sh)"
 fi
 
 info "syncing ${BOLD}$LOCAL_DIR${RESET}${CYAN} → ${BOLD}$SERVER:$REMOTE_DIR"

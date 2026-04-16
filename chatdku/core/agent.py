@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import traceback
+import pyfiglet
 
 # Must be set before `import dspy` — prevents litellm from fetching the remote
 # model pricing database at startup (cuts ~40s off cold-start time).
@@ -17,6 +18,7 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.executor import Executor
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
+from chatdku.core.tools.course_recommender import CourseRecommenderOuter
 from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
 from chatdku.core.tools.llama_index_tools import (
@@ -112,7 +114,7 @@ class Agent(dspy.Module):
             # These limits are for compressing both tool and conversation memory.
             # Uses the executor's token limits as the executor has the largest context needs.
             limits = self.executor.get_token_limits(
-                plan="",
+                current_agenda="",
                 current_user_message=current_user_message,
                 conversation_history=self.conversation_memory.history_str(),
                 trajectory=format_trajectory({}),
@@ -196,7 +198,7 @@ class Agent(dspy.Module):
                 return i
 
 
-def build_agent(streaming: bool = True, max_iterations: int = 3) -> "Agent":
+def build_agent(streaming: bool = True, max_iterations: int = 5) -> "Agent":
     """Configure DSPy and return a ready-to-use Agent instance."""
     setup()
     use_phoenix()
@@ -240,6 +242,11 @@ def build_agent(streaming: bool = True, max_iterations: int = 3) -> "Agent":
         QueryCurriculumOuter(),
         PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
         CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
+        CourseRecommenderOuter(
+            requirements_dir=config.major_requirements_dir,
+            classdata_csv_path=config.classdata_csv_path,
+            prereq_csv_path=config.prereq_csv_path,
+        ),
     ]
 
     return Agent(
@@ -288,6 +295,8 @@ def _main_interactive():
     import time
 
     agent = build_agent(streaming=True)
+
+    pyfiglet.figlet_format("ChatDKU", font="slant")
 
     while True:
         try:
