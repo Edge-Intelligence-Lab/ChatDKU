@@ -1,7 +1,6 @@
 from flask import request, jsonify, session, g
 from ollama import ChatResponse
 import requests
-import threading
 from flask_socketio import emit
 from app.models import Feedback, Request, UploadedFile, UserModel
 from chatdku.core.agent import Agent
@@ -28,37 +27,12 @@ def routes(app, db, socketio, logger):
             # g.user = db.session.scalar(
             #     db.select(UserModel).where(UserModel.netid == netid)
             # )
+
             # if not g.user:
             #     # g.user = UserModel(netid=netid)
             #     db.session.add(g.user)
             #     db.session.commit()  # Commented because the db schema wasn't created yet
 
-    def schedule_memory_write(user_id: str, message_content: str, assistant_text: str, session_conversation: list[dict[str, str]] | None = None):
-        if session_conversation is None:
-            session_conversation = []
-
-        payload = {
-            "user_id": user_id,
-            "session_conversation": session_conversation,
-            "most_recent_conversation": [
-                {"role": "user", "content": message_content},
-                {"role": "assistant", "content": assistant_text},
-            ],
-        }
-
-        try:
-            requests.post(
-                os.getenv("MEMORY_API_URL", "http://localhost:8000/memory"),
-                json=payload,
-                timeout=10,
-            )
-        except Exception:
-            pass
-
-    def get_memory_user_id() -> str:
-        return session.get("user", {}).get("eppn", "Chat_DKU") # defaults to Chat_DKU if user not found in session
-
-            
     @app.after_request
     def no_sniff_header(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -98,21 +72,10 @@ def routes(app, db, socketio, logger):
                 current_user_message=message_content, question_id=question_id
             )
 
-            assistant_chunks = []
-            user_id = get_memory_user_id()
-
             # Stream the responses
             def generate():
                 for response in responses_gen.response:
-                    assistant_chunks.append(str(response))
                     yield f"{response}"
-
-                assistant_text = "".join(assistant_chunks)
-                threading.Thread(
-                    target=schedule_memory_write,
-                    args=(user_id, message_content, assistant_text, []),
-                    daemon=True,
-                ).start()
 
             return Response(stream_with_context(generate()), content_type="text/plain")
 
