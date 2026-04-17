@@ -39,4 +39,6 @@ export DB_PASSWORD="securepassword123"
 export DB_HOST="localhost"
 export DB_PORT="5432"
 export DB_NAME="chatdku_db"
+export NAME_DB_INGESTION="chatdku_ingestion"
+esport USER_DB_INGESTION="chatdku_retrieval"
 ```
