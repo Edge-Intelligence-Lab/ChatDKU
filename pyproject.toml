@@ -62,8 +62,6 @@ dependencies = [
     "sqlalchemy",
     "pytest",
     "pre-commit",
-    "seaborn",
-    "ray"
 ]
 
 [project.optional-dependencies]
@@ -86,6 +84,11 @@ backend = [
     "locust>=2.39.0",
     "drf-spectacular[sidecar]",
     "django-prometheus",
+]
+
+evaluation = [
+    "seaborn",
+    "ray"
 ]
 
 [tool.setuptools]
