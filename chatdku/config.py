@@ -60,13 +60,18 @@ class Config:
         self._store.update(
             {
                 # LLM
-                "llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+                "llm": "Qwen/Qwen3.6-35B-A3B",
                 "llm_url": "http://localhost:18085/v1",
                 "llm_api_key": llm_api_key,
-                "backup_llm": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+                "backup_llm": "Qwen/Qwen3.6-35B-A3B",
                 "backup_llm_url": "http://localhost:18085/v1",
-                "llm_temperature": 0.7,
-                "context_window": 22000,
+                "llm_temperature": 1.0,
+                "top_p": 1.0,
+                "top_k": 40,
+                "min_p": 0.0,
+                "presence_penalty": 2.0,
+                "repetition_penalty": 1.0,
+                "context_window": 35000,
                 "output_window": 10000,
                 "response_type": "Multiple Paragraphs",
                 # Embedding

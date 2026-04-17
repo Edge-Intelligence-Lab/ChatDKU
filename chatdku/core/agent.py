@@ -194,12 +194,18 @@ def main():
     use_phoenix()
 
     lm = dspy.LM(
-        model="openai/" + config.backup_llm,
-        api_base=config.backup_llm_url,
+        model="openai/" + config.llm,
+        api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
         max_tokens=config.output_window,
+        top_p=config.top_p,
+        top_k=config.top_k,
+        min_p=config.min_p,
+        presence_penalty=config.presence_penalty,
+        repetition_penalty=config.repetition_penalty,
         temperature=config.llm_temperature,
+        enable_thinking=False,
     )
     dspy.configure(lm=lm)
     # To disable cache:
