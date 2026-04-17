@@ -174,8 +174,10 @@ The current apache configuration supports `8009` as the port.
 
 All in all, this is the current configuration for production:
 
+>[!Note]
+>This command is executed from `./ChatDKU` dir
 ```bash
-nohup gunicorn -b 10.200.14.82:8000 chatdku_django.wsgi:application --timeout 500 --workers 8 --threads 6 --preload &
+nohup gunicorn --chdir chatdku/django/chatdku_django   -b 10.200.14.82:8000 chatdku_django.wsgi:application --timeout 500 --workers 8 --threads 6 --preload &
 ```
 
 To view live logs, you can use
