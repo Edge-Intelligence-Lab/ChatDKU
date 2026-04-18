@@ -109,7 +109,6 @@ class Agent(dspy.Module):
                 current_user_message=current_user_message,
                 conversation_history=self.conversation_memory.history_str(),
                 trajectory=format_trajectory({}),
-                assessment="",
             )
 
             # Clear internal memory for each user message

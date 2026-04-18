@@ -22,49 +22,26 @@ from chatdku.core.utils import (
 )
 
 
-class AssessSignature(dspy.Signature):
+class _ExecutorSignatureBase(dspy.Signature):
     """
-    You are evaluating the progress of an information-gathering task for
-    Duke Kunshan University (DKU).
+    You are an Executor Agent for Duke Kunshan University (DKU) gathering
+    information to answer a user's question.
 
-    Given the plan and the tool results collected so far (trajectory), determine:
-    1. What information from the plan has been successfully gathered.
-    2. What information is still missing or insufficient.
-    3. Whether you should continue gathering information or finish.
+    Given the plan and the trajectory so far, do the following in order:
 
-    Choose "continue" if the plan has unfulfilled steps that the available tools
-    can still address.
-    Choose "finish" if you have gathered enough information to answer the user's
-    question, OR if the remaining gaps cannot be resolved with further tool calls.
-    """
+    1. Assess progress:
+       - What information from the plan has been successfully gathered.
+       - What information is still missing or insufficient.
+       - Whether the missing information can be obtained with available tools.
 
-    plan: str = dspy.InputField(
-        desc="The plan describing what information to gather.",
-        format=lambda x: x,
-    )
-    current_user_message: str = dspy.InputField()
-    trajectory: str = dspy.InputField(
-        desc="Tool calls and their results collected so far. May be empty on the first iteration.",
-        format=lambda x: x,
-    )
-    conversation_history: str = CONVERSATION_HISTORY_FIELD
-    conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    2. Decide whether to continue or finish:
+       - Choose "finish" in the next_tool_name field if you have gathered enough
+         information to answer the user's question, OR if the remaining gaps cannot
+         be resolved with further tool calls.
 
-    assessment: str = dspy.OutputField(
-        desc=(
-            "Brief analysis: (1) what information has been gathered so far, "
-            "(2) what is still missing from the plan, "
-            "(3) whether the missing information can be obtained with available tools."
-        ),
-    )
-    decision: str = dspy.OutputField(type=Literal["continue", "finish"])
-
-
-class _ActSignatureBase(dspy.Signature):
-    """
-    You are an Executor Agent for Duke Kunshan University (DKU). You have been
-    given a plan and an assessment of what information is still missing.
-    Your job is to pick the best tool to call next to fill the identified gaps.
+    3. If continuing, pick the best tool to call next to fill the identified
+       gaps. If a previous tool call failed, try to work around it (e.g.
+       rephrase the query, try a different tool).
 
     Useful facts:
         - Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
@@ -82,9 +59,6 @@ class _ActSignatureBase(dspy.Signature):
                 - "Psychology" -> "PSYCH"
                 - "Physics" -> "PHYS"
                 etc.
-
-    If a previous tool call failed, try to work around it (e.g. rephrase the
-    query, try a different tool).
     """
 
     plan: str = dspy.InputField(
@@ -93,16 +67,20 @@ class _ActSignatureBase(dspy.Signature):
     )
     current_user_message: str = dspy.InputField()
     trajectory: str = dspy.InputField(
-        desc="Tool calls and their results collected so far.",
-        format=lambda x: x,
-    )
-    assessment: str = dspy.InputField(
-        desc="Analysis of what has been gathered and what is still missing.",
+        desc="Tool calls and their results collected so far. May be empty on the first iteration.",
         format=lambda x: x,
     )
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     chatbot_role: str = ROLE_PROMPT
+
+    assessment: str = dspy.OutputField(
+        desc=(
+            "Brief analysis: (1) what information has been gathered so far, "
+            "(2) what is still missing from the plan, "
+            "(3) whether the missing information can be obtained with available tools."
+        ),
+    )
 
 
 class DistillSignature(dspy.Signature):
@@ -178,20 +156,36 @@ class Executor(dspy.Module):
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
 
-        # Build the ActSignature dynamically with tool descriptions in the instructions.
+        # Build the Executor signature dynamically with tool descriptions in the instructions.
         instr = (
-            [f"{_ActSignatureBase.instructions}\n"]
-            if _ActSignatureBase.instructions
+            [f"{_ExecutorSignatureBase.instructions}\n"]
+            if _ExecutorSignatureBase.instructions
             else []
         )
+        outputs = ", ".join(
+            [f"`{k}`" for k in _ExecutorSignatureBase.output_fields.keys()]
+        )
+        tools["finish"] = Tool(
+            func=lambda: "Completed.",
+            name="finish",
+            desc=f"Marks the task as complete. That is, signals that all information for producing the outputs, i.e. {outputs}, are now available to be extracted.",
+            args={},
+        )
+
         for idx, tool in enumerate(tools.values()):
             instr.append(f"({idx + 1}) {tool}")
         instr.append(
-            "When providing `next_tool_args`, the value inside the field must be in JSON format"
+            "When providing `next_tool_args`, the value inside the field must be in JSON format. "
         )
 
-        act_signature = (
-            dspy.Signature({**_ActSignatureBase.input_fields}, "\n".join(instr))
+        exec_signature = (
+            dspy.Signature(
+                {
+                    **_ExecutorSignatureBase.input_fields,
+                    **_ExecutorSignatureBase.output_fields,
+                },
+                "\n".join(instr),
+            )
             .append("next_thought", dspy.OutputField(), type_=str)
             .append(
                 "next_tool_name",
@@ -202,25 +196,16 @@ class Executor(dspy.Module):
         )
 
         self.tools = tools
-        self.assessor = dspy.Predict(AssessSignature)
-        self.actor = dspy.Predict(act_signature)
+        self.executor = dspy.Predict(exec_signature)
         self.distiller = dspy.Predict(DistillSignature)
 
-        self.assess_token_ratios: dict[str, float] = {
-            "plan": 3 / 12,
-            "current_user_message": 1 / 12,
-            "conversation_history": 2 / 12,
-            "conversation_summary": 1 / 12,
-            "trajectory": 5 / 12,
-        }
-        self.act_token_ratios: dict[str, float] = {
-            "plan": 2 / 15,
-            "current_user_message": 1 / 15,
-            "conversation_history": 1 / 15,
-            "conversation_summary": 1 / 15,
-            "chatbot_role": 2 / 15,
-            "trajectory": 4 / 15,
-            "assessment": 2 / 15,
+        self.executor_token_ratios: dict[str, float] = {
+            "plan": 2 / 13,
+            "current_user_message": 1 / 13,
+            "conversation_history": 1 / 13,
+            "conversation_summary": 1 / 13,
+            "chatbot_role": 2 / 13,
+            "trajectory": 5 / 13,
         }
         self.distill_token_ratios: dict[str, float] = {
             "current_user_message": 2 / 10,
@@ -233,9 +218,9 @@ class Executor(dspy.Module):
         self.max_iterations = max_iterations
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
-        """Return token limits using the actor's ratios (tightest constraint)."""
-        template_len = len(get_template(self.actor, **kwargs))
-        return token_limit_ratio_to_count(self.act_token_ratios, template_len)
+        """Return token limits using the executor's ratios."""
+        template_len = len(get_template(self.executor, **kwargs))
+        return token_limit_ratio_to_count(self.executor_token_ratios, template_len)
 
     def forward(
         self,
@@ -258,60 +243,39 @@ class Executor(dspy.Module):
             )
 
             for idx in range(self.max_iterations):
-                formatted_traj = format_trajectory(trajectory)
-
-                # Phase 1: ASSESS
-                assess_inputs = {
+                exec_inputs = {
                     "plan": plan,
                     **shared_inputs,
-                }
-                assess_inputs = truncate_tokens_all(
-                    assess_inputs,
-                    self._assess_token_limits(**assess_inputs),
-                )
-
-                try:
-                    assess_result = self._call_with_potential_trajectory_truncation(
-                        self.assessor, trajectory, **assess_inputs
-                    )
-                except ValueError:
-                    break
-
-                trajectory[f"assessment_{idx}"] = assess_result.assessment
-
-                if assess_result.decision == "finish":
-                    break
-
-                # Phase 2: ACT
-                act_inputs = {
-                    "plan": plan,
-                    **shared_inputs,
-                    "assessment": assess_result.assessment,
                     "chatbot_role": role_str,
                 }
-                act_inputs = truncate_tokens_all(
-                    act_inputs,
-                    self._act_token_limits(**act_inputs),
+                exec_inputs = truncate_tokens_all(
+                    exec_inputs,
+                    self._executor_token_limits(**exec_inputs),
                 )
 
                 try:
-                    act_result = self._call_with_potential_trajectory_truncation(
-                        self.actor, trajectory, **act_inputs
+                    result = self._call_with_potential_trajectory_truncation(
+                        self.executor, trajectory, **exec_inputs
                     )
                 except ValueError:
                     break
 
-                trajectory[f"thought_{idx}"] = act_result.next_thought
-                trajectory[f"tool_name_{idx}"] = act_result.next_tool_name
-                trajectory[f"tool_args_{idx}"] = act_result.next_tool_args
+                trajectory[f"assessment_{idx}"] = result.assessment
+
+                if result.next_tool_name == "finish":
+                    break
+
+                trajectory[f"thought_{idx}"] = result.next_thought
+                trajectory[f"tool_name_{idx}"] = result.next_tool_name
+                trajectory[f"tool_args_{idx}"] = result.next_tool_args
 
                 try:
                     trajectory[f"observation_{idx}"] = self.tools[
-                        act_result.next_tool_name
-                    ](**act_result.next_tool_args)
+                        result.next_tool_name
+                    ](**result.next_tool_args)
                 except Exception as err:
                     trajectory[f"observation_{idx}"] = (
-                        f"Execution error in {act_result.next_tool_name}: {_fmt_exc(err)}"
+                        f"Execution error in {result.next_tool_name}: {_fmt_exc(err)}"
                     )
 
             # DISTILL
@@ -337,13 +301,9 @@ class Executor(dspy.Module):
 
     # Token limit helpers
 
-    def _assess_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(get_template(self.assessor, **kwargs))
-        return token_limit_ratio_to_count(self.assess_token_ratios, template_len)
-
-    def _act_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(get_template(self.actor, **kwargs))
-        return token_limit_ratio_to_count(self.act_token_ratios, template_len)
+    def _executor_token_limits(self, **kwargs) -> dict[str, int]:
+        template_len = len(get_template(self.executor, **kwargs))
+        return token_limit_ratio_to_count(self.executor_token_ratios, template_len)
 
     def _distill_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.distiller, **kwargs))
