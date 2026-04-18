@@ -143,7 +143,7 @@ class Planner(dspy.Module):
             tool_descriptions.append(f"({idx + 1}) {tool}")
 
         self.tool_descriptions_str = "\n".join(tool_descriptions)
-        self.planner = dspy.Predict(PlannerSignature)
+        self.planner = dspy.ChainOfThought(PlannerSignature)
         self.planner.demos = PLANNER_DEMOS
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 12,
