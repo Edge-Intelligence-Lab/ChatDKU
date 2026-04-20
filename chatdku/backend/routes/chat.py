@@ -48,13 +48,30 @@ def chat(data:ChatRequest,bg: BackgroundTasks):
     
     def generate():
         try:
+            buffer = ""
+            CHUNK_SIZE = 100
+
             for response in responses_gen.response:
-                load={
-                    "type":"token",
-                    "content":response
-                }
-                redis_client.xadd(channel,load)
-            redis_client.xadd(channel,{"type":"end"})
+                buffer += response
+
+                while len(buffer) >= CHUNK_SIZE:
+                    chunk = buffer[:CHUNK_SIZE]
+                    buffer = buffer[CHUNK_SIZE:]
+
+                    redis_client.xadd(channel, {
+                        "type": "token",
+                        "content": chunk
+                    }, maxlen=100000)
+
+            # flush remaining
+            if buffer:
+                redis_client.xadd(channel, {
+                    "type": "token",
+                    "content": buffer
+                }, maxlen=100000)
+
+            redis_client.xadd(channel, {"type": "end"})
+            redis_client.expire(channel, 300)
 
         except Exception as e:
             redis_client.xadd(channel, {
