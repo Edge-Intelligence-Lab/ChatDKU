@@ -139,11 +139,7 @@ python manage.py runserver
 
 ## Development
 
-See [GUIDE.md](./GUIDE.md) for a new contributor guide covering the tech stack, git workflow, and role-specific resources.
-
 See [chatdku/core/README.md](./chatdku/core/README.md) for a deeper explanation of the agent modules.
-
-See [Documentations/](./Documentations/) for deployment guides and Phoenix observability setup.
 
 ---
 
