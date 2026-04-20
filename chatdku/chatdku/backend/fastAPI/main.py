@@ -3,13 +3,16 @@ from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from redis import Redis
 from pydantic import BaseModel, Field
 import json
 
 from chatdku.core.dspy_classes.memory import PermanentMemory
 from chatdku.core.tools.memory_tool import MemoryTools
+from chatdku.config import config
 
 app = FastAPI()
+redis = Redis(host=config.redis_host, port=config.redis_port, db=config.redis_db, password=config.redis_password)
 
 
 class MemoryRequestBase(BaseModel):
@@ -38,25 +41,30 @@ async def root():
     return {"status": "ok"}
 
 @app.post("/memory")
-async def memory_agent(request: MemoryAgentRequest):
+def memory_agent(request: MemoryAgentRequest):
     if request.session_conversation is None:
         request.session_conversation = []
 
-    async def event_generator():
-        yield f"data: {json.dumps({'event': 'started'})}\n\n"
+    channel = f"chat:{request.chat_id}"
 
-        permanent_memory = PermanentMemory(request.user_id)
-
-        yield f"data: {json.dumps({'event': 'processing'})}\n\n"
-
-        result = await asyncio.to_thread(
-            permanent_memory,
-            session_conversation=request.session_conversation,
-            most_recent_conversation=request.most_recent_conversation,
-        )
-
-        request.session_conversation.extend(request.most_recent_conversation)
-
-        yield f"data: {json.dumps({'event': 'done', 'result': result, 'conversations': request.session_conversation})}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    def publish(event_type : str, data : dict):
+       redis.publish(channel, json.dumps({"event": event_type, "data": data}))
+        
+    publish("memory_agent_started", {"message": "Memory Agent started"})
+    
+    permanent_memory = PermanentMemory(user_id=request.user_id)
+    
+    publish("memory_agent_processing", {"message": "Processing memory agent request"})
+    
+    result = permanent_memory( 
+        session_conversation=request.session_conversation,
+        most_recent_conversation=request.most_recent_conversation,
+        chat_id=request.chat_id
+    )
+    
+    publish("memory_agent_completed", {"message": "Memory Agent completed", "result": result}) # end token?
+    
+    return {"status": "success", "result": result}
+    
+    
+    
