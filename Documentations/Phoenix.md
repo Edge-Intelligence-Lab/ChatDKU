@@ -9,7 +9,7 @@ Phoenix is a monitoring and tracing tool by Arize. We use it to trace our agent'
 You can access Phoenix by going to: [http://10.200.14.82:6007/](http://10.200.14.82:6007/) 
 
 You will be promped to login with your username and password. 
-The default username is `admin@localhost` and the password is `w_jkY7a.6EzmgfQ`.
+Ask the username and password from PM.
 
 ## Installation
 
@@ -24,22 +24,23 @@ pip install arize-phoenix
 Run the following command, or set it in your `~/.profile` (see `Env-variables.md`):
 
 ```bash
-export OTEL_EXPORTER_OTLP_HEADERS='Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6MyJ9.TTBhMzMyyevVPEQIGqVPbdzSW6V9QhnYQtErH-KCeqM'
+export OTEL_EXPORTER_OTLP_HEADERS=<API_KEY>
 ``` 
+
+Ask the API_KEY from the PM.
 
 If Phoenix is not running, run:
 ```bash
-PHOENIX_PORT=6007 PHOENIX_WORKING_DIR=/datapool/phoenix PHOENIX_ENABLE_AUTH=True PHOENIX_SECRET=testsecret000000000000000000000000000000 nohup phoenix serve > /var/log/phoenix.log &
+phoenix serve
 ```
 
 The setup for phoenix can be found in `chatdku/chatdku/setup.py` with the function name `use_phoenix()`.
 
 You can change the project name here:
 
-https://github.com/Glitterccc/ChatDKU/blob/ee156832abf4d65e0dcac7456c71db4d717a085e/chatdku/chatdku/setup.py#L41
+https://github.com/Edge-Intelligence-Lab/ChatDKU/blob/ee156832abf4d65e0dcac7456c71db4d717a085e/chatdku/chatdku/setup.py#L41
 
-
-## Using Phoenix tracing
+## Using Phoenix Tracing
 
 > [!IMPORTANT]
 > Remember to run setup.py's use_phoenix() once before using the tracing.
