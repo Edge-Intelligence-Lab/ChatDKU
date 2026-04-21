@@ -73,16 +73,32 @@ class AssessSignature(dspy.Signature):
     decision: str = dspy.OutputField(type=Literal["continue", "finish"])
 
 
-class _ActSignatureBase(dspy.Signature):
-    """
-    You are an Executor Agent for Duke Kunshan University (DKU). You have been
-    given the current investigation agenda and an assessment of what is still missing.
-    Your job is to pick the best tool to call next.
+class ExecutorSignatureBase(dspy.Signature):
+    """You are an Executor Agent for Duke Kunshan University (DKU) gathering
+    information to answer a user's question.
+
+    Given the plan and the tool results collected so far (trajectory), do the following in order:
+
+    1. Assess progress:
+       1. What information from the plan has been successfully gathered.
+       2. What information is still missing or insufficient.
+       3. What NEW investigation areas have been REVEALED by the tool results so far
+       that were not in the original agenda — for example, a retrieved policy document
+       mentions a mandatory course, or schedule data reveals an unmet prerequisite chain.
 
     You MUST pursue the full current agenda — including any extensions discovered
     during earlier steps — not just the original plan. If the assessment reveals
     new requirements (e.g., a policy document names a mandatory course), investigate
     those before finishing.
+
+    2. Decide whether to continue or finish:
+       - Choose "finish" in the next_tool_name field if you have gathered enough
+         information to answer the user's question, OR if the remaining gaps cannot
+         be resolved with further tool calls.
+
+    3. If continuing, pick the best tool to call next to fill the identified
+       gaps. If a previous tool call failed, try to work around it (e.g.
+       rephrase the query, try a different tool).
 
     Useful facts:
         - Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
@@ -100,9 +116,6 @@ class _ActSignatureBase(dspy.Signature):
                 - "Psychology" -> "PSYCH"
                 - "Physics" -> "PHYS"
                 etc.
-
-    If a previous tool call failed, try to work around it (e.g. rephrase the
-    query, try a different tool).
     """
 
     current_agenda: str = dspy.InputField(
@@ -114,16 +127,27 @@ class _ActSignatureBase(dspy.Signature):
     )
     current_user_message: str = dspy.InputField()
     trajectory: str = dspy.InputField(
-        desc="Tool calls and their results collected so far.",
-        format=lambda x: x,
-    )
-    assessment: str = dspy.InputField(
-        desc="Analysis of what has been gathered and what is still missing.",
+        desc="Tool calls and their results collected so far. May be empty on the first iteration.",
         format=lambda x: x,
     )
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     chatbot_role: str = ROLE_PROMPT
+    agenda_extensions: str = dspy.OutputField(
+        desc=(
+            "New investigation areas revealed by the tool results that are NOT yet "
+            "in the current agenda. Describe each as a short action phrase. "
+            "Leave empty if nothing new was discovered."
+        ),
+    )
+    assessment: str = dspy.OutputField(
+        desc=(
+            "Brief analysis: (1) what information has been gathered so far, "
+            "(2) what is still missing from the plan, "
+            "(3) whether the missing information can be obtained with available tools."
+        ),
+        format=lambda x: x,
+    )
 
 
 class DistillSignature(dspy.Signature):
@@ -201,9 +225,19 @@ class Executor(dspy.Module):
 
         # Build the ActSignature dynamically with tool descriptions in the instructions.
         instr = (
-            [f"{_ActSignatureBase.instructions}\n"]
-            if _ActSignatureBase.instructions
+            [f"{ExecutorSignatureBase.instructions}\n"]
+            if ExecutorSignatureBase.instructions
             else []
+        )
+        outputs = ", ".join(
+            [f"`{k}`" for k in ExecutorSignatureBase.output_fields.keys()]
+        )
+
+        tools["finish"] = Tool(
+            func=lambda: "Completed.",
+            name="finish",
+            desc=f"Marks the task as complete. That is, signals that all information for producing the outputs, i.e. {outputs}, are now available to be extracted.",
+            args={},
         )
         for idx, tool in enumerate(tools.values()):
             instr.append(f"({idx + 1}) {tool}")
@@ -211,8 +245,14 @@ class Executor(dspy.Module):
             "When providing `next_tool_args`, the value inside the field must be in JSON format"
         )
 
-        act_signature = (
-            dspy.Signature({**_ActSignatureBase.input_fields}, "\n".join(instr))
+        exec_signature = (
+            dspy.Signature(
+                {
+                    **ExecutorSignatureBase.input_fields,
+                    **ExecutorSignatureBase.output_fields,
+                },
+                "\n".join(instr),
+            )
             .append("next_thought", dspy.OutputField(), type_=str)
             .append(
                 "next_tool_name",
@@ -223,8 +263,7 @@ class Executor(dspy.Module):
         )
 
         self.tools = tools
-        self.assessor = dspy.Predict(AssessSignature)
-        self.actor = dspy.Predict(act_signature)
+        self.executor = dspy.Predict(exec_signature)
         self.distiller = dspy.Predict(DistillSignature)
 
         self.assess_token_ratios: dict[str, float] = {
@@ -258,7 +297,7 @@ class Executor(dspy.Module):
         # Ensure current_agenda is present (agent.py calls this with plan="")
         if "current_agenda" not in kwargs and "plan" in kwargs:
             kwargs["current_agenda"] = kwargs.pop("plan")
-        template_len = len(get_template(self.actor, **kwargs))
+        template_len = len(get_template(self.executor, **kwargs))
         return token_limit_ratio_to_count(self.act_token_ratios, template_len)
 
     def forward(
@@ -286,27 +325,33 @@ class Executor(dspy.Module):
             )
 
             for idx in range(self.max_iterations):
-                # Phase 1: ASSESS against the current (possibly extended) agenda
-                assess_inputs = {
+
+                # Phase 1: ACT using the current (extended) agenda
+                executor_inputs = {
                     "current_agenda": current_agenda,
                     **shared_inputs,
+                    "chatbot_role": role_str,
                 }
-                assess_inputs = truncate_tokens_all(
-                    assess_inputs,
-                    self._assess_token_limits(**assess_inputs),
+                executor_inputs = truncate_tokens_all(
+                    executor_inputs,
+                    self._act_token_limits(**executor_inputs),
                 )
 
                 try:
-                    assess_result = self._call_with_potential_trajectory_truncation(
-                        self.assessor, trajectory, **assess_inputs
+                    executor_result = self._call_with_potential_trajectory_truncation(
+                        self.executor, trajectory, **executor_inputs
                     )
                 except ValueError:
                     break
 
+                if executor_result.next_tool_name == "finish":
+                    break
+
                 # Record assessment; append any agenda extensions into the trajectory
                 # so future iterations can see what was discovered.
-                assessment_text = assess_result.assessment
-                extensions = getattr(assess_result, "agenda_extensions", "").strip()
+                assessment_text = executor_result.assessment
+
+                extensions = getattr(executor_result, "agenda_extensions", "").strip()
                 if extensions:
                     assessment_text += f"\n[Agenda extensions discovered: {extensions}]"
                     current_agenda = (
@@ -314,41 +359,19 @@ class Executor(dspy.Module):
                         f"[Additional areas to investigate, discovered at step {idx + 1}]:\n"
                         f"{extensions}"
                     )
+
                 trajectory[f"assessment_{idx}"] = assessment_text
-
-                if assess_result.decision == "finish":
-                    break
-
-                # Phase 2: ACT using the current (extended) agenda
-                act_inputs = {
-                    "current_agenda": current_agenda,
-                    **shared_inputs,
-                    "assessment": assess_result.assessment,
-                    "chatbot_role": role_str,
-                }
-                act_inputs = truncate_tokens_all(
-                    act_inputs,
-                    self._act_token_limits(**act_inputs),
-                )
-
-                try:
-                    act_result = self._call_with_potential_trajectory_truncation(
-                        self.actor, trajectory, **act_inputs
-                    )
-                except ValueError:
-                    break
-
-                trajectory[f"thought_{idx}"] = act_result.next_thought
-                trajectory[f"tool_name_{idx}"] = act_result.next_tool_name
-                trajectory[f"tool_args_{idx}"] = act_result.next_tool_args
+                trajectory[f"thought_{idx}"] = executor_result.next_thought
+                trajectory[f"tool_name_{idx}"] = executor_result.next_tool_name
+                trajectory[f"tool_args_{idx}"] = executor_result.next_tool_args
 
                 try:
                     trajectory[f"observation_{idx}"] = self.tools[
-                        act_result.next_tool_name
-                    ](**act_result.next_tool_args)
+                        executor_result.next_tool_name
+                    ](**executor_result.next_tool_args)
                 except Exception as err:
                     trajectory[f"observation_{idx}"] = (
-                        f"Execution error in {act_result.next_tool_name}: {_fmt_exc(err)}"
+                        f"Execution error in {executor_result.next_tool_name}: {_fmt_exc(err)}"
                     )
 
             # DISTILL — pass the final (extended) agenda so the distiller knows
@@ -380,7 +403,7 @@ class Executor(dspy.Module):
         return token_limit_ratio_to_count(self.assess_token_ratios, template_len)
 
     def _act_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(get_template(self.actor, **kwargs))
+        template_len = len(get_template(self.executor, **kwargs))
         return token_limit_ratio_to_count(self.act_token_ratios, template_len)
 
     def _distill_token_limits(self, **kwargs) -> dict[str, int]:
