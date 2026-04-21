@@ -100,6 +100,14 @@ class ExecutorSignatureBase(dspy.Signature):
         ),
     )
 
+    assessment: str = dspy.OutputField(
+        desc=(
+            "Brief analysis: (1) what information has been gathered so far, "
+            "(2) what is still missing from the plan, "
+            "(3) whether the missing information can be obtained with available tools."
+        ),
+    )
+
 
 class DistillSignature(dspy.Signature):
     """
@@ -174,7 +182,7 @@ class Executor(dspy.Module):
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
 
-        # Build the ActSignature dynamically with tool descriptions in the instructions.
+        # Build the Executor signature dynamically with tool descriptions in the instructions.
         instr = (
             [f"{ExecutorSignatureBase.instructions}\n"]
             if ExecutorSignatureBase.instructions
@@ -190,10 +198,11 @@ class Executor(dspy.Module):
             desc=f"Marks the task as complete. That is, signals that all information for producing the outputs, i.e. {outputs}, are now available to be extracted.",
             args={},
         )
+
         for idx, tool in enumerate(tools.values()):
             instr.append(f"({idx + 1}) {tool}")
         instr.append(
-            "When providing `next_tool_args`, the value inside the field must be in JSON format"
+            "When providing `next_tool_args`, the value inside the field must be in JSON format. "
         )
 
         exec_signature = (
@@ -226,7 +235,6 @@ class Executor(dspy.Module):
 
         self.trajectory_summary = ""
         self.max_iterations = max_iterations
-
 
     def forward(
         self,

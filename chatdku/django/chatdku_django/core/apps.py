@@ -1,10 +1,10 @@
-from django.apps import AppConfig
-from chatdku.config import config
-import dspy
+import logging
 import threading
 
+import dspy
+from django.apps import AppConfig
 
-import logging
+from chatdku.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,17 @@ class CoreConfig(AppConfig):
             api_base=config.llm_url,
             api_key=config.llm_api_key,
             model_type="chat",
-            max_tokens=config.context_window,
+            max_tokens=config.output_window,
+            top_p=config.top_p,
+            min_p=config.min_p,
+            presence_penalty=config.presence_penalty,
+            repetition_penalty=config.repetition_penalty,
             temperature=config.llm_temperature,
+            extra_body={
+                "top_k": config.top_k,
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
+            enable_thinking=False,
         )
         dspy.configure(lm=lm)
 

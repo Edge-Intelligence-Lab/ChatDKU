@@ -22,7 +22,7 @@ def test_context_window_exceeded():
         model="openai/" + config.backup_llm,
         api_base=config.backup_llm_url,
         api_key=config.llm_api_key,
-        model_type="chat",
+        model_type="responses",
         max_tokens=config.context_window,
         temperature=config.llm_temperature,
     )

@@ -32,6 +32,11 @@ from rest_framework.views import APIView
 from chatdku.core.agent import Agent
 from chat.tools import get_tools
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from datetime import datetime
+from .models import WeeklyEvent
+
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
@@ -387,3 +392,33 @@ class SessionViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+
+
+class WeeklyEventsView(APIView):
+    permission_classes = [IsAuthenticated]  
+
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        if not start_date or not end_date:
+            return Response({'error': 'Missing start_date or end_date'}, status=400)
+        try:
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'error': 'Invalid date format, use YYYY-MM-DD'}, status=400)
+
+        events = WeeklyEvent.objects.using("ingestion").filter(event_date__range=(start, end)).order_by('event_date', 'start_time')
+        data = [{
+            'title': e.title,
+            'date': e.event_date.isoformat(),
+            'start_time': e.start_time.strftime('%H:%M:%S') if e.start_time else None,
+            'end_time': e.end_time.strftime('%H:%M:%S') if e.end_time else None,
+            'location': e.location,
+            'sponsor': e.sponsor,
+            'open_to': e.open_to,
+            'speaker': e.speaker,
+            'url': e.url,
+        } for e in events]
+        return Response({'events': data})

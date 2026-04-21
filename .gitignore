@@ -226,4 +226,9 @@ benchmarks/questions.json
 **/locust_logs
 
 #For testing
-**/benchmarks
+# Local temporary files
+.python-version
+*.csv
+
+update_events_weekly.sh
+*.sh

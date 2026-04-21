@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 import dspy
 
@@ -16,6 +17,12 @@ class Text2SQLSignature(dspy.Signature):
     Always select at least 4 relevant columns when composing SQL queries.
     If you don't know the values of the fields, you can use `SELECT DISTINCT` to get a list of all possible values.
 
+    Decide whether to continue or finish:
+       - Choose "continue" if there needs to be more information retrieved
+       - Choose "finish" if you have gathered enough information to answer the
+         user's question, OR if the remaining gaps cannot be resolved with
+         further tool calls.
+
     Do note that:
         - For computer science subject code, we use the code "COMPSCI" instead of "CS".
 
@@ -26,6 +33,7 @@ class Text2SQLSignature(dspy.Signature):
     current_user_message = dspy.InputField(desc="User's initial prompt")
     sql_context = dspy.InputField(desc="PostgreSQL table schema.")
     trajectory: dict = dspy.InputField(desc="The results of your previous query.")
+    action: str = dspy.OutputField(type=Literal["continue", "finish"])
     sql = dspy.OutputField(desc="Pure, valid PostgreSQL query ending with semicolon")
 
 
@@ -41,8 +49,9 @@ class GenerateSQL(dspy.Module):
             sql_context=db_schema,
             trajectory=trajectory,
         )
+        action = pred.action
         sql_result = pred.sql
-        if sql_result.lower() == "finish":
+        if action.lower() == "finish":
             return dspy.Prediction(sql="finish")
         sql_result = sanitize_sql(extract_sql_regex(sql_result))
         # sanitize generated SQL to avoid runaway repetition or duplication

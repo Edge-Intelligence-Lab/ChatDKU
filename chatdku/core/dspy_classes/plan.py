@@ -42,6 +42,10 @@ class PlannerSignature(dspy.Signature):
     Write plans at a high level — describe *what* information is needed, not the exact
     tool calls. The Executor will figure out the specifics.
 
+    Side notes:
+        - If the user uses abbreviations or acronyms, you plan's first step should be to
+          look up the full name of the abbreviation or acronym.
+
     Schedule and course-planning questions:
         When the user asks for a next-semester schedule, course plan, or "what courses should
         I take", you MUST verify ALL of the following are known before choosing action_type
@@ -100,13 +104,11 @@ PLANNER_DEMOS = [
         ),
     ).with_inputs("current_user_message"),
     dspy.Example(
-        current_user_message=(
-            "list all major requirements for molecular biosciences track in genetics and genomics"
-        ),
+        current_user_message=("what are the major requirements for X major"),
         action_type="plan",
         action=(
-            "The user wants the full list of requirements for the Molecular Bioscience major, "
-            "Genetics and Genomics track. Look up the major-specific requirements for this "
+            "The user wants the full list of requirements for the X major, "
+            "Y track. Look up the major-specific requirements for this "
             "major and track combination. Also retrieve the university-wide common-core "
             "requirements that apply to all majors."
         ),
@@ -128,6 +130,15 @@ PLANNER_DEMOS = [
             "and seems unsatisfied with a previous incomplete answer. Search for the "
             "complete DKU grading scale including all letter grades, their GPA point "
             "values, and any related grading policies."
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message="What is the scoring standard for NSPHST and graduation requirement?",
+        action_type="plan",
+        action=(
+            "The user is asking about the scoring standard for NSPHST and graduation requirement. "
+            "'NSPHST' might be an abbreviation. I need to first look up the full name of the abbreviation. "
+            "Then, I can search for the relevant information including the scoring standard and graduation requirement."
         ),
     ).with_inputs("current_user_message"),
     dspy.Example(
@@ -177,7 +188,7 @@ class Planner(dspy.Module):
             tool_descriptions.append(f"({idx + 1}) {tool}")
 
         self.tool_descriptions_str = "\n".join(tool_descriptions)
-        self.planner = dspy.Predict(PlannerSignature)
+        self.planner = dspy.ChainOfThought(PlannerSignature)
         self.planner.demos = PLANNER_DEMOS
         self.token_ratios: dict[str, float] = {
             "current_user_message": 2 / 12,

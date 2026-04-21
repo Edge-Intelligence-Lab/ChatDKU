@@ -1,0 +1,246 @@
+{
+  "reasoning": {
+    "StateAssessment": {
+      "description": "Assess the current knowledge state, usually identifying a knowledge gap."
+    },
+    "PlanFormation": {
+      "description": "The agent is forming a plan of action."
+    },
+    "InformationSynthesis": {
+      "description": "Synthesize new information (from search results) to form a conclusion."
+    }
+  },
+  "search": {
+    "InitialQuery": {
+      "description": "The first 'search' call in a trace, or a search that starts a new, independent line of investigation not directly based on the immediately preceding steps."
+    },
+    "RefinedQuery": {
+      "description": "The query is a direct modification of an input from a previous step (e.g., adding keywords to a search query, correcting a typo)."
+    },
+    "FollowUpQuery": {
+      "description": "The query is a logical next step based on information from any preceding action (considering ALL previous actions, not just search actions), but is not a direct modification of a previous input."
+    },
+    "RepeatQuery": {
+      "description": "A query that is the same as the previous query."
+    }
+  },
+  "search_result": {
+    "search_result": {
+      "description": "The result of a search query.",
+      "attributes": {
+        "information_quality": {
+          "type": "string",
+          "options": [
+            "Sufficient",
+            "Insufficient"
+          ],
+          "description": "Assesses whether the search result contains enough information to answer the query. 'Sufficient': The search result provides adequate information to answer the query. The key facts, details, or data needed to address the question are present in the retrieved content. Example: Query asks 'What is the capital of France?' and the result contains 'Paris is the capital and largest city of France.' 'Insufficient': The search result lacks critical information needed to answer the query. Important details are missing, incomplete, or the result only provides partial information that cannot fully address the question. Example: Query asks 'What is the birth date of the lead singer of Coldplay?' but the result only states 'Chris Martin is the lead singer of Coldplay' without mentioning his birth date."
+        },
+        "information_clarity": {
+          "type": "string",
+          "options": [
+            "Clear",
+            "Unclear"
+          ],
+          "description": "Describes the clarity of the information. 'Clear': The main information needed to answer the query is clearly stated and unambiguous. 'Unclear': There are multiple possible interpretations, conflicting information, or the information is vague."
+        },
+        "quality_justification": {
+          "type": "string",
+          "description": "An explanation for why the information quality was judged a certain way."
+        },
+        "clarity_justification": {
+          "type": "string",
+          "description": "An explanation for why the information clarity was judged a certain way."
+        }
+      }
+    }
+  },
+  "visit": {
+    "InitialQuery": {
+      "description": "The first 'visit' call in a trace, or a visit that starts a new, independent line of investigation not directly based on the immediately preceding steps."
+    },
+    "RefinedQuery": {
+      "description": "The visit's input (URL, goal) is a direct modification of an input from a previous step (e.g., using a more specific URL found in a prior search result, or correcting a typo in a URL)."
+    },
+    "FollowUpQuery": {
+      "description": "The visit is a logical next step based on information from any preceding action (considering ALL previous actions, not just visit actions), but is not a direct modification of a previous input."
+    },
+    "RepeatQuery": {
+      "description": "A visit that is the same as a previous visit with the same goal."
+    }
+  },
+  "visit_result": {
+    "search_result": {
+      "description": "The result of visiting a webpage (treating content as search results).",
+      "attributes": {
+        "information_quality": {
+          "type": "string",
+          "options": [
+            "Sufficient",
+            "Insufficient"
+          ],
+          "description": "Assesses whether the visit result contains enough information to fulfill the visit goal. 'Sufficient': The extracted content provides adequate information to address the goal. 'Insufficient': The content lacks critical information needed to fulfill the goal."
+        },
+        "information_clarity": {
+          "type": "string",
+          "options": [
+            "Clear",
+            "Unclear"
+          ],
+          "description": "Describes the clarity of the information. 'Clear': The main information needed to fulfill the goal is clearly stated and unambiguous. 'Unclear': There are multiple possible interpretations, conflicting information, or the information is vague."
+        },
+        "quality_justification": {
+          "type": "string",
+          "description": "An explanation for why the information quality was judged a certain way."
+        },
+        "clarity_justification": {
+          "type": "string",
+          "description": "An explanation for why the information clarity was judged a certain way."
+        }
+      }
+    }
+  },
+  "google_scholar": {
+    "InitialQuery": {
+      "description": "The first 'google_scholar' call in a trace, or a scholar search that starts a new, independent line of investigation not directly based on the immediately preceding steps."
+    },
+    "RefinedQuery": {
+      "description": "The query is a direct modification of an input from a previous step (e.g., adding keywords to a search query, correcting a typo)."
+    },
+    "FollowUpQuery": {
+      "description": "The query is a logical next step based on information from any preceding action (considering ALL previous actions, not just scholar actions), but is not a direct modification of a previous input."
+    },
+    "RepeatQuery": {
+      "description": "A query that is the same as a previous query."
+    }
+  },
+  "scholar_result": {
+    "search_result": {
+      "description": "The result of a Google Scholar search query.",
+      "attributes": {
+        "information_quality": {
+          "type": "string",
+          "options": [
+            "Sufficient",
+            "Insufficient"
+          ],
+          "description": "Assesses whether the scholar result contains enough information to answer the query. 'Sufficient': The result provides adequate information to answer the query. 'Insufficient': The result lacks critical information needed to answer the query."
+        },
+        "information_clarity": {
+          "type": "string",
+          "options": [
+            "Clear",
+            "Unclear"
+          ],
+          "description": "Describes the clarity of the information. 'Clear': The main information needed to answer the query is clearly stated and unambiguous. 'Unclear': There are multiple possible interpretations, conflicting information, or the information is vague."
+        },
+        "quality_justification": {
+          "type": "string",
+          "description": "An explanation for why the information quality was judged a certain way."
+        },
+        "clarity_justification": {
+          "type": "string",
+          "description": "An explanation for why the information clarity was judged a certain way."
+        }
+      }
+    }
+  },
+  "parse_file": {
+    "InitialQuery": {
+      "description": "The first 'parse_file' call in a trace, or a call that starts a new, independent line of investigation not directly based on the immediately preceding steps."
+    },
+    "RefinedQuery": {
+      "description": "The file selection is a direct modification of a previous tool input (e.g., adding or removing a file from a list based on prior results)."
+    },
+    "FollowUpQuery": {
+      "description": "Parsing a file is a logical next step based on information from any preceding action (considering ALL previous actions, not just parse_file actions), but is not a direct modification of a previous input."
+    },
+    "RepeatQuery": {
+      "description": "A file parsing action that targets the exact same set of files as a previous action."
+    }
+  },
+  "file_result": {
+    "search_result": {
+      "description": "The result of parsing files (treating parsed content as search results).",
+      "attributes": {
+        "information_quality": {
+          "type": "string",
+          "options": [
+            "Sufficient",
+            "Insufficient"
+          ],
+          "description": "Assesses whether the parsed content contains enough information to address the task. 'Sufficient': The parsed content provides adequate information. 'Insufficient': The content lacks critical information."
+        },
+        "information_clarity": {
+          "type": "string",
+          "options": [
+            "Clear",
+            "Unclear"
+          ],
+          "description": "Describes the clarity of the parsed information. 'Clear': The information is clearly stated and unambiguous. 'Unclear': Multiple interpretations possible or the information is vague."
+        },
+        "quality_justification": {
+          "type": "string",
+          "description": "An explanation for why the information quality was judged a certain way."
+        },
+        "clarity_justification": {
+          "type": "string",
+          "description": "An explanation for why the information clarity was judged a certain way."
+        }
+      }
+    }
+  },
+  "python": {
+    "InitialQuery": {
+      "description": "The first 'python' call in a trace, or a code execution that starts a new, independent line of investigation not directly based on the immediately preceding steps."
+    },
+    "RefinedQuery": {
+      "description": "The code is a direct modification or iteration of code from a previous 'python' step (e.g., fixing a bug, adding a print statement)."
+    },
+    "FollowUpQuery": {
+      "description": "The code execution is a logical next step based on information from any preceding action (considering ALL previous actions, not just python actions), but is not a direct modification of previous code."
+    },
+    "RepeatQuery": {
+      "description": "A code execution that runs the exact same code as a previous action."
+    }
+  },
+  "python_result": {
+    "search_result": {
+      "description": "The result of executing Python code (treating output as search results).",
+      "attributes": {
+        "information_quality": {
+          "type": "string",
+          "options": [
+            "Sufficient",
+            "Insufficient"
+          ],
+          "description": "Assesses whether the execution output contains enough information to address the task. 'Sufficient': The output provides adequate information. 'Insufficient': The output lacks critical information."
+        },
+        "information_clarity": {
+          "type": "string",
+          "options": [
+            "Clear",
+            "Unclear"
+          ],
+          "description": "Describes the clarity of the execution output. 'Clear': The output is clearly interpretable. 'Unclear': Multiple interpretations possible or the output is vague."
+        },
+        "quality_justification": {
+          "type": "string",
+          "description": "An explanation for why the information quality was judged a certain way."
+        },
+        "clarity_justification": {
+          "type": "string",
+          "description": "An explanation for why the information clarity was judged a certain way."
+        }
+      }
+    }
+  },
+  "answer": {
+    "CorrectAnswer": {
+      "description": "The final answer, which is correct."
+    },
+    "IncorrectAnswer": {
+      "description": "The final answer, which is incorrect."
+    }
+  }
+}

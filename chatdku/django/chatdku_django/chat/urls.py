@@ -9,4 +9,5 @@ urlpatterns = [
     path("chat", views.ChatView.as_view(), name="chat"),
     path("feedback", views.FeedbackView.as_view(), name="feedback"),
     path("", include(router.urls)),
+    path('events', views.WeeklyEventsView.as_view(), name='weekly_events'),
 ]

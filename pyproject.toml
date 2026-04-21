@@ -94,6 +94,11 @@ backend = [
     "django-prometheus",
 ]
 
+evaluation = [
+    "seaborn",
+    "ray"
+]
+
 [tool.setuptools]
 packages = ["chatdku"]
 
