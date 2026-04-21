@@ -3,6 +3,8 @@ from chatdku.core.tools.llama_index_tools import (
     VectorRetrieverOuter,
 )
 from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
+from chatdku.core.tools.major_requirements import MajorRequirementsLookup
+from chatdku.core.tools.get_prerequisites import PrerequisiteLookup
 
 
 def get_tools(user_id: str, search_mode, docs):
@@ -25,6 +27,11 @@ def get_tools(user_id: str, search_mode, docs):
             files=docs,
         ),
         SyllabusLookupOuter(),
+        MajorRequirementsLookup,
+        PrerequisiteLookup,
+        # NOTE: This tool is using 2026 Spring Semester's schedule
+        # Should update the db before using this tool
+        # CourseScheduleLookup,
     ]
 
     return base_tools
