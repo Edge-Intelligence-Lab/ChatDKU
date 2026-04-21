@@ -165,7 +165,7 @@ class SummarizerSignature(dspy.Signature):
 
 # Keys per iteration in the trajectory dict.
 # tool_name, tool_args, observation
-_KEYS_PER_ITERATION = 3
+_KEYS_PER_ITERATION = 4
 
 
 class Executor(dspy.Module):
@@ -276,7 +276,7 @@ class Executor(dspy.Module):
                         f"[Additional areas to investigate, discovered at step {idx + 1}]:\n"
                         f"{extensions}"
                     )
-                # NOTE: Same as assessment, we don't need to record the thought process
+                trajectory[f"thought_{idx}"] = executor_result.next_thought
                 trajectory[f"tool_name_{idx}"] = executor_result.next_tool_name
                 trajectory[f"tool_args_{idx}"] = executor_result.next_tool_args
 

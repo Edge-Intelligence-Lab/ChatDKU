@@ -183,7 +183,7 @@ class Agent(dspy.Module):
                 return i
 
 
-def build_agent(streaming: bool = True, max_iterations: int = 5) -> "Agent":
+def build_agent(streaming: bool = True, max_iterations: int = 10) -> "Agent":
     """Configure DSPy and return a ready-to-use Agent instance."""
     setup()
     use_phoenix()
