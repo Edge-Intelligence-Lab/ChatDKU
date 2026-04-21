@@ -195,7 +195,11 @@ class Executor(dspy.Module):
         tools["finish"] = Tool(
             func=lambda: "Completed.",
             name="finish",
-            desc=f"Marks the task as complete. That is, signals that all information for producing the outputs, i.e. {outputs}, are now available to be extracted.",
+            desc=(
+                "Marks the task as complete."
+                "That is, signals that all information for producing "
+                f"the outputs, i.e. {outputs}, are now available to be extracted."
+            ),
             args={},
         )
 
@@ -250,23 +254,22 @@ class Executor(dspy.Module):
         with span_ctx_start("Executor", SpanKind.AGENT) as span:
             for idx in range(self.max_iterations):
                 executor_inputs = dict(
-                    current_agenda= current_agenda,
+                    current_agenda=current_agenda,
                     current_user_message=current_user_message,
                     conversation_history=conversation_memory.history_str(),
                     conversation_summary=conversation_memory.summary,
                     current_date=str(date.today()),
-                    chatbot_role= role_str,
+                    chatbot_role=role_str,
                 )
 
                 span.set_attribute("agent.name", "Executor")
-                span.set_attribute(
-                    "input.value",
-                    safe_json_dumps(executor_inputs)
-                )
+                span.set_attribute("input.value", safe_json_dumps(executor_inputs))
 
                 try:
-                    executor_result = self._call_with_potential_trajectory_truncation(
-                        self.executor, trajectory, **executor_inputs
+                    executor_result = (
+                        self._call_with_potential_trajectory_truncation(  # noqa E501
+                            self.executor, trajectory, **executor_inputs
+                        )
                     )
                 except ValueError:
                     break

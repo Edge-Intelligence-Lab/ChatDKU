@@ -38,15 +38,57 @@ _COURSE_CODE_RE = re.compile(r"\b([A-Z]{2,10})\s+(\d{3}[A-Z]?)\b")
 
 # Known DKU subject codes — used to filter false positives from the markdown.
 _KNOWN_SUBJECTS = {
-    "DKU", "GERMAN", "INDSTU", "JAPANESE", "KOREAN", "MUSIC",
-    "SPANISH", "ARHU", "ARTS", "BEHAVSCI", "BIOL", "CHEM",
-    "CHINESE", "COMPDSGN", "COMPSCI", "CULANTH", "CULMOVE", "CULSOC",
-    "EAP", "ECON", "ENVIR", "ETHLDR", "GCHINA", "GCULS",
-    "GLHLTH", "GLOCHALL", "HIST", "HUM", "INFOSCI", "INSTGOV",
-    "LIT", "MATH", "MATSCI", "MEDIA", "MEDIART", "NEUROSCI",
-    "PHIL", "PHYS", "PHYSEDU", "POLECON", "POLSCI", "PPE",
-    "PSYCH", "PUBPOL", "SOCIOL", "SOSC", "STATS", "USTUD",
-    "WOC", "RELIG", "MINITERM",
+    "DKU",
+    "GERMAN",
+    "INDSTU",
+    "JAPANESE",
+    "KOREAN",
+    "MUSIC",
+    "SPANISH",
+    "ARHU",
+    "ARTS",
+    "BEHAVSCI",
+    "BIOL",
+    "CHEM",
+    "CHINESE",
+    "COMPDSGN",
+    "COMPSCI",
+    "CULANTH",
+    "CULMOVE",
+    "CULSOC",
+    "EAP",
+    "ECON",
+    "ENVIR",
+    "ETHLDR",
+    "GCHINA",
+    "GCULS",
+    "GLHLTH",
+    "GLOCHALL",
+    "HIST",
+    "HUM",
+    "INFOSCI",
+    "INSTGOV",
+    "LIT",
+    "MATH",
+    "MATSCI",
+    "MEDIA",
+    "MEDIART",
+    "NEUROSCI",
+    "PHIL",
+    "PHYS",
+    "PHYSEDU",
+    "POLECON",
+    "POLSCI",
+    "PPE",
+    "PSYCH",
+    "PUBPOL",
+    "SOCIOL",
+    "SOSC",
+    "STATS",
+    "USTUD",
+    "WOC",
+    "RELIG",
+    "MINITERM",
 }
 
 
@@ -276,9 +318,7 @@ def CourseRecommender(
     req_dir = Path(config.major_req_dir)
     classdata_csv_path = Path(config.classdata_csv_path)
     prereq_csv_path = Path(config.prereq_csv_path)
-    with span_ctx_start(
-        "CourseRecommender", OpenInferenceSpanKindValues.TOOL
-    ) as span:
+    with span_ctx_start("CourseRecommender", OpenInferenceSpanKindValues.TOOL) as span:
         span.set_attributes(
             {
                 SpanAttributes.INPUT_VALUE: safe_json_dumps(
@@ -479,4 +519,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    __import__('pprint').pprint(CourseRecommender(major=args.major, completed_courses=args.completed))
+    __import__("pprint").pprint(
+        CourseRecommender(major=args.major, completed_courses=args.completed)
+    )

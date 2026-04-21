@@ -6,7 +6,6 @@ from itertools import combinations
 
 from redis import Redis
 from redis.commands.search.query import Query
-from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore

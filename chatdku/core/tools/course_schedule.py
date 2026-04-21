@@ -132,9 +132,7 @@ def CourseScheduleLookup(course_names: list[str]) -> str:
         except Exception as e:
             span.set_attributes(
                 {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(error=str(e))
-                    ),
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(error=str(e))),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )

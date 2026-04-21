@@ -7,8 +7,7 @@ import pyfiglet
 
 # Must be set before `import dspy` — prevents litellm from fetching the remote
 # model pricing database at startup (cuts ~40s off cold-start time).
-os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
-
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")  # noqa: E402,E401
 import dspy
 from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttributes
 from opentelemetry.trace import Status, StatusCode, use_span

@@ -1,7 +1,7 @@
 """Tests for chatdku.core.tools.llama_index_tools (VectorRetrieverOuter, KeywordRetrieverOuter)."""
 
 from contextlib import contextmanager
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

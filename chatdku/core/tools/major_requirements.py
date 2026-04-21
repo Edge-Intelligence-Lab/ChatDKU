@@ -138,9 +138,7 @@ def MajorRequirementsLookup(major: str) -> str:
 
         try:
             if not req_dir.is_dir():
-                raise FileNotFoundError(
-                    f"Requirements directory not found: {req_dir}"
-                )
+                raise FileNotFoundError(f"Requirements directory not found: {req_dir}")
 
             stems = _list_stems(req_dir)
             if not stems:
@@ -193,9 +191,7 @@ def MajorRequirementsLookup(major: str) -> str:
         except Exception as e:
             span.set_attributes(
                 {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(error=str(e))
-                    ),
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(error=str(e))),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
@@ -218,4 +214,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     lookup = MajorRequirementsLookup(args.major)
-    __import__('pprint').pprint(lookup)
+    __import__("pprint").pprint(lookup)

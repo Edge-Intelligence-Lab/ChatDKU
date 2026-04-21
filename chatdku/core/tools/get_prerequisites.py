@@ -68,9 +68,7 @@ def PrerequisiteLookup(course_names: list[str]) -> str:
         String describing the prerequisites for each course, separated by newlines.
     """
     prereq_csv_path = config.prereq_csv_path
-    with span_ctx_start(
-        "PrerequisiteLookup", OpenInferenceSpanKindValues.TOOL
-    ) as span:
+    with span_ctx_start("PrerequisiteLookup", OpenInferenceSpanKindValues.TOOL) as span:
         span.set_attributes(
             {
                 SpanAttributes.INPUT_VALUE: safe_json_dumps(
@@ -81,15 +79,11 @@ def PrerequisiteLookup(course_names: list[str]) -> str:
         )
 
         try:
-            results = [
-                get_prereq(course, prereq_csv_path) for course in course_names
-            ]
+            results = [get_prereq(course, prereq_csv_path) for course in course_names]
             result = "\n".join(results)
             span.set_attributes(
                 {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(result=result)
-                    ),
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
@@ -98,9 +92,7 @@ def PrerequisiteLookup(course_names: list[str]) -> str:
         except Exception as e:
             span.set_attributes(
                 {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(error=str(e))
-                    ),
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(error=str(e))),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )
