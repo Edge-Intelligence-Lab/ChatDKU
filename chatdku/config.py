@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Any, Mapping, Optional
 from urllib.parse import quote_plus
 
@@ -80,6 +81,8 @@ class Config:
                 "tei_url": "http://localhost:18080",
                 "chunk_size": 512,
                 "chunk_overlap": 40,
+                # Skills
+                "skills_dir": Path(__file__).parent.resolve() / "skills",
                 # Reranker
                 "reranker_top_n": 5,
                 "reranker_backup_top_n": 10,  # If reranker fails, use the top n results using the embedding scores
@@ -113,7 +116,7 @@ class Config:
                 "graph_root_dir": "/home/Glitterccc/projects/DKU_LLM/GraphDKU",
                 "llamaparse_api": llamaparse_api,
                 # MISC
-                "module_root_dir": os.path.dirname(os.path.abspath(__file__)),
+                "module_root_dir": Path(__file__).parent.resolve(),
                 # External data
                 "prereq_csv_path": "/datapool/chatdku_external_data/DK_SR_PREREQ_CRSE_CHATDKU.csv",
                 "classdata_csv_path": "/datapool/chatdku_external_data/cleaned_classdata.csv",
