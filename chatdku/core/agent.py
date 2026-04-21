@@ -27,7 +27,7 @@ from chatdku.core.tools.llama_index_tools import (
 )
 from chatdku.core.tools.major_requirements import MajorRequirementsLookup
 from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
-from chatdku.core.utils import format_trajectory, load_conversation, span_start
+from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
 # When `--dev` is passed to the script, enable additional debug prints in this module.
@@ -108,19 +108,6 @@ class Agent(dspy.Module):
         )
 
         with use_span(span):
-            # Putting this in `self.__init__()` might not work due to that you might
-            # want DSPy to change prompt dynamically.
-
-            # These limits are for compressing both tool and conversation memory.
-            # Uses the executor's token limits as the executor has the largest context needs.
-            limits = self.executor.get_token_limits(
-                current_agenda="",
-                current_user_message=current_user_message,
-                conversation_history=self.conversation_memory.history_str(),
-                trajectory=format_trajectory({}),
-                assessment="",
-            )
-
             # Clear internal memory for each user message
             self.internal_memory.clear()
 
@@ -135,7 +122,6 @@ class Agent(dspy.Module):
                 self.conversation_memory(
                     role="assistant",
                     content=prev_response,
-                    max_history_size=limits["conversation_history"],
                 )
 
             plan_result = self.planner(
@@ -167,7 +153,6 @@ class Agent(dspy.Module):
             self.conversation_memory(
                 role="user",
                 content=current_user_message,
-                max_history_size=limits["conversation_history"],
             )
 
         if not self.streaming:
@@ -204,12 +189,21 @@ def build_agent(streaming: bool = True, max_iterations: int = 5) -> "Agent":
     use_phoenix()
 
     lm = dspy.LM(
-        model="openai/" + config.backup_llm,
-        api_base=config.backup_llm_url,
+        model="openai/" + config.llm,
+        api_base=config.llm_url,
         api_key=config.llm_api_key,
         model_type="chat",
         max_tokens=config.output_window,
+        top_p=config.top_p,
+        min_p=config.min_p,
+        presence_penalty=config.presence_penalty,
+        repetition_penalty=config.repetition_penalty,
         temperature=config.llm_temperature,
+        extra_body={
+            "top_k": config.top_k,
+            "chat_template_kwargs": {"enable_thinking": False},
+        },
+        enable_thinking=False,
     )
     dspy.configure(lm=lm)
 
