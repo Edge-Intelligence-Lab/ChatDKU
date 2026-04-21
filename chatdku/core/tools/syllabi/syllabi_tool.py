@@ -8,26 +8,25 @@ from openinference.semconv.trace import (
 from opentelemetry.trace import Status, StatusCode
 
 from chatdku.core.tools.retriever.base_retriever import NodeWithScore, nodes_to_OTLP
-from chatdku.core.tools.syllabi_tool.generate_sql import GenerateSQL
+from chatdku.core.tools.syllabi.generate_sql import GenerateSQL
 from chatdku.core.utils import span_ctx_start
 from chatdku.setup import DB
 
 table_name = "curriculum"
 
 
-def QueryCurriculumOuter(N=3):
+def SyllabusLookupOuter(N=3):
     db = DB()
     sql_agent = GenerateSQL()
     db_schema = fetch_schema(db=db)
 
-    def QueryCurriculum(query: str, current_user_message: str) -> tuple[str, dict]:
+    def SyllabusLookup(query: str, current_user_message: str) -> tuple[str, dict]:
         """
-        Takes a natural language query about courses and classes offered
-        at Duke Kunshan University -> generates intermediate SQL query
+        Takes a natural language query about course syllabus -> generates intermediate SQL query
         passed into Postgres which has courses' syllabi -> Result formatted in natural language.
 
         It can answer what a specific course covers, what kind of assignments
-        are given, a course's grading policy, and a course's history (when it was offered).
+        are given, and a course's grading policy.
 
         Good tool for syllabus questions.
 
@@ -95,7 +94,7 @@ def QueryCurriculumOuter(N=3):
 
         return answer, internal_result
 
-    return QueryCurriculum
+    return SyllabusLookup
 
 
 def fetch_schema(db: DB) -> str:

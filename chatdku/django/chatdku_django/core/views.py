@@ -16,9 +16,7 @@ from drf_spectacular.utils import (
     extend_schema,
     OpenApiResponse,
 )
-from core.tasks import update_user_chroma
 from .utils import slugify
-from rest_framework import status
 
 import logging
 

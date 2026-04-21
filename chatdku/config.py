@@ -55,7 +55,7 @@ class Config:
             db_host = _env("DB_HOST")
             db_port = _env("DB_PORT")
             db_name = _env("DB_NAME")
-            psql_uri = f"postgresql://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
+            psql_uri = f"postgresql://{db_user}:{quote_plus(db_password or '')}@{db_host}:{db_port}/{db_name}"
 
         self._store.update(
             {
@@ -117,7 +117,7 @@ class Config:
                 # External data
                 "prereq_csv_path": "/datapool/chatdku_external_data/DK_SR_PREREQ_CRSE_CHATDKU.csv",
                 "classdata_csv_path": "/datapool/chatdku_external_data/cleaned_classdata.csv",
-                "major_requirements_dir": "/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
+                "major_req_dir": "/datapool/chatdku_external_data/doc_testing/output/ug_bulletin_2023-2024",
             }
         )
         # refresh read-only view

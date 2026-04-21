@@ -56,16 +56,27 @@ class PlannerSignature(dspy.Signature):
         If any of these are missing from the current message and the conversation history,
         choose action_type "send_message" and ask for the missing information.
 
-        Once you have all three pieces of information, your plan should include:
-            a. Look up the requirements for the student's major.
-            b. Look up the university-wide common-core requirements.
-            c. Identify courses that still need to be completed.
-            d. Verify prerequisites for each recommended course.
+        Once you have all three pieces of information, your plan should:
+            a. FIRST retrieve year-specific academic policies for the student's
+               class year — e.g. query "Year 1 fall semester mandatory courses",
+               "freshman requirements DKU 101 writing", or
+               "Class of 20XX graduation requirements". Use VectorRetriever or
+               KeywordRetriever. The Executor will extend its agenda based on any
+               mandatory courses or policy constraints it discovers.
+            b. Call CourseRecommender with the student's major and completed_courses
+               to get the baseline eligibility and schedule availability report.
+               This single tool handles requirements lookup, schedule availability,
+               and prerequisite checking in one step — prefer it over calling
+               MajorRequirementsLookup, CourseScheduleLookup, and PrerequisiteLookup
+               individually.
+            c. Optionally supplement with VectorRetriever or QueryCurriculum if the
+               student asks for more detail on specific courses (syllabus, instructor,
+               course description, etc.).
     """
 
     current_user_message: str = dspy.InputField()
-    conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    conversation_history: str = CONVERSATION_HISTORY_FIELD
     chatbot_role: str = ROLE_PROMPT
     available_tools: str = dspy.InputField(
         desc="Descriptions of the tools available to the Executor.",
@@ -139,6 +150,29 @@ PLANNER_DEMOS = [
             "1. What is your major (and track, if applicable)?\n"
             "2. What is your year of matriculation (e.g. Class of 2027)?\n"
             "3. What courses have you already completed or are currently taking?"
+        ),
+    ).with_inputs("current_user_message"),
+    dspy.Example(
+        current_user_message=(
+            "I'm a Data Science major, Class of 2027. "
+            "I've completed MATH 105, STATS 201, COMPSCI 101, and ECON 101. "
+            "What courses should I take next semester?"
+        ),
+        action_type="plan",
+        action=(
+            "The student has provided all required information: major (Data Science), "
+            "year (Class of 2027), completed courses (MATH 105, STATS 201, COMPSCI 101, ECON 101). "
+            "Class of 2027 means they matriculated in Fall 2023, so they are currently in Year 2 "
+            "(assuming Fall 2026 is next semester) or Year 3 depending on current date. "
+            "Step 1: Retrieve year-specific academic policies — search for 'Year 2 requirements' "
+            "or 'sophomore mandatory courses DKU' to identify any mandatory courses the student "
+            "must take based on their class year (e.g. DKU 101, writing requirement for Year 1; "
+            "GCHINA 101 for Year 1 Spring; GLOCHALL 201 for Year 2). "
+            "Step 2: Call CourseRecommender with major='data science' and "
+            "completed_courses=['MATH 105', 'STATS 201', 'COMPSCI 101', 'ECON 101'] to get the "
+            "baseline eligibility and schedule availability report. "
+            "The Executor should extend its agenda if the policy search reveals mandatory courses "
+            "not yet covered by CourseRecommender."
         ),
     ).with_inputs("current_user_message"),
 ]

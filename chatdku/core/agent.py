@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
+import argparse
+import os
+import sys
 import traceback
+import pyfiglet
 
+# Must be set before `import dspy` — prevents litellm from fetching the remote
+# model pricing database at startup (cuts ~40s off cold-start time).
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")  # noqa: E402,E401
 import dspy
 from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttributes
 from opentelemetry.trace import Status, StatusCode, use_span
@@ -10,15 +17,16 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.executor import Executor
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.tools.course_schedule import CourseScheduleLookupOuter
-from chatdku.core.tools.get_prerequisites import PrerequisiteLookupOuter
+from chatdku.core.tools.course_recommender import CourseRecommender
+from chatdku.core.tools.course_schedule import CourseScheduleLookup
+from chatdku.core.tools.get_prerequisites import PrerequisiteLookup
 from chatdku.core.tools.llama_index_tools import (
     KeywordRetrieverOuter,
     VectorRetrieverOuter,
 )
-from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
-from chatdku.core.utils import format_trajectory, load_conversation, span_start
+from chatdku.core.tools.major_requirements import MajorRequirementsLookup
+from chatdku.core.tools.syllabi.syllabi_tool import SyllabusLookupOuter
+from chatdku.core.utils import load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
 
 # When `--dev` is passed to the script, enable additional debug prints in this module.
@@ -99,18 +107,6 @@ class Agent(dspy.Module):
         )
 
         with use_span(span):
-            # Putting this in `self.__init__()` might not work due to that you might
-            # want DSPy to change prompt dynamically.
-
-            # These limits are for compressing both tool and conversation memory.
-            # Uses the executor's token limits as the executor has the largest context needs.
-            limits = self.executor.get_token_limits(
-                plan="",
-                current_user_message=current_user_message,
-                conversation_history=self.conversation_memory.history_str(),
-                trajectory=format_trajectory({}),
-            )
-
             # Clear internal memory for each user message
             self.internal_memory.clear()
 
@@ -125,7 +121,6 @@ class Agent(dspy.Module):
                 self.conversation_memory(
                     role="assistant",
                     content=prev_response,
-                    max_history_size=limits["conversation_history"],
                 )
 
             plan_result = self.planner(
@@ -157,7 +152,6 @@ class Agent(dspy.Module):
             self.conversation_memory(
                 role="user",
                 content=current_user_message,
-                max_history_size=limits["conversation_history"],
             )
 
         if not self.streaming:
@@ -188,7 +182,8 @@ class Agent(dspy.Module):
                 return i
 
 
-def main():
+def build_agent(streaming: bool = True, max_iterations: int = 10) -> "Agent":
+    """Configure DSPy and return a ready-to-use Agent instance."""
     setup()
     use_phoenix()
 
@@ -210,17 +205,13 @@ def main():
         enable_thinking=False,
     )
     dspy.configure(lm=lm)
-    # To disable cache:
 
+    # To disable cache:
     # dspy.configure_cache(
     # enable_disk_cache=False,
     # enable_memory_cache=False
     # )
 
-    import time
-
-    # role = "student"
-    # access_type = "student"  # hard code it for now, need parameter pass from user role
     user_id = "Chat_DKU"
     search_mode = 0
     tools = [
@@ -240,28 +231,61 @@ def main():
             search_mode=search_mode,
             files=[],
         ),
-        # DocRetrieverOuter(
-        #     retriever_top_k=25,
-        #     use_reranker=True,
-        #     reranker_top_n=5,
-        #     access_type=access_type,
-        #     role=role,
-        #     user_id=user_id,
-        #     search_mode=search_mode,
-        #     files=[],
-        # ),
-        MajorRequirementsLookupOuter(config.major_requirements_dir),
-        QueryCurriculumOuter(),
-        PrerequisiteLookupOuter(prereq_csv_path=config.prereq_csv_path),
-        CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
+        SyllabusLookupOuter(),
+        MajorRequirementsLookup,
+        PrerequisiteLookup,
+        CourseRecommender,
+        CourseScheduleLookup,
     ]
 
-    agent = Agent(
-        max_iterations=3,
-        streaming=True,
+    return Agent(
+        max_iterations=max_iterations,
+        streaming=streaming,
         get_intermediate=False,
         tools=tools,
     )
+
+
+def run_query(query: str, agent: "Agent | None" = None) -> str:
+    """Run a single query and return the full response as a string.
+
+    Suitable for programmatic use from Python:
+        from chatdku.core.agent import run_query
+        print(run_query("What are the CS major requirements?"))
+    """
+    if agent is None:
+        agent = build_agent(streaming=False)
+    result = agent(current_user_message=query)
+    response = result.response
+    if isinstance(response, str):
+        return response
+    # Streaming generator — collect.
+    return "".join(response)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="ChatDKU agent.")
+    parser.add_argument(
+        "query",
+        nargs="*",
+        help="Query to run once and exit. If omitted, starts interactive mode.",
+    )
+    args = parser.parse_args()
+
+    if args.query:
+        query = " ".join(args.query)
+        print(run_query(query))
+        return
+
+    _main_interactive()
+
+
+def _main_interactive():
+    import time
+
+    agent = build_agent(streaming=True)
+
+    pyfiglet.figlet_format("ChatDKU", font="slant")
 
     while True:
         try:
@@ -290,5 +314,5 @@ if __name__ == "__main__":
         main()
     except Exception:
         print(traceback.format_exc())
-
-    input()
+        if sys.stdin.isatty():
+            input()

@@ -10,15 +10,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from chatdku.core.tools.syllabi_tool.generate_sql import (
+from chatdku.core.tools.syllabi.generate_sql import (
     _collapse_repeated_lines,
     _dedupe_lines,
     _truncate_long_output,
 )
 
 # Import helpers directly after patching
-from chatdku.core.tools.syllabi_tool.query_curriculum_db import (
-    QueryCurriculumOuter,
+from chatdku.core.tools.syllabi.syllabi_tool import (
+    SyllabusLookupOuter,
     fetch_schema,
 )
 
@@ -27,7 +27,7 @@ from chatdku.core.tools.syllabi_tool.query_curriculum_db import (
 # We patch setup() and use_phoenix() before importing the module.
 
 
-query_curriculum_db = QueryCurriculumOuter()
+query_curriculum_db = SyllabusLookupOuter()
 
 
 class TestCollapseRepeatedLines:
@@ -149,7 +149,7 @@ def mock_db(monkeypatch):
     ]
     mock_db_cls = MagicMock(return_value=db_instance)
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.DB",
+        "chatdku.core.tools.syllabi.query_curriculum_db.DB",
         mock_db_cls,
     )
     return db_instance
@@ -160,7 +160,7 @@ def mock_generate_sql(monkeypatch):
     sql_agent = MagicMock(return_value=FAKE_SQL)
     mock_cls = MagicMock(return_value=sql_agent)
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.GenerateSQL",
+        "chatdku.core.tools.syllabi.query_curriculum_db.GenerateSQL",
         mock_cls,
     )
     return sql_agent
@@ -175,7 +175,7 @@ def mock_dspy_predict(monkeypatch):
     predictor_instance = MagicMock(return_value=fake_result)
     mock_predict_cls = MagicMock(return_value=predictor_instance)
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+        "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
         mock_predict_cls,
     )
     return fake_result
@@ -224,7 +224,7 @@ class TestQueryCurriculumDb:
             Exception("DB is down"),  # SQL execution fails
         ]
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.DB",
+            "chatdku.core.tools.syllabi.query_curriculum_db.DB",
             MagicMock(return_value=db_instance),
         )
         # Should not raise; error is caught and passed to the LM as text
@@ -238,7 +238,7 @@ class TestQueryCurriculumDb:
         fake_result.result = "<think>internal</think>Clean answer."
         predictor_instance = MagicMock(return_value=fake_result)
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+            "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=predictor_instance),
         )
         result, internal = query_curriculum_db("Test query.", "Test query.")
@@ -252,7 +252,7 @@ class TestQueryCurriculumDb:
         fake_result.result = "\n".join(["answer"] * 20)
         predictor_instance = MagicMock(return_value=fake_result)
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+            "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=predictor_instance),
         )
         result, internal = query_curriculum_db(
@@ -266,7 +266,7 @@ def mock_db_outer(monkeypatch):
     db_instance = MagicMock()
     db_instance.execute.side_effect = [FAKE_SCHEMA_ROWS, FAKE_ROWS]
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.DB",
+        "chatdku.core.tools.syllabi.query_curriculum_db.DB",
         MagicMock(return_value=db_instance),
     )
     return db_instance
@@ -276,7 +276,7 @@ def mock_db_outer(monkeypatch):
 def mock_generate_sql_outer(monkeypatch):
     sql_agent = MagicMock(return_value=FAKE_SQL)
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.GenerateSQL",
+        "chatdku.core.tools.syllabi.query_curriculum_db.GenerateSQL",
         MagicMock(return_value=sql_agent),
     )
     return sql_agent
@@ -288,7 +288,7 @@ def mock_dspy_predict_outer(monkeypatch):
     fake_result.result = "Two math courses found."
     predictor_instance = MagicMock(return_value=fake_result)
     monkeypatch.setattr(
-        "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+        "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
         MagicMock(return_value=predictor_instance),
     )
     return fake_result
@@ -298,7 +298,7 @@ class TestQueryCurriculumOuter:
     def test_returns_tuple(
         self, mock_db_outer, mock_generate_sql_outer, mock_dspy_predict_outer
     ):
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         result = fn("What courses are there?", "What courses are there?")
         assert isinstance(result, tuple)
         assert len(result) == 2
@@ -306,14 +306,14 @@ class TestQueryCurriculumOuter:
     def test_result_is_string(
         self, mock_db_outer, mock_generate_sql_outer, mock_dspy_predict_outer
     ):
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         result_str, internal = fn("List CS courses.", "List CS courses.")
         assert isinstance(result_str, str)
 
     def test_internal_result_contains_sql(
         self, mock_db_outer, mock_generate_sql_outer, mock_dspy_predict_outer
     ):
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         _, internal = fn("Find courses.", "Find courses.")
         assert "sql" in internal
         assert isinstance(internal["sql"], str)
@@ -325,16 +325,16 @@ class TestQueryCurriculumOuter:
             Exception("timeout"),
         ]
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.DB",
+            "chatdku.core.tools.syllabi.query_curriculum_db.DB",
             MagicMock(return_value=db_instance),
         )
         fake_result = MagicMock()
         fake_result.result = "SQL execution error: timeout"
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+            "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=MagicMock(return_value=fake_result)),
         )
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         result_str, _ = fn("Any query.", "Any query.")
         assert isinstance(result_str, str)
 
@@ -344,10 +344,10 @@ class TestQueryCurriculumOuter:
         fake_result = MagicMock()
         fake_result.result = "<think>skip</think>Real answer."
         monkeypatch.setattr(
-            "chatdku.core.tools.syllabi_tool.query_curriculum_db.dspy.Predict",
+            "chatdku.core.tools.syllabi.query_curriculum_db.dspy.Predict",
             MagicMock(return_value=MagicMock(return_value=fake_result)),
         )
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         result_str, _ = fn("Q.", "Q.")
         assert "<think>" not in result_str
         assert "Real answer." in result_str
@@ -360,10 +360,10 @@ class TestQueryCurriculumOuter:
         monkeypatch,
     ):
         """Runs without error when config has no tracer (uses nullcontext)."""
-        import chatdku.core.tools.syllabi_tool.query_curriculum_db as mod
+        import chatdku.core.tools.syllabi.syllabi_tool as mod
 
         fake_config = MagicMock(spec=[])  # no tracer attribute
         monkeypatch.setattr(mod, "config", fake_config)
-        fn = QueryCurriculumOuter()
+        fn = SyllabusLookupOuter()
         result_str, internal = fn("Any query.", "Any query.")
         assert isinstance(result_str, str)

@@ -120,7 +120,7 @@ def _collapse_repeated_lines(text: str, max_consecutive: int = 4) -> str:
             if prev is not None:
                 if count > max_consecutive:
                     out_lines.append(prev)
-                    out_lines.append(f"...({count+1} repeated lines collapsed)...")
+                    out_lines.append(f"...({count + 1} repeated lines collapsed)...")
                 else:
                     out_lines.extend([prev] * (count + 1))
             prev = line
@@ -130,7 +130,7 @@ def _collapse_repeated_lines(text: str, max_consecutive: int = 4) -> str:
     if prev is not None:
         if count > max_consecutive:
             out_lines.append(prev)
-            out_lines.append(f"...({count+1} repeated lines collapsed)...")
+            out_lines.append(f"...({count + 1} repeated lines collapsed)...")
         else:
             out_lines.extend([prev] * (count + 1))
 

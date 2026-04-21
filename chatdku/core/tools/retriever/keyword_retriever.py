@@ -4,12 +4,8 @@ import string
 import sys
 from itertools import combinations
 
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from redis import Redis
 from redis.commands.search.query import Query
-from redisvl.schema import IndexSchema
 
 from chatdku.config import config
 from chatdku.core.tools.retriever.base_retriever import BaseDocRetriever, NodeWithScore
@@ -17,6 +13,8 @@ from chatdku.core.tools.utils import get_url
 
 
 def _ensure_nltk_resource(resource_path: str, download_name: str) -> None:
+    import nltk
+
     try:
         nltk.data.find(resource_path)
     except LookupError:
@@ -34,8 +32,16 @@ def _ensure_nltk_resource(resource_path: str, download_name: str) -> None:
         )
 
 
-_ensure_nltk_resource("corpora/stopwords", "stopwords")
-_ensure_nltk_resource("tokenizers/punkt_tab", "punkt_tab")
+_nltk_ready = False
+
+
+def _ensure_nltk_resources() -> None:
+    global _nltk_ready
+    if _nltk_ready:
+        return
+    _ensure_nltk_resource("corpora/stopwords", "stopwords")
+    _ensure_nltk_resource("tokenizers/punkt_tab", "punkt_tab")
+    _nltk_ready = True
 
 
 class KeywordRetriever(BaseDocRetriever):
@@ -52,12 +58,23 @@ class KeywordRetriever(BaseDocRetriever):
             search_mode,
             files,
         )
+        # Load NLTK resources once at construction time so the first query
+        # doesn't pay the cost. Subsequent calls are O(1) via sys.modules.
+        _ensure_nltk_resources()
+        from nltk.corpus import stopwords as _sw
+        from nltk.tokenize import word_tokenize as _wt
+
+        self._stopwords = _sw
+        self._word_tokenize = _wt
 
     def query(self, query: str | list[str]) -> list[NodeWithScore]:
         """
         Retrieve texts from the database that contain the
         same keywords in the query.
         """
+        stopwords = self._stopwords
+        word_tokenize = self._word_tokenize
+
         client = Redis(
             host=config.redis_host,
             port=config.redis_port,
