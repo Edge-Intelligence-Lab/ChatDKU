@@ -76,7 +76,7 @@ def parse_course_codes(md_text: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _load_prereq_df(prereq_csv_path: str) -> pd.DataFrame:
+def _load_prereq_df(prereq_csv_path: Path) -> pd.DataFrame:
     return pd.read_csv(prereq_csv_path, encoding="utf-16le")
 
 
@@ -167,7 +167,7 @@ def prerequisites_met(
 
 
 def _get_offered_courses(
-    course_codes: list[str], classdata_csv_path: str
+    course_codes: list[str], classdata_csv_path: Path
 ) -> dict[str, list[dict]]:
     """Return a mapping of course_code → list of schedule rows for offered courses.
 
@@ -273,9 +273,9 @@ def CourseRecommender(
     Returns:
         A Markdown-formatted recommendation report.
     """
-    req_dir = config.major_req_dir
-    classdata_csv_path = config.classdata_csv_path
-    prereq_csv_path = config.prereq_csv_path
+    req_dir = Path(config.major_req_dir)
+    classdata_csv_path = Path(config.classdata_csv_path)
+    prereq_csv_path = Path(config.prereq_csv_path)
     with span_ctx_start(
         "CourseRecommender", OpenInferenceSpanKindValues.TOOL
     ) as span:
@@ -328,8 +328,8 @@ def _run_recommendation(
     major: str,
     completed_courses: list[str],
     req_dir: Path,
-    classdata_csv_path: str,
-    prereq_csv_path: str,
+    classdata_csv_path: Path,
+    prereq_csv_path: Path,
 ) -> str:
     if not req_dir.is_dir():
         raise FileNotFoundError(f"Requirements directory not found: {req_dir}")

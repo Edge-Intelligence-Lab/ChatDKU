@@ -125,7 +125,7 @@ def MajorRequirementsLookup(major: str) -> str:
         Markdown text of the major's requirements, or an error message when
         no match is found.
     """
-    req_dir = config.major_req_dir
+    req_dir = Path(config.major_req_dir)
     with span_ctx_start(
         "MajorRequirementsLookup", OpenInferenceSpanKindValues.TOOL
     ) as span:
