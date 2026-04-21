@@ -71,8 +71,8 @@ class PlannerSignature(dspy.Signature):
     """
 
     current_user_message: str = dspy.InputField()
-    conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    conversation_history: str = CONVERSATION_HISTORY_FIELD
     chatbot_role: str = ROLE_PROMPT
     available_tools: str = dspy.InputField(
         desc="Descriptions of the tools available to the Executor.",
