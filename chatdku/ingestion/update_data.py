@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import hashlib
 
-
 import pandas as pd
 from llama_index.core import SimpleDirectoryReader
 from llama_index.core.ingestion import IngestionPipeline
@@ -21,9 +20,6 @@ from openpyxl import load_workbook
 from improved_html_cleaner import HtmlCleaner
 
 from chatdku.config import config
-
-# Import structure-aware PDF chunker (local parsing, replaces LlamaParse)
-from structure_chunker import process_pdf as process_pdf_structure_aware
 
 
 def _safe_lower(x):
@@ -79,6 +75,85 @@ def _ensure_permission_metadata(
     md.setdefault("user_id", _safe_lower(user_id))
 
     return md
+
+
+def infer_permissions_from_path(file_path: str) -> dict:
+    """
+    Automatically infer access permissions based on file path.
+
+    Args:
+        file_path: Absolute path to the file
+
+    Returns:
+        Dictionary with access_type, role, organization, user_id
+    """
+    path_str = str(file_path)
+
+    # Rule 1: Public knowledge base (visible to everyone)
+    if "chat_dku_public" in path_str:
+        return {
+            "access_type": "public",
+            "role": None,
+            "organization": None,
+            "user_id": None,
+        }
+
+    # Rule 2: Main advising knowledge base (visible to students)
+    if "chat_dku_advising" in path_str and "test" not in path_str:
+        return {
+            "access_type": "student",
+            "role": "student",
+            "organization": None,
+            "user_id": None,
+        }
+
+    # Rule 3: Test knowledge base (for development/testing)
+    if "chat_dku_advising_test" in path_str:
+        return {
+            "access_type": "student",
+            "role": "student",
+            "organization": None,
+            "user_id": None,
+        }
+
+    # Rule 4: Developer personal folders (private, owner-only access)
+    developer_names = [
+        "Mil3sYu",
+        "theta-lin",
+        "zhiwei531",
+        "Glitterccc",
+        "Ar-temis",
+        "AndyLu666",
+        "SHAO-Jiaqi757",
+        "Ederich013",
+        "Ada0116",
+        "Wangshengyang2004",
+        "munishlohani",
+        "pomegranar",
+        "hafikhan11",
+        "GihoonE",
+        "algernon-echo",
+        "BESTTOOLBOX",
+        "sean-allen-siegfreid",
+        "zhangyunzhen2027",
+    ]
+
+    for name in developer_names:
+        if f"/{name}/" in path_str:
+            return {
+                "access_type": "private",
+                "role": None,
+                "organization": None,
+                "user_id": name,
+            }
+
+    # Default: student access (least privilege)
+    return {
+        "access_type": "student",
+        "role": "student",
+        "organization": None,
+        "user_id": "Chat_DKU",
+    }
 
 
 def load_event_files():
@@ -243,8 +318,7 @@ def write_changes(data_dir: str, added_files: set[str], removed_files: set[str])
     Args:
         data_dir: The directory that log.json and all the data is in.
         added_files: Set of added files, that was returned from read_changes()
-        removed_files: Set of removed files, that was returned from
-        read_changes()
+        removed_files: Set of removed files, that was returned from read_changes()
     """
     log_path = os.path.join(data_dir, "log.json")
 
@@ -277,8 +351,7 @@ def read_changes(data_dir: str) -> tuple[set[str], set[str]]:
     Args:
         data_dir: The directory that log.json and all the data is in.
     Returns:
-        tuple(added_files, removed_files): A tuple of sets with the added
-        files and removed files.
+        tuple(added_files, removed_files): A tuple of sets with the added files and removed files.
     """
     log_path = os.path.join(data_dir, "log.json")
 
@@ -340,42 +413,43 @@ def _read_pdf(
     file_paths: list[str], user_id, access_type, role, organization
 ) -> list[TextNode]:
     """
-    Read PDF files using local structure-aware chunker (pdfplumber).
-    Replaces the previous LlamaParse-based implementation.
+    Read PDF files using LlamaParse + fixed chunk size SentenceSplitter.
 
-    Args:
-        file_paths: List of PDF file paths to process
-        user_id: User ID for metadata
-        access_type: Access type (public/student/office/private)
-        role: User role
-        organization: Organization name (required for office access)
-
-    Returns:
-        List of TextNode objects with structure-aware chunks
+    This is the rollback version:
+    - remove structure-aware chunking
+    - restore fixed chunk size splitting
     """
+    from llama_parse import LlamaParse
+
     total_nodes = []
 
     for file_path in file_paths:
-        print(f"Reading PDF with structure_chunker: {file_path}")
+        print(f"Reading PDF with LlamaParse: {file_path}")
 
-        # Use local structure-aware chunker instead of LlamaParse
-        chunked_docs = process_pdf_structure_aware(
-            file_path, max_chunk_size=config.chunk_size, min_chunk_size=80
+        parser = LlamaParse(
+            api_key=config.llamaparse_api,
+            result_type="markdown",
+            num_workers=4,
+            verbose=True,
+            language="en",
+            parsing_instruction="This is a DKU document. Extract all text and preserve structure.",
         )
 
-        for doc in chunked_docs:
-            # Generate unique ID for the chunk
+        documents = parser.load_data(file_path)
+
+        splitter = SentenceSplitter(
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+        )
+        nodes = splitter.get_nodes_from_documents(documents)
+
+        for node in nodes:
             chunk_id = str(uuid.uuid4())
 
-            # Build metadata with permission fields
             base_metadata = custom_metadata(user_id)(file_path)
-            base_metadata["page_number"] = doc.metadata.get("page_number", "Not given")
             base_metadata["chunk_id"] = chunk_id
-            base_metadata["chunking_method"] = doc.metadata.get(
-                "chunking_method", "structure_aware"
-            )
+            base_metadata["chunking_method"] = "fixed"
 
-            # Apply permission metadata
             base_metadata = _ensure_permission_metadata(
                 base_metadata,
                 user_id=user_id,
@@ -384,17 +458,9 @@ def _read_pdf(
                 organization=organization,
             )
 
-            # Create TextNode
-            node = TextNode(
-                text=doc.text,
-                id_=chunk_id,
-                metadata=base_metadata,
-            )
+            node.id_ = chunk_id
+            node.metadata = base_metadata
 
-            if node.text == "":
-                continue
-
-            # Set source relationship
             doc_id = os.path.abspath(file_path)
             node.relationships[NodeRelationship.SOURCE] = RelatedNodeInfo(
                 node_id=hashlib.md5(doc_id.encode()).hexdigest()
@@ -402,7 +468,8 @@ def _read_pdf(
 
             total_nodes.append(node)
 
-        print(f"Finished loading {file_path}. Generated {len(chunked_docs)} chunks.")
+        print(f"Finished loading {file_path}. Generated {len(nodes)} chunks.")
+
     return total_nodes
 
 
@@ -524,8 +591,8 @@ def update_events(user_id: str) -> list:
 def update(
     data_dir: str,
     user_id: str,
-    access_type: str,
-    role: str,
+    access_type: str = None,
+    role: str = None,
     organization: str = None,
     verbose: bool = False,
 ):
@@ -534,7 +601,7 @@ def update(
 
     This function:
     1. Detects added/removed files since last run
-    2. Processes new PDF files using local structure-aware chunker
+    2. Processes new PDF files using LlamaParse + fixed chunk size
     3. Processes new non-PDF files using UnstructuredReader
     4. Removes nodes from deleted files
     5. Generates fresh event nodes
@@ -543,8 +610,8 @@ def update(
     Args:
         data_dir: Root directory containing documents
         user_id: User ID for metadata
-        access_type: Access type (public/student/office/private)
-        role: User role
+        access_type: Access type (public/student/office/private). If None, auto-infer from path
+        role: User role. If None, auto-infer from path
         organization: Organization name (required for office access)
         verbose: Whether to print detailed information
     """
@@ -566,20 +633,68 @@ def update(
         print(f"Files to be added: {added_files}")
         print(f"Files to be removed: {removed_files}")
 
-    # load newly added non-event files
+    # load newly added non-event files with per-file permission inference
     if added_files:
         pdf_files = [file for file in added_files if file.endswith(".pdf")]
         non_pdf_files = list(set(added_files) - set(pdf_files))
 
-        if non_pdf_files:
-            new_nodes.extend(
-                _read_non_pdf(non_pdf_files, user_id, access_type, role, organization)
-            )
+        # Process non-PDF files with per-file permission inference
+        for file in non_pdf_files:
+            # Determine permissions for this file
+            if access_type:
+                # Global override mode: use provided parameters
+                file_access_type = access_type
+                file_role = role
+                file_organization = organization
+            else:
+                # Auto-inference mode: determine from file path
+                perms = infer_permissions_from_path(file)
+                file_access_type = perms["access_type"]
+                file_role = perms["role"]
+                file_organization = perms["organization"]
 
-        if pdf_files:
-            new_nodes.extend(
-                _read_pdf(pdf_files, user_id, access_type, role, organization)
+            # Process single file
+            nodes = _read_non_pdf(
+                [file],
+                user_id,
+                file_access_type,
+                file_role,
+                file_organization,
             )
+            new_nodes.extend(nodes)
+            if verbose:
+                print(
+                    f"Processed {file} -> access_type={file_access_type}, role={file_role}"
+                )
+
+        # Process PDF files with per-file permission inference
+        for file in pdf_files:
+            # Determine permissions for this file
+            if access_type:
+                # Global override mode: use provided parameters
+                file_access_type = access_type
+                file_role = role
+                file_organization = organization
+            else:
+                # Auto-inference mode: determine from file path
+                perms = infer_permissions_from_path(file)
+                file_access_type = perms["access_type"]
+                file_role = perms["role"]
+                file_organization = perms["organization"]
+
+            # Process single file
+            nodes = _read_pdf(
+                [file],
+                user_id,
+                file_access_type,
+                file_role,
+                file_organization,
+            )
+            new_nodes.extend(nodes)
+            if verbose:
+                print(
+                    f"Processed {file} -> access_type={file_access_type}, role={file_role}"
+                )
 
         print("Total added nodes:", len(new_nodes))
 
@@ -616,7 +731,7 @@ def main(data_dir, user_id, access_type, role, organization=None, verbose=False)
         user_id: User ID for metadata
         access_type: Access type (public/student/office/private)
         role: User role
-        organization: Organization name (required for office access)
+        organization: Organization name (required when access_type == 'office')
         verbose: Whether to print detailed information
     """
     if data_dir is None:
@@ -649,10 +764,7 @@ if __name__ == "__main__":
         "--access_type",
         type=str,
         default="student",
-        help=(
-            "Access type for the nodes. Including 'public', 'student', "
-            "'office', 'private'. Defaults to 'student'."
-        ),
+        help="Access type for the nodes. Including 'public', 'student', 'office', 'private'. Defaults to 'student'.",
     )
     parser.add_argument(
         "--role",
@@ -664,7 +776,7 @@ if __name__ == "__main__":
         "--organization",
         type=str,
         default=None,
-        help=("Organization for the nodes. " "Required when access_type == 'office'."),
+        help="Organization for the nodes. Required when access_type == 'office'.",
     )
     parser.add_argument(
         "-v",
@@ -681,5 +793,5 @@ if __name__ == "__main__":
         args.access_type,
         args.role,
         args.organization,
-        args.v,
+        args.verbose,
     )
