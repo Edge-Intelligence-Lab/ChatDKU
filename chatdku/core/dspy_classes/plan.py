@@ -51,7 +51,7 @@ class PlannerSignature(dspy.Signature):
         I take", you MUST verify ALL of the following are known before choosing action_type
         "plan":
             1. The student's major (and track, if applicable).
-            2. Their year of matriculation (Class of 20XX).
+            2. Their year of matriculation (e.g. matriculated in 2024, thus class of 2028).
             3. Courses they have already completed OR are currently taking.
         If any of these are missing from the current message and the conversation history,
         choose action_type "send_message" and ask for the missing information.
