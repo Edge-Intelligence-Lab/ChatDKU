@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any, Literal
 
 import dspy
@@ -20,57 +21,6 @@ from chatdku.core.utils import (
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-
-
-class AssessSignature(dspy.Signature):
-    """
-    You are evaluating the progress of an information-gathering task for
-    Duke Kunshan University (DKU).
-
-    Given the current agenda and the tool results collected so far (trajectory), determine:
-    1. What information from the agenda has been successfully gathered.
-    2. What information is still missing or insufficient.
-    3. What NEW investigation areas have been REVEALED by the tool results so far
-       that were not in the original agenda — for example, a retrieved policy document
-       mentions a mandatory course, or schedule data reveals an unmet prerequisite chain.
-    4. Whether you should continue gathering information or finish.
-
-    Choose "continue" if the agenda has unfulfilled steps OR if newly-revealed areas
-    warrant further investigation.
-    Choose "finish" if you have gathered enough information to answer the user's
-    question, OR if remaining gaps cannot be resolved with further tool calls.
-    """
-
-    current_agenda: str = dspy.InputField(
-        desc=(
-            "The current investigation agenda: the original plan plus any extensions "
-            "discovered during execution."
-        ),
-        format=lambda x: x,
-    )
-    current_user_message: str = dspy.InputField()
-    trajectory: str = dspy.InputField(
-        desc="Tool calls and their results collected so far. May be empty on the first iteration.",
-        format=lambda x: x,
-    )
-    conversation_history: str = CONVERSATION_HISTORY_FIELD
-    conversation_summary: str = CONVERSATION_SUMMARY_FIELD
-
-    assessment: str = dspy.OutputField(
-        desc=(
-            "Brief analysis: (1) what has been gathered, "
-            "(2) what is still missing from the agenda, "
-            "(3) what new areas (if any) were revealed by the results."
-        ),
-    )
-    agenda_extensions: str = dspy.OutputField(
-        desc=(
-            "New investigation areas revealed by the tool results that are NOT yet "
-            "in the current agenda. Describe each as a short action phrase. "
-            "Leave empty if nothing new was discovered."
-        ),
-    )
-    decision: str = dspy.OutputField(type=Literal["continue", "finish"])
 
 
 class ExecutorSignatureBase(dspy.Signature):
@@ -130,16 +80,10 @@ class ExecutorSignatureBase(dspy.Signature):
         desc="Tool calls and their results collected so far. May be empty on the first iteration.",
         format=lambda x: x,
     )
-    conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    conversation_history: str = CONVERSATION_HISTORY_FIELD
     chatbot_role: str = ROLE_PROMPT
-    agenda_extensions: str = dspy.OutputField(
-        desc=(
-            "New investigation areas revealed by the tool results that are NOT yet "
-            "in the current agenda. Describe each as a short action phrase. "
-            "Leave empty if nothing new was discovered."
-        ),
-    )
+    current_date: date = dspy.InputField()
     assessment: str = dspy.OutputField(
         desc=(
             "Brief analysis: (1) what information has been gathered so far, "
@@ -147,6 +91,13 @@ class ExecutorSignatureBase(dspy.Signature):
             "(3) whether the missing information can be obtained with available tools."
         ),
         format=lambda x: x,
+    )
+    agenda_extensions: str = dspy.OutputField(
+        desc=(
+            "New investigation areas revealed by the tool results that are NOT yet "
+            "in the current agenda. Describe each as a short action phrase. "
+            "Leave empty if nothing new was discovered."
+        ),
     )
 
 
@@ -213,8 +164,8 @@ class SummarizerSignature(dspy.Signature):
 
 
 # Keys per iteration in the trajectory dict.
-# assessment, thought, tool_name, tool_args, observation
-_KEYS_PER_ITERATION = 5
+# tool_name, tool_args, observation
+_KEYS_PER_ITERATION = 3
 
 
 class Executor(dspy.Module):
@@ -266,22 +217,6 @@ class Executor(dspy.Module):
         self.executor = dspy.Predict(exec_signature)
         self.distiller = dspy.Predict(DistillSignature)
 
-        self.assess_token_ratios: dict[str, float] = {
-            "current_agenda": 3 / 12,
-            "current_user_message": 1 / 12,
-            "conversation_history": 2 / 12,
-            "conversation_summary": 1 / 12,
-            "trajectory": 5 / 12,
-        }
-        self.act_token_ratios: dict[str, float] = {
-            "current_agenda": 3 / 16,
-            "current_user_message": 1 / 16,
-            "conversation_history": 1 / 16,
-            "conversation_summary": 1 / 16,
-            "chatbot_role": 2 / 16,
-            "trajectory": 4 / 16,
-            "assessment": 2 / 16,
-        }
         self.distill_token_ratios: dict[str, float] = {
             "current_user_message": 2 / 10,
             "plan": 2 / 10,
@@ -292,13 +227,6 @@ class Executor(dspy.Module):
         self.trajectory_summary = ""
         self.max_iterations = max_iterations
 
-    def get_token_limits(self, **kwargs) -> dict[str, int]:
-        """Return token limits using the actor's ratios (tightest constraint)."""
-        # Ensure current_agenda is present (agent.py calls this with plan="")
-        if "current_agenda" not in kwargs and "plan" in kwargs:
-            kwargs["current_agenda"] = kwargs.pop("plan")
-        template_len = len(get_template(self.executor, **kwargs))
-        return token_limit_ratio_to_count(self.act_token_ratios, template_len)
 
     def forward(
         self,
@@ -306,35 +234,26 @@ class Executor(dspy.Module):
         current_user_message: str,
         conversation_memory: ConversationMemory,
     ) -> dspy.Prediction:
-        shared_inputs = dict(
-            current_user_message=current_user_message,
-            conversation_history=conversation_memory.history_str(),
-            conversation_summary=conversation_memory.summary,
-        )
-
         # current_agenda starts as the original plan and grows as the Executor
         # discovers new investigation areas from tool results.
         current_agenda = plan
 
         trajectory = {}
         with span_ctx_start("Executor", SpanKind.AGENT) as span:
-            span.set_attribute("agent.name", "Executor")
-            span.set_attribute(
-                "input.value",
-                safe_json_dumps({"plan": plan, **shared_inputs}),
-            )
-
             for idx in range(self.max_iterations):
+                executor_inputs = dict(
+                    current_agenda= current_agenda,
+                    current_user_message=current_user_message,
+                    conversation_history=conversation_memory.history_str(),
+                    conversation_summary=conversation_memory.summary,
+                    current_date=str(date.today()),
+                    chatbot_role= role_str,
+                )
 
-                # Phase 1: ACT using the current (extended) agenda
-                executor_inputs = {
-                    "current_agenda": current_agenda,
-                    **shared_inputs,
-                    "chatbot_role": role_str,
-                }
-                executor_inputs = truncate_tokens_all(
-                    executor_inputs,
-                    self._act_token_limits(**executor_inputs),
+                span.set_attribute("agent.name", "Executor")
+                span.set_attribute(
+                    "input.value",
+                    safe_json_dumps(executor_inputs)
                 )
 
                 try:
@@ -347,21 +266,17 @@ class Executor(dspy.Module):
                 if executor_result.next_tool_name == "finish":
                     break
 
-                # Record assessment; append any agenda extensions into the trajectory
-                # so future iterations can see what was discovered.
-                assessment_text = executor_result.assessment
-
+                # NOTE: By Temuulen - I don't think we need to record assessment
+                # The agent can just assess everyturn and the assessment can act like
+                # a thought process guideline
                 extensions = getattr(executor_result, "agenda_extensions", "").strip()
                 if extensions:
-                    assessment_text += f"\n[Agenda extensions discovered: {extensions}]"
                     current_agenda = (
                         f"{current_agenda}\n\n"
                         f"[Additional areas to investigate, discovered at step {idx + 1}]:\n"
                         f"{extensions}"
                     )
-
-                trajectory[f"assessment_{idx}"] = assessment_text
-                trajectory[f"thought_{idx}"] = executor_result.next_thought
+                # NOTE: Same as assessment, we don't need to record the thought process
                 trajectory[f"tool_name_{idx}"] = executor_result.next_tool_name
                 trajectory[f"tool_args_{idx}"] = executor_result.next_tool_args
 
@@ -395,16 +310,6 @@ class Executor(dspy.Module):
             relevant_context=distill_result.relevant_context,
             summary=self.trajectory_summary,
         )
-
-    # Token limit helpers
-
-    def _assess_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(get_template(self.assessor, **kwargs))
-        return token_limit_ratio_to_count(self.assess_token_ratios, template_len)
-
-    def _act_token_limits(self, **kwargs) -> dict[str, int]:
-        template_len = len(get_template(self.executor, **kwargs))
-        return token_limit_ratio_to_count(self.act_token_ratios, template_len)
 
     def _distill_token_limits(self, **kwargs) -> dict[str, int]:
         template_len = len(get_template(self.distiller, **kwargs))
