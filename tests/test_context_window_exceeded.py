@@ -5,7 +5,7 @@ when the input is far larger than the model's context window.
 
 import dspy
 import pytest
-from litellm import ContextWindowExceededError
+from litellm.exceptions import ContextWindowExceededError
 
 from chatdku.config import config
 
@@ -19,12 +19,21 @@ class HugeInputSignature(dspy.Signature):
 
 def test_context_window_exceeded():
     lm = dspy.LM(
-        model="openai/" + config.backup_llm,
-        api_base=config.backup_llm_url,
+        model="openai/" + config.llm,
+        api_base=config.llm_url,
         api_key=config.llm_api_key,
-        model_type="responses",
-        max_tokens=config.context_window,
+        model_type="chat",
+        max_tokens=config.output_window,
+        top_p=config.top_p,
+        min_p=config.min_p,
+        presence_penalty=config.presence_penalty,
+        repetition_penalty=config.repetition_penalty,
         temperature=config.llm_temperature,
+        extra_body={
+            "top_k": config.top_k,
+            "chat_template_kwargs": {"enable_thinking": False},
+        },
+        enable_thinking=False,
     )
     dspy.configure(lm=lm)
 
@@ -34,4 +43,4 @@ def test_context_window_exceeded():
     huge_input = "hello world " * 500_000  # ~6M tokens
 
     with pytest.raises(ContextWindowExceededError):
-        predictor(question=huge_input)
+        predictor(question=huge_input).answer
