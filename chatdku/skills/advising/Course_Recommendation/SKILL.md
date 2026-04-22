@@ -64,7 +64,7 @@ Extends DKU's first-year orientation. This 7-week, non-credit, non-graded course
 
 ### Additional for Chinese / HMT Students
 - Chinese Society & Culture (CHSC): 16 credits (taught in Chinese; **do not** count toward the 136 for the Duke degree).
-- Military training: 4 credits (HMT may substitute CHSC courses).
+- Military training: 4 credits (HMT may substitute this with CHSC courses).
 - Physical Education: 8 half-credit courses (4 credits; max 2 count toward the 136) + annual physical proficiency test.
 
 ## Attribute Counting Rules (apply every time)

@@ -454,3 +454,8 @@ def skill_view(name: str) -> str:
 
     except Exception as e:
         raise e
+
+
+if __name__ == "__main__":
+    __import__("pprint").pprint(skills_list())
+    __import__("pprint").pprint(skill_view("Course_Recommendation"))
