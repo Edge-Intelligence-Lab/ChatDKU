@@ -33,8 +33,8 @@ from openinference.semconv.trace import (
 from opentelemetry.trace import Status, StatusCode
 from thefuzz import fuzz, process
 
-from chatdku.core.utils import span_ctx_start
 from chatdku.config import config
+from chatdku.core.utils import span_ctx_start
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +179,7 @@ def MajorRequirementsLookup(major: str) -> str:
 
             span.set_attributes(
                 {
-                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                        dict(matched_file=matched, char_count=len(result))
-                    ),
+                    SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
                     SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                 }
             )

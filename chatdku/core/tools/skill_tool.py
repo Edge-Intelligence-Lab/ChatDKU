@@ -249,11 +249,10 @@ def _parse_tags(tags_value) -> List[str]:
 
 def skill_view(name: str) -> str:
     """
-    View the content of a skill or a specific file within a skill directory.
+    View the content of a skill within a skill directory.
 
     Args:
-        name: Name or path of the skill (e.g., "axolotl" or "03-fine-tuning/axolotl").
-            Qualified names like "plugin:skill" resolve to plugin-provided skills.
+        name: Name of the skill (e.g., "axolotl").
 
     Returns:
         JSON string with skill content or error message
