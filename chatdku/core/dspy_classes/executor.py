@@ -1,5 +1,6 @@
+import json
 from datetime import date
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import dspy
 from dspy import Tool
@@ -15,6 +16,7 @@ from chatdku.core.dspy_classes.prompt_settings import (
     role_str,
 )
 from chatdku.core.dspy_common import get_template
+from chatdku.core.tools.skill_tool import skill_view, skills_list
 from chatdku.core.utils import (
     format_trajectory,
     span_ctx_start,
@@ -50,6 +52,15 @@ class ExecutorSignatureBase(dspy.Signature):
        gaps. If a previous tool call failed, try to work around it (e.g.
        rephrase the query, try a different tool).
 
+    Skills:
+        You are given `available_skills` — a JSON listing of skills (name +
+        description) you can consult for task-specific instructions. The Planner
+        may have already loaded a skill whose contents appear in `loaded_skills`;
+        follow those instructions when relevant. If another skill in
+        `available_skills` looks clearly useful for the current agenda and is
+        not already in `loaded_skills`, call the `skill_view` tool with that
+        skill's exact name to load its instructions before proceeding.
+
     Useful facts:
         - Available subject codes: DKU, GERMAN, INDSTU, JAPANESE, KOREAN, MUSIC, SPANISH,
             ARHU, ARTS, BEHAVSCI, BIOL, CHEM, CHINESE, COMPDSGN, COMPSCI, CULANTH, CULMOVE,
@@ -84,6 +95,20 @@ class ExecutorSignatureBase(dspy.Signature):
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     chatbot_role: str = ROLE_PROMPT
     current_date: date = dspy.InputField()
+    available_skills: str = dspy.InputField(
+        desc=(
+            "JSON output from skills_list() describing skills you can load by "
+            "calling the skill_view tool with a skill's exact name."
+        ),
+        format=lambda x: x,
+    )
+    loaded_skills: str = dspy.InputField(
+        desc=(
+            "Contents of skills that have already been loaded for this task. "
+            "Follow their instructions when relevant. May be empty."
+        ),
+        format=lambda x: x,
+    )
     assessment: str = dspy.OutputField(
         desc=(
             "Brief analysis: (1) what information has been gathered so far, "
@@ -182,6 +207,8 @@ class Executor(dspy.Module):
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
 
+        tools["skill_view"] = Tool(skill_view)
+
         # Build the Executor signature dynamically with tool descriptions in the instructions.
         instr = (
             [f"{ExecutorSignatureBase.instructions}\n"]
@@ -245,10 +272,16 @@ class Executor(dspy.Module):
         plan: str,
         current_user_message: str,
         conversation_memory: ConversationMemory,
+        relevant_skill_name: Optional[str] = None,
     ) -> dspy.Prediction:
         # current_agenda starts as the original plan and grows as the Executor
         # discovers new investigation areas from tool results.
         current_agenda = plan
+
+        available_skills_str = skills_list()
+        loaded_skills_str = ""
+        if relevant_skill_name:
+            loaded_skills_str = skill_view(relevant_skill_name)
 
         trajectory = {}
         with span_ctx_start("Executor", SpanKind.AGENT) as span:
@@ -260,6 +293,8 @@ class Executor(dspy.Module):
                     conversation_summary=conversation_memory.summary,
                     current_date=str(date.today()),
                     chatbot_role=role_str,
+                    available_skills=available_skills_str,
+                    loaded_skills=loaded_skills_str,
                 )
 
                 span.set_attribute("agent.name", "Executor")

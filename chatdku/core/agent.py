@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import traceback
+
 import pyfiglet
 
 # Must be set before `import dspy` — prevents litellm from fetching the remote
@@ -138,6 +139,7 @@ class Agent(dspy.Module):
                     plan=plan_result.action,
                     current_user_message=current_user_message,
                     conversation_memory=self.conversation_memory,
+                    relevant_skill_name=plan_result.relevant_skill_name,
                 )
                 synthesizer_args = dict(
                     current_user_message=current_user_message,
@@ -234,7 +236,7 @@ def build_agent(streaming: bool = True, max_iterations: int = 10) -> "Agent":
         SyllabusLookupOuter(),
         MajorRequirementsLookup,
         PrerequisiteLookup,
-        CourseRecommender,
+        # CourseRecommender,
         CourseScheduleLookup,
     ]
 

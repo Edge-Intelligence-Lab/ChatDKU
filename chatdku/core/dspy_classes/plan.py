@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 import dspy
 from dspy import Tool
@@ -13,11 +13,15 @@ from chatdku.core.dspy_classes.prompt_settings import (
     role_str,
 )
 from chatdku.core.dspy_common import get_template
+from chatdku.core.tools.skill_tool import skills_list
 from chatdku.core.utils import (
     span_ctx_start,
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
+
+
+_NO_SKILL = "none"
 
 
 class PlannerSignature(dspy.Signature):
@@ -41,6 +45,14 @@ class PlannerSignature(dspy.Signature):
     You are given descriptions of the available tools so you know what actions are possible.
     Write plans at a high level — describe *what* information is needed, not the exact
     tool calls. The Executor will figure out the specifics.
+
+    Skills:
+        You are also given `available_skills` — a JSON listing of skills (each with a
+        name and description) that the Executor can load to get task-specific
+        instructions. If one of the skills is clearly relevant to the plan you are
+        producing, output its exact `name` in `relevant_skill_name` so the Executor
+        loads it. If no skill is relevant, output "none". Only select a skill when
+        `action_type` is "plan"; for "send_message" always output "none".
 
     Side notes:
         - If the user uses abbreviations or acronyms, you plan's first step should be to
@@ -82,12 +94,27 @@ class PlannerSignature(dspy.Signature):
         desc="Descriptions of the tools available to the Executor.",
         format=lambda x: x,
     )
+    available_skills: str = dspy.InputField(
+        desc=(
+            "JSON output from skills_list() describing skills the Executor can "
+            "load. Use the skill names and descriptions to decide which skill, "
+            "if any, is relevant to the plan."
+        ),
+        format=lambda x: x,
+    )
     action_type: str = dspy.OutputField(type=Literal["plan", "send_message"])
     action: str = dspy.OutputField(
         desc=(
             'If action_type is "plan": a free-form plan describing what information '
             "to gather and why. "
             'If action_type is "send_message": the message to send to the user.'
+        ),
+    )
+    relevant_skill_name: str = dspy.OutputField(
+        desc=(
+            "Exact name of the single most relevant skill from available_skills for "
+            'the Executor to load, or "none" if no skill applies. Must be "none" '
+            'when action_type is "send_message".'
         ),
     )
 
@@ -102,6 +129,7 @@ PLANNER_DEMOS = [
             "Search for information about the CR/NC policy, including eligibility, deadlines, "
             "and how it affects GPA."
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message=("what are the major requirements for X major"),
@@ -112,6 +140,7 @@ PLANNER_DEMOS = [
             "major and track combination. Also retrieve the university-wide common-core "
             "requirements that apply to all majors."
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message="where is jia yan's office?",
@@ -121,6 +150,7 @@ PLANNER_DEMOS = [
             "likely a faculty or staff member at DKU. Search for information about "
             "Jia Yan including their office location, building, and room number."
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message="a+，a，a-什么的呢？你这个不全呀",
@@ -131,6 +161,7 @@ PLANNER_DEMOS = [
             "complete DKU grading scale including all letter grades, their GPA point "
             "values, and any related grading policies."
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message="What is the scoring standard for NSPHST and graduation requirement?",
@@ -140,6 +171,7 @@ PLANNER_DEMOS = [
             "'NSPHST' might be an abbreviation. I need to first look up the full name of the abbreviation. "
             "Then, I can search for the relevant information including the scoring standard and graduation requirement."
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message="what courses should I take next semester?",
@@ -151,6 +183,7 @@ PLANNER_DEMOS = [
             "2. What is your year of matriculation (e.g. Class of 2027)?\n"
             "3. What courses have you already completed or are currently taking?"
         ),
+        relevant_skill_name=_NO_SKILL,
     ).with_inputs("current_user_message"),
     dspy.Example(
         current_user_message=(
@@ -174,6 +207,7 @@ PLANNER_DEMOS = [
             "The Executor should extend its agenda if the policy search reveals mandatory courses "
             "not yet covered by CourseRecommender."
         ),
+        relevant_skill_name="Course-Recommendation",
     ).with_inputs("current_user_message"),
 ]
 
@@ -188,14 +222,16 @@ class Planner(dspy.Module):
             tool_descriptions.append(f"({idx + 1}) {tool}")
 
         self.tool_descriptions_str = "\n".join(tool_descriptions)
+        self.available_skills_str = skills_list()
         self.planner = dspy.ChainOfThought(PlannerSignature)
         self.planner.demos = PLANNER_DEMOS
         self.token_ratios: dict[str, float] = {
-            "current_user_message": 2 / 12,
-            "conversation_history": 3 / 12,
-            "conversation_summary": 1 / 12,
-            "chatbot_role": 2 / 12,
-            "available_tools": 2 / 12,
+            "current_user_message": 2 / 14,
+            "conversation_history": 3 / 14,
+            "conversation_summary": 1 / 14,
+            "chatbot_role": 2 / 14,
+            "available_tools": 2 / 14,
+            "available_skills": 2 / 14,
         }
 
     def get_token_limits(self, **kwargs) -> dict[str, int]:
@@ -213,6 +249,7 @@ class Planner(dspy.Module):
             conversation_summary=conversation_memory.summary,
             chatbot_role=role_str,
             available_tools=self.tool_descriptions_str,
+            available_skills=self.available_skills_str,
         )
 
         with span_ctx_start("Planner", SpanKind.AGENT) as span:
@@ -226,14 +263,33 @@ class Planner(dspy.Module):
 
             result = self.planner(**planner_inputs)
 
+            relevant_skill_name: Optional[str] = _normalize_skill_name(
+                getattr(result, "relevant_skill_name", None)
+            )
+
             span.set_attribute(
                 "output.value",
                 safe_json_dumps(
-                    {"action_type": result.action_type, "action": result.action}
+                    {
+                        "action_type": result.action_type,
+                        "action": result.action,
+                        "relevant_skill_name": relevant_skill_name,
+                    }
                 ),
             )
 
         return dspy.Prediction(
             action_type=result.action_type,
             action=result.action,
+            relevant_skill_name=relevant_skill_name,
         )
+
+
+def _normalize_skill_name(value) -> Optional[str]:
+    """Collapse missing / ``"none"`` / empty skill names to ``None``."""
+    if value is None:
+        return None
+    name = str(value).strip()
+    if not name or name.lower() == _NO_SKILL:
+        return None
+    return name

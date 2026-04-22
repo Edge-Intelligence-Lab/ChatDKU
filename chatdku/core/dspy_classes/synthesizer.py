@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 import dspy
 from openinference.instrumentation import safe_json_dumps
@@ -22,6 +23,7 @@ from chatdku.core.dspy_classes.prompt_settings import (
     CURRENT_USER_MESSAGE_FIELD,
 )
 from chatdku.core.dspy_common import get_template
+from chatdku.core.tools.skill_tool import skill_view
 from chatdku.core.utils import (
     span_ctx_start,
     token_limit_ratio_to_count,
@@ -98,6 +100,7 @@ class SynthesizerSignature(dspy.Signature):
 
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
+    loaded_skills: str = dspy.InputField()
     relevant_context: str = dspy.InputField(
         desc=(
             "Organized extraction of information relevant to answering the "
@@ -117,11 +120,12 @@ class Synthesizer(dspy.Module):
         super().__init__()
         self.synthesizer = dspy.Predict(SynthesizerSignature)
         self.token_ratios: dict[str, float] = {
-            "current_user_message": 2 / 15,
+            "current_user_message": 1 / 15,
             "conversation_history": 2 / 15,
             "conversation_summary": 1 / 15,
-            "relevant_context": 5 / 15,
+            "relevant_context": 4 / 15,
             "trajectory_summary": 1 / 15,
+            "loaded_skills": 3 / 15,
         }
 
     def get_token_limits(self) -> dict[str, int]:
@@ -136,7 +140,11 @@ class Synthesizer(dspy.Module):
         relevant_context: str,
         trajectory_summary: str,
         streaming: bool,
+        relevant_skill_name: Optional[str] = None,
     ):
+        loaded_skills_str = ""
+        if relevant_skill_name:
+            loaded_skills_str = skill_view(relevant_skill_name)
         with span_ctx_start("Synthesizer", SpanKind.CHAIN) as span:
             synthesizer_args = dict(
                 current_user_message=current_user_message,
@@ -144,6 +152,7 @@ class Synthesizer(dspy.Module):
                 conversation_summary=conversation_memory.summary,
                 relevant_context=relevant_context,
                 trajectory_summary=trajectory_summary,
+                loaded_skills=loaded_skills_str,
             )
             synthesizer_args = truncate_tokens_all(
                 synthesizer_args, self.get_token_limits()
