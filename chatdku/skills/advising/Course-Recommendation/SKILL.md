@@ -20,7 +20,7 @@ Trigger on requests like "what should I take next session?", "help me plan my sc
 
 Before suggesting anything, you must know (ask if missing):
 1. **Year of study** (1–4) and matriculation year — requirements follow the Bulletin of the matriculation year.
-2. **Citizenship track** — international vs. Chinese Mainland / HK-Macau-Taiwan (HMT). Chinese/HMT students have extra requirements (CHSC, PE, military training).
+2. **Student Type** — international vs. Chinese Mainland / HK-Macau-Taiwan (HMT). Chinese/HMT students have extra requirements (CHSC, PE, military training).
 3. **Language track** — English for Academic Purposes (EAP), Chinese as a Second Language (CSL), or waived. This determines 8–16 language credits.
 4. **Declared or intended major** (or "undeclared"). Incoming students haven't declared their major.
 5. **Courses already completed / in progress** — needed to check prerequisites and avoid duplicates.

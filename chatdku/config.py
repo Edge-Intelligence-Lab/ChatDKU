@@ -72,7 +72,7 @@ class Config:
                 "min_p": 0.0,
                 "presence_penalty": 2.0,
                 "repetition_penalty": 1.0,
-                "context_window": 35000,
+                "context_window": 128000,
                 "output_window": 10000,
                 "response_type": "Multiple Paragraphs",
                 # Embedding

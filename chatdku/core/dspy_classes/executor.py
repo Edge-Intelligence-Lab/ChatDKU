@@ -125,14 +125,6 @@ class ExecutorSignatureBase(dspy.Signature):
         ),
     )
 
-    assessment: str = dspy.OutputField(
-        desc=(
-            "Brief analysis: (1) what information has been gathered so far, "
-            "(2) what is still missing from the plan, "
-            "(3) whether the missing information can be obtained with available tools."
-        ),
-    )
-
 
 class DistillSignature(dspy.Signature):
     """

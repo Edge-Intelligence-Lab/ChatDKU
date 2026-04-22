@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal, Optional
 
 import dspy
@@ -19,7 +20,6 @@ from chatdku.core.utils import (
     token_limit_ratio_to_count,
     truncate_tokens_all,
 )
-
 
 _NO_SKILL = "none"
 
@@ -62,31 +62,17 @@ class PlannerSignature(dspy.Signature):
         When the user asks for a next-semester schedule, course plan, or "what courses should
         I take", you MUST verify ALL of the following are known before choosing action_type
         "plan":
-            1. The student's major (and track, if applicable).
-            2. Their year of matriculation (e.g. matriculated in 2024, thus class of 2028).
-            3. Courses they have already completed OR are currently taking.
+            1. **Year of study** (1–4) and matriculation year — requirements follow the Bulletin of the matriculation year.
+            2. **Student Type** — international vs. Chinese Mainland / HK-Macau-Taiwan (HMT). Chinese/HMT students have extra requirements (CHSC, PE, military training).
+            3. **Language track** — English for Academic Purposes (EAP), Chinese as a Second Language (CSL), or waived. This determines 8–16 language credits.
+            4. **Declared or intended major** (or "undeclared"). Incoming students haven't declared their major.
+            5. **Courses already completed / in progress** — needed to check prerequisites and avoid duplicates.
         If any of these are missing from the current message and the conversation history,
         choose action_type "send_message" and ask for the missing information.
-
-        Once you have all three pieces of information, your plan should:
-            a. FIRST retrieve year-specific academic policies for the student's
-               class year — e.g. query "Year 1 fall semester mandatory courses",
-               "freshman requirements DKU 101 writing", or
-               "Class of 20XX graduation requirements". Use VectorRetriever or
-               KeywordRetriever. The Executor will extend its agenda based on any
-               mandatory courses or policy constraints it discovers.
-            b. Call CourseRecommender with the student's major and completed_courses
-               to get the baseline eligibility and schedule availability report.
-               This single tool handles requirements lookup, schedule availability,
-               and prerequisite checking in one step — prefer it over calling
-               MajorRequirementsLookup, CourseScheduleLookup, and PrerequisiteLookup
-               individually.
-            c. Optionally supplement with VectorRetriever or QueryCurriculum if the
-               student asks for more detail on specific courses (syllabus, instructor,
-               course description, etc.).
     """
 
     current_user_message: str = dspy.InputField()
+    current_date: str = dspy.InputField()
     conversation_summary: str = CONVERSATION_SUMMARY_FIELD
     conversation_history: str = CONVERSATION_HISTORY_FIELD
     chatbot_role: str = ROLE_PROMPT
@@ -260,6 +246,8 @@ class Planner(dspy.Module):
                 planner_inputs,
                 self.get_token_limits(**planner_inputs),
             )
+
+            planner_inputs["current_date"] = str(datetime.today())
 
             result = self.planner(**planner_inputs)
 
