@@ -90,6 +90,7 @@ class Config:
                 "data_dir": "/datapool/chat_dku_advising",
                 "documents_path": "/datapool/chat_dku_advising/parsed.pkl",  # This is Deprecated use nodes instead
                 "nodes_path": "/datapool/chat_dku_advising/nodes.json",
+                "wiki_path": "/datapool/chat_dku_wiki",
                 "pipeline_cache": "./pipeline_cache",
                 "url_csv_path": "/datapool/url_csv/url_database.csv",
                 "event_path": "/datapool/chat_dku_advising/event_data",
