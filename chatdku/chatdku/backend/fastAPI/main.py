@@ -12,7 +12,7 @@ from chatdku.core.tools.memory_tool import MemoryTools
 from chatdku.config import config
 
 app = FastAPI()
-redis = Redis(host=config.redis_host, port=config.redis_port, db=config.redis_db, password=config.redis_password)
+redis = Redis(host=config.redis_host, port=config.redis_port, password=config.redis_password)
 
 
 class MemoryRequestBase(BaseModel):
@@ -59,7 +59,6 @@ def memory_agent(request: MemoryAgentRequest):
     result = permanent_memory( 
         session_conversation=request.session_conversation,
         most_recent_conversation=request.most_recent_conversation,
-        chat_id=request.chat_id
     )
     
     publish("memory_agent_completed", {"message": "Memory Agent completed", "result": result}) # end token?
