@@ -5,7 +5,7 @@
 [![Watch Demo Video](https://img.shields.io/badge/Watch-Demo_Video-red?style=flat-square)](https://youtu.be/SdItulvqdLo)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
-
+![/images/ChatDKU_Banner.png]
 ChatDKU is a campus assistant that answers questions about DKU policies, courses, requirements, faculty, and academic resources. It retrieves information from DKU documents and databases, then generates accurate, answers with citations.
 
 ---
