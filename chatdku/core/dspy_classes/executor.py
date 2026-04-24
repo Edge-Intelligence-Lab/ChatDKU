@@ -266,6 +266,7 @@ class Executor(dspy.Module):
         conversation_memory: ConversationMemory,
         relevant_skill_name: Optional[str] = None,
     ) -> dspy.Prediction:
+        plan = plan or ""
         # current_agenda starts as the original plan and grows as the Executor
         # discovers new investigation areas from tool results.
         current_agenda = plan
@@ -307,7 +308,7 @@ class Executor(dspy.Module):
                 # NOTE: By Temuulen - I don't think we need to record assessment
                 # The agent can just assess everyturn and the assessment can act like
                 # a thought process guideline
-                extensions = getattr(executor_result, "agenda_extensions", "").strip()
+                extensions = (getattr(executor_result, "agenda_extensions", None) or "").strip()
                 if extensions:
                     current_agenda = (
                         f"{current_agenda}\n\n"

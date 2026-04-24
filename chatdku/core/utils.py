@@ -135,7 +135,8 @@ def truncate_tokens(
     s: str, max_tokens: int, tokenizer: Optional[Callable] = None
 ) -> str:
     """Truncate string so that it does not exceed the given number of tokens."""
-
+    if not isinstance(s, str):
+        s = "" if s is None else str(s)
     splitter = TokenTextSplitter(
         chunk_size=int(abs(max_tokens)), chunk_overlap=0, tokenizer=tokenizer
     )
