@@ -128,6 +128,17 @@ def MajorRequirementsLookupOuter() -> callable:
                         f"No requirement files found in {req_dir}"
                     )
 
+                if major.strip().lower() == "list":
+                    result = "Available DKU majors/tracks:\n" + stems_list_str
+                    span.set_attributes(
+                        {
+                            SpanAttributes.OUTPUT_VALUE: result,
+                            SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.TEXT.value,
+                        }
+                    )
+                    span.set_status(Status(StatusCode.OK))
+                    return result
+
                 matched = _best_match(major, stems)
                 if matched is None:
                     result = _not_found_msg(major)
@@ -146,9 +157,7 @@ def MajorRequirementsLookupOuter() -> callable:
 
                 span.set_attributes(
                     {
-                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(
-                            dict(matched_file=matched, char_count=len(result))
-                        ),
+                        SpanAttributes.OUTPUT_VALUE: safe_json_dumps(dict(result=result)),
                         SpanAttributes.OUTPUT_MIME_TYPE: OpenInferenceMimeTypeValues.JSON.value,
                     }
                 )
