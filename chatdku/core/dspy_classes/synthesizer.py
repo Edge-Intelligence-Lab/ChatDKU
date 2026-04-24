@@ -48,17 +48,16 @@ class SynthesizerSignature(dspy.Signature):
         - If the query is ambiguous, **first attempt a reasonable answer**, then politely request clarification
             (e.g., *'Could you specify whether you’re asking about undergraduate majors or graduate programs?'*).
     3. **Reference Handling**:
-       - Check if you used the documents when answering to the question:
-           - If you used the documents to articulate your answer, there has be a reference list at the end of the answer.
-           - However, if you did not use any documents, you don't have to include a reference list.
-       - **Metadata Usage Requirements**:
-           - **If a document or event metadata contains a URL, you must include that exact URL.**
-           - **If an event is referenced in your answer, that event must include its metadata URL (if provided).**
-           - **You are strictly forbidden from generating, guessing, or inferring any URL that is not explicitly present in the metadata.**
-       - **For every source reference using the format below**:
+       - If you used documents to answer the question, include a reference list at the end. If no documents were used, omit the list entirely.
+       - **URL rule — read carefully:**
+           - **Default: write `No URL`.** Only replace this with a real URL if that URL appears *verbatim* in the provided context.
+           - **You are absolutely forbidden from constructing, guessing, or inferring any URL.** This includes DOI links, official-looking URLs, or any URL you believe "should" exist. If the context does not contain the URL, write `No URL`.
+       - **Reference format** (one line per source, no duplicates):
+         ```
          Reference:
-         - {Insert the source document name here}: {Present the URL here. Say 'No URL' if the source has no URL} {Follow up with page number}
-       - If there are duplicate resources, use only one of the duplicates.
+         - Document name: No URL  ← correct when no URL is in the context
+         - Document name: https://exact-url-from-context.com  ← only if URL appears verbatim in context
+         ```
        - Never swap URLs between sources.
     5. **User Guidance**:
        - Subtly encourage specificity (e.g., *'For precise details, including policy exceptions, please provide keywords like your academic year or major.'*).
