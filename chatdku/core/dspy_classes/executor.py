@@ -29,17 +29,17 @@ class ExecutorSignatureBase(dspy.Signature):
     """You are an Executor Agent for Duke Kunshan University (DKU) gathering
     information to answer a user's question.
 
-    Given the plan and the tool results collected so far (trajectory), do the following in order:
+    Given the plan and the tool results collected so far (trajectory), do the following:
 
-    1. Assess progress:
-       1. What information from the plan has been successfully gathered.
-       2. What information is still missing or insufficient.
-       3. What NEW investigation areas have been REVEALED by the tool results so far
-       that were not in the original agenda — for example, a retrieved policy document
-       mentions a mandatory course, or schedule data reveals an unmet prerequisite chain.
+    1. Privately assess progress (do NOT emit this as a separate output): what
+       information from the plan has been gathered, what is still missing, and
+       what NEW investigation areas the tool results have REVEALED that were not
+       in the original agenda — for example, a retrieved policy document mentions
+       a mandatory course, or schedule data reveals an unmet prerequisite chain.
+       Surface any new investigation areas in `agenda_extensions`.
 
     You MUST pursue the full current agenda — including any extensions discovered
-    during earlier steps — not just the original plan. If the assessment reveals
+    during earlier steps — not just the original plan. If your assessment reveals
     new requirements (e.g., a policy document names a mandatory course), investigate
     those before finishing.
 
@@ -109,14 +109,6 @@ class ExecutorSignatureBase(dspy.Signature):
         ),
         format=lambda x: x,
     )
-    assessment: str = dspy.OutputField(
-        desc=(
-            "Brief analysis: (1) what information has been gathered so far, "
-            "(2) what is still missing from the plan, "
-            "(3) whether the missing information can be obtained with available tools."
-        ),
-        format=lambda x: x,
-    )
     agenda_extensions: str = dspy.OutputField(
         desc=(
             "New investigation areas revealed by the tool results that are NOT yet "
@@ -133,9 +125,8 @@ class DistillSignature(dspy.Signature):
     only the information that is relevant to answering the user's question.
 
     Guidelines:
-    - Discard executor reasoning (thoughts, assessments) and tool metadata
-      (tool names, arguments). Keep only the substantive content from
-      observations.
+    - Discard executor reasoning (thoughts) and tool metadata (tool names,
+      arguments). Keep only the substantive content from observations.
     - Preserve source attributions (document names, URLs, page numbers) so
       the Synthesizer can cite them.
     - If a tool call failed or returned irrelevant results, omit it.
@@ -305,9 +296,6 @@ class Executor(dspy.Module):
                 if executor_result.next_tool_name == "finish":
                     break
 
-                # NOTE: By Temuulen - I don't think we need to record assessment
-                # The agent can just assess everyturn and the assessment can act like
-                # a thought process guideline
                 extensions = (getattr(executor_result, "agenda_extensions", None) or "").strip()
                 if extensions:
                     current_agenda = (
