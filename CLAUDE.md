@@ -67,7 +67,7 @@ Each tool is a callable that the Planner/Executor can invoke:
 | `syllabi/` | `SyllabusLookup` — queries PostgreSQL course/syllabus database via LLM-generated SQL |
 | `course_schedule.py` | `CourseScheduleLookup` — searches cleaned class schedule CSV |
 | `get_prerequisites.py` | `PrerequisiteLookup` — prerequisite checks from CSV |
-| `course_recommender.py` | `CourseRecommender` — agentic course recommendation with policy-aware planning |
+| `course_recommender.py` | `BuildSemesterPlan` — aggregates major requirements + offerings + prereqs + time-conflict-free schedule enumeration |
 
 ### Configuration
 

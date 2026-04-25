@@ -18,7 +18,7 @@ from chatdku.core.dspy_classes.conversation_memory import ConversationMemory
 from chatdku.core.dspy_classes.executor import Executor
 from chatdku.core.dspy_classes.plan import Planner
 from chatdku.core.dspy_classes.synthesizer import Synthesizer
-from chatdku.core.tools.course_recommender import CourseRecommender
+from chatdku.core.tools.course_recommender import BuildSemesterPlan
 from chatdku.core.tools.course_schedule import CourseScheduleLookup
 from chatdku.core.tools.get_prerequisites import PrerequisiteLookup
 from chatdku.core.tools.llama_index_tools import (
@@ -236,7 +236,7 @@ def build_agent(streaming: bool = True, max_iterations: int = 10) -> "Agent":
         SyllabusLookupOuter(),
         MajorRequirementsLookupOuter(),
         PrerequisiteLookup,
-        # CourseRecommender,
+        BuildSemesterPlan,
         CourseScheduleLookup,
     ]
 

@@ -595,12 +595,22 @@ def _build_schedules_section(
 # ---------------------------------------------------------------------------
 
 
-def CourseRecommender(
+def BuildSemesterPlan(
     major: str,
     completed_courses: list[str],
 ) -> str:
     """
-    Generate a structured next-semester course recommendation for a DKU student.
+    Build a next-semester course plan for a DKU student: figures out what
+    requirements are still outstanding, which of those courses are actually
+    being offered, which the student is prerequisite-eligible for, and
+    enumerates concrete non-conflicting schedule combinations.
+
+    Use this whenever a student asks "what should I take", "help me plan my
+    schedule", "build me a semester", "am I on track to graduate", or any
+    other planning / multi-course recommendation question. Prefer this over
+    calling MajorRequirementsLookup + CourseScheduleLookup + PrerequisiteLookup
+    separately — this tool already joins all three and adds time-conflict
+    detection on top.
 
     Given the student's major and the courses they have already completed,
     this tool:
@@ -609,22 +619,27 @@ def CourseRecommender(
       3. Identifies which required courses still need to be completed.
       4. Checks which remaining courses are offered next semester.
       5. Checks whether the student meets prerequisites for each available course.
-      6. Returns a grouped report: recommended, eligible-but-not-offered,
-         prerequisites-not-met, and no-schedule-data categories.
+      6. Enumerates 2- and 3-course combinations per 7-week session whose
+         primary lecture sections share no overlapping meeting time.
+      7. Returns a grouped Markdown report: recommended, eligible-but-not-
+         offered, prerequisites-not-met, no-schedule-data, plus the per-
+         session list of plausible non-conflicting schedules.
 
     Args:
         major (str): The student's major and optional track, e.g. "data science"
                      or "computation and design computer science".
         completed_courses (list[str]): Courses the student has already completed
             or is currently taking, e.g. ["COMPSCI 101", "MATH 105", "STATS 201"].
+            Pass an empty list for incoming students with no prior coursework.
 
     Returns:
-        A Markdown-formatted recommendation report.
+        A Markdown-formatted recommendation report including conflict-free
+        schedule combinations.
     """
     req_dir = Path(config.major_req_dir)
     classdata_csv_path = Path(config.classdata_csv_path)
     prereq_csv_path = Path(config.prereq_csv_path)
-    with span_ctx_start("CourseRecommender", OpenInferenceSpanKindValues.TOOL) as span:
+    with span_ctx_start("BuildSemesterPlan", OpenInferenceSpanKindValues.TOOL) as span:
         span.set_attributes(
             {
                 SpanAttributes.INPUT_VALUE: safe_json_dumps(
@@ -835,7 +850,7 @@ if __name__ == "__main__":
 
     use_phoenix()
 
-    parser = argparse.ArgumentParser(description="Test CourseRecommender")
+    parser = argparse.ArgumentParser(description="Test BuildSemesterPlan")
     parser.add_argument("--major", required=True, help="Student's major")
     parser.add_argument(
         "--completed",
@@ -846,5 +861,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     __import__("pprint").pprint(
-        CourseRecommender(major=args.major, completed_courses=args.completed)
+        BuildSemesterPlan(major=args.major, completed_courses=args.completed)
     )

@@ -187,11 +187,11 @@ PLANNER_DEMOS = [
             "or 'sophomore mandatory courses DKU' to identify any mandatory courses the student "
             "must take based on their class year (e.g. DKU 101, writing requirement for Year 1; "
             "GCHINA 101 for Year 1 Spring; GLOCHALL 201 for Year 2). "
-            "Step 2: Call CourseRecommender with major='data science' and "
+            "Step 2: Call BuildSemesterPlan with major='data science' and "
             "completed_courses=['MATH 105', 'STATS 201', 'COMPSCI 101', 'ECON 101'] to get the "
             "baseline eligibility and schedule availability report. "
             "The Executor should extend its agenda if the policy search reveals mandatory courses "
-            "not yet covered by CourseRecommender."
+            "not yet covered by BuildSemesterPlan."
         ),
         relevant_skill_name="Course-Recommendation",
     ).with_inputs("current_user_message"),

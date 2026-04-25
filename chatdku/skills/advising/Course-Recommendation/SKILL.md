@@ -78,21 +78,31 @@ Extends DKU's first-year orientation. This 7-week, non-credit, non-graded course
 ## Procedure
 
 1. **Gather context** (see "Required Context"). Do not guess the student's track.
-2. **Pull the student's major requirements** via `MajorRequirementsLookup` — this gives the authoritative list of foundation, interdisciplinary, and disciplinary courses for their matriculation year.
-3. **Identify remaining gaps** by subtracting completed courses from: Common Core (by year), Language sequence, Writing, QR, Distribution (per division), Foundation, Interdisciplinary, Disciplinary, Signature Work, Mini-term, and (for Chinese/HMT) CHSC/PE/military.
-4. **Prioritize** in this order:
+
+2. **Call `BuildSemesterPlan`** with the student's major and completed courses (use `[]` for incoming students). This is the primary tool for any schedule-building or "what should I take" question — it does the requirements lookup, offerings filter, prerequisite check, and time-conflict-free schedule enumeration in one call. **Do not manually chain `MajorRequirementsLookup` + `CourseScheduleLookup` + `PrerequisiteLookup` for this purpose** — `BuildSemesterPlan` already joins all three and adds conflict detection on top.
+
+3. **Anchor on its enumerated schedules.** The "Plausible non-conflicting schedules" section in `BuildSemesterPlan`'s output lists combinations that are deterministically proven to have no primary-lecture time conflicts within a session. Pick from those rather than reassembling a schedule by hand. If none match the student's preferences, swap in another eligible-and-offered course from the report — and re-verify time fit by inspecting the day flags and `Mtg Start`/`Mtg End` of the candidate sections via `CourseScheduleLookup`.
+
+4. **Fill bulletin gaps `BuildSemesterPlan` doesn't cover** (only as needed):
+   - Year-locked Common Core sequencing (Y1 *China in the World* → Y2 *Global Challenges* → Y3 *Ethics*) — verify the recommended set aligns with the student's year.
+   - Writing requirement is first-year first-session only — confirm if applicable.
+   - EAP/CSL placement (sequential, gating) — confirm the student's level.
+   - Signature Work milestones (mentor in sophomore year, proposal in junior, capstones in senior).
+   - For Chinese/HMT students: CHSC, PE, military training.
+   - Prerequisite chains beyond what `BuildSemesterPlan` already filtered (use `PrerequisiteLookup` for free-form prereq text).
+
+5. **Prioritize** what to actually recommend in this order:
    - Year-locked Common Core for the current year (missing it risks study-away eligibility).
    - Writing (first-year, first session only).
-   - EAP/CSL sequence progression (sequential, gating).
+   - EAP/CSL sequence progression.
    - Divisional Foundation if the student is in junior year with gaps.
-   - Prerequisite chains for the major (use `PrerequisiteLookup`).
+   - Prerequisite chains for the major.
    - Signature Work milestones at the right year.
    - Distribution + QR to round out breadth.
-5. **Check offerings** with `CourseScheduleLookup` for the target session — only recommend courses actually offered, with seats consistent with the student's year.
-6. **Verify prerequisites** for each candidate with `PrerequisiteLookup` before suggesting it.
-7. **Anchor on enumerated schedules.** When `CourseRecommender` returns a "Plausible non-conflicting schedules" section, treat those combinations as the trustworthy starting point — they are deterministically proven to have no primary-section time conflicts within a session. Pick from these rather than re-assembling a schedule by hand. If none of the listed combinations match the student's preferences, you may swap in another eligible-and-offered course, but you must then re-verify time fit by inspecting the day flags and `Mtg Start`/`Mtg End` of the candidate sections via `CourseScheduleLookup`.
-8. **Present the recommendation** as a short plan: for each course, state (a) course code/title and chosen section, (b) which requirement it satisfies, (c) why it fits now (prereq chain, year-lock, breadth gap), (d) the meeting days/times. Offer alternatives where reasonable.
-9. **Cite** the Bulletin section whenever you state a rule (e.g., "Bulletin 2025-2026, Part 3, Distribution Requirement").
+
+6. **Present the recommendation** as a short plan: for each course, state (a) course code/title and chosen section, (b) which requirement it satisfies, (c) why it fits now (prereq chain, year-lock, breadth gap), (d) the meeting days/times. Offer alternatives where reasonable.
+
+7. **Cite** the Bulletin section whenever you state a rule (e.g., "Bulletin 2025-2026, Part 3, Distribution Requirement").
 
 ## Pitfalls
 
@@ -111,8 +121,8 @@ Before returning the final recommendation, confirm:
 - [ ] Each recommended course exists in the current schedule (`CourseScheduleLookup`).
 - [ ] Prerequisites are met (`PrerequisiteLookup`).
 - [ ] Each course is mapped to exactly one requirement bucket in the plan.
-- [ ] **No two recommended primary sections in the same session share a meeting day at overlapping times.** Use the schedules enumerated by `CourseRecommender` whenever available — they are guaranteed conflict-free. If you build a schedule outside that list, walk the day flags + `Mtg Start`/`Mtg End` of every section pair yourself.
-- [ ] **Lab / recitation / discussion fit acknowledged.** `CourseRecommender`'s conflict check covers only primary lectures (sections with purely numeric labels). For each recommended course, check whether the chosen primary has a paired secondary (suffixes like `L`, `R`, `D`) and confirm at least one secondary slot is conflict-free against the rest of the schedule.
+- [ ] **No two recommended primary sections in the same session share a meeting day at overlapping times.** Use the schedules enumerated by `BuildSemesterPlan` whenever available — they are guaranteed conflict-free. If you build a schedule outside that list, walk the day flags + `Mtg Start`/`Mtg End` of every section pair yourself.
+- [ ] **Lab / recitation / discussion fit acknowledged.** `BuildSemesterPlan`'s conflict check covers only primary lectures (sections with purely numeric labels). For each recommended course, check whether the chosen primary has a paired secondary (suffixes like `L`, `R`, `D`) and confirm at least one secondary slot is conflict-free against the rest of the schedule.
 - [ ] Year-locked items (Common Core, Writing, Foundation deadline) are addressed or explicitly deferred with reasoning.
 - [ ] Credit total per session is reasonable for a DKU 7-week session (typically 2 in-depth courses, optionally 1 in a 14-week block).
 - [ ] For Chinese/HMT students, CHSC/PE/military progress is acknowledged.

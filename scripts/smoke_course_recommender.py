@@ -1,7 +1,7 @@
-"""End-to-end smoke test for CourseRecommender's schedule enumeration.
+"""End-to-end smoke test for BuildSemesterPlan's schedule enumeration.
 
 For each student profile:
-  1. Run CourseRecommender.
+  1. Run BuildSemesterPlan.
   2. Parse the "Plausible non-conflicting schedules" section out of the report.
   3. Re-look-up each cited section in cleaned_classdata.csv and recompute
      conflicts independently — fail loudly if the tool ever recommends a
@@ -20,7 +20,7 @@ import pandas as pd
 
 from chatdku.config import config
 from chatdku.core.tools.course_recommender import (
-    CourseRecommender,
+    BuildSemesterPlan,
     _parse_time_to_minutes,
     _row_meeting_days,
 )
@@ -227,9 +227,9 @@ def run_one(name: str, major: str, completed: list[str], df: pd.DataFrame) -> in
     print(f"  major={major!r}, completed={completed}")
     print(f"{'-' * 76}")
     try:
-        report = CourseRecommender(major=major, completed_courses=completed)
+        report = BuildSemesterPlan(major=major, completed_courses=completed)
     except Exception as e:
-        print(f"  !! CourseRecommender threw: {e!r}")
+        print(f"  !! BuildSemesterPlan threw: {e!r}")
         return 1
 
     # Print the schedules section only (keep output digestible).
