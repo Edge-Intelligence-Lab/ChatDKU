@@ -11,6 +11,7 @@ all the data-joining logic in Python, returning a single structured report.
 
 from __future__ import annotations
 
+import itertools
 import re
 from pathlib import Path
 
@@ -285,6 +286,311 @@ def _format_schedule_rows(rows: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Schedule conflict detection
+# ---------------------------------------------------------------------------
+
+# Day codes used internally. Friday is included even though current data has
+# no Friday meetings — the parser handles it if it ever appears.
+_DAY_CODE_BY_COL = {"Mon": "M", "Tues": "Tu", "Wed": "W", "Thurs": "Th", "Fri": "F"}
+
+# Time format observed in cleaned_classdata.csv: " 8:30:00.000000AM".
+# Leading space and microseconds are normalized before parsing.
+_TIME_RE = re.compile(
+    r"^\s*(?P<h>\d{1,2}):(?P<m>\d{2})(?::\d{2}(?:\.\d+)?)?\s*(?P<ap>AM|PM)\s*$",
+    re.IGNORECASE,
+)
+
+# A "primary" section is one whose label is purely numeric (e.g. "001", "003").
+# Sections with letter suffixes ("001L", "001R", "009D") are labs / recitations
+# / discussions that pair with a primary section. We only enumerate combinations
+# of primary sections; secondaries are surfaced separately so the agent can
+# tell the student "you also need to fit one of these."
+_PRIMARY_SECTION_RE = re.compile(r"^\d+$")
+
+
+def _parse_time_to_minutes(t: object) -> int | None:
+    """Parse a string like ' 8:30:00.000000AM' to minutes since midnight.
+
+    Returns None if the input is missing or unparseable. The CSV writer pads
+    single-digit hours with a leading space; the regex tolerates that.
+    """
+    if t is None:
+        return None
+    s = str(t).strip()
+    if not s or s.lower() == "nan":
+        return None
+    m = _TIME_RE.match(s)
+    if not m:
+        return None
+    hour = int(m.group("h"))
+    minute = int(m.group("m"))
+    ap = m.group("ap").upper()
+    if ap == "AM":
+        if hour == 12:
+            hour = 0
+    else:  # PM
+        if hour != 12:
+            hour += 12
+    return hour * 60 + minute
+
+
+def _row_meeting_days(row: dict) -> set[str]:
+    """Return the set of day codes ({'M','Tu','W','Th','F'}) this row meets."""
+    days: set[str] = set()
+    for col, code in _DAY_CODE_BY_COL.items():
+        v = row.get(col)
+        if v is not None and str(v).strip().upper() == "Y":
+            days.add(code)
+    return days
+
+
+def _is_primary_section(section: object) -> bool:
+    """True if section label is purely numeric (e.g. '001', '003')."""
+    if section is None:
+        return False
+    return bool(_PRIMARY_SECTION_RE.match(str(section).strip()))
+
+
+def _row_is_active(row: dict) -> bool:
+    status = str(row.get("Class Status", "")).strip().lower()
+    # Treat unknown / blank status as active so we don't silently drop rows.
+    return status != "cancelled"
+
+
+def _row_to_meeting(course: str, row: dict) -> dict | None:
+    """Convert a CSV row to a structured meeting record.
+
+    Returns None for rows that can't be scheduled (cancelled, no days, or
+    unparseable times).
+    """
+    if not _row_is_active(row):
+        return None
+    days = _row_meeting_days(row)
+    if not days:
+        return None
+    start = _parse_time_to_minutes(row.get("Mtg Start"))
+    end = _parse_time_to_minutes(row.get("Mtg End"))
+    if start is None or end is None or end <= start:
+        return None
+    section = str(row.get("Section", "")).strip()
+    return {
+        "course": course,
+        "session": str(row.get("Session", "")).strip(),
+        "section": section,
+        "is_primary": _is_primary_section(section),
+        "days": days,
+        "start": start,
+        "end": end,
+        "instructor": str(row.get("Instructor", "")).strip(),
+    }
+
+
+def _meetings_conflict(a: dict, b: dict) -> bool:
+    """Two meetings conflict iff same session, shared day, and time overlap."""
+    if a["session"] != b["session"]:
+        return False
+    if not (a["days"] & b["days"]):
+        return False
+    return a["start"] < b["end"] and b["start"] < a["end"]
+
+
+def _format_minutes(m: int) -> str:
+    h, mm = divmod(m, 60)
+    suffix = "AM" if h < 12 else "PM"
+    h12 = h % 12 or 12
+    return f"{h12}:{mm:02d}{suffix}"
+
+
+def _format_meeting(m: dict) -> str:
+    days = "".join(d for d in ("M", "Tu", "W", "Th", "F") if d in m["days"])
+    return f"§{m['section']} {days} {_format_minutes(m['start'])}-{_format_minutes(m['end'])}"
+
+
+def _build_course_options(
+    eligible_offered: list[tuple[str, list[dict]]],
+) -> dict[str, dict[str, list[dict]]]:
+    """Group eligible-and-offered courses into per-session, per-section meetings.
+
+    Returns a nested dict:
+        { course_code: { session_code: [meeting, meeting, ...] } }
+
+    Each `meeting` belongs to exactly one section (primary or secondary).
+    Cancelled / un-timed rows are dropped.
+    """
+    by_course: dict[str, dict[str, list[dict]]] = {}
+    for course, rows in eligible_offered:
+        for row in rows:
+            meeting = _row_to_meeting(course, row)
+            if meeting is None:
+                continue
+            by_course.setdefault(course, {}).setdefault(meeting["session"], []).append(
+                meeting
+            )
+    return by_course
+
+
+def _primary_meetings_by_course(
+    course_options: dict[str, dict[str, list[dict]]],
+    session: str,
+) -> dict[str, list[dict]]:
+    """For one session, return {course: [primary_meeting, ...]}.
+
+    Courses with no primary section in this session are omitted (we can't
+    enumerate them safely without knowing what to anchor on).
+    """
+    out: dict[str, list[dict]] = {}
+    for course, by_session in course_options.items():
+        meetings = by_session.get(session, [])
+        primaries = [m for m in meetings if m["is_primary"]]
+        if primaries:
+            out[course] = primaries
+    return out
+
+
+def _secondary_meetings(
+    course_options: dict[str, dict[str, list[dict]]],
+    course: str,
+    session: str,
+) -> list[dict]:
+    return [
+        m
+        for m in course_options.get(course, {}).get(session, [])
+        if not m["is_primary"]
+    ]
+
+
+def _enumerate_session_schedules(
+    primaries_by_course: dict[str, list[dict]],
+    priority_index: dict[str, int],
+    target_size: int,
+    max_results: int,
+) -> list[list[dict]]:
+    """Return up to `max_results` non-conflicting combinations of `target_size`
+    distinct courses (one primary section each), ranked by priority.
+
+    Ranking: lower sum of priority_index across the chosen courses wins
+    (priority_index reflects ordering in the requirements doc — earlier-listed
+    items are higher priority).
+    """
+    courses = list(primaries_by_course.keys())
+    if len(courses) < target_size:
+        return []
+
+    # Sort courses by priority so combinations are generated roughly best-first.
+    courses.sort(key=lambda c: priority_index.get(c, 10_000))
+
+    results: list[tuple[int, list[dict]]] = []
+    for combo_courses in itertools.combinations(courses, target_size):
+        # For each course, try each primary-section choice; emit the first
+        # non-conflicting assignment found. We keep things small by cartesian-
+        # producting only over primaries (typically 1-3 per course).
+        section_lists = [primaries_by_course[c] for c in combo_courses]
+        for assignment in itertools.product(*section_lists):
+            ok = True
+            for i in range(len(assignment)):
+                for j in range(i + 1, len(assignment)):
+                    if _meetings_conflict(assignment[i], assignment[j]):
+                        ok = False
+                        break
+                if not ok:
+                    break
+            if ok:
+                score = sum(priority_index.get(c, 10_000) for c in combo_courses)
+                results.append((score, list(assignment)))
+                break  # one valid assignment per course-combo is enough
+
+    results.sort(key=lambda r: r[0])
+    return [meetings for _, meetings in results[:max_results]]
+
+
+def _format_schedule_block(
+    schedule: list[dict],
+    course_options: dict[str, dict[str, list[dict]]],
+    session: str,
+) -> str:
+    """Render a single schedule combination as a Markdown block."""
+    lines = []
+    for meeting in schedule:
+        course = meeting["course"]
+        instr = f" — {meeting['instructor']}" if meeting["instructor"] else ""
+        lines.append(f"  - **{course}** {_format_meeting(meeting)}{instr}")
+        secondaries = _secondary_meetings(course_options, course, session)
+        if secondaries:
+            sec_strs = [_format_meeting(s) for s in secondaries]
+            lines.append(
+                f"    - *also requires one of (verify fit):* {' | '.join(sec_strs)}"
+            )
+    return "\n".join(lines)
+
+
+def _build_schedules_section(
+    eligible_offered: list[tuple[str, list[dict]]],
+    priority_order: list[str],
+    target_sizes: tuple[int, ...] = (3, 2),
+    max_per_session_per_size: int = 3,
+) -> str:
+    """Build the Markdown section listing plausible non-conflicting schedules
+    per session. Returns an empty string if no schedules can be built.
+    """
+    course_options = _build_course_options(eligible_offered)
+    if not course_options:
+        return ""
+
+    priority_index = {c: i for i, c in enumerate(priority_order)}
+
+    # Discover sessions present in the data, in stable order.
+    sessions: list[str] = []
+    for by_session in course_options.values():
+        for s in by_session.keys():
+            if s and s not in sessions:
+                sessions.append(s)
+    sessions.sort()  # 7W1 before 7W2 alphabetically — matches calendar order
+
+    if not sessions:
+        return ""
+
+    out = ["### Plausible non-conflicting schedules (per 7-week session)\n"]
+    out.append(
+        "*Each option below is a set of primary lecture sections that share no "
+        "meeting time. Lab/recitation/discussion sections are listed separately "
+        "and must also be fitted in by the student.*\n"
+    )
+    any_emitted = False
+    for session in sessions:
+        primaries = _primary_meetings_by_course(course_options, session)
+        out.append(f"#### Session {session}")
+        if not primaries:
+            out.append("- *(no primary sections with parsable meeting times)*\n")
+            continue
+        emitted_for_session = False
+        for size in target_sizes:
+            schedules = _enumerate_session_schedules(
+                primaries,
+                priority_index,
+                target_size=size,
+                max_results=max_per_session_per_size,
+            )
+            if not schedules:
+                continue
+            out.append(f"**{size}-course options:**")
+            for idx, sched in enumerate(schedules, 1):
+                out.append(f"- Option {idx}:")
+                out.append(_format_schedule_block(sched, course_options, session))
+            out.append("")
+            emitted_for_session = True
+            any_emitted = True
+        if not emitted_for_session:
+            out.append(
+                "- *(could not assemble a non-conflicting combination from "
+                "the eligible pool)*\n"
+            )
+
+    if not any_emitted:
+        return ""
+    return "\n".join(out)
+
+
+# ---------------------------------------------------------------------------
 # Tool factory
 # ---------------------------------------------------------------------------
 
@@ -423,7 +729,9 @@ def _run_recommendation(
         prereq_df = None
         prereq_available = False
 
-    eligible_and_offered: list[tuple[str, str]] = []  # (course, schedule_summary)
+    # eligible_and_offered keeps both the display summary and the raw rows so
+    # the schedule builder downstream has structured access to meeting times.
+    eligible_and_offered: list[tuple[str, str, list[dict]]] = []
     eligible_not_offered: list[str] = []
     not_eligible: list[tuple[str, str]] = []  # (course, reason)
     no_schedule_data: list[str] = []
@@ -434,12 +742,16 @@ def _run_recommendation(
                 met, reason = prerequisites_met(course, completed_set, prereq_df)
                 if met:
                     schedule_summary = _format_schedule_rows(offered[course])
-                    eligible_and_offered.append((course, schedule_summary))
+                    eligible_and_offered.append(
+                        (course, schedule_summary, offered[course])
+                    )
                 else:
                     not_eligible.append((course, reason))
             else:
                 schedule_summary = _format_schedule_rows(offered[course])
-                eligible_and_offered.append((course, schedule_summary))
+                eligible_and_offered.append(
+                    (course, schedule_summary, offered[course])
+                )
         else:
             if prereq_available:
                 met, reason = prerequisites_met(course, completed_set, prereq_df)
@@ -460,7 +772,7 @@ def _run_recommendation(
 
     lines.append("### Recommended — eligible and offered next semester")
     if eligible_and_offered:
-        for course, schedule in eligible_and_offered:
+        for course, schedule, _rows in eligible_and_offered:
             lines.append(f"- **{course}** — {schedule}")
     else:
         lines.append("- *(none)*")
@@ -488,11 +800,25 @@ def _run_recommendation(
             lines.append(f"- {course}")
         lines.append("")
 
+    # Schedule enumeration: prove which 2-/3-course combinations have no
+    # primary-section time conflicts. Priority order is the order courses
+    # appear in the requirements doc (major then common-core).
+    eligible_pairs = [(c, rows) for c, _summary, rows in eligible_and_offered]
+    schedules_md = _build_schedules_section(
+        eligible_offered=eligible_pairs,
+        priority_order=all_required,
+    )
+    if schedules_md:
+        lines.append(schedules_md)
+        lines.append("")
+
     lines.append("---")
     lines.append(
         "*Note: Prerequisites are checked using DKUHub data. "
         "Complex or conditional prerequisites (e.g. instructor consent, GPA requirements) "
-        "may not be captured — always confirm with your academic advisor.*"
+        "may not be captured — always confirm with your academic advisor. "
+        "Schedule conflict checks cover only primary lecture sections; verify "
+        "lab/recitation/discussion fit before registering.*"
     )
 
     return "\n".join(lines)
