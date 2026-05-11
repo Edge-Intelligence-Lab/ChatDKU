@@ -21,12 +21,12 @@ echo "Starting FastAPI app..."
 echo "Host: $HOST, Port: $PORT, Workers: $WORKERS"
 
 # Run Gunicorn with Uvicorn workers
-# nohup  python -m gunicorn \
-#     -w $WORKERS \
-#     -k uvicorn.workers.UvicornWorker \
-#     chatdku.backend.main:app \
-#     --bind $HOST:$PORT \
-#     --log-level info &
+nohup  python -m gunicorn \
+    -w $WORKERS \
+    -k uvicorn.workers.UvicornWorker \
+    chatdku.backend.main:app \
+    --bind $HOST:$PORT \
+    --log-level info &
 
-uvicorn chatdku.backend.main:app --host $HOST --port $PORT --reload
+# uvicorn chatdku.backend.main:app --host $HOST --port $PORT --reload
  
