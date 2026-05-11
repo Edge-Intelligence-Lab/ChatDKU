@@ -48,7 +48,6 @@ def chat(data: ChatRequest, bg: BackgroundTasks):
     channel = f"chat:{data.id}"
 
     def send(events):
-        print(events)
         redis_client.xadd(
             channel,
             {
