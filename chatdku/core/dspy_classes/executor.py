@@ -151,11 +151,12 @@ _KEYS_PER_ITERATION = 5
 
 
 class Executor(dspy.Module):
-    def __init__(self, tools, max_iterations=5):
+    def __init__(self, tools, max_iterations=5,stream=None):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
         tools = {tool.name: tool for tool in tools}
 
+        self.stream=stream
         # Build the Executor signature dynamically with tool descriptions in the instructions.
         instr = (
             [f"{_ExecutorSignatureBase.instructions}\n"]
@@ -241,6 +242,8 @@ class Executor(dspy.Module):
                 "input.value",
                 safe_json_dumps({"plan": plan, **shared_inputs}),
             )
+            if self.stream:
+                self.stream.reasoning("Executor","Executing the plan....")
 
             for idx in range(self.max_iterations):
                 exec_inputs = {
@@ -257,6 +260,8 @@ class Executor(dspy.Module):
                     result = self._call_with_potential_trajectory_truncation(
                         self.executor, trajectory, **exec_inputs
                     )
+                    
+
                 except ValueError:
                     break
 
@@ -264,6 +269,9 @@ class Executor(dspy.Module):
 
                 if result.next_tool_name == "finish":
                     break
+
+                if self.stream:
+                    self.stream.reasoning("Executor",f"{result.next_tool_name}: {result.next_tool_args[list(result.next_tool_args.keys())[0]]}")
 
                 trajectory[f"thought_{idx}"] = result.next_thought
                 trajectory[f"tool_name_{idx}"] = result.next_tool_name

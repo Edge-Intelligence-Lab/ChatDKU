@@ -20,9 +20,12 @@ from chatdku.core.tools.major_requirements import MajorRequirementsLookupOuter
 from chatdku.core.tools.syllabi_tool.query_curriculum_db import QueryCurriculumOuter
 from chatdku.core.utils import format_trajectory, load_conversation, span_start
 from chatdku.setup import setup, use_phoenix
-
+from chatdku.core.intermediate_tracing import EventStream
 # When `--dev` is passed to the script, enable additional debug prints in this module.
 DEBUG_DEV = False
+
+
+
 
 
 class Agent(dspy.Module):
@@ -41,15 +44,19 @@ class Agent(dspy.Module):
 
     def __init__(
         self,
+        stream,
         max_iterations: int = 5,
         streaming: bool = False,
         get_intermediate: bool = False,
         rewrite_query: bool = True,
         previous_conversation: list = [],
         tools: list = [],
+ 
+
     ):
         super().__init__()
-        self.streaming = streaming
+        self.strem=stream
+        self.streaming=streaming
         self.get_intermediate = get_intermediate
         self.rewrite_query = rewrite_query
         # Store information not accessible to the LLM.
@@ -60,8 +67,8 @@ class Agent(dspy.Module):
         # Edit (Temuulen): nahhh it is causing issues.
         self.internal_memory = {}
 
-        self.planner = Planner(tools)
-        self.executor = Executor(tools, max_iterations)
+        self.planner = Planner(tools,stream=stream)
+        self.executor = Executor(tools, max_iterations,stream=stream)
 
         self.conversation_memory = ConversationMemory()
 
@@ -256,7 +263,12 @@ def main():
         CourseScheduleLookupOuter(classdata_csv_path=config.classdata_csv_path),
     ]
 
+    def print_stream(event):
+        print(event)
+    stream= EventStream(print_stream)
+
     agent = Agent(
+        stream,
         max_iterations=3,
         streaming=True,
         get_intermediate=False,

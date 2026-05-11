@@ -145,10 +145,10 @@ PLANNER_DEMOS = [
 
 
 class Planner(dspy.Module):
-    def __init__(self, tools):
+    def __init__(self, tools,stream=None):
         super().__init__()
         tools = [t if isinstance(t, Tool) else Tool(t) for t in tools]
-
+        self.stream=stream
         tool_descriptions = []
         for idx, tool in enumerate(tools):
             tool_descriptions.append(f"({idx + 1}) {tool}")
@@ -191,6 +191,7 @@ class Planner(dspy.Module):
             )
 
             result = self.planner(**planner_inputs)
+            self.stream.reasoning("Planner",str(result.action))
 
             span.set_attribute(
                 "output.value",
