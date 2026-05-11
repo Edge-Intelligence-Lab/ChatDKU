@@ -64,6 +64,8 @@ dependencies = [
     "pre-commit",
     "fastapi",
     "psycopg2",
+    "uvicorn>=0.44.0",
+    "gunicorn>=23.0.0",
 ]
 
 [project.optional-dependencies]

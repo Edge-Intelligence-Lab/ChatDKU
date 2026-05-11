@@ -227,5 +227,5 @@ benchmarks/questions.json
 .python-version
 *.csv
 
-update_events_weekly.sh
-*.sh
+*/update_events_weekly.sh
+*/devsync.sh

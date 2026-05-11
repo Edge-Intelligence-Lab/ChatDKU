@@ -24,7 +24,7 @@ def fetch_schema(conn):
         """
         )
         schema[table] = {col: dtype for col, dtype in cur.fetchall()}
-    print("Schema fetched!")
+    # print("Schema fetched!")
     return str(schema)
 
 
@@ -36,4 +36,4 @@ connection = psycopg2.connect(
     port="5432",  # Default PostgreSQL port
 )
 
-print(fetch_schema(connection))
+# print(fetch_schema(connection))
