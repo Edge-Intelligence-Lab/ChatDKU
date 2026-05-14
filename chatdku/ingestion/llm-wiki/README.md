@@ -24,6 +24,148 @@ Current implementation does not yet provide:
 - Semantic retrieval over the wiki itself.
 - Human review queues or conflict resolution workflows.
 
+## Code structure
+
+```text
+llm-wiki/
+  AGENTS.md
+  README.md
+  WIKI_INGESTION_PLAN.md
+  build_wiki.py
+  configs/
+    wiki_rules.md
+  schemas/
+    wiki_page_schema.md
+  src/chatdku_ingestion/
+    __init__.py
+    builder.py
+    cli.py
+    extractors.py
+    io.py
+    markdown.py
+    models.py
+    utils.py
+    validator.py
+```
+
+### File responsibilities
+
+- `build_wiki.py`
+  - Script entrypoint.
+  - Adds the repository root and local `src/` to `sys.path`.
+  - Calls `chatdku_ingestion.cli.main()`.
+
+- `src/chatdku_ingestion/cli.py`
+  - Parses `--nodes-path` and `--output-dir`.
+  - Calls `build_wiki(...)`.
+
+- `src/chatdku_ingestion/builder.py`
+  - Main orchestration layer.
+  - Loads `nodes.json`.
+  - Groups nodes by source document.
+  - Builds source pages.
+  - Derives entity pages from source pages.
+  - Adds cross-page links.
+  - Detects scoped contradictions.
+  - Writes markdown and graph artifacts.
+  - Runs validation.
+
+- `src/chatdku_ingestion/models.py`
+  - Defines `WikiPage`, `SourceRef`, `GroundedFact`, and `ContradictionNote`.
+
+- `src/chatdku_ingestion/extractors.py`
+  - Heuristic fact extraction.
+  - Heuristic entity extraction.
+  - Filters noisy phone and garbled-text cases.
+
+- `src/chatdku_ingestion/utils.py`
+  - Slug generation.
+  - Source title cleanup.
+  - Domain inference.
+  - Summary heuristic.
+  - Garbled text detection.
+
+- `src/chatdku_ingestion/markdown.py`
+  - Renders source pages, entity pages, index, overview, main report, and validation report.
+
+- `src/chatdku_ingestion/io.py`
+  - Loads `nodes.json`.
+  - Ensures output layout.
+  - Clears generated markdown directories before rebuild.
+  - Writes text and JSON artifacts.
+
+- `src/chatdku_ingestion/validator.py`
+  - Checks for duplicate page IDs, missing summaries, missing source refs, broken cross refs, duplicate source paths, orphan entity pages, and unresolved contradictions.
+
+- `AGENTS.md`
+  - Documents the intended ingest/query/lint workflow for future agent-based maintenance.
+
+## Build flow
+
+The current build pipeline is:
+
+`nodes.json -> source pages -> entity pages -> index/overview/main -> graph json -> validation report`
+
+Concretely:
+
+1. Load normalized `nodes.json`.
+2. Group nodes by source path.
+3. Build one source page per grouped document.
+4. Extract candidate entities from source pages.
+5. Build one entity page per merged entity cluster.
+6. Add links between related source and entity pages.
+7. Detect contradictions inside entity or title-local clusters.
+8. Render markdown pages and graph artifacts.
+9. Validate the generated wiki.
+
+## How summaries are built
+
+Current summaries are not generated with an LLM.
+
+They are built with a deterministic heuristic in `utils.first_sentences(...)`:
+
+- collapse whitespace,
+- split text into sentences,
+- take the first few sentences,
+- truncate to a fixed length.
+
+If the extracted text looks garbled, the summary is replaced with a warning message instead of attempting synthesis.
+
+This means the current summary layer is:
+
+- cheap,
+- reproducible,
+- source-close,
+- but not semantically strong.
+
+## How facts are extracted
+
+Current fact extraction is also heuristic-only, not LLM-based.
+
+`extractors.py` currently:
+
+- matches structured lines such as `deadline: ...`, `policy: ...`, `requirement: ...`,
+- extracts emails with regex,
+- extracts phone numbers with regex,
+- deduplicates repeated values,
+- skips low-quality garbled text.
+
+## LLM status
+
+The current implementation does **not** call an LLM during wiki build.
+
+That is deliberate for this stage. The current version is a deterministic artifact builder, not a full Karpathy-style autonomous wiki maintainer yet.
+
+So the answer is:
+
+- `summary`: heuristic only
+- `fact extraction`: heuristic only
+- `entity extraction`: heuristic only
+- `contradiction detection`: heuristic only
+- `LLM in build loop`: not yet
+
+The next major step, if desired, is to add an LLM-backed maintenance layer on top of these artifacts rather than replacing them.
+
 ## Pipeline
 
 ```mermaid
