@@ -11,25 +11,93 @@ Current scope:
 - Provides a lightweight validator.
 - Keeps the wiki layer as plain Markdown documents only.
 
+## Pipeline
+
+```mermaid
+flowchart TD
+    subgraph L1["Source"]
+        A["Raw files"]
+    end
+
+    subgraph L2["Node"]
+        B["update_data"]
+        C["nodes.json"]
+    end
+
+    subgraph L3["Wiki"]
+        D["build_wiki"]
+        E["sources"]
+        F["entities / concepts / policies"]
+        G["overview"]
+        H["validation"]
+        I["graph"]
+    end
+
+    subgraph L4["Retrieval"]
+        J["Chroma"]
+        K["Postgres"]
+        L["Redis"]
+        M["wiki index later"]
+    end
+
+    A --> B --> C --> D
+    D --> E
+    D --> F
+    D --> G
+    D --> H
+    D --> I
+
+    C --> J
+    C --> K
+    C --> L
+    E -.-> M
+    F -.-> M
+    G -.-> M
+```
+
+## LLM Wiki Workflow
+
+```mermaid
+flowchart TD
+    A["nodes"] --> B["group"]
+    B --> C["source page"]
+    C --> D["extract"]
+    D --> E["link"]
+    E --> F["check conflict"]
+
+    subgraph AG["Agent loop"]
+        G["gather evidence"]
+        H["compare"]
+        I{"clear?"}
+        J["auto resolve"]
+        K["mark unresolved"]
+    end
+
+    F --> G
+    G --> H
+    H --> I
+    I -->|yes| J
+    I -->|no| K
+
+    J --> L["validate"]
+    K --> L
+    L --> M["wiki md"]
+    L --> N["graph"]
+    L --> O["review queue"]
+```
+
 ## Quick start
 
 ```bash
-cd ChatDKU/chatdku/ingestion/llm-wiki
-PYTHONPATH=src python3 -m chatdku_ingestion.cli --nodes-path /path/to/nodes.json
-```
-
-Or:
-
-```bash
-cd ChatDKU/chatdku/ingestion/llm-wiki
-PYTHONPATH=src python3 build_wiki.py --nodes-path /path/to/nodes.json
+cd ChatDKU/chatdku
+python3 -m ingestion.llm-wiki.build_wiki --nodes-path /path/to/nodes.json
 ```
 
 By default, outputs are written under:
 
-- `datapool/chat_dku_wiki/main.md`
-- `datapool/chat_dku_wiki/validation_report.md`
-- `datapool/chat_dku_wiki/graph/graph.json` (placeholder link graph)
+- `ChatDKU/wiki/main.md`
+- `ChatDKU/wiki/validation_report.md`
+- `ChatDKU/graph/graph.json` (placeholder link graph)
 
 ## Notes
 
