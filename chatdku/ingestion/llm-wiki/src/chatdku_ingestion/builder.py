@@ -3,20 +3,21 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
-from .extractors import extract_candidate_entities, extract_grounded_facts
+from .extractors import extract_grounded_facts
 from .io import clear_markdown_dir, ensure_layout, load_nodes, write_json, write_text
 from .markdown import (
-    render_entity_page,
+    render_cluster_page,
     render_index,
     render_main_document,
     render_overview,
-    render_source_page,
+    render_service_page,
+    render_timeline_page,
+    render_topic_page,
     render_validation_report,
 )
-from .models import ContradictionNote, SourceRef, WikiPage
+from .models import SourceRef, WikiPage
 from .utils import (
     doc_key_from_node,
-    entity_page_id,
     file_name_from_doc_key,
     first_sentences,
     infer_domain,
@@ -27,7 +28,164 @@ from .utils import (
 )
 from .validator import validate_pages
 
-CONTRADICTION_LABELS = {"deadline", "requirement", "policy", "scope", "office"}
+
+TOPIC_RULES = [
+    {
+        "id": "academic_advising",
+        "title": "Academic Advising",
+        "topic_families": ["advising"],
+        "audience": ["undergraduate", "faculty_advisor"],
+        "keywords": [
+            "academic advising",
+            "faculty advisor",
+            "advising faq",
+            "undergraduate advising",
+            "advisor manual",
+            "pre-health",
+            "pre-law",
+        ],
+        "preferred_surfaces": ["website", "handbook", "faq", "slides", "guide", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "majors_overview",
+        "title": "Majors and Tracks Overview",
+        "topic_families": ["major_track_program"],
+        "audience": ["undergraduate"],
+        "keywords": ["majors", "tracks", "major convener", "major alignment", "division of"],
+        "preferred_surfaces": ["bulletin", "website", "guide", "spreadsheet", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "major_declaration",
+        "title": "Major Declaration",
+        "topic_families": ["major_track_program", "forms_workflows"],
+        "audience": ["undergraduate"],
+        "keywords": ["major declaration", "declare their majors", "declaring your major"],
+        "preferred_surfaces": ["slides", "guide", "website", "bulletin", "other"],
+        "service": "academic_advising",
+        "timeline": "major_declaration_cycle",
+    },
+    {
+        "id": "registration_planning",
+        "title": "Registration and Planning",
+        "topic_families": ["registration_planning", "forms_workflows"],
+        "audience": ["undergraduate"],
+        "keywords": [
+            "registration",
+            "schedule builder",
+            "student self-service center",
+            "4-year plan",
+            "pre-registration",
+            "class search",
+        ],
+        "preferred_surfaces": ["guide", "slides", "faq", "website", "other"],
+        "service": "registrar_student_center",
+        "timeline": "registration_cycle",
+    },
+    {
+        "id": "course_substitution",
+        "title": "Course Substitution",
+        "topic_families": ["registration_planning", "forms_workflows"],
+        "audience": ["undergraduate"],
+        "keywords": ["course substitution"],
+        "preferred_surfaces": ["form", "guide", "website", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "leave_of_absence",
+        "title": "Leave of Absence",
+        "topic_families": ["student_support", "forms_workflows"],
+        "audience": ["student", "undergraduate"],
+        "keywords": ["leave of absence", "loa"],
+        "preferred_surfaces": ["guide", "website", "form", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "cr_nc",
+        "title": "CR/NC Policy",
+        "topic_families": ["academic_policy"],
+        "audience": ["undergraduate", "faculty_advisor"],
+        "keywords": ["cr/nc", "crnc"],
+        "preferred_surfaces": ["faq", "website", "handbook", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "overload_policy",
+        "title": "Overload Policy",
+        "topic_families": ["academic_policy"],
+        "audience": ["undergraduate"],
+        "keywords": ["overload policy", "overload"],
+        "preferred_surfaces": ["guide", "website", "other"],
+        "service": "academic_advising",
+    },
+    {
+        "id": "signature_work",
+        "title": "Signature Work",
+        "topic_families": ["signature_work"],
+        "audience": ["undergraduate", "signature_work_student"],
+        "keywords": ["signature work", "sw mentor", "signature-work", "mentor information sheet"],
+        "preferred_surfaces": ["handbook", "calendar", "form", "website", "other"],
+        "service": "signature_work_support",
+        "timeline": "signature_work_cycle",
+    },
+    {
+        "id": "student_accessibility",
+        "title": "Student Accessibility Service",
+        "topic_families": ["student_support", "office_service"],
+        "audience": ["student"],
+        "keywords": ["student accessibility", "accessibility service"],
+        "preferred_surfaces": ["handbook", "website", "other"],
+        "service": "student_accessibility",
+    },
+]
+
+SERVICE_RULES = {
+    "academic_advising": {
+        "title": "Office of Undergraduate Advising",
+        "summary": "Service index for advising-related topics, faculty advisor support, and undergraduate planning materials.",
+    },
+    "registrar_student_center": {
+        "title": "Registrar and Student Self-Service Center",
+        "summary": "Service index for registration, planning, and student self-service workflows.",
+    },
+    "signature_work_support": {
+        "title": "Signature Work Support",
+        "summary": "Service index for Signature Work handbook, mentoring, and calendar-related materials.",
+    },
+    "student_accessibility": {
+        "title": "Student Accessibility Service",
+        "summary": "Service index for accessibility support materials and related student workflows.",
+    },
+}
+
+TIMELINE_RULES = {
+    "major_declaration_cycle": {
+        "title": "Major Declaration Timing",
+        "summary": "Timeline index for when students usually encounter major declaration materials and related advising guidance.",
+    },
+    "registration_cycle": {
+        "title": "Registration Cycle",
+        "summary": "Timeline index for planning and registration materials across the term cycle.",
+    },
+    "signature_work_cycle": {
+        "title": "Signature Work Cycle",
+        "summary": "Timeline index for Signature Work handbook and calendar materials across the academic year.",
+    },
+}
+
+SURFACE_PRIORITY = {
+    "bulletin": 0,
+    "handbook": 1,
+    "website": 2,
+    "guide": 3,
+    "faq": 4,
+    "form": 5,
+    "calendar": 6,
+    "slides": 7,
+    "spreadsheet": 8,
+    "other": 9,
+}
 
 
 def _group_nodes_by_source(nodes: list[dict]) -> dict[str, list[dict]]:
@@ -37,232 +195,345 @@ def _group_nodes_by_source(nodes: list[dict]) -> dict[str, list[dict]]:
     return grouped
 
 
-def _guess_source_type(metadata: dict) -> str:
-    if metadata.get("is_event") is True or metadata.get("event_url"):
-        return "event"
-    file_type = str(metadata.get("file_type") or "").lower()
-    if file_type:
-        return file_type
-    return "doc"
+def _detect_surface(file_path: str, file_name: str) -> str:
+    lower = f"{file_path} {file_name}".lower()
+    if "bulletin" in lower:
+        return "bulletin"
+    if "handbook" in lower or "manual" in lower:
+        return "handbook"
+    if "faq" in lower:
+        return "faq"
+    if "form" in lower:
+        return "form"
+    if "guide" in lower:
+        return "guide"
+    if "calendar" in lower:
+        return "calendar"
+    if file_path.endswith(".pptx"):
+        return "slides"
+    if file_path.endswith(".xlsx"):
+        return "spreadsheet"
+    if "dukekunshan.edu.cn" in lower or file_path.endswith(".html"):
+        return "website"
+    return "other"
 
 
-def _build_source_page(doc_key: str, doc_nodes: list[dict]) -> WikiPage:
+def _classify_topic(source: dict) -> dict:
+    title_haystack = " ".join(
+        [
+            source["title"].lower(),
+            source["file_name"].lower(),
+            source["file_path"].lower(),
+        ]
+    )
+    summary_haystack = source["summary"].lower()
+    best_rule = None
+    best_score = -1
+    for rule in TOPIC_RULES:
+        title_hits = sum(1 for keyword in rule["keywords"] if keyword in title_haystack)
+        summary_hits = sum(1 for keyword in rule["keywords"] if keyword in summary_haystack)
+        if source["surface"] == "website" and title_hits == 0:
+            score = 0
+        elif title_hits == 0 and summary_hits < 2:
+            score = 0
+        else:
+            score = title_hits * 3 + summary_hits
+        if score > best_score:
+            best_score = score
+            best_rule = rule
+    if best_rule and best_score > 0:
+        return best_rule
+    return {
+        "id": f"general_{slugify(source['domain'])}",
+        "title": f"{source['domain'].replace('-', ' ').title()} Reference",
+        "topic_families": ["reference_catalog"],
+        "audience": ["student"],
+        "keywords": [],
+        "service": None,
+    }
+
+
+def _build_source_record(doc_key: str, doc_nodes: list[dict]) -> dict:
     first_meta = (doc_nodes[0].get("metadata", {}) or {}) if doc_nodes else {}
     texts = [str(node.get("text", "")).strip() for node in doc_nodes if node.get("text")]
     merged_text = "\n".join(texts)
     file_name = first_meta.get("file_name") or file_name_from_doc_key(doc_key)
     file_path = str(first_meta.get("file_path") or doc_key)
     title = title_from_source(file_name, merged_text, file_path)
-    source_type = _guess_source_type(first_meta)
-    domain = infer_domain(file_path)
-    page_id = page_id_from_doc_key(file_path)
-
+    summary = first_sentences(merged_text)
+    surface = _detect_surface(file_path, file_name)
+    topic_rule = _classify_topic(
+        {
+            "title": title,
+            "file_name": file_name,
+            "file_path": file_path,
+            "summary": summary,
+            "domain": infer_domain(file_path),
+            "surface": surface,
+        }
+    )
     source_ref = SourceRef(
         file_path=file_path,
         file_name=file_name,
-        source_type=source_type,
+        source_type=surface,
         source_url=first_meta.get("source_url") or first_meta.get("event_url"),
         last_modified=first_meta.get("last_modified_date"),
     )
+    return {
+        "doc_key": doc_key,
+        "page_id": page_id_from_doc_key(file_path),
+        "title": title,
+        "file_name": file_name,
+        "file_path": file_path,
+        "domain": infer_domain(file_path),
+        "summary": summary,
+        "surface": surface,
+        "node_count": len(doc_nodes),
+        "source_ref": source_ref,
+        "facts": extract_grounded_facts(merged_text, source_ref=file_path),
+        "reference_context": [text[:240] for text in texts[:3]],
+        "topic_rule": topic_rule,
+    }
 
-    facts = extract_grounded_facts(merged_text, source_ref=source_ref.file_path)
-    entities = extract_candidate_entities(merged_text, first_meta)
-    tags = unique_preserve_order(
-        [
-            domain,
-            source_type,
-            str(first_meta.get("access_type") or ""),
-            str(first_meta.get("role") or ""),
-        ]
+
+def _preferred_sources(records: list[dict], limit: int = 3) -> list[str]:
+    topic_rule = records[0]["topic_rule"]
+    preferred_surfaces = topic_rule.get("preferred_surfaces", [])
+    preferred_rank = {surface: idx for idx, surface in enumerate(preferred_surfaces)}
+    ordered = sorted(
+        records,
+        key=lambda item: (
+            preferred_rank.get(item["surface"], 100),
+            SURFACE_PRIORITY.get(item["surface"], SURFACE_PRIORITY["other"]),
+            item["file_name"].lower(),
+        ),
     )
-    source_log = [
-        f"doc_key: `{doc_key}`",
-        f"file_type: `{first_meta.get('file_type', '')}`",
-        f"page_number: `{first_meta.get('page_number', '')}`",
-        f"access_type: `{first_meta.get('access_type', '')}`",
-        f"role: `{first_meta.get('role', '')}`",
-        f"organization: `{first_meta.get('organization', '')}`",
-        f"user_id: `{first_meta.get('user_id', '')}`",
-        f"chunk_count: `{len(doc_nodes)}`",
-    ]
-
-    return WikiPage(
-        page_id=page_id,
-        title=title,
-        page_type="source",
-        domain=domain,
-        tags=tags,
-        source_refs=[source_ref],
-        ground_truth_refs=facts,
-        cross_refs=[],
-        output_path=f"sources/{page_id}.md",
-        entity_names=entities,
-        node_count=len(doc_nodes),
-        status="verified" if facts else "draft",
-        summary=first_sentences(merged_text),
-        source_log=source_log,
-        reference_context=[text[:240] for text in texts[:5]],
-        open_questions=[] if facts else ["No deterministic grounded facts detected yet."],
-    )
+    return [record["file_path"] for record in ordered[:limit]]
 
 
-def _build_entity_pages(source_pages: list[WikiPage]) -> list[WikiPage]:
-    entity_to_sources: dict[str, list[WikiPage]] = defaultdict(list)
-    for page in source_pages:
-        for entity_name in page.entity_names:
-            entity_to_sources[entity_name].append(page)
+def _build_cluster_pages(source_records: list[dict]) -> list[WikiPage]:
+    by_topic: dict[str, list[dict]] = defaultdict(list)
+    for record in source_records:
+        by_topic[record["topic_rule"]["id"]].append(record)
 
-    entity_pages: list[WikiPage] = []
-    for entity_name, pages in sorted(entity_to_sources.items(), key=lambda item: item[0].lower()):
-        source_refs = unique_preserve_order([ref.file_path for page in pages for ref in page.source_refs])
-        rendered_refs = [
-            SourceRef(file_path=ref_path, file_name=Path(ref_path).name or ref_path, source_type="source")
-            for ref_path in source_refs
-        ]
-        merged_facts = []
-        for page in pages:
-            merged_facts.extend(page.ground_truth_refs[:4])
+    cluster_pages: list[WikiPage] = []
+    for topic_id, records in sorted(by_topic.items()):
+        topic_rule = records[0]["topic_rule"]
+        surfaces = unique_preserve_order([record["surface"] for record in records])
+        preferred_rank = {
+            surface: idx for idx, surface in enumerate(topic_rule.get("preferred_surfaces", []))
+        }
+        authority_order = sorted(
+            surfaces,
+            key=lambda item: (preferred_rank.get(item, 100), SURFACE_PRIORITY.get(item, 99)),
+        )
+        cluster_status = "stable"
+        if len(records) >= 4 and len(surfaces) >= 3:
+            cluster_status = "mixed"
         summary = (
-            f"{entity_name} appears in {len(pages)} source page(s) across "
-            f"{len({page.domain for page in pages})} domain(s)."
+            f"Source cluster for {topic_rule['title']} with {len(records)} overlapping source(s) "
+            f"across {', '.join(surfaces)}."
         )
-        entity_pages.append(
+        cluster_pages.append(
             WikiPage(
-                page_id=entity_page_id(entity_name),
-                title=entity_name,
-                page_type="entity",
-                domain=pages[0].domain,
-                tags=unique_preserve_order([page.domain for page in pages] + ["entity"]),
-                source_refs=rendered_refs,
-                ground_truth_refs=merged_facts[:10],
+                page_id=f"cluster.{topic_id}",
+                title=f"{topic_rule['title']} Source Cluster",
+                page_type="source_cluster",
+                domain=records[0]["domain"],
+                tags=surfaces + topic_rule["topic_families"],
+                source_refs=[record["source_ref"] for record in records],
+                ground_truth_refs=[],
                 cross_refs=[],
-                output_path=f"entities/{slugify(entity_name)}.md",
-                entity_names=[entity_name],
-                node_count=sum(page.node_count for page in pages),
-                status="verified" if merged_facts else "draft",
+                output_path=f"clusters/{slugify(topic_id)}.md",
+                topic_families=topic_rule["topic_families"],
+                audience=topic_rule["audience"],
+                source_surfaces=surfaces,
+                preferred_detail_sources=_preferred_sources(records),
+                node_count=sum(record["node_count"] for record in records),
+                status="active",
+                cluster_status=cluster_status,
                 summary=summary,
-                source_log=[f"source_pages: {', '.join(page.page_id for page in pages[:8])}"],
-                reference_context=[page.summary for page in pages[:5]],
+                source_log=authority_order,
+                reference_context=[],
             )
         )
-    return entity_pages
+    return cluster_pages
 
 
-def _attach_cross_refs(source_pages: list[WikiPage], entity_pages: list[WikiPage]) -> None:
-    entity_lookup = {page.title: page.page_id for page in entity_pages}
-    source_by_id = {page.page_id: page for page in source_pages}
-    source_ids_by_entity: dict[str, list[str]] = defaultdict(list)
-
-    for page in source_pages:
-        for entity_name in page.entity_names:
-            source_ids_by_entity[entity_name].append(page.page_id)
-
-    for page in source_pages:
-        related_sources: list[str] = []
-        for entity_name in page.entity_names:
-            related_sources.extend(source_ids_by_entity[entity_name])
-        related_sources.extend(
-            other.page_id for other in source_pages if other.domain == page.domain and other.page_id != page.page_id
-        )
-        entity_refs = [entity_lookup[name] for name in page.entity_names if name in entity_lookup]
-        page.cross_refs = unique_preserve_order(entity_refs + related_sources)
-        page.cross_refs = [ref for ref in page.cross_refs if ref != page.page_id][:10]
-
-    entity_names_by_source: dict[str, list[str]] = {page.page_id: page.entity_names for page in source_pages}
-    for entity_page in entity_pages:
-        related_entity_names: list[str] = []
-        source_refs: list[str] = []
-        for source_page in source_pages:
-            if entity_page.title not in source_page.entity_names:
-                continue
-            source_refs.append(source_page.page_id)
-            related_entity_names.extend(
-                name for name in entity_names_by_source[source_page.page_id] if name != entity_page.title
-            )
-        entity_links = [entity_lookup[name] for name in unique_preserve_order(related_entity_names) if name in entity_lookup]
-        entity_page.cross_refs = unique_preserve_order(source_refs + entity_links)[:12]
-
-
-def _attach_cluster_contradictions(source_pages: list[WikiPage], entity_pages: list[WikiPage]) -> None:
-    source_by_id = {page.page_id: page for page in source_pages}
-    page_notes: dict[str, list[ContradictionNote]] = defaultdict(list)
-
-    clusters: dict[str, list[str]] = defaultdict(list)
-    for entity_page in entity_pages:
-        source_ids = [ref for ref in entity_page.cross_refs if ref in source_by_id]
-        if len(source_ids) > 1:
-            clusters[f"entity:{entity_page.title}"] = source_ids
-
-    for page in source_pages:
-        clusters[f"title:{slugify(page.title)}"].append(page.page_id)
-
-    for cluster_name, page_ids in clusters.items():
-        unique_page_ids = unique_preserve_order(page_ids)
-        if len(unique_page_ids) <= 1:
-            continue
-
-        fact_index: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
-        value_index: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-
-        for page_id in unique_page_ids:
-            for fact in source_by_id[page_id].ground_truth_refs:
-                if fact.label not in CONTRADICTION_LABELS:
-                    continue
-                normalized_value = fact.value.lower()
-                fact_index[fact.label][normalized_value].add(page_id)
-                value_index[fact.label][normalized_value].append(fact.value)
-
-        for label, values in fact_index.items():
-            if len(values) <= 1:
-                continue
-            conflicting_page_ids = sorted({pid for pid_set in values.values() for pid in pid_set})
-            display_values = [variants[0] for variants in value_index[label].values()]
-            note = ContradictionNote(
-                label=label,
-                status="needs_review",
-                explanation=(
-                    f"Found {len(values)} distinct `{label}` values inside cluster `{cluster_name}` "
-                    f"across {len(conflicting_page_ids)} source pages."
+def _build_topic_pages(cluster_pages: list[WikiPage]) -> list[WikiPage]:
+    topic_pages: list[WikiPage] = []
+    for cluster in cluster_pages:
+        topic_id = cluster.page_id.removeprefix("cluster.")
+        title = cluster.title.removesuffix(" Source Cluster")
+        quick_orientation = [
+            f"topic_family: {', '.join(cluster.topic_families)}",
+            f"source_surfaces: {', '.join(cluster.source_surfaces)}",
+            f"source_count: {len(cluster.source_refs)}",
+            f"best_open_first: {Path(cluster.preferred_detail_sources[0]).name if cluster.preferred_detail_sources else 'N/A'}",
+        ]
+        topic_pages.append(
+            WikiPage(
+                page_id=f"topic.{topic_id}",
+                title=title,
+                page_type="topic_index",
+                domain=cluster.domain,
+                tags=cluster.topic_families + ["topic_index"],
+                source_refs=cluster.source_refs,
+                ground_truth_refs=[],
+                cross_refs=[cluster.page_id],
+                output_path=f"topics/{slugify(topic_id)}.md",
+                topic_families=cluster.topic_families,
+                audience=cluster.audience,
+                source_surfaces=cluster.source_surfaces,
+                canonical_source_cluster=cluster.page_id,
+                preferred_detail_sources=cluster.preferred_detail_sources,
+                status="active",
+                cluster_status=cluster.cluster_status,
+                summary=(
+                    f"General DKU topic index for {title.lower()}. "
+                    f"Start here, then open the best detailed source if needed."
                 ),
-                conflicting_values=sorted(display_values)[:6],
-                conflicting_refs=conflicting_page_ids,
+                reference_context=quick_orientation,
             )
-            for page_id in conflicting_page_ids:
-                page_notes[page_id].append(note)
+        )
+    return topic_pages
 
-    for page in source_pages:
-        page.contradiction_notes.extend(page_notes.get(page.page_id, []))
 
-    for entity_page in entity_pages:
-        related_source_ids = [ref for ref in entity_page.cross_refs if ref in source_by_id]
-        notes: list[ContradictionNote] = []
-        for source_id in related_source_ids:
-            notes.extend(page_notes.get(source_id, []))
-        entity_page.contradiction_notes = notes[:6]
+def _build_service_pages(topic_pages: list[WikiPage]) -> list[WikiPage]:
+    by_service: dict[str, list[WikiPage]] = defaultdict(list)
+    topic_rule_by_page_id = {f"topic.{rule['id']}": rule for rule in TOPIC_RULES}
+    for page in topic_pages:
+        rule = topic_rule_by_page_id.get(page.page_id)
+        if rule and rule.get("service"):
+            by_service[rule["service"]].append(page)
+
+    pages: list[WikiPage] = []
+    for service_id, topic_refs in sorted(by_service.items()):
+        meta = SERVICE_RULES[service_id]
+        pages.append(
+            WikiPage(
+                page_id=f"service.{service_id}",
+                title=meta["title"],
+                page_type="service_index",
+                domain="general",
+                tags=["office_service"],
+                source_refs=[ref for page in topic_refs for ref in page.source_refs[:1]],
+                ground_truth_refs=[],
+                cross_refs=[page.page_id for page in topic_refs],
+                output_path=f"services/{slugify(service_id)}.md",
+                topic_families=["office_service"],
+                audience=["student"],
+                source_surfaces=unique_preserve_order(
+                    [surface for page in topic_refs for surface in page.source_surfaces]
+                ),
+                preferred_detail_sources=unique_preserve_order(
+                    [src for page in topic_refs for src in page.preferred_detail_sources]
+                )[:3],
+                status="active",
+                summary=meta["summary"],
+                reference_context=[page.title for page in topic_refs[:6]],
+            )
+        )
+    return pages
+
+
+def _build_timeline_pages(topic_pages: list[WikiPage]) -> list[WikiPage]:
+    by_timeline: dict[str, list[WikiPage]] = defaultdict(list)
+    topic_rule_by_page_id = {f"topic.{rule['id']}": rule for rule in TOPIC_RULES}
+    for page in topic_pages:
+        rule = topic_rule_by_page_id.get(page.page_id)
+        if rule and rule.get("timeline"):
+            by_timeline[rule["timeline"]].append(page)
+
+    pages: list[WikiPage] = []
+    for timeline_id, topic_refs in sorted(by_timeline.items()):
+        meta = TIMELINE_RULES[timeline_id]
+        pages.append(
+            WikiPage(
+                page_id=f"timeline.{timeline_id}",
+                title=meta["title"],
+                page_type="timeline_index",
+                domain="general",
+                tags=["timeline_index"],
+                source_refs=[ref for page in topic_refs for ref in page.source_refs[:1]],
+                ground_truth_refs=[],
+                cross_refs=[page.page_id for page in topic_refs],
+                output_path=f"timelines/{slugify(timeline_id)}.md",
+                topic_families=unique_preserve_order(
+                    [family for page in topic_refs for family in page.topic_families]
+                ),
+                audience=["student"],
+                source_surfaces=unique_preserve_order(
+                    [surface for page in topic_refs for surface in page.source_surfaces]
+                ),
+                preferred_detail_sources=unique_preserve_order(
+                    [src for page in topic_refs for src in page.preferred_detail_sources]
+                )[:3],
+                status="active",
+                summary=meta["summary"],
+            )
+        )
+    return pages
+
+
+def _attach_related_pages(
+    topic_pages: list[WikiPage],
+    cluster_pages: list[WikiPage],
+    service_pages: list[WikiPage],
+    timeline_pages: list[WikiPage],
+) -> None:
+    cluster_by_topic = {
+        cluster.page_id.removeprefix("cluster."): cluster.page_id for cluster in cluster_pages
+    }
+    for page in topic_pages:
+        topic_key = page.page_id.removeprefix("topic.")
+        related = [cluster_by_topic.get(topic_key)]
+        for other in topic_pages:
+            if other.page_id == page.page_id:
+                continue
+            if set(other.topic_families) & set(page.topic_families):
+                related.append(other.page_id)
+        for service in service_pages:
+            if page.page_id in service.cross_refs:
+                related.append(service.page_id)
+        for timeline in timeline_pages:
+            if page.page_id in timeline.cross_refs:
+                related.append(timeline.page_id)
+        page.cross_refs = [ref for ref in unique_preserve_order([item for item in related if item]) if ref != page.page_id][:8]
+
+    for cluster in cluster_pages:
+        topic_ref = f"topic.{cluster.page_id.removeprefix('cluster.')}"
+        cluster.cross_refs = [topic_ref] if topic_ref in {page.page_id for page in topic_pages} else []
 
 
 def build_wiki(nodes_path: str | Path, output_dir: str | Path = ".") -> dict:
     nodes = load_nodes(nodes_path)
     paths = ensure_layout(output_dir)
-    clear_markdown_dir(paths["sources"])
-    clear_markdown_dir(paths["entities"])
+    for key in ["topics", "clusters", "services", "timelines"]:
+        clear_markdown_dir(paths[key])
 
     grouped = _group_nodes_by_source(nodes)
-    source_pages = [_build_source_page(doc_key, doc_nodes) for doc_key, doc_nodes in grouped.items()]
-    entity_pages = _build_entity_pages(source_pages)
-    _attach_cross_refs(source_pages, entity_pages)
-    _attach_cluster_contradictions(source_pages, entity_pages)
+    source_records = [_build_source_record(doc_key, doc_nodes) for doc_key, doc_nodes in grouped.items()]
 
-    all_pages = source_pages + entity_pages
+    cluster_pages = _build_cluster_pages(source_records)
+    topic_pages = _build_topic_pages(cluster_pages)
+    service_pages = _build_service_pages(topic_pages)
+    timeline_pages = _build_timeline_pages(topic_pages)
+    _attach_related_pages(topic_pages, cluster_pages, service_pages, timeline_pages)
+
+    all_pages = topic_pages + cluster_pages + service_pages + timeline_pages
     pages_by_id = {page.page_id: page for page in all_pages}
 
-    for page in source_pages:
-        write_text(paths["wiki"] / page.output_path, render_source_page(page, pages_by_id))
-    for page in entity_pages:
-        write_text(paths["wiki"] / page.output_path, render_entity_page(page, pages_by_id))
+    for page in topic_pages:
+        write_text(paths["wiki"] / page.output_path, render_topic_page(page, pages_by_id))
+    for page in cluster_pages:
+        write_text(paths["wiki"] / page.output_path, render_cluster_page(page, pages_by_id))
+    for page in service_pages:
+        write_text(paths["wiki"] / page.output_path, render_service_page(page, pages_by_id))
+    for page in timeline_pages:
+        write_text(paths["wiki"] / page.output_path, render_timeline_page(page, pages_by_id))
 
     issues = validate_pages(all_pages)
-
     write_text(paths["wiki"] / "index.md", render_index(all_pages))
     write_text(paths["wiki"] / "overview.md", render_overview(all_pages, issues))
     write_text(
@@ -283,11 +554,10 @@ def build_wiki(nodes_path: str | Path, output_dir: str | Path = ".") -> dict:
             "title": page.title,
             "page_type": page.page_type,
             "domain": page.domain,
+            "topic_family": page.topic_families,
             "output_path": page.output_path,
             "source_count": len(page.source_refs),
-            "fact_count": len(page.ground_truth_refs),
             "cross_ref_count": len(page.cross_refs),
-            "entities": page.entity_names,
         }
         for page in all_pages
     ]
@@ -317,8 +587,10 @@ def build_wiki(nodes_path: str | Path, output_dir: str | Path = ".") -> dict:
 
     return {
         "total_nodes": len(nodes),
-        "total_source_pages": len(source_pages),
-        "total_entity_pages": len(entity_pages),
+        "total_topics": len(topic_pages),
+        "total_clusters": len(cluster_pages),
+        "total_services": len(service_pages),
+        "total_timelines": len(timeline_pages),
         "issues": issues,
         "index_document": str(paths["wiki"] / "index.md"),
         "main_document": str(paths["wiki"] / "main.md"),

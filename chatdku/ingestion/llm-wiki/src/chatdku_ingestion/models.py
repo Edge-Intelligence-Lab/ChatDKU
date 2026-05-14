@@ -45,9 +45,15 @@ class WikiPage:
     ground_truth_refs: list[GroundedFact]
     cross_refs: list[str]
     output_path: str
+    topic_families: list[str] = field(default_factory=list)
+    audience: list[str] = field(default_factory=list)
+    source_surfaces: list[str] = field(default_factory=list)
+    canonical_source_cluster: str | None = None
+    preferred_detail_sources: list[str] = field(default_factory=list)
     entity_names: list[str] = field(default_factory=list)
     node_count: int = 0
     status: str = "draft"
+    cluster_status: str = ""
     contradiction_notes: list[ContradictionNote] = field(default_factory=list)
     summary: str = ""
     source_log: list[str] = field(default_factory=list)

@@ -22,15 +22,24 @@ def _frontmatter(page: WikiPage) -> str:
         f'domain: "{page.domain}"',
         f'status: "{page.status}"',
         f'last_updated: "{page.last_updated}"',
-        f"node_count: {page.node_count}",
-        "tags:",
-        *_yaml_list(page.tags, indent=2),
-        "entities:",
-        *_yaml_list(page.entity_names, indent=2),
-        "source_paths:",
-        *_yaml_list([ref.file_path for ref in page.source_refs], indent=2),
-        "---",
+        "topic_family:",
+        *_yaml_list(page.topic_families, indent=2),
+        "audience:",
+        *_yaml_list(page.audience, indent=2),
+        "source_surfaces:",
+        *_yaml_list(page.source_surfaces, indent=2),
     ]
+    if page.canonical_source_cluster:
+        lines.append(f'canonical_source_cluster: "{page.canonical_source_cluster}"')
+    if page.cluster_status:
+        lines.append(f'cluster_status: "{page.cluster_status}"')
+    lines.extend(
+        [
+            "source_paths:",
+            *_yaml_list([ref.file_path for ref in page.source_refs], indent=2),
+            "---",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -54,94 +63,108 @@ def _render_source_refs(page: WikiPage) -> str:
     return "\n".join(lines) or "- None"
 
 
-def _render_facts(page: WikiPage) -> str:
-    lines = []
-    for fact in page.ground_truth_refs:
-        lines.append(f"- **{fact.label}**: {fact.value}")
-        lines.append(f"  - evidence: {fact.evidence}")
-        lines.append(f"  - source_ref: `{fact.source_ref}`")
-    return "\n".join(lines) or "- None"
-
-
-def _render_contradictions(page: WikiPage) -> str:
-    lines = []
-    for note in page.contradiction_notes:
-        lines.append(f"- **{note.label}** | status: `{note.status}`")
-        lines.append(f"  - note: {note.explanation}")
-        if note.conflicting_values:
-            lines.append(
-                "  - values: " + ", ".join(f"`{value}`" for value in note.conflicting_values)
-            )
-        if note.conflicting_refs:
-            lines.append("  - refs: " + ", ".join(f"`{ref}`" for ref in note.conflicting_refs))
-    return "\n".join(lines) or "- None"
-
-
-def _render_source_log(page: WikiPage) -> str:
-    return "\n".join(f"- {item}" for item in page.source_log) or "- None"
-
-
-def _render_context(page: WikiPage) -> str:
-    return "\n".join(f"- {item}" for item in page.reference_context) or "- None"
-
-
-def render_source_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
+def render_topic_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
     lines = [
         _frontmatter(page),
         "",
         f"# {page.title}",
         "",
-        "## Summary",
+        "## One-Line Summary",
         page.summary or "No summary generated.",
         "",
-        "## Grounded Facts",
-        _render_facts(page),
+        "## Why This Page Exists",
+        (
+            "This is a compact DKU topic index page. Read this first to orient to the topic, "
+            "then open the best detailed source when needed."
+        ),
         "",
-        "## Source Refs",
-        _render_source_refs(page),
+        "## Quick Orientation",
+        *([f"- {item}" for item in page.reference_context] or ["- Not available."]),
         "",
-        "## Connections",
+        "## Best Sources To Open Next",
+        *([f"- `{item}`" for item in page.preferred_detail_sources] or ["- Not available."]),
+        "",
+        "## Related Topics",
         _render_links(page, pages_by_id),
         "",
-        "## Contradictions",
-        _render_contradictions(page),
-        "",
-        "## Source Log",
-        _render_source_log(page),
-        "",
-        "## Reference Context",
-        _render_context(page),
+        "## Source Cluster Status",
+        f"- `{page.cluster_status or 'stable'}`",
     ]
     return "\n".join(lines).strip() + "\n"
 
 
-def render_entity_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
+def render_cluster_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
     lines = [
         _frontmatter(page),
         "",
         f"# {page.title}",
         "",
-        "## Summary",
+        "## Cluster Summary",
         page.summary or "No summary generated.",
         "",
-        "## Supporting Sources",
+        "## Authority Order",
+        *([f"- `{item}`" for item in page.source_log] or ["- Not available."]),
+        "",
+        "## Included Sources",
         _render_source_refs(page),
         "",
-        "## Grounded Facts",
-        _render_facts(page),
+        "## Best Entry Sources",
+        *([f"- `{item}`" for item in page.preferred_detail_sources] or ["- Not available."]),
         "",
-        "## Connections",
+        "## Related Pages",
         _render_links(page, pages_by_id),
         "",
-        "## Contradictions",
-        _render_contradictions(page),
+        "## Notes On Overlap",
+        f"- cluster_status: `{page.cluster_status or 'stable'}`",
+    ]
+    return "\n".join(lines).strip() + "\n"
+
+
+def render_service_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
+    lines = [
+        _frontmatter(page),
+        "",
+        f"# {page.title}",
+        "",
+        "## One-Line Summary",
+        page.summary or "No summary generated.",
+        "",
+        "## What This Service Helps With",
+        *([f"- {item}" for item in page.reference_context] or ["- Not available."]),
+        "",
+        "## Best Sources To Open",
+        *([f"- `{item}`" for item in page.preferred_detail_sources] or ["- Not available."]),
+        "",
+        "## Related Topic Indexes",
+        _render_links(page, pages_by_id),
+    ]
+    return "\n".join(lines).strip() + "\n"
+
+
+def render_timeline_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
+    lines = [
+        _frontmatter(page),
+        "",
+        f"# {page.title}",
+        "",
+        "## Cycle Summary",
+        page.summary or "No summary generated.",
+        "",
+        "## Best Calendar / Handbook Sources",
+        *([f"- `{item}`" for item in page.preferred_detail_sources] or ["- Not available."]),
+        "",
+        "## Related Topic Indexes",
+        _render_links(page, pages_by_id),
     ]
     return "\n".join(lines).strip() + "\n"
 
 
 def render_index(pages: list[WikiPage]) -> str:
-    sources = [page for page in pages if page.page_type == "source"]
-    entities = [page for page in pages if page.page_type == "entity"]
+    topics = [page for page in pages if page.page_type == "topic_index"]
+    services = [page for page in pages if page.page_type == "service_index"]
+    timelines = [page for page in pages if page.page_type == "timeline_index"]
+    clusters = [page for page in pages if page.page_type == "source_cluster"]
+
     lines = [
         "# ChatDKU Wiki Index",
         "",
@@ -150,39 +173,46 @@ def render_index(pages: list[WikiPage]) -> str:
         "- [Main Build Report](main.md)",
         "- [Validation Report](validation_report.md)",
         "",
-        "## Sources",
+        "## Topic Indexes",
     ]
-    for page in sorted(sources, key=lambda item: item.title.lower()):
+    for page in sorted(topics, key=lambda item: item.title.lower()):
         lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
-    lines.extend(["", "## Entities"])
-    for page in sorted(entities, key=lambda item: item.title.lower()):
+    lines.extend(["", "## Service Indexes"])
+    for page in sorted(services, key=lambda item: item.title.lower()):
+        lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
+    lines.extend(["", "## Timeline Indexes"])
+    for page in sorted(timelines, key=lambda item: item.title.lower()):
+        lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
+    lines.extend(["", "## Source Clusters"])
+    for page in sorted(clusters, key=lambda item: item.title.lower()):
         lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
     return "\n".join(lines).strip() + "\n"
 
 
 def render_overview(pages: list[WikiPage], issues: list[str]) -> str:
-    sources = [page for page in pages if page.page_type == "source"]
-    entities = [page for page in pages if page.page_type == "entity"]
-    by_domain: dict[str, int] = {}
-    for page in sources:
-        by_domain[page.domain] = by_domain.get(page.domain, 0) + 1
+    topics = [page for page in pages if page.page_type == "topic_index"]
+    services = [page for page in pages if page.page_type == "service_index"]
+    timelines = [page for page in pages if page.page_type == "timeline_index"]
+    clusters = [page for page in pages if page.page_type == "source_cluster"]
+    by_family: dict[str, int] = {}
+    for page in topics:
+        for family in page.topic_families:
+            by_family[family] = by_family.get(family, 0) + 1
 
     lines = [
         "# ChatDKU Wiki Overview",
         "",
         "## Snapshot",
-        f"- source_pages: {len(sources)}",
-        f"- entity_pages: {len(entities)}",
+        f"- topic_pages: {len(topics)}",
+        f"- cluster_pages: {len(clusters)}",
+        f"- service_pages: {len(services)}",
+        f"- timeline_pages: {len(timelines)}",
         f"- validation_issues: {len(issues)}",
         "",
-        "## Domain Coverage",
+        "## Topic Family Coverage",
     ]
-    for domain, count in sorted(by_domain.items()):
-        lines.append(f"- `{domain}`: {count} sources")
-
-    lines.extend(["", "## Notable Entities"])
-    for page in sorted(entities, key=lambda item: (-len(item.source_refs), item.title.lower()))[:15]:
-        lines.append(f"- [{page.title}]({page.output_path}) - supported by {len(page.source_refs)} source(s)")
+    for family, count in sorted(by_family.items()):
+        lines.append(f"- `{family}`: {count} topic page(s)")
     return "\n".join(lines).strip() + "\n"
 
 
@@ -194,8 +224,6 @@ def render_main_document(
     output_dir: str,
     issues: list[str],
 ) -> str:
-    sources = [page for page in pages if page.page_type == "source"]
-    entities = [page for page in pages if page.page_type == "entity"]
     lines = [
         "# ChatDKU Wiki Main",
         "",
@@ -203,8 +231,7 @@ def render_main_document(
         f"- nodes_path: `{nodes_path}`",
         f"- output_dir: `{output_dir}`",
         f"- total_nodes: {total_nodes}",
-        f"- source_pages: {len(sources)}",
-        f"- entity_pages: {len(entities)}",
+        f"- total_pages: {len(pages)}",
         f"- validation_issues: {len(issues)}",
         "",
         "## Key Outputs",
@@ -212,21 +239,13 @@ def render_main_document(
         "- [Overview](overview.md)",
         "- [Validation Report](validation_report.md)",
         "",
-        "## Source Inventory",
+        "## Topic Inventory",
     ]
-    for page in sorted(sources, key=lambda item: item.title.lower()):
+    for page in sorted((p for p in pages if p.page_type == "topic_index"), key=lambda item: item.title.lower()):
         lines.append(
-            f"- [{page.title}]({page.output_path}) | domain: `{page.domain}` | "
-            f"facts: {len(page.ground_truth_refs)} | links: {len(page.cross_refs)}"
+            f"- [{page.title}]({page.output_path}) | family: `{', '.join(page.topic_families)}` | "
+            f"cluster: `{page.canonical_source_cluster or ''}`"
         )
-
-    lines.extend(["", "## Entity Inventory"])
-    for page in sorted(entities, key=lambda item: item.title.lower()):
-        lines.append(
-            f"- [{page.title}]({page.output_path}) | sources: {len(page.source_refs)} | "
-            f"links: {len(page.cross_refs)}"
-        )
-
     lines.extend(["", "## Validation"])
     if issues:
         lines.extend(f"- {issue}" for issue in issues)
