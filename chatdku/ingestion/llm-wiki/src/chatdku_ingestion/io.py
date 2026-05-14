@@ -21,6 +21,7 @@ def ensure_layout(base_dir: str | Path) -> dict[str, Path]:
         "wiki": wiki_dir,
         "topics": wiki_dir / "topics",
         "clusters": wiki_dir / "clusters",
+        "authorities": wiki_dir / "authorities",
         "services": wiki_dir / "services",
         "timelines": wiki_dir / "timelines",
         "graph": base / "graph",

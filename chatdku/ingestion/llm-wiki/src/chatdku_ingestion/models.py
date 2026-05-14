@@ -48,6 +48,7 @@ class WikiPage:
     topic_families: list[str] = field(default_factory=list)
     audience: list[str] = field(default_factory=list)
     source_surfaces: list[str] = field(default_factory=list)
+    authority_sources: list[str] = field(default_factory=list)
     canonical_source_cluster: str | None = None
     preferred_detail_sources: list[str] = field(default_factory=list)
     entity_names: list[str] = field(default_factory=list)

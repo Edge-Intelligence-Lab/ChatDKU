@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 
 import requests
@@ -65,16 +66,38 @@ class LLMWikiWriter:
     @staticmethod
     def _clean_answer(text: str) -> str:
         cleaned = text.strip()
-        prefix = "Final answer:"
-        if cleaned.startswith(prefix):
-            cleaned = cleaned[len(prefix) :].strip()
+        cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.S | re.I).strip()
+
+        final_answer_matches = re.findall(
+            r"Final answer:\s*(.*)",
+            cleaned,
+            flags=re.I | re.S,
+        )
+        if final_answer_matches:
+            cleaned = final_answer_matches[-1].strip()
+
+        # If Qwen leaks a structured reasoning preamble, keep only the tail after the
+        # last numbered block if it looks like a final short answer.
+        if "\n\n" in cleaned and any(
+            marker in cleaned
+            for marker in [
+                "thinking process",
+                "Analyze User Input",
+                "Analyze the Goal",
+                "Deconstruct the Request",
+                "Identify Constraints",
+            ]
+        ):
+            tail = cleaned.split("\n\n")[-1].strip()
+            if tail and len(tail) < len(cleaned):
+                cleaned = tail
+
         suspicious_markers = [
             "Analyze User Input",
             "Analyze the Goal",
             "Deconstruct the Request",
             "Identify Constraints",
             "thinking process",
-            "**",
         ]
         if any(marker in cleaned for marker in suspicious_markers):
             raise ValueError(f"LLM returned reasoning-style output: {cleaned[:200]}")

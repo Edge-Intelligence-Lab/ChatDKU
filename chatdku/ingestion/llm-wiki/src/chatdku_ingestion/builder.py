@@ -7,6 +7,7 @@ from .extractors import extract_grounded_facts
 from .io import clear_markdown_dir, ensure_layout, load_nodes, write_json, write_text
 from .llm import LLMWikiWriter
 from .markdown import (
+    render_authority_page,
     render_cluster_page,
     render_index,
     render_main_document,
@@ -188,6 +189,12 @@ SURFACE_PRIORITY = {
     "other": 9,
 }
 
+AUTHORITY_BULLETIN_KEYWORDS = [
+    "ug_bulletin",
+    "undergraduate instruction",
+    "bulletin of duke kunshan university undergraduate instruction",
+]
+
 
 def _group_nodes_by_source(nodes: list[dict]) -> dict[str, list[dict]]:
     grouped: dict[str, list[dict]] = defaultdict(list)
@@ -217,6 +224,15 @@ def _detect_surface(file_path: str, file_name: str) -> str:
     if "dukekunshan.edu.cn" in lower or file_path.endswith(".html"):
         return "website"
     return "other"
+
+
+def _is_authority_hub(file_path: str, file_name: str, summary: str, surface: str, node_count: int) -> bool:
+    lower = f"{file_path} {file_name} {summary}".lower()
+    if surface != "bulletin":
+        return False
+    if node_count < 200:
+        return False
+    return any(keyword in lower for keyword in AUTHORITY_BULLETIN_KEYWORDS)
 
 
 def _classify_topic(source: dict) -> dict:
@@ -294,6 +310,9 @@ def _build_source_record(doc_key: str, doc_nodes: list[dict]) -> dict:
         "facts": extract_grounded_facts(merged_text, source_ref=file_path),
         "reference_context": [text[:240] for text in texts[:3]],
         "topic_rule": topic_rule,
+        "source_role": "authority_hub"
+        if _is_authority_hub(file_path, file_name, summary, surface, len(doc_nodes))
+        else "standard",
     }
 
 
@@ -315,6 +334,8 @@ def _preferred_sources(records: list[dict], limit: int = 3) -> list[str]:
 def _build_cluster_pages(source_records: list[dict]) -> list[WikiPage]:
     by_topic: dict[str, list[dict]] = defaultdict(list)
     for record in source_records:
+        if record["source_role"] != "standard":
+            continue
         by_topic[record["topic_rule"]["id"]].append(record)
 
     cluster_pages: list[WikiPage] = []
@@ -359,6 +380,46 @@ def _build_cluster_pages(source_records: list[dict]) -> list[WikiPage]:
             )
         )
     return cluster_pages
+
+
+def _build_authority_pages(source_records: list[dict]) -> list[WikiPage]:
+    authority_records = [record for record in source_records if record["source_role"] == "authority_hub"]
+    pages: list[WikiPage] = []
+    for record in authority_records:
+        pages.append(
+            WikiPage(
+                page_id="authority.ug_bulletin_2025_2026",
+                title="Undergraduate Bulletin 2025-2026",
+                page_type="authority_index",
+                domain="general",
+                tags=["authority_hub", "bulletin", "reference_catalog"],
+                source_refs=[record["source_ref"]],
+                ground_truth_refs=[],
+                cross_refs=[],
+                output_path="authorities/ug-bulletin-2025-2026.md",
+                topic_families=[
+                    "major_track_program",
+                    "academic_policy",
+                    "registration_planning",
+                    "reference_catalog",
+                ],
+                audience=["undergraduate", "faculty_advisor", "student"],
+                source_surfaces=[record["surface"]],
+                preferred_detail_sources=[record["file_path"]],
+                status="active",
+                cluster_status="authority_hub",
+                summary=(
+                    "Primary cross-topic authority source for undergraduate programs, academic requirements, "
+                    "and formal policy references at DKU. Use this when a topic needs the most comprehensive official background."
+                ),
+                reference_context=[
+                    "broad undergraduate authority source",
+                    "cross-topic reference for policy, curriculum, and academic requirements",
+                    "not usually the first page to open for a narrow workflow question",
+                ],
+            )
+        )
+    return pages
 
 
 def _build_topic_pages(cluster_pages: list[WikiPage]) -> list[WikiPage]:
@@ -531,6 +592,7 @@ def _build_timeline_pages(topic_pages: list[WikiPage]) -> list[WikiPage]:
 def _attach_related_pages(
     topic_pages: list[WikiPage],
     cluster_pages: list[WikiPage],
+    authority_pages: list[WikiPage],
     service_pages: list[WikiPage],
     timeline_pages: list[WikiPage],
 ) -> None:
@@ -551,11 +613,23 @@ def _attach_related_pages(
         for timeline in timeline_pages:
             if page.page_id in timeline.cross_refs:
                 related.append(timeline.page_id)
+        for authority in authority_pages:
+            if set(page.topic_families) & set(authority.topic_families):
+                related.append(authority.page_id)
+                page.authority_sources.extend(authority.preferred_detail_sources)
         page.cross_refs = [ref for ref in unique_preserve_order([item for item in related if item]) if ref != page.page_id][:8]
+        page.authority_sources = unique_preserve_order(page.authority_sources)
 
     for cluster in cluster_pages:
         topic_ref = f"topic.{cluster.page_id.removeprefix('cluster.')}"
         cluster.cross_refs = [topic_ref] if topic_ref in {page.page_id for page in topic_pages} else []
+
+    for authority in authority_pages:
+        authority.cross_refs = [
+            page.page_id
+            for page in topic_pages
+            if set(page.topic_families) & set(authority.topic_families)
+        ][:12]
 
 
 def build_wiki(
@@ -566,28 +640,31 @@ def build_wiki(
 ) -> dict:
     nodes = load_nodes(nodes_path)
     paths = ensure_layout(output_dir)
-    for key in ["topics", "clusters", "services", "timelines"]:
+    for key in ["topics", "clusters", "authorities", "services", "timelines"]:
         clear_markdown_dir(paths[key])
 
     grouped = _group_nodes_by_source(nodes)
     source_records = [_build_source_record(doc_key, doc_nodes) for doc_key, doc_nodes in grouped.items()]
 
     cluster_pages = _build_cluster_pages(source_records)
+    authority_pages = _build_authority_pages(source_records)
     topic_pages = _build_topic_pages(cluster_pages)
     service_pages = _build_service_pages(topic_pages)
     timeline_pages = _build_timeline_pages(topic_pages)
-    _attach_related_pages(topic_pages, cluster_pages, service_pages, timeline_pages)
+    _attach_related_pages(topic_pages, cluster_pages, authority_pages, service_pages, timeline_pages)
 
     if use_llm:
         _apply_llm_summaries(cluster_pages, topic_pages)
 
-    all_pages = topic_pages + cluster_pages + service_pages + timeline_pages
+    all_pages = topic_pages + cluster_pages + authority_pages + service_pages + timeline_pages
     pages_by_id = {page.page_id: page for page in all_pages}
 
     for page in topic_pages:
         write_text(paths["wiki"] / page.output_path, render_topic_page(page, pages_by_id))
     for page in cluster_pages:
         write_text(paths["wiki"] / page.output_path, render_cluster_page(page, pages_by_id))
+    for page in authority_pages:
+        write_text(paths["wiki"] / page.output_path, render_authority_page(page, pages_by_id))
     for page in service_pages:
         write_text(paths["wiki"] / page.output_path, render_service_page(page, pages_by_id))
     for page in timeline_pages:
@@ -649,6 +726,7 @@ def build_wiki(
         "total_nodes": len(nodes),
         "total_topics": len(topic_pages),
         "total_clusters": len(cluster_pages),
+        "total_authorities": len(authority_pages),
         "total_services": len(service_pages),
         "total_timelines": len(timeline_pages),
         "issues": issues,

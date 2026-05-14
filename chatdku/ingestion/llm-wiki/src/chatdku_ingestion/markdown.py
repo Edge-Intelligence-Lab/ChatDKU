@@ -37,6 +37,8 @@ def _frontmatter(page: WikiPage) -> str:
         [
             "source_paths:",
             *_yaml_list([ref.file_path for ref in page.source_refs], indent=2),
+            "authority_sources:",
+            *_yaml_list(page.authority_sources, indent=2),
             "---",
         ]
     )
@@ -84,6 +86,9 @@ def render_topic_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
         "## Best Sources To Open Next",
         *([f"- `{item}`" for item in page.preferred_detail_sources] or ["- Not available."]),
         "",
+        "## Related Authority Sources",
+        *([f"- `{item}`" for item in page.authority_sources] or ["- None."]),
+        "",
         "## Related Topics",
         _render_links(page, pages_by_id),
         "",
@@ -116,6 +121,31 @@ def render_cluster_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str
         "",
         "## Notes On Overlap",
         f"- cluster_status: `{page.cluster_status or 'stable'}`",
+    ]
+    return "\n".join(lines).strip() + "\n"
+
+
+def render_authority_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
+    lines = [
+        _frontmatter(page),
+        "",
+        f"# {page.title}",
+        "",
+        "## One-Line Summary",
+        page.summary or "No summary generated.",
+        "",
+        "## Why This Authority Matters",
+        (
+            "This page represents a cross-topic authority source. "
+            "Use it when a topic page needs the most comprehensive official reference, "
+            "but prefer narrower topic sources first when they exist."
+        ),
+        "",
+        "## Best Topics To Reach From Here",
+        _render_links(page, pages_by_id),
+        "",
+        "## Source Refs",
+        _render_source_refs(page),
     ]
     return "\n".join(lines).strip() + "\n"
 
@@ -161,6 +191,7 @@ def render_timeline_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> st
 
 def render_index(pages: list[WikiPage]) -> str:
     topics = [page for page in pages if page.page_type == "topic_index"]
+    authorities = [page for page in pages if page.page_type == "authority_index"]
     services = [page for page in pages if page.page_type == "service_index"]
     timelines = [page for page in pages if page.page_type == "timeline_index"]
     clusters = [page for page in pages if page.page_type == "source_cluster"]
@@ -177,6 +208,9 @@ def render_index(pages: list[WikiPage]) -> str:
     ]
     for page in sorted(topics, key=lambda item: item.title.lower()):
         lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
+    lines.extend(["", "## Authority Sources"])
+    for page in sorted(authorities, key=lambda item: item.title.lower()):
+        lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
     lines.extend(["", "## Service Indexes"])
     for page in sorted(services, key=lambda item: item.title.lower()):
         lines.append(f"- [{page.title}]({page.output_path}) - {page.summary[:140]}")
@@ -191,6 +225,7 @@ def render_index(pages: list[WikiPage]) -> str:
 
 def render_overview(pages: list[WikiPage], issues: list[str]) -> str:
     topics = [page for page in pages if page.page_type == "topic_index"]
+    authorities = [page for page in pages if page.page_type == "authority_index"]
     services = [page for page in pages if page.page_type == "service_index"]
     timelines = [page for page in pages if page.page_type == "timeline_index"]
     clusters = [page for page in pages if page.page_type == "source_cluster"]
@@ -204,6 +239,7 @@ def render_overview(pages: list[WikiPage], issues: list[str]) -> str:
         "",
         "## Snapshot",
         f"- topic_pages: {len(topics)}",
+        f"- authority_pages: {len(authorities)}",
         f"- cluster_pages: {len(clusters)}",
         f"- service_pages: {len(services)}",
         f"- timeline_pages: {len(timelines)}",
@@ -246,6 +282,9 @@ def render_main_document(
             f"- [{page.title}]({page.output_path}) | family: `{', '.join(page.topic_families)}` | "
             f"cluster: `{page.canonical_source_cluster or ''}`"
         )
+    lines.extend(["", "## Authority Inventory"])
+    for page in sorted((p for p in pages if p.page_type == "authority_index"), key=lambda item: item.title.lower()):
+        lines.append(f"- [{page.title}]({page.output_path}) | surfaces: `{', '.join(page.source_surfaces)}`")
     lines.extend(["", "## Validation"])
     if issues:
         lines.extend(f"- {issue}" for issue in issues)
