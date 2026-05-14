@@ -17,12 +17,22 @@ def ensure_layout(base_dir: str | Path) -> dict[str, Path]:
     base = Path(base_dir)
     wiki_dir = base / "wiki"
     paths = {
+        "root": base,
         "wiki": wiki_dir,
+        "sources": wiki_dir / "sources",
+        "entities": wiki_dir / "entities",
         "graph": base / "graph",
     }
     for p in paths.values():
         p.mkdir(parents=True, exist_ok=True)
     return paths
+
+
+def clear_markdown_dir(path: Path) -> None:
+    if not path.exists():
+        return
+    for child in path.glob("*.md"):
+        child.unlink()
 
 
 def write_text(path: Path, content: str) -> None:

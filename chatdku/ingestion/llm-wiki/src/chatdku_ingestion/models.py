@@ -30,6 +30,7 @@ class ContradictionNote:
     label: str
     status: str
     explanation: str
+    conflicting_values: list[str] = field(default_factory=list)
     conflicting_refs: list[str] = field(default_factory=list)
 
 
@@ -43,6 +44,8 @@ class WikiPage:
     source_refs: list[SourceRef]
     ground_truth_refs: list[GroundedFact]
     cross_refs: list[str]
+    output_path: str
+    entity_names: list[str] = field(default_factory=list)
     node_count: int = 0
     status: str = "draft"
     contradiction_notes: list[ContradictionNote] = field(default_factory=list)
