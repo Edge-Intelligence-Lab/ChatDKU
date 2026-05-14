@@ -22,12 +22,21 @@ def parse_args() -> argparse.Namespace:
         default=config.wiki_path,
         help="Output root for wiki/ and graph/ folders",
     )
+    parser.add_argument(
+        "--use-llm",
+        action="store_true",
+        help="Use the configured Qwen endpoint to write compact topic and cluster summaries",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    result = build_wiki(nodes_path=args.nodes_path, output_dir=args.output_dir)
+    result = build_wiki(
+        nodes_path=args.nodes_path,
+        output_dir=args.output_dir,
+        use_llm=args.use_llm,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

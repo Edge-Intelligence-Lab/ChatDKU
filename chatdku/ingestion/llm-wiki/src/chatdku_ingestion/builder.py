@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .extractors import extract_grounded_facts
 from .io import clear_markdown_dir, ensure_layout, load_nodes, write_json, write_text
+from .llm import LLMWikiWriter
 from .markdown import (
     render_cluster_page,
     render_index,
@@ -399,6 +400,57 @@ def _build_topic_pages(cluster_pages: list[WikiPage]) -> list[WikiPage]:
     return topic_pages
 
 
+def _sample_cluster_sources(cluster: WikiPage, limit: int = 6) -> list[dict]:
+    samples: list[dict] = []
+    for ref in cluster.source_refs[:limit]:
+        samples.append(
+            {
+                "file_name": ref.file_name,
+                "file_path": ref.file_path,
+                "source_type": ref.source_type,
+                "last_modified": ref.last_modified,
+            }
+        )
+    return samples
+
+
+def _apply_llm_summaries(
+    cluster_pages: list[WikiPage],
+    topic_pages: list[WikiPage],
+) -> None:
+    writer = LLMWikiWriter()
+    cluster_by_id = {page.page_id: page for page in cluster_pages}
+
+    for cluster in cluster_pages:
+        try:
+            cluster.summary = writer.write_cluster_summary(
+                cluster_title=cluster.title,
+                topic_families=cluster.topic_families,
+                sources=_sample_cluster_sources(cluster),
+            )
+        except Exception:
+            pass
+
+    for topic in topic_pages:
+        cluster = cluster_by_id.get(topic.canonical_source_cluster or "")
+        try:
+            topic.summary = writer.write_topic_summary(
+                topic_title=topic.title,
+                topic_families=topic.topic_families,
+                cluster_status=topic.cluster_status,
+                preferred_sources=topic.preferred_detail_sources,
+            )
+        except Exception:
+            pass
+        if cluster:
+            topic.reference_context = [
+                f"topic_family: {', '.join(topic.topic_families)}",
+                f"source_surfaces: {', '.join(cluster.source_surfaces)}",
+                f"source_count: {len(cluster.source_refs)}",
+                f"best_open_first: {Path(topic.preferred_detail_sources[0]).name if topic.preferred_detail_sources else 'N/A'}",
+            ]
+
+
 def _build_service_pages(topic_pages: list[WikiPage]) -> list[WikiPage]:
     by_service: dict[str, list[WikiPage]] = defaultdict(list)
     topic_rule_by_page_id = {f"topic.{rule['id']}": rule for rule in TOPIC_RULES}
@@ -506,7 +558,12 @@ def _attach_related_pages(
         cluster.cross_refs = [topic_ref] if topic_ref in {page.page_id for page in topic_pages} else []
 
 
-def build_wiki(nodes_path: str | Path, output_dir: str | Path = ".") -> dict:
+def build_wiki(
+    nodes_path: str | Path,
+    output_dir: str | Path = ".",
+    *,
+    use_llm: bool = False,
+) -> dict:
     nodes = load_nodes(nodes_path)
     paths = ensure_layout(output_dir)
     for key in ["topics", "clusters", "services", "timelines"]:
@@ -520,6 +577,9 @@ def build_wiki(nodes_path: str | Path, output_dir: str | Path = ".") -> dict:
     service_pages = _build_service_pages(topic_pages)
     timeline_pages = _build_timeline_pages(topic_pages)
     _attach_related_pages(topic_pages, cluster_pages, service_pages, timeline_pages)
+
+    if use_llm:
+        _apply_llm_summaries(cluster_pages, topic_pages)
 
     all_pages = topic_pages + cluster_pages + service_pages + timeline_pages
     pages_by_id = {page.page_id: page for page in all_pages}
