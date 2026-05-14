@@ -317,12 +317,16 @@ def render_validation_report(issues: list[str]) -> str:
 def render_maintenance_report(pages: list[WikiPage], maintenance_log: list[dict]) -> str:
     topic_pages = [page for page in pages if page.page_type == "topic_index"]
     cluster_pages = [page for page in pages if page.page_type == "source_cluster"]
+    deterministic = [item for item in maintenance_log if item.get("status") == "deterministic"]
+    reviewed = [item for item in maintenance_log if item.get("status") == "reviewed"]
+    fallback = [item for item in maintenance_log if item.get("status") == "fallback"]
     lines = [
         "# Maintenance Report",
         "",
         "## Snapshot",
-        f"- reviewed_topics: {len([item for item in maintenance_log if item.get('status') == 'reviewed'])}",
-        f"- fallback_topics: {len([item for item in maintenance_log if item.get('status') == 'fallback'])}",
+        f"- deterministic_flagged_topics: {len(deterministic)}",
+        f"- reviewed_topics: {len(reviewed)}",
+        f"- fallback_topics: {len(fallback)}",
         f"- topics_with_notes: {len([page for page in topic_pages if page.maintenance_notes])}",
         f"- topics_with_open_questions: {len([page for page in topic_pages if page.open_questions])}",
         f"- clusters_in_review: {len([page for page in cluster_pages if page.cluster_status == 'review'])}",
@@ -340,6 +344,44 @@ def render_maintenance_report(pages: list[WikiPage], maintenance_log: list[dict]
             )
     else:
         lines.append("- No topic maintenance items.")
+    lines.extend(["", "## Cluster Review Queue"])
+    cluster_queue = [
+        page for page in cluster_pages if page.maintenance_notes or page.open_questions or page.cluster_status == "review"
+    ]
+    if cluster_queue:
+        for page in sorted(cluster_queue, key=lambda item: item.title.lower()):
+            note = page.maintenance_notes[0] if page.maintenance_notes else "needs periodic review"
+            lines.append(
+                f"- [{page.title}](../{page.output_path}) | cluster_status: `{page.cluster_status or 'stable'}` | {note}"
+            )
+    else:
+        lines.append("- No cluster maintenance items.")
+    lines.extend(["", "## Duplicate Source Variants"])
+    duplicates = [
+        page for page in cluster_pages
+        if any(note.startswith("duplicate_source_variants:") for note in page.maintenance_notes)
+    ]
+    if duplicates:
+        for page in sorted(duplicates, key=lambda item: item.title.lower()):
+            duplicate_note = next(
+                note for note in page.maintenance_notes if note.startswith("duplicate_source_variants:")
+            )
+            lines.append(f"- [{page.title}](../{page.output_path}) | {duplicate_note}")
+    else:
+        lines.append("- No duplicate source variants detected.")
+    lines.extend(["", "## Broad Catch-All Topics"])
+    broad_topics = [
+        page for page in topic_pages
+        if any(note.startswith("broad_topic:") for note in page.maintenance_notes)
+    ]
+    if broad_topics:
+        for page in sorted(broad_topics, key=lambda item: item.title.lower()):
+            broad_note = next(
+                note for note in page.maintenance_notes if note.startswith("broad_topic:")
+            )
+            lines.append(f"- [{page.title}](../{page.output_path}) | {broad_note}")
+    else:
+        lines.append("- No broad catch-all topics flagged.")
     lines.extend(["", "## Link Suggestions Applied"])
     applied = [item for item in maintenance_log if item.get("link_suggestions_applied")]
     if applied:

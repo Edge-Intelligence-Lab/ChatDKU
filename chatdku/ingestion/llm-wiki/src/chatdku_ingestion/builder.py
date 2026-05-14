@@ -197,6 +197,19 @@ AUTHORITY_BULLETIN_KEYWORDS = [
 ]
 
 
+def _source_variant_key(file_name: str, file_path: str) -> str:
+    path = Path(file_path)
+    stem = path.stem.lower()
+    if stem == "index":
+        parent = path.parent.name.lower().replace("_", " ").replace("-", " ")
+        if parent:
+            return " ".join(parent.split())
+    stem = stem.replace("_", " ").replace("-", " ")
+    stem = stem.replace(" copy", " ")
+    stem = stem.replace(" final", " ")
+    return " ".join(stem.split())
+
+
 def _group_nodes_by_source(nodes: list[dict]) -> dict[str, list[dict]]:
     grouped: dict[str, list[dict]] = defaultdict(list)
     for node in nodes:
@@ -329,7 +342,17 @@ def _preferred_sources(records: list[dict], limit: int = 3) -> list[str]:
             item["file_name"].lower(),
         ),
     )
-    return [record["file_path"] for record in ordered[:limit]]
+    picked: list[str] = []
+    seen_variants: set[str] = set()
+    for record in ordered:
+        variant_key = _source_variant_key(record["file_name"], record["file_path"])
+        if variant_key in seen_variants:
+            continue
+        seen_variants.add(variant_key)
+        picked.append(record["file_path"])
+        if len(picked) >= limit:
+            break
+    return picked
 
 
 def _build_cluster_pages(source_records: list[dict]) -> list[WikiPage]:
@@ -511,6 +534,79 @@ def _apply_llm_summaries(
                 f"source_count: {len(cluster.source_refs)}",
                 f"best_open_first: {Path(topic.preferred_detail_sources[0]).name if topic.preferred_detail_sources else 'N/A'}",
             ]
+
+
+def _apply_structural_maintenance(
+    topic_pages: list[WikiPage],
+    cluster_pages: list[WikiPage],
+) -> list[dict]:
+    maintenance_log: list[dict] = []
+    cluster_by_id = {page.page_id: page for page in cluster_pages}
+
+    for cluster in cluster_pages:
+        notes: list[str] = []
+        questions: list[str] = []
+        variant_groups: dict[str, list[str]] = defaultdict(list)
+        for ref in cluster.source_refs:
+            variant_groups[_source_variant_key(ref.file_name, ref.file_path)].append(ref.file_path)
+        duplicate_variants = [
+            (variant, paths)
+            for variant, paths in variant_groups.items()
+            if len(paths) > 1 and len(set(paths)) > 1
+        ]
+        if cluster.cluster_status == "mixed":
+            notes.append("mixed_cluster: source bundle spans multiple surfaces and likely needs a clearer routing boundary.")
+        if cluster.page_id.startswith("cluster.general_"):
+            notes.append("broad_cluster: catch-all reference cluster should be reviewed for narrower DKU topic splits.")
+        if duplicate_variants:
+            summary = ", ".join(
+                f"{variant} ({len(paths)} copies)" for variant, paths in duplicate_variants[:3]
+            )
+            notes.append(f"duplicate_source_variants: {summary}")
+            questions.append("Choose one canonical entry source when duplicate copies point to the same material.")
+        if len(cluster.source_surfaces) == 1 and cluster.source_surfaces[0] in {"slides", "other"}:
+            questions.append("Consider attaching a more canonical web, guide, or handbook source for this topic.")
+        cluster.maintenance_notes = unique_preserve_order(cluster.maintenance_notes + notes)
+        cluster.open_questions = unique_preserve_order(cluster.open_questions + questions)
+
+    for topic in topic_pages:
+        notes: list[str] = []
+        questions: list[str] = []
+        cluster = cluster_by_id.get(topic.canonical_source_cluster or "")
+        related_topic_refs = [ref for ref in topic.cross_refs if ref.startswith("topic.")]
+        if topic.page_id.startswith("topic.general_"):
+            notes.append("broad_topic: catch-all topic index should be reviewed for DKU-specific splits or rerouting.")
+        if len(related_topic_refs) < 2:
+            notes.append("weak_topic_interconnection: add more nearby topic links if this index remains user-facing.")
+        if cluster and any(note.startswith("duplicate_source_variants:") for note in cluster.maintenance_notes):
+            notes.append("source_dedup_review: canonicalize duplicate source copies before relying on this topic as a stable entry point.")
+        if cluster and cluster.cluster_status == "mixed":
+            notes.append("cluster_needs_review: canonical source cluster is mixed and may overlap adjacent topic indexes.")
+        if (
+            "forms_workflows" in topic.topic_families
+            and cluster
+            and all(surface in {"slides", "other"} for surface in cluster.source_surfaces)
+        ):
+            questions.append("This workflow topic may need a more official website, form, or guide as a preferred entry source.")
+        topic.maintenance_notes = unique_preserve_order(topic.maintenance_notes + notes)
+        topic.open_questions = unique_preserve_order(topic.open_questions + questions)
+        if notes or questions:
+            maintenance_log.append(
+                {
+                    "page_id": topic.page_id,
+                    "status": "deterministic",
+                    "maintenance_notes": topic.maintenance_notes,
+                    "open_questions": topic.open_questions,
+                    "link_suggestions_applied": [],
+                    "conflict_signals": [
+                        note.removeprefix("cluster_needs_review: ").strip()
+                        for note in notes
+                        if note.startswith("cluster_needs_review:")
+                    ],
+                }
+            )
+
+    return maintenance_log
 
 
 def _topic_maintenance_candidates(topic: WikiPage, topic_pages: list[WikiPage]) -> list[WikiPage]:
@@ -748,11 +844,11 @@ def build_wiki(
     timeline_pages = _build_timeline_pages(topic_pages)
     _attach_related_pages(topic_pages, cluster_pages, authority_pages, service_pages, timeline_pages)
 
+    maintenance_log = _apply_structural_maintenance(topic_pages, cluster_pages)
     if use_llm:
         _apply_llm_summaries(cluster_pages, topic_pages)
-    maintenance_log: list[dict] = []
     if use_llm_maintenance:
-        maintenance_log = _apply_llm_maintenance(topic_pages, cluster_pages)
+        maintenance_log.extend(_apply_llm_maintenance(topic_pages, cluster_pages))
 
     all_pages = topic_pages + cluster_pages + authority_pages + service_pages + timeline_pages
     pages_by_id = {page.page_id: page for page in all_pages}
@@ -833,6 +929,7 @@ def build_wiki(
         "total_timelines": len(timeline_pages),
         "issues": issues,
         "maintenance_reviewed_topics": len([item for item in maintenance_log if item["status"] == "reviewed"]),
+        "maintenance_flagged_topics": len([item for item in maintenance_log if item["status"] in {"deterministic", "reviewed"}]),
         "index_document": str(paths["wiki"] / "index.md"),
         "main_document": str(paths["wiki"] / "main.md"),
         "maintenance_report": str(paths["reports"] / "maintenance_report.md"),
