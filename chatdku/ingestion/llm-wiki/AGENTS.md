@@ -4,7 +4,7 @@ This file defines how an agent should maintain the ChatDKU wiki generated from i
 
 ## Purpose
 
-The ChatDKU wiki is a compiled knowledge layer built from normalized `nodes.json` outputs. It does not replace Chroma, Redis, or Postgres. It adds a persistent markdown layer that can accumulate source-grounded summaries, entities, contradictions, and high-level overviews.
+The ChatDKU wiki is a compiled knowledge layer built from normalized `nodes.json` outputs. It is not the retrieval system. It is a persistent natural-language index that accumulates source-grounded summaries, entities, contradictions, and high-level overviews for maintenance and auditing.
 
 ## Three layers
 
@@ -13,7 +13,7 @@ The ChatDKU wiki is a compiled knowledge layer built from normalized `nodes.json
   - Produced and normalized by the existing ChatDKU ingestion pipeline.
 - `nodes.json`
   - Canonical normalized intermediate artifact.
-  - Remains the source for vector, keyword, and relational loaders.
+  - Remains the canonical normalized source for wiki generation.
 - `wiki/`
   - LLM-maintained markdown knowledge layer.
   - Agents may update this layer, but must preserve source grounding.
@@ -41,7 +41,18 @@ When asked to ingest or rebuild the wiki:
 6. Regenerate `wiki/validation_report.md`.
 7. Preserve contradictions instead of overwriting them.
 
-## Query workflow
+## Maintenance workflow
+
+When asked to maintain the wiki after a rebuild:
+
+1. Read `wiki/validation_report.md` first.
+2. Prioritize parser failures, garbled pages, and duplicate clusters.
+3. Review contradiction-heavy pages before writing any synthesis.
+4. Prefer improving page structure and provenance over writing more prose.
+5. Update source/entity/concept/policy organization only when the source support is clear.
+6. Keep all maintenance changes inspectable and diff-friendly.
+
+## Read workflow
 
 When asked a question against the wiki:
 
@@ -69,8 +80,9 @@ When asked to lint or review the wiki:
 3. Contradictions must be recorded, not silently merged away.
 4. Every wiki page must keep traceable source references.
 5. Agent-written prose should stay conservative and inspectable.
-6. Query-time synthesis can be saved back into the wiki only if the page clearly cites its supporting source pages.
+6. The wiki exists to maintain a natural-language index, not to replace retrieval orchestration.
+7. Any saved synthesis must clearly cite its supporting source pages.
 
 ## Known current limitation
 
-This implementation is currently deterministic and heuristic-first. It builds a persistent wiki structure, but it does not yet run an autonomous LLM maintenance loop during ingest. Agent-assisted updating is the next phase, not the current baseline.
+This implementation is currently deterministic and heuristic-first. It builds a persistent wiki structure, but it does not yet run an autonomous LLM maintenance loop during ingest. Agent-assisted updating is the next phase, with workflow quality taking priority over retrieval features.
