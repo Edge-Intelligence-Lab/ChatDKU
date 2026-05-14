@@ -94,6 +94,12 @@ def render_topic_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str:
         "",
         "## Source Cluster Status",
         f"- `{page.cluster_status or 'stable'}`",
+        "",
+        "## Maintenance Notes",
+        *([f"- {item}" for item in page.maintenance_notes] or ["- None."]),
+        "",
+        "## Open Questions",
+        *([f"- {item}" for item in page.open_questions] or ["- None."]),
     ]
     return "\n".join(lines).strip() + "\n"
 
@@ -121,6 +127,10 @@ def render_cluster_page(page: WikiPage, pages_by_id: dict[str, WikiPage]) -> str
         "",
         "## Notes On Overlap",
         f"- cluster_status: `{page.cluster_status or 'stable'}`",
+        *([f"- {item}" for item in page.maintenance_notes] or []),
+        "",
+        "## Open Questions",
+        *([f"- {item}" for item in page.open_questions] or ["- None."]),
     ]
     return "\n".join(lines).strip() + "\n"
 
@@ -203,6 +213,7 @@ def render_index(pages: list[WikiPage]) -> str:
         "- [Overview](overview.md)",
         "- [Main Build Report](main.md)",
         "- [Validation Report](validation_report.md)",
+        "- [Maintenance Report](reports/maintenance_report.md)",
         "",
         "## Topic Indexes",
     ]
@@ -274,6 +285,7 @@ def render_main_document(
         "- [Index](index.md)",
         "- [Overview](overview.md)",
         "- [Validation Report](validation_report.md)",
+        "- [Maintenance Report](reports/maintenance_report.md)",
         "",
         "## Topic Inventory",
     ]
@@ -299,4 +311,51 @@ def render_validation_report(issues: list[str]) -> str:
         lines.extend(f"- {issue}" for issue in issues)
     else:
         lines.append("- No issues detected.")
+    return "\n".join(lines).strip() + "\n"
+
+
+def render_maintenance_report(pages: list[WikiPage], maintenance_log: list[dict]) -> str:
+    topic_pages = [page for page in pages if page.page_type == "topic_index"]
+    cluster_pages = [page for page in pages if page.page_type == "source_cluster"]
+    lines = [
+        "# Maintenance Report",
+        "",
+        "## Snapshot",
+        f"- reviewed_topics: {len([item for item in maintenance_log if item.get('status') == 'reviewed'])}",
+        f"- fallback_topics: {len([item for item in maintenance_log if item.get('status') == 'fallback'])}",
+        f"- topics_with_notes: {len([page for page in topic_pages if page.maintenance_notes])}",
+        f"- topics_with_open_questions: {len([page for page in topic_pages if page.open_questions])}",
+        f"- clusters_in_review: {len([page for page in cluster_pages if page.cluster_status == 'review'])}",
+        "",
+        "## Topic Review Queue",
+    ]
+    queue_items = [
+        page for page in topic_pages if page.maintenance_notes or page.open_questions or page.cluster_status == "review"
+    ]
+    if queue_items:
+        for page in sorted(queue_items, key=lambda item: item.title.lower()):
+            note = page.maintenance_notes[0] if page.maintenance_notes else "needs periodic review"
+            lines.append(
+                f"- [{page.title}](../{page.output_path}) | cluster_status: `{page.cluster_status or 'stable'}` | {note}"
+            )
+    else:
+        lines.append("- No topic maintenance items.")
+    lines.extend(["", "## Link Suggestions Applied"])
+    applied = [item for item in maintenance_log if item.get("link_suggestions_applied")]
+    if applied:
+        for item in applied:
+            lines.append(
+                f"- `{item['page_id']}` -> {', '.join(f'`{target}`' for target in item['link_suggestions_applied'])}"
+            )
+    else:
+        lines.append("- No additional links applied.")
+    lines.extend(["", "## Conflict Signals"])
+    conflicts = [item for item in maintenance_log if item.get("conflict_signals")]
+    if conflicts:
+        for item in conflicts:
+            lines.append(
+                f"- `{item['page_id']}` | " + "; ".join(item["conflict_signals"])
+            )
+    else:
+        lines.append("- No LLM conflict signals.")
     return "\n".join(lines).strip() + "\n"

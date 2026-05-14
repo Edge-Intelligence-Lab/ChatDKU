@@ -27,6 +27,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the configured Qwen endpoint to write compact topic and cluster summaries",
     )
+    parser.add_argument(
+        "--use-llm-maintenance",
+        action="store_true",
+        help="Use the configured Qwen endpoint to review wiki structure, conflict signals, and interconnections",
+    )
     return parser.parse_args()
 
 
@@ -36,6 +41,7 @@ def main() -> None:
         nodes_path=args.nodes_path,
         output_dir=args.output_dir,
         use_llm=args.use_llm,
+        use_llm_maintenance=args.use_llm_maintenance,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

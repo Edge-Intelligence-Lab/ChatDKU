@@ -10,6 +10,7 @@ from .markdown import (
     render_authority_page,
     render_cluster_page,
     render_index,
+    render_maintenance_report,
     render_main_document,
     render_overview,
     render_service_page,
@@ -512,6 +513,99 @@ def _apply_llm_summaries(
             ]
 
 
+def _topic_maintenance_candidates(topic: WikiPage, topic_pages: list[WikiPage]) -> list[WikiPage]:
+    candidates: list[WikiPage] = []
+    for other in topic_pages:
+        if other.page_id == topic.page_id:
+            continue
+        if set(other.topic_families) & set(topic.topic_families):
+            candidates.append(other)
+    return candidates[:8]
+
+
+def _apply_llm_maintenance(
+    topic_pages: list[WikiPage],
+    cluster_pages: list[WikiPage],
+) -> list[dict]:
+    writer = LLMWikiWriter()
+    cluster_by_id = {page.page_id: page for page in cluster_pages}
+    maintenance_log: list[dict] = []
+
+    for topic in topic_pages:
+        cluster = cluster_by_id.get(topic.canonical_source_cluster or "")
+        candidate_pages = _topic_maintenance_candidates(topic, topic_pages)
+        candidate_payload = [
+            {
+                "page_id": page.page_id,
+                "title": page.title,
+                "topic_families": page.topic_families,
+            }
+            for page in candidate_pages
+        ]
+        try:
+            review = writer.review_topic_maintenance(
+                topic_id=topic.page_id,
+                topic_title=topic.title,
+                topic_summary=topic.summary,
+                topic_families=topic.topic_families,
+                cluster_status=topic.cluster_status,
+                preferred_sources=topic.preferred_detail_sources,
+                authority_sources=topic.authority_sources,
+                related_candidates=candidate_payload,
+            )
+        except Exception as exc:
+            topic.maintenance_notes.append(f"llm_maintenance_unavailable: {exc}")
+            maintenance_log.append(
+                {
+                    "page_id": topic.page_id,
+                    "status": "fallback",
+                    "maintenance_notes": topic.maintenance_notes[-1:],
+                    "open_questions": [],
+                    "link_suggestions_applied": [],
+                    "conflict_signals": [],
+                }
+            )
+            continue
+
+        notes = [str(item).strip() for item in review.get("maintenance_notes", []) if str(item).strip()]
+        questions = [str(item).strip() for item in review.get("open_questions", []) if str(item).strip()]
+        conflicts = [str(item).strip() for item in review.get("conflict_signals", []) if str(item).strip()]
+        suggested_links = []
+        candidate_ids = {page.page_id for page in candidate_pages}
+        for item in review.get("link_suggestions", []):
+            page_id = str(item).strip()
+            if page_id and page_id in candidate_ids and page_id not in topic.cross_refs:
+                topic.cross_refs.append(page_id)
+                suggested_links.append(page_id)
+        topic.cross_refs = unique_preserve_order(topic.cross_refs)[:10]
+        topic.maintenance_notes.extend(unique_preserve_order(notes))
+        topic.open_questions.extend(unique_preserve_order(questions))
+        topic.open_questions = unique_preserve_order(topic.open_questions)
+        if conflicts:
+            topic.maintenance_notes.extend(
+                unique_preserve_order([f"conflict_signal: {item}" for item in conflicts])
+            )
+            if cluster and cluster.cluster_status == "stable":
+                cluster.cluster_status = "review"
+            if cluster:
+                cluster.maintenance_notes.extend(unique_preserve_order(conflicts))
+                cluster.open_questions.extend(unique_preserve_order(questions))
+                cluster.maintenance_notes = unique_preserve_order(cluster.maintenance_notes)
+                cluster.open_questions = unique_preserve_order(cluster.open_questions)
+        maintenance_log.append(
+            {
+                "page_id": topic.page_id,
+                "status": "reviewed",
+                "maintenance_notes": topic.maintenance_notes,
+                "open_questions": topic.open_questions,
+                "link_suggestions_applied": suggested_links,
+                "conflict_signals": conflicts,
+            }
+        )
+
+    return maintenance_log
+
+
 def _build_service_pages(topic_pages: list[WikiPage]) -> list[WikiPage]:
     by_service: dict[str, list[WikiPage]] = defaultdict(list)
     topic_rule_by_page_id = {f"topic.{rule['id']}": rule for rule in TOPIC_RULES}
@@ -637,10 +731,11 @@ def build_wiki(
     output_dir: str | Path = ".",
     *,
     use_llm: bool = False,
+    use_llm_maintenance: bool = False,
 ) -> dict:
     nodes = load_nodes(nodes_path)
     paths = ensure_layout(output_dir)
-    for key in ["topics", "clusters", "authorities", "services", "timelines"]:
+    for key in ["topics", "clusters", "authorities", "services", "timelines", "reports"]:
         clear_markdown_dir(paths[key])
 
     grouped = _group_nodes_by_source(nodes)
@@ -655,6 +750,9 @@ def build_wiki(
 
     if use_llm:
         _apply_llm_summaries(cluster_pages, topic_pages)
+    maintenance_log: list[dict] = []
+    if use_llm_maintenance:
+        maintenance_log = _apply_llm_maintenance(topic_pages, cluster_pages)
 
     all_pages = topic_pages + cluster_pages + authority_pages + service_pages + timeline_pages
     pages_by_id = {page.page_id: page for page in all_pages}
@@ -684,6 +782,10 @@ def build_wiki(
         ),
     )
     write_text(paths["wiki"] / "validation_report.md", render_validation_report(issues))
+    write_text(
+        paths["reports"] / "maintenance_report.md",
+        render_maintenance_report(all_pages, maintenance_log),
+    )
 
     page_catalog = [
         {
@@ -730,7 +832,9 @@ def build_wiki(
         "total_services": len(service_pages),
         "total_timelines": len(timeline_pages),
         "issues": issues,
+        "maintenance_reviewed_topics": len([item for item in maintenance_log if item["status"] == "reviewed"]),
         "index_document": str(paths["wiki"] / "index.md"),
         "main_document": str(paths["wiki"] / "main.md"),
+        "maintenance_report": str(paths["reports"] / "maintenance_report.md"),
         "wiki_dir": str(paths["wiki"]),
     }

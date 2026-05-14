@@ -59,5 +59,6 @@ class WikiPage:
     summary: str = ""
     source_log: list[str] = field(default_factory=list)
     reference_context: list[str] = field(default_factory=list)
+    maintenance_notes: list[str] = field(default_factory=list)
     open_questions: list[str] = field(default_factory=list)
     last_updated: str = field(default_factory=utc_now_iso)
